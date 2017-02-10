@@ -101,7 +101,7 @@ void MDNVT::update_x_d()
             ++elem;
         }
     
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
@@ -152,7 +152,7 @@ void MDNVT::update_x_d(type0 fac_x_d)
             ++elem;
         }
     
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
@@ -202,7 +202,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
         x_d+=__dim__;
         ++elem;
     }
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
@@ -246,7 +246,7 @@ void MDNVT::init()
             ++elem;
         }
         
-        MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,MPI_TYPE0,MPI_SUM,world);
+        MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
         T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
     }
     else

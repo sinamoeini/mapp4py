@@ -24,17 +24,19 @@ namespace MAPP_NS
     private:
     protected:
     public:
+        class Atoms* atoms;
         const char* name;
         byte* data;
         int dim;
         int byte_sz;
         unsigned int vec_sz;
         unsigned int vec_cpcty;
+        static constexpr unsigned int vec_grw=128;
         
         void* begin()const{return data;};
         void* end()const{return data+vec_sz*byte_sz;};
 
-        vec(int,size_t,const char*);
+        vec(class Atoms*,int,size_t,const char*);
         virtual ~vec();
         
         void change_dim(int);
@@ -67,25 +69,6 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline vec::vec(int __dim,size_t __t_size,const char* __name):
-dim(__dim),
-byte_sz(static_cast<int>(__t_size)*__dim),
-vec_sz(0),
-vec_cpcty(0),
-data(NULL),
-name(__name)
-{
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-inline vec::~vec()
-{
-    delete [] data;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 inline void vec::change_dim(int new_dim)
 {
     if(new_dim==dim) return;
@@ -109,13 +92,14 @@ inline void vec::reserve(int xtra_atms)
     if(vec_cpcty>=vec_sz+xtra_atms)
         return;
     
-    byte* __data=new byte[(vec_sz+xtra_atms)*byte_sz];
+    vec_cpcty=vec_sz+xtra_atms+vec_grw;
+    byte* __data=new byte[vec_cpcty*byte_sz];
     
     memcpy(__data,data,byte_sz*vec_sz);
-    
+
     delete [] data;
     data=__data;
-    vec_cpcty=vec_sz+xtra_atms;
+    
 }
 /*--------------------------------------------
  
@@ -129,14 +113,13 @@ inline void vec::resize(int n)
     }
     
     
+    vec_cpcty=n+vec_grw;
     byte* __data=NULL;
-    if(n) __data=new byte[n*byte_sz];
-    
+    if(n) __data=new byte[vec_cpcty*byte_sz];
     memcpy(__data,data,byte_sz*vec_sz);
-    
     delete [] data;
     data=__data;
-    vec_cpcty=vec_sz=n;
+    vec_sz=n;
 }
 /*--------------------------------------------
  
@@ -386,11 +369,11 @@ namespace MAPP_NS
     private:
     protected:
     public:
-        class Atoms* atoms;
         Vec(Atoms*,int,const char*);
         Vec(Atoms*,int);
         ~Vec();
-        
+        unsigned int size()const{return dim*vec_sz;}
+        static MPI_Datatype MPI_T;
         T* begin()const{return reinterpret_cast<T*>(data);};
         T* end()const{return reinterpret_cast<T*>(data+vec_sz*byte_sz);};
     };
@@ -437,9 +420,9 @@ namespace MAPP_NS
         Atoms(Communication&);
         Atoms(MPI_Comm&);
         virtual ~Atoms();
-        void add_vec(vec*);
         vec* find_vec(const char*);
-        void del_vec(vec*);
+        void push(vec*);
+        void pop(vec*);
         void x2s(int);
         void s2x(int);
         void x2s_lcl();
@@ -512,35 +495,46 @@ namespace MAPP_NS
  
  -----------------------*/
 /*--------------------------------------------
- constructor with name;
+ 
  --------------------------------------------*/
-template<typename T>
-Vec<T>::Vec(Atoms* __atoms,int __dim,const char* __name):
-vec(__dim,sizeof(T),__name),
+inline vec::vec(Atoms* __atoms,int __dim,size_t __t_size,const char* __name):
+dim(__dim),
+byte_sz(static_cast<int>(__t_size)*__dim),
+vec_sz(0),
+vec_cpcty(0),
+data(NULL),
+name(__name),
 atoms(__atoms)
 {
-    atoms->add_vec(this);
+    atoms->push(this);
     resize(atoms->natms);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+inline vec::~vec()
+{
+    delete [] data;
+    atoms->pop(this);
 }
 /*--------------------------------------------
  constructor with name;
  --------------------------------------------*/
 template<typename T>
+Vec<T>::Vec(Atoms* __atoms,int __dim,const char* __name):
+vec(__atoms,__dim,sizeof(T),__name)
+{}
+/*--------------------------------------------
+ constructor without name;
+ --------------------------------------------*/
+template<typename T>
 Vec<T>::Vec(Atoms* __atoms,int __dim):
-vec(__dim,sizeof(T),NULL),
-atoms(__atoms)
-{
-    atoms->add_vec(this);
-    resize(atoms->natms);
-}
+vec(__atoms,__dim,sizeof(T),NULL)
+{}
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
 template<typename T>
 inline Vec<T>::~Vec()
-{
-    atoms->del_vec(this);
-}
-
-
+{}
 #endif

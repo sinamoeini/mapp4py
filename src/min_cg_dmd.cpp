@@ -239,16 +239,14 @@ void MinCGDMD::run(int nsteps)
     dynamic=NULL;
     fin();
     
-    
+    /*
     type0* xx=atoms->x->begin();
     type0* aa=atoms->alpha->begin();
     type0* cc=atoms->c->begin();
     int n=atoms->natms;
     for(int i=0;i<n;i++)
-    {
         printf("%lf %lf %lf %e %e\n",xx[3*i],xx[3*i+1],xx[3*i+2],aa[i],cc[i]);
-    }
-     
+    */
 }
 /*--------------------------------------------
  
@@ -262,7 +260,7 @@ type0 MinCGDMD::F(type0 alpha)
     type0* c_vec=atoms->c->begin();
     for(int i=0;i<n;i++)
         if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,MPI_TYPE0,MPI_MAX,world);
+    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,world);
     
     if(chng_box)
         atoms->update_H();
@@ -282,7 +280,7 @@ type0 MinCGDMD::dF(type0 alpha,type0& drev)
     type0* c_vec=atoms->c->begin();
     for(int i=0;i<n;i++)
         if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,MPI_TYPE0,MPI_MAX,world);
+    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,world);
     
     if(chng_box)
         atoms->update_H();
@@ -342,19 +340,7 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     type0 max_a_lcl=MIN(fabs(max_dx/max_h_lcl),max_alpha_ratio);
     max_a_lcl=MIN(max_a_lcl,fabs(max_dalpha/max_h_alpha_lcl));
 
-    MPI_Allreduce(&max_a_lcl,&max_a,1,MPI_TYPE0,MPI_MIN,world);
-    
-    if(!chng_box) return;
-    /*
-    Algebra::DoLT<__dim__>::func([this,&max_a,&max_h](int i,int j)
-    {
-        if(h.A[i][j])
-        {
-            max_a=MIN(max_a,0.999*fabs(max_dx/h.A[i][j]));
-            max_h=MAX(max_h,h.A[i][j]);
-        }
-    });*/
-    
+    MPI_Allreduce(&max_a_lcl,&max_a,1,Vec<type0>::MPI_T,MPI_MIN,world);
 }
 /*--------------------------------------------
  reset to initial position
@@ -362,8 +348,7 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 void MinCGDMD::F_reset()
 {
     x=x0;
-    if(chng_box)
-        atoms->update_H();
+    if(chng_box) atoms->update_H();
     dynamic->update(atoms->x);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------

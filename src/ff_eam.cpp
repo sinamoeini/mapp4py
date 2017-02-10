@@ -527,7 +527,7 @@ type0 ForceFieldEAM::xchng_energy(GCMC* gcmc)
 {
     int& icomm=gcmc->icomm;
     for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
-        MPI_Reduce(gcmc->lcl_vars,gcmc->vars,2,MPI_TYPE0,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
+        MPI_Reduce(gcmc->lcl_vars,gcmc->vars,2,Vec<type0>::MPI_T,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
  
     
     if(gcmc->im_root)

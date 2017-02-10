@@ -3,6 +3,20 @@
 #include "elements.h"
 #include "xmath.h"
 using namespace MAPP_NS;
+template<> MPI_Datatype Vec<char>::MPI_T=MPI_CHAR;
+template<> MPI_Datatype Vec<short>::MPI_T=MPI_SHORT;
+template<> MPI_Datatype Vec<int>::MPI_T=MPI_INT;
+template<> MPI_Datatype Vec<long>::MPI_T=MPI_LONG;
+template<> MPI_Datatype Vec<long long>::MPI_T=MPI_LONG_LONG;
+template<> MPI_Datatype Vec<unsigned char>::MPI_T=MPI_UNSIGNED_CHAR;
+template<> MPI_Datatype Vec<unsigned short>::MPI_T=MPI_UNSIGNED_SHORT;
+template<> MPI_Datatype Vec<unsigned int>::MPI_T=MPI_UNSIGNED;
+template<> MPI_Datatype Vec<unsigned long int>::MPI_T=MPI_UNSIGNED_LONG;
+template<> MPI_Datatype Vec<unsigned long long>::MPI_T=MPI_UNSIGNED_LONG_LONG;
+template<> MPI_Datatype Vec<float>::MPI_T=MPI_FLOAT;
+template<> MPI_Datatype Vec<double>::MPI_T=MPI_DOUBLE;
+template<> MPI_Datatype Vec<long double>::MPI_T=MPI_LONG_DOUBLE;
+template<> MPI_Datatype Vec<bool>::MPI_T=MPI_CXX_BOOL;
 /*---------------------------------------------------------------------------
       ___   _____   _____       ___  ___   _____
      /   | |_   _| /  _  \     /   |/   | /  ___/
@@ -82,18 +96,33 @@ void Atoms::update_H()
 /*--------------------------------------------
  add a new vec
  --------------------------------------------*/
-void Atoms::add_vec(vec* v)
+void Atoms::push(vec* v)
 {
     if(v->name)
         for(int ivec=0;ivec<nvecs;ivec++)
             if(vecs[ivec]->name && !strcmp(v->name,vecs[ivec]->name))
                 throw "internal error: vector name already exist";
-    vec** vecs_=new vec*[nvecs+1];
-    memcpy(vecs_,vecs,nvecs*sizeof(vec*));
+    
+    vec** __vecs=new vec*[nvecs+1];
+    memcpy(__vecs,vecs,nvecs*sizeof(vec*));
     delete [] vecs;
-    vecs=vecs_;
-    vecs[nvecs]=v;
-    nvecs++;
+    vecs=__vecs;
+    vecs[nvecs++]=v;
+}
+/*--------------------------------------------
+ remove a vector
+ --------------------------------------------*/
+void Atoms::pop(vec* v)
+{
+    int ivec=nvecs-1;
+    for(;vecs[ivec]!=v;ivec--){}
+    vecs[ivec]=vecs[nvecs-1];
+    nvecs--;
+
+    vec** __vecs=NULL;
+    if(nvecs) __vecs=new vec*[nvecs];
+    
+    memcpy(__vecs,vecs,(nvecs)*sizeof(vec*));
 }
 /*--------------------------------------------
  add a new vec with name
@@ -104,31 +133,6 @@ vec* Atoms::find_vec(const char* name)
         if(vecs[ivec]->name && strcmp(name,vecs[ivec]->name)==0)
             return vecs[ivec];
     return NULL;
-}
-/*--------------------------------------------
- remove a vector
- --------------------------------------------*/
-void Atoms::del_vec(vec* v)
-{
-    if(nvecs-1)
-    {
-        vec** vecs_=new vec*[nvecs-1];
-        int ivec=0;
-        for(int jvec=0;jvec<nvecs;jvec++)
-            if(vecs[jvec]!=v)
-                vecs_[ivec++]=vecs[jvec];
-        
-        delete [] vecs;
-        vecs=vecs_;
-        nvecs--;
-    }
-    else
-    {
-        delete [] vecs;
-        vecs=NULL;
-        nvecs=0;
-    }
-    
 }
 /*--------------------------------------------
  x2s

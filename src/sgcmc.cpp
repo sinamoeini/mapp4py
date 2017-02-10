@@ -288,7 +288,7 @@ void SGCMC::attmpt()
             memcpy(s_buff,s_vec_p->begin()+del_idx*__dim__,__dim__*sizeof(type0));
         }
         MPI_Allreduce(&iproc,&curr_root,1,MPI_INT,MPI_MAX,world);
-        MPI_Bcast(s_buff,__dim__,MPI_TYPE0,curr_root,world);
+        MPI_Bcast(s_buff,__dim__,Vec<type0>::MPI_T,curr_root,world);
         MPI_Bcast(&gas_id,1,MPI_INT,curr_root,world);
     }
     
@@ -297,7 +297,7 @@ void SGCMC::attmpt()
     ff->pre_xchng_energy_timer(this);
     
     delta_u=ff->xchng_energy_timer(this);
-    MPI_Bcast(&delta_u,1,MPI_TYPE0,curr_root,world);
+    MPI_Bcast(&delta_u,1,Vec<type0>::MPI_T,curr_root,world);
     
     type0 fac;
     root_succ=false;

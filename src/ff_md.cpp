@@ -65,7 +65,7 @@ void ForceFieldMD::post_xchng_energy_timer(GCMC* gcmc)
 void ForceFieldMD::force_calc_timer()
 {
     force_calc();
-    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     const type0 vol=atoms->vol;
     Algebra::Do<__nvoigt__>::func([this,&vol](int i){nrgy_strss[i+1]/=vol;});
 }
@@ -75,7 +75,7 @@ void ForceFieldMD::force_calc_timer()
 type0 ForceFieldMD::energy_calc_timer()
 {
     energy_calc();
-    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return nrgy_strss[0];
 }
 /*--------------------------------------------
@@ -86,7 +86,7 @@ type0 ForceFieldMD::value_timer()
     nrgy_strss_lcl[0]=0.0;
     energy_calc();
     type0 en;
-    MPI_Allreduce(&nrgy_strss_lcl[0],&en,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&nrgy_strss_lcl[0],&en,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return en;
 }
 /*--------------------------------------------
@@ -95,7 +95,7 @@ type0 ForceFieldMD::value_timer()
 void ForceFieldMD::derivative_timer()
 {
     force_calc();
-    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
     if(!atoms->dof) return;
     type0* fvec=f->begin();
@@ -129,7 +129,7 @@ void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
     }
     
     
-    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]*=-1.0;});
     Algebra::NONAME_DyadicV_mul_MLT(nrgy_strss+1,atoms->B,S);
     const type0 vol=atoms->vol;

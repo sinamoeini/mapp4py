@@ -817,7 +817,7 @@ type0 ForceFieldEAMDMD::ddc_norm()
             ans_lcl+=tmp0*tmp0;
         }
     
-    MPI_Allreduce(&ans_lcl,&ans,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&ans_lcl,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return sqrt(ans);
 }
 /*--------------------------------------------
@@ -1164,7 +1164,7 @@ type0 ForceFieldEAMDMD::update_J(type0 alpha,type0* a,type0* g)
         }
     }
     type0 ans;
-    MPI_Allreduce(&ans_lcl,&ans,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&ans_lcl,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return sqrt(ans);
     
 }
@@ -1327,10 +1327,10 @@ force_calc_static(bool st_clc)
         for(int i=0;i<7;i++)
             nrgy_strss[i]=0.0;
         
-        MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,7,MPI_TYPE0,MPI_SUM,world);
+        MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,7,Vec<type0>::MPI_T,MPI_SUM,world);
     }
     else
-        MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,1,MPI_TYPE0,MPI_SUM,world);
+        MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,1,Vec<type0>::MPI_T,MPI_SUM,world);
 }
 
 /*--------------------------------------------

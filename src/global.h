@@ -3,7 +3,6 @@
 #define MIN(A,B) (A<B?A:B)
 #define MAX(A,B) (A>B?A:B)
 
-#define MPI_TYPE0 MPI_DOUBLE
 #define RESTRICT __restrict__
 #ifndef __MAPP__type_def__
 #define __MAPP__type_def__

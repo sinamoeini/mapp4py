@@ -279,7 +279,7 @@ void DynamicMD::store_arch_vecs()
     unsigned int* id_0=atoms->id->begin();
     unsigned int* id_1=id_arch->begin();
     memcpy(id_1,id_0,atoms->natms*sizeof(unsigned int));
-    atoms->del_vec(id_arch);
+    atoms->pop(id_arch);
 }
 /*--------------------------------------------
  
@@ -530,8 +530,8 @@ void DynamicMD::restore_arch_vecs()
     delete [] rcv_buff;
     
     for(int ivec=0;ivec<narch_vecs;ivec++)
-        atoms->add_vec(arch_vecs[ivec]);
-    atoms->add_vec(id_arch);
+        atoms->push(arch_vecs[ivec]);
+    atoms->push(id_arch);
     delete id_arch;
     id_arch=NULL;
 }

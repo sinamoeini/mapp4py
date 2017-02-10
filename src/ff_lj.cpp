@@ -171,7 +171,7 @@ type0 ForceFieldLJ::xchng_energy(GCMC* gcmc)
 {
     int& icomm=gcmc->icomm;
     for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
-        MPI_Reduce(gcmc->lcl_vars,gcmc->vars,1,MPI_TYPE0,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
+        MPI_Reduce(gcmc->lcl_vars,gcmc->vars,1,Vec<type0>::MPI_T,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
     if(gcmc->im_root)
         return gcmc->vars[0];
     
@@ -201,20 +201,20 @@ void ForceFieldLJ::force_calc()
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
     
-    type0 xi[__dim__];
-    type0 dxij[__dim__];
+    type0 x_i[__dim__];
+    type0 dx_ij[__dim__];
     const int natms=atoms->natms;
     for(int iatm=0;iatm<natms;iatm++)
     {
         ielem=evec[iatm];
-        Algebra::V_eq<__dim__>(x+iatm*__dim__,xi);
-        type0 fi[__dim__]{[0 ... __dim__-1]=0.0};
+        Algebra::V_eq<__dim__>(x+iatm*__dim__,x_i);
+        type0 f_i[__dim__]{[0 ... __dim__-1]=0.0};
         const int list_size=neighbor_list_size[iatm];
         for(int j=0,jatm;j<list_size;j++)
         {
             jatm=neighbor_list[iatm][j];
             jelem=evec[jatm];
-            rsq=Algebra::DX_RSQ(xi,x+jatm*__dim__,dxij);
+            rsq=Algebra::DX_RSQ(x_i,x+jatm*__dim__,dx_ij);
             if(rsq>=cut_sq[ielem][jelem]) continue;
             
             type0 sig2=sigma[ielem][jelem]*sigma[ielem][jelem]/rsq;
@@ -224,20 +224,20 @@ void ForceFieldLJ::force_calc()
             type0 fpair=24.0*eps*sig6*(2.0*sig6-1.0)/rsq;
             type0 en=4.0*eps*sig6*(sig6-1.0)+offset[ielem][jelem];
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dxij,fi);
+            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
             
             if(jatm<natms)
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dxij,fvec+__dim__*jatm);
+                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+__dim__*jatm);
             else
             {
                 fpair*=0.5;
                 en*=0.5;
             }
             nrgy_strss_lcl[0]+=en;
-            Algebra::DyadicV(-fpair,dxij,&nrgy_strss_lcl[1]);
+            Algebra::DyadicV(-fpair,dx_ij,&nrgy_strss_lcl[1]);
         }
         
-        Algebra::V_add<__dim__>(fi,fvec+iatm*__dim__);
+        Algebra::V_add<__dim__>(f_i,fvec+iatm*__dim__);
     }
 }
 /*--------------------------------------------

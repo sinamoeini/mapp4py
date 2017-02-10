@@ -7,21 +7,6 @@
 #include "dynamic_md.h"
 #include "atoms_styles.h"
 using namespace MAPP_NS;
-template<> MPI_Datatype MPI_type_attr<char>::MPI_T=MPI_CHAR;
-template<> MPI_Datatype MPI_type_attr<short>::MPI_T=MPI_SHORT;
-template<> MPI_Datatype MPI_type_attr<int>::MPI_T=MPI_INT;
-template<> MPI_Datatype MPI_type_attr<long>::MPI_T=MPI_LONG;
-template<> MPI_Datatype MPI_type_attr<long long>::MPI_T=MPI_LONG_LONG;
-template<> MPI_Datatype MPI_type_attr<unsigned char>::MPI_T=MPI_UNSIGNED_CHAR;
-template<> MPI_Datatype MPI_type_attr<unsigned short>::MPI_T=MPI_UNSIGNED_SHORT;
-template<> MPI_Datatype MPI_type_attr<unsigned int>::MPI_T=MPI_UNSIGNED;
-template<> MPI_Datatype MPI_type_attr<unsigned long int>::MPI_T=MPI_UNSIGNED_LONG;
-template<> MPI_Datatype MPI_type_attr<unsigned long long>::MPI_T=MPI_UNSIGNED_LONG_LONG;
-template<> MPI_Datatype MPI_type_attr<float>::MPI_T=MPI_FLOAT;
-template<> MPI_Datatype MPI_type_attr<double>::MPI_T=MPI_DOUBLE;
-template<> MPI_Datatype MPI_type_attr<long double>::MPI_T=MPI_LONG_DOUBLE;
-template<> MPI_Datatype MPI_type_attr<bool>::MPI_T=MPI_CXX_BOOL;
-
 LineSearch* MinCG::ls=NULL;
 /*--------------------------------------------
  constructor
@@ -314,7 +299,7 @@ void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     for(int i=0;i<n;i++)
         max_h_lcl=MAX(max_h_lcl,fabs(hvec[i]));
     
-    MPI_Allreduce(&max_h_lcl,&max_h,1,MPI_TYPE0,MPI_MAX,world);
+    MPI_Allreduce(&max_h_lcl,&max_h,1,Vec<type0>::MPI_T,MPI_MAX,world);
     max_a=fabs(max_dx/max_h);
     
 }

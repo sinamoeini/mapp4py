@@ -4,15 +4,6 @@
 #include "xmath.h"
 namespace MAPP_NS
 {
-    template<class T>
-    class MPI_type_attr
-    {public: static MPI_Datatype MPI_T;};
- }
-/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-namespace MAPP_NS
-{
     
     
     template<class T,const int N,class E>
@@ -342,7 +333,7 @@ T VecTens<T,N>::operator*(const VecTens<T,N>& r)
     });
     
     T ans;
-    MPI_Allreduce(&ans_lcl,&ans,1,MPI_type_attr<T>::MPI_T,MPI_SUM,vecs[0]->atoms->world);
+    MPI_Allreduce(&ans_lcl,&ans,1,Vec<T>::MPI_T,MPI_SUM,vecs[0]->atoms->world);
     if(box_chng)
         Algebra::DoLT<__dim__>::func([this,&r,&ans](int i,int j){ans+=this->A[i][j]*r.A[i][j];});
     return ans;
@@ -700,7 +691,7 @@ T __VecTens<T>::operator*(const __VecTens<T>& rhs)
     for(int i=0;i<n;i++)
         ans_lcl+=vec0[i]*vec1[i];
     
-    MPI_Allreduce(&ans_lcl,&ans,1,MPI_type_attr<T>::MPI_T,MPI_SUM,this->vec->atoms->world);
+    MPI_Allreduce(&ans_lcl,&ans,1,Vec<T>::MPI_T,MPI_SUM,this->vec->atoms->world);
     if(!box_chng) return ans;
     Algebra::DoLT<__dim__>::func([this,&rhs,&ans](int i,int j)
     {ans+=this->A[i][j]*rhs.A[i][j];});

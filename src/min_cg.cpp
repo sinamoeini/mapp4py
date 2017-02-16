@@ -8,6 +8,16 @@
 #include "atoms_styles.h"
 using namespace MAPP_NS;
 LineSearch* MinCG::ls=NULL;
+const char* MinCG::err_msgs[]=
+{
+    [LS_F_DOWNHILL]="line search failed: not downhill direction\n",
+    [LS_F_GRAD0]="line search failed: gradient is zero\n",
+    [LS_MIN_ALPHA]="line search failed: minimum alpha reached\n",
+    [MIN_S_TOLERANCE]="minimization finished: energy tolerance reached\n",
+    [MIN_F_MAX_ITER]="minimization finished: maximum iteration reached\n",
+    [B_F_DOWNHILL]="bracketing failed: not downhill direction\n",
+    [B_F_MAX_ALPHA]="bracketing failed: maximum alpha reached\n"
+};
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
@@ -28,26 +38,6 @@ ntally(1000)
  --------------------------------------------*/
 MinCG::~MinCG()
 {
-}
-/*--------------------------------------------
- error messages
- --------------------------------------------*/
-void MinCG::print_error()
-{
-    if(err==LS_F_DOWNHILL)
-        fprintf(MAPP::mapp_out,"line search failed: not downhill direction\n");
-    else if(err==LS_F_GRAD0)
-        fprintf(MAPP::mapp_out,"line search failed: gradient is zero\n");
-    else if(err==LS_MIN_ALPHA)
-        fprintf(MAPP::mapp_out,"line search failed: minimum alpha reached\n");
-    else if(err==MIN_S_TOLERANCE)
-        fprintf(MAPP::mapp_out,"minimization finished: energy tolerance reached\n");
-    else if(err==MIN_F_MAX_ITER)
-        fprintf(MAPP::mapp_out,"minimization finished: maximum iteration reached\n");
-    else if(err==B_F_DOWNHILL)
-        fprintf(MAPP::mapp_out,"bracketing failed: not downhill direction\n");
-    else if(err==B_F_MAX_ALPHA)
-        fprintf(MAPP::mapp_out,"bracketing failed: maximum alpha reached\n");
 }
 /*--------------------------------------------
  
@@ -72,24 +62,12 @@ void MinCG::force_calc()
 void MinCG::prepare_affine_h()
 {
     const int natms=atoms->natms;
-    if(chng_box)
-    {
-        Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
-        type0* xvec=x0.vecs[0]->begin();
-        type0* hvec=h.vecs[0]->begin();
-        for(int iatm=0;iatm<natms;iatm++)
-        {
-            Algebra::V_mul_MLT(xvec,MLT,hvec);
-            xvec+=__dim__;
-            hvec+=__dim__;
-        }
-    }
-    else
-    {
-        type0* hvec=h.vecs[0]->begin();
-        for(int iatm=0;iatm<natms;iatm++,hvec+=__dim__)
-            Algebra::zero<__dim__>(hvec);
-    }
+    type0 MLT[__dim__][__dim__];
+    Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
+    type0* xvec=x0.vecs[0]->begin();
+    type0* hvec=h.vecs[0]->begin();
+    for(int iatm=0;iatm<natms;iatm++,xvec+=__dim__,hvec+=__dim__)
+        Algebra::V_mul_MLT(xvec,MLT,hvec);
 }
 /*--------------------------------------------
  
@@ -154,20 +132,14 @@ void MinCG::run(int nsteps)
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
     
-    Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-    {
-        S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];
-    });
     thermo.init();
+    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
     thermo.print(0);
     
-    
-    curr_energy=ff->nrgy_strss[0];
-    type0 prev_energy;
-    
+    type0 e_prev,e_curr=ff->nrgy_strss[0];
     type0 f0_f0,f_f,f_f0;
     type0 ratio,alpha;
-    err=LS_S;
+    int err=LS_S;
     h=f;
     f0_f0=f*f;
     int istep=0;
@@ -182,7 +154,7 @@ void MinCG::run(int nsteps)
         x0=x;
         f0=f;
         
-        prev_energy=curr_energy;
+        e_prev=e_curr;
         
         
         f_h=f*h;
@@ -192,14 +164,14 @@ void MinCG::run(int nsteps)
             f_h=f0_f0;
         }
         if(affine) prepare_affine_h();
-        err=ls->line_min(this,curr_energy,alpha,1);
+        err=ls->line_min(this,e_curr,alpha,1);
         
         if(err!=LS_S)
             continue;
         
         force_calc();
         
-        if(prev_energy-curr_energy<e_tol)
+        if(e_prev-e_curr<e_tol)
             err=MIN_S_TOLERANCE;
         
         if(istep+1==nsteps)
@@ -207,8 +179,7 @@ void MinCG::run(int nsteps)
         
         if((istep+1)%ntally==0)
         {
-            Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-            {S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];});
+            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
             thermo.print(istep+1);
         }
         
@@ -225,18 +196,16 @@ void MinCG::run(int nsteps)
     
     if(istep%ntally)
     {
-        Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-        {S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];});
-        thermo.print(istep);
+        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
     }
 
     thermo.fin();
-    print_error();
-    
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
     fin();
+    
+    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
 }
 /*--------------------------------------------
  
@@ -267,6 +236,11 @@ type0 MinCG::dF(type0 alpha,type0& drev)
 }
 /*--------------------------------------------
  find maximum h
+ lets find the next sensible number 
+ 
+ x=x_0+h*alpha
+ (x-x0)/alpha=sqrt(eps)/alpha
+
  --------------------------------------------*/
 void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 {

@@ -27,6 +27,26 @@ namespace MAPP_NS
         
         static PyMethodDef methods[];
         static void setup_methods();
+        
+        class MD
+        {
+        private:
+        protected:
+        public:
+            static PyObject* init_module(void);
+            static PyMethodDef methods[];
+            static void setup_methods();
+        };
+        
+        class DMD
+        {
+        private:
+        protected:
+        public:
+            static PyObject* init_module(void);
+            static PyMethodDef methods[];
+            static void setup_methods();
+        };
     };
 }
 #endif 

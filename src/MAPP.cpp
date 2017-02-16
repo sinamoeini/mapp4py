@@ -13,7 +13,7 @@
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
-PyMethodDef MAPP::methods[]={[0 ... 4]={NULL}};
+PyMethodDef MAPP::methods[]={[0 ... 2]={NULL}};
 /*--------------------------------------------*/
 void MAPP::setup_methods()
 {
@@ -26,9 +26,6 @@ void MAPP::setup_methods()
     methods[1].ml_meth=(PyCFunction)resume_out;
     methods[1].ml_flags=METH_NOARGS;
     methods[1].ml_doc="resumes stdout & stderr of non-root processes";
-    
-    ReadCFGMD::ml_cfg_md(methods[2]);
-    ReadCFGDMD::ml_cfg_dmd(methods[3]);
 }
 /*--------------------------------------------
  
@@ -37,8 +34,7 @@ PyObject* MAPP::pause_out(PyObject* self)
 {
     MPI_Barrier(MPI_COMM_WORLD);
     if(!glbl_rank) Py_RETURN_NONE;
-    if(!__devnull__)
-        __devnull__=fopen(devnull_path,"w");
+    if(!__devnull__) __devnull__=fopen(devnull_path,"w");
 
     GET_FILE(stdout)=__devnull__;
     GET_FILE(stderr)=__devnull__;
@@ -81,15 +77,13 @@ void MAPP::init_module(void)
     Py_DECREF(posixpath);
     glbl_rank=Communication::get_rank();
     
+    mapp_out=__stdout__=GET_FILE(stdout);
+    mapp_err=__stderr__=GET_FILE(stderr);
+    
     import_array();
     setup_methods();
     PyObject* module=Py_InitModule3("mapp",methods,"MIT Atomistic Parallel Package");
     if(module==NULL) return;
-    
-    mapp_out=__stdout__=GET_FILE(stdout);
-    mapp_err=__stderr__=GET_FILE(stderr);
-    
-
     
     MAPP_MPI::setup_tp();
     if(PyType_Ready(&MAPP_MPI::TypeObject)<0) return;
@@ -97,59 +91,91 @@ void MAPP::init_module(void)
     PyModule_AddObject(module,"mpi",reinterpret_cast<PyObject*>(&MAPP_MPI::TypeObject));
     
     
-    Atoms::setup_tp();
-    if(PyType_Ready(&Atoms::TypeObject)<0) return;
-    Py_INCREF(&Atoms::TypeObject);
-    PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&Atoms::TypeObject));
+    ExamplePython::setup_tp();
+    if(PyType_Ready(&ExamplePython::TypeObject)<0) return;
+    Py_INCREF(&ExamplePython::TypeObject);
+    PyModule_AddObject(module,"xmpl",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
+    
+    PyModule_AddObject(module,"md",MAPP::MD::init_module());
+    PyModule_AddObject(module,"dmd",MAPP::DMD::init_module());
+}
+/*--------------------------------------------*/
+PyMethodDef MAPP::MD::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void MAPP::MD::setup_methods()
+{
+    ReadCFGMD::ml_cfg(methods[0]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* MAPP::MD::init_module(void)
+{
+    setup_methods();
+    PyObject* module=Py_InitModule3("md",methods,"MIT Atomistic Parallel Package");
+    if(module==NULL) return NULL;
     
     AtomsMD::setup_tp();
-    if(PyType_Ready(&AtomsMD::TypeObject)<0) return;
+    if(PyType_Ready(&AtomsMD::TypeObject)<0) return NULL;
     Py_INCREF(&AtomsMD::TypeObject);
-    PyModule_AddObject(module,"atoms_md",reinterpret_cast<PyObject*>(&AtomsMD::TypeObject));
-    
-    AtomsDMD::setup_tp();
-    if(PyType_Ready(&AtomsDMD::TypeObject)<0) return;
-    Py_INCREF(&AtomsDMD::TypeObject);
-    PyModule_AddObject(module,"atoms_dmd",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
+    PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsMD::TypeObject));
     
     MDNVT::setup_tp();
-    if(PyType_Ready(&MDNVT::TypeObject)<0) return;
+    if(PyType_Ready(&MDNVT::TypeObject)<0) return NULL;
     Py_INCREF(&MDNVT::TypeObject);
-    PyModule_AddObject(module,"md_nvt",reinterpret_cast<PyObject*>(&MDNVT::TypeObject));
+    PyModule_AddObject(module,"nvt",reinterpret_cast<PyObject*>(&MDNVT::TypeObject));
     
     
     MDNST::setup_tp();
-    if(PyType_Ready(&MDNST::TypeObject)<0) return;
+    if(PyType_Ready(&MDNST::TypeObject)<0) return NULL;
     Py_INCREF(&MDNST::TypeObject);
-    PyModule_AddObject(module,"md_nst",reinterpret_cast<PyObject*>(&MDNST::TypeObject));
+    PyModule_AddObject(module,"nst",reinterpret_cast<PyObject*>(&MDNST::TypeObject));
     
     
     MDMuVT::setup_tp();
-    if(PyType_Ready(&MDMuVT::TypeObject)<0) return;
+    if(PyType_Ready(&MDMuVT::TypeObject)<0) return NULL;
     Py_INCREF(&MDMuVT::TypeObject);
-    PyModule_AddObject(module,"md_muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
+    PyModule_AddObject(module,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
     
     
     MinCG::setup_tp();
-    if(PyType_Ready(&MinCG::TypeObject)<0) return;
+    if(PyType_Ready(&MinCG::TypeObject)<0) return NULL;
     Py_INCREF(&MinCG::TypeObject);
     PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
     
     
     MinLBFGS::setup_tp();
-    if(PyType_Ready(&MinLBFGS::TypeObject)<0) return;
+    if(PyType_Ready(&MinLBFGS::TypeObject)<0) return NULL;
     Py_INCREF(&MinLBFGS::TypeObject);
     PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
     
+    return module;
+}
+/*--------------------------------------------*/
+PyMethodDef MAPP::DMD::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void MAPP::DMD::setup_methods()
+{
+    ReadCFGDMD::ml_cfg(methods[0]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* MAPP::DMD::init_module(void)
+{
+    setup_methods();
+    PyObject* module=Py_InitModule3("dmd",methods,"MIT Atomistic Parallel Package");
+    if(module==NULL) return NULL;
+    
+    AtomsDMD::setup_tp();
+    if(PyType_Ready(&AtomsDMD::TypeObject)<0) return NULL;
+    Py_INCREF(&AtomsDMD::TypeObject);
+    PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
     
     MinCGDMD::setup_tp();
-    if(PyType_Ready(&MinCGDMD::TypeObject)<0) return;
+    if(PyType_Ready(&MinCGDMD::TypeObject)<0) return NULL;
     Py_INCREF(&MinCGDMD::TypeObject);
-    PyModule_AddObject(module,"min_cg_dmd",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
+    PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
     
-    ExamplePython::setup_tp();
-    if(PyType_Ready(&ExamplePython::TypeObject)<0) return;
-    Py_INCREF(&ExamplePython::TypeObject);
-    PyModule_AddObject(module,"xmpl",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
-                          
+    return module;
 }

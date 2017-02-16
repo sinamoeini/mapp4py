@@ -20,7 +20,7 @@ chng_box(false),
 e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 affine(false),
 max_dx(1.0),
-max_dalpha(0.1),
+max_dalpha(0.01),
 ntally(1000)
 {
 }
@@ -146,7 +146,7 @@ void MinCGDMD::run(int nsteps)
     force_calc();
     type0 S[__dim__][__dim__];
     
-    ThermoDynamics thermo(6,
+    ThermoDynamics thermo(8,
     "PE",ff->nrgy_strss[0],
     "S[0][0]",S[0][0],
     "S[1][1]",S[1][1],
@@ -341,6 +341,7 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     max_a_lcl=MIN(max_a_lcl,fabs(max_dalpha/max_h_alpha_lcl));
 
     MPI_Allreduce(&max_a_lcl,&max_a,1,Vec<type0>::MPI_T,MPI_MIN,world);
+    
 }
 /*--------------------------------------------
  reset to initial position
@@ -411,7 +412,7 @@ PyTypeObject MinCGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp()
 {
-    TypeObject.tp_name="min_cg_dmd";
+    TypeObject.tp_name="min_cg";
     TypeObject.tp_doc="conjugate gradient minimization";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

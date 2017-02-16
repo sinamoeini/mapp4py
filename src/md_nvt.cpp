@@ -410,7 +410,7 @@ PyTypeObject MDNVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MDNVT::setup_tp()
 {
-    TypeObject.tp_name="md_nvt";
+    TypeObject.tp_name="nvt";
     TypeObject.tp_doc="MD of canonical ensemble";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

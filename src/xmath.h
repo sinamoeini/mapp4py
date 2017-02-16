@@ -3020,7 +3020,7 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<const int dim,typename T>
-        void DyadicV_2_MLT(T(&dyad)[dim*(dim+1)/2],T (&MLT)[dim][dim])
+        void DyadicV_2_MLT(T* dyad,T (&MLT)[dim][dim])
         {
             __DyadicV_2_MLT<dim,dim,dim>::func(dyad,&MLT[0][0]);
         }

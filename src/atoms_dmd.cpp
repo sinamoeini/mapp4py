@@ -91,7 +91,7 @@ PyTypeObject AtomsDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp()
 {
-    TypeObject.tp_name="atoms_dmd";
+    TypeObject.tp_name="atoms";
     TypeObject.tp_doc="I will add doc here";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
@@ -110,18 +110,29 @@ void AtomsDMD::setup_tp()
     TypeObject.tp_base=&Atoms::TypeObject;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsDMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsDMD::getset[]={[0 ... 11]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
 {
-    
+    getset_h(getset[0]);
+    getset_kB(getset[1]);
+    getset_H(getset[2]);
+    getset_B(getset[3]);
+    getset_vol(getset[4]);
+    getset_elems(getset[5]);
+    getset_skin(getset[6]);
+    getset_comm_rank(getset[7]);
+    getset_comm_size(getset[8]);
+    getset_comm_coords(getset[9]);
+    getset_comm_dims(getset[10]);
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsDMD::methods[]={[0 ... 3]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsDMD::methods[]={[0 ... 4]={NULL,NULL,0,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
-    ForceFieldEAMDMD::ml_new(methods[0],methods[1],methods[2]);
+    ml_strain(methods[0]);
+    ForceFieldEAMDMD::ml_new(methods[1],methods[2],methods[3]);
     
 }
 

@@ -223,6 +223,8 @@ VecTens<T,N>::~VecTens()
         vecs[i]=NULL;
     });
     if(A_alloc) delete [] A;
+    A_alloc=false;
+    A=NULL;
 }
 /*--------------------------------------------
  

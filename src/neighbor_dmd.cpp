@@ -100,7 +100,7 @@ void NeighborDMD::create_list(bool box_change)
     
     int** tmp_neigh_list;
     int* tmp_neigh_list_sz;
-    Memory::alloc(tmp_neigh_list,c_dim,neighbor_list_size_size+atoms->natms_ph);
+    Memory::alloc(tmp_neigh_list,c_dim,neighbor_list_size_size+(atoms->natms_ph)*c_dim);
     Memory::alloc(tmp_neigh_list_sz,c_dim);
     for(int ic=0;ic<c_dim;ic++) tmp_neigh_list_sz[ic]=0;
     
@@ -137,7 +137,7 @@ void NeighborDMD::create_list(bool box_change)
 
             for(int ic=0;ic<c_dim&& c_i[ic]>0.0;ic++)
                 for(int jc=0;jc<c_dim&& c_j[jc]>0.0;jc++)
-                    if(r-scl*sqrt(alpha_i[ic]*alpha_i[ic]-alpha_j[jc]*alpha_j[jc])<cut_sk[elem_i[ic]][elem_j[jc]])
+                    if(r-scl*sqrt(alpha_i[ic]*alpha_i[ic]+alpha_j[jc]*alpha_j[jc])<cut_sk[elem_i[ic]][elem_j[jc]])
                         tmp_neigh_list[ic][tmp_neigh_list_sz[ic]++]=j*c_dim+jc;
 
         },store);
@@ -156,7 +156,7 @@ void NeighborDMD::create_list(bool box_change)
             
             for(int ic=0;ic<c_dim&& c_i[ic]>0.0;ic++)
                 for(int jc=0;jc<c_dim&& c_j[jc]>0.0;jc++)
-                    if(r-scl*sqrt(alpha[ic]*alpha[ic]-alpha[jc]*alpha[jc])<cut_sk[elem_i[ic]][elem_j[jc]])
+                    if(r-scl*sqrt(alpha[ic]*alpha[ic]+alpha[jc]*alpha[jc])<cut_sk[elem_i[ic]][elem_j[jc]])
                         tmp_neigh_list[ic][tmp_neigh_list_sz[ic]++]=j*c_dim+jc;
 
         },store);

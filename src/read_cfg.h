@@ -40,7 +40,7 @@ namespace MAPP_NS
         ReadCFGMD(MPI_Comm&);
         ~ReadCFGMD();
         class AtomsMD* operator()(const char*);
-        static void ml_cfg_md(PyMethodDef&);
+        static void ml_cfg(PyMethodDef&);
     };
 }
 
@@ -54,7 +54,7 @@ namespace MAPP_NS
         ReadCFGDMD(MPI_Comm&);
         ~ReadCFGDMD();
         class AtomsDMD* operator()(int,const char*);
-        static void ml_cfg_dmd(PyMethodDef&);
+        static void ml_cfg(PyMethodDef&);
     };
 }
 

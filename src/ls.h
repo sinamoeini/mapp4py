@@ -68,7 +68,6 @@ type0& b,type0& c,type0& fa,type0& fb,type0& fc)
     
     if(fb>=fa)
     {
-
         c=b;
         fc=fb;
         int iter=20;

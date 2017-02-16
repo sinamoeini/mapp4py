@@ -245,7 +245,7 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
         atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
         updt->reset();
         updt->list();
-        ff->neighbor->create_list(box_chng);
+        ff->neighbor->create_list(true);
         store_x0();
     }
     else
@@ -264,8 +264,7 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
         atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
         updt->reset();
         updt->list();
-        ff->neighbor->create_list(box_chng);
-        
+        ff->neighbor->create_list(true);
         store_x0();
     }
 }

@@ -22,6 +22,7 @@
 #include "memory.h"
 #include "atoms_md.h"
 #include "ff_styles.h"
+#include "MAPP.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
@@ -98,16 +99,13 @@ void MinLBFGS::run(int nsteps)
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
     
-    Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-    {
-        S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];
-    });
+    
     thermo.init();
+    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
     thermo.print(0);
     
     
-    curr_energy=ff->nrgy_strss[0];
-    type0 prev_energy;
+    type0 e_prev,e_curr=ff->nrgy_strss[0];
         
     type0 alpha_m,gamma;
     type0 inner0,inner1;
@@ -116,7 +114,7 @@ void MinLBFGS::run(int nsteps)
     
     int k=0;
     gamma=1.0;
-    err=LS_S;
+    int err=LS_S;
     
 
     int istep=0;
@@ -136,7 +134,7 @@ void MinLBFGS::run(int nsteps)
         for(int i=k-1;i>-1;i--)
         h+=(-alpha[i]-rho[i]*(y[i]*h))*s[i];
         
-        prev_energy=curr_energy;
+        e_prev=e_curr;
         
         
         f_h=f*h;
@@ -147,14 +145,14 @@ void MinLBFGS::run(int nsteps)
             f_h=f*f;
         }
         if(affine) prepare_affine_h();
-        err=ls->line_min(this,curr_energy,alpha_m,0);
+        err=ls->line_min(this,e_curr,alpha_m,0);
         
         if(err!=LS_S)
             continue;
         
         force_calc();
         
-        if(prev_energy-curr_energy<e_tol)
+        if(e_prev-e_curr<e_tol)
             err=MIN_S_TOLERANCE;
         
         if(istep+1==nsteps)
@@ -162,8 +160,7 @@ void MinLBFGS::run(int nsteps)
         
         if((istep+1)%ntally==0)
         {
-            Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-            {S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];});
+            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
             thermo.print(istep+1);
         }
         
@@ -194,19 +191,17 @@ void MinLBFGS::run(int nsteps)
     
     if(istep%ntally)
     {
-        Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-        {S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];});
+        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
         thermo.print(istep);
     }
 
     thermo.fin();
-    print_error();
-    
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
     fin();
     
+    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
 }
 /*--------------------------------------------
  fin after a run

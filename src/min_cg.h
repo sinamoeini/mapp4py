@@ -10,24 +10,21 @@ namespace MAPP_NS
     {
     private:
     protected:
+        static const char* err_msgs[];
         type0 max_dx;
-        type0 MLT[__dim__][__dim__];
         bool chng_box;
-        int err;
         type0 f_h;
-        type0 curr_energy;
+        bool affine;
+        type0 e_tol;
+        bool H_dof[__dim__][__dim__];
+        int ntally;
         
         void prepare_affine_h();
         type0 calc_ndofs();
         type0 ndofs;
         
         
-        bool affine;
-        type0 e_tol;
         
-        bool H_dof[__dim__][__dim__];
-        
-        int ntally;
         
         VecTens<type0,1> h;
         VecTens<type0,1> x;
@@ -39,7 +36,6 @@ namespace MAPP_NS
         class AtomsMD*& atoms;
         class ForceFieldMD*& ff;
         class DynamicMD* dynamic;
-        void print_error();
     public:
         MinCG(AtomsMD*&,ForceFieldMD*&);
         ~MinCG();

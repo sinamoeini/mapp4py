@@ -236,9 +236,7 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
             updt->update(updt_vecs,nupdt_vecs,true);
 
         if(decide())
-        {
             return;
-        }
         
         atoms->x2s_lcl();
         xchng->full_xchng();

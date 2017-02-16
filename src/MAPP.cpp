@@ -177,5 +177,10 @@ PyObject* MAPP::DMD::init_module(void)
     Py_INCREF(&MinCGDMD::TypeObject);
     PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
     
+    MinLBFGSDMD::setup_tp();
+    if(PyType_Ready(&MinLBFGSDMD::TypeObject)<0) return NULL;
+    Py_INCREF(&MinLBFGSDMD::TypeObject);
+    PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMD::TypeObject));
+    
     return module;
 }

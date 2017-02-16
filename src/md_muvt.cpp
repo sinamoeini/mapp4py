@@ -8,7 +8,7 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-MDMuVT::MDMuVT(AtomsMD*& __atoms,ForceFieldMD*& __ff,
+MDMuVT::MDMuVT(AtomsMD* __atoms,ForceFieldMD* __ff,
 type0 __mu,type0 __T,type0 __dt,elem_type __gas_elem,int __seed):
 MDNVT(__atoms,__ff,__T,__dt),
 seed(__seed),

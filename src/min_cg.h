@@ -1,30 +1,18 @@
 #ifndef __MAPP__min_cg__
 #define __MAPP__min_cg__
+#include "min.h"
 #include "min_vec.h"
-#include "api.h"
 #include "ls.h"
-#include "atoms_md.h"
 namespace MAPP_NS
 {
-    class MinCG
+    class MinCG:public Min
     {
     private:
     protected:
-        static const char* err_msgs[];
-        type0 max_dx;
-        bool chng_box;
-        type0 f_h;
-        bool affine;
-        type0 e_tol;
-        bool H_dof[__dim__][__dim__];
-        int ntally;
         
         void prepare_affine_h();
         type0 calc_ndofs();
         type0 ndofs;
-        
-        
-        
         
         VecTens<type0,1> h;
         VecTens<type0,1> x;
@@ -33,11 +21,11 @@ namespace MAPP_NS
         VecTens<type0,1> f0;
         
         MPI_Comm& world;
-        class AtomsMD*& atoms;
-        class ForceFieldMD*& ff;
+        class AtomsMD* atoms;
+        class ForceFieldMD* ff;
         class DynamicMD* dynamic;
     public:
-        MinCG(AtomsMD*&,ForceFieldMD*&);
+        MinCG(AtomsMD*,ForceFieldMD*);
         ~MinCG();
         virtual void run(int);
         void init();
@@ -73,11 +61,7 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
-        static void getset_e_tol(PyGetSetDef&);
-        static void getset_affine(PyGetSetDef&);
-        static void getset_H_dof(PyGetSetDef&);
-        static void getset_max_dx(PyGetSetDef&);
-        static void getset_ntally(PyGetSetDef&);
+
         
         static void setup_tp();
         

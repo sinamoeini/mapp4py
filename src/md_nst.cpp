@@ -11,7 +11,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-MDNST::MDNST(AtomsMD*& __atoms,ForceFieldMD*& __ff,
+MDNST::MDNST(AtomsMD* __atoms,ForceFieldMD* __ff,
 type0(&__S)[__dim__][__dim__],type0 __T,type0 __dt):
 MDNVT(__atoms,__ff,__T,__dt),
 thermo_baro(__dt/2.0,1000.0*__dt,3,1),

@@ -14,8 +14,8 @@ namespace MAPP_NS
     {
     private:
     protected:
-        class AtomsMD*& atoms;
-        class ForceFieldMD*& ff;
+        class AtomsMD* atoms;
+        class ForceFieldMD* ff;
         MPI_Comm& world;
         
         class DynamicMD* dynamic;
@@ -45,7 +45,7 @@ namespace MAPP_NS
         virtual void change_dt(type0);
         virtual void dof_consistency(){};
     public:
-        MDNVT(class AtomsMD*&,class ForceFieldMD*&,type0,type0);
+        MDNVT(class AtomsMD*,class ForceFieldMD*,type0,type0);
         virtual ~MDNVT();
         void init();
         virtual void run(int);

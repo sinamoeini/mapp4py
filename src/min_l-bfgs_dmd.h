@@ -1,9 +1,9 @@
-#ifndef __MAPP__MinLBFGS__
-#define __MAPP__MinLBFGS__
-#include "min_cg.h"
+#ifndef __MAPP__min_l_bfgs_dmd__
+#define __MAPP__min_l_bfgs_dmd__
+#include "min_cg_dmd.h"
 namespace MAPP_NS
 {
-    class MinLBFGS:public MinCG
+    class MinLBFGSDMD:public MinCGDMD
     {
     private:
     protected:
@@ -11,11 +11,11 @@ namespace MAPP_NS
         type0* rho;
         type0* alpha;
         
-        VecTens<type0,1>* s;
-        VecTens<type0,1>* y;
+        VecTens<type0,2>* s;
+        VecTens<type0,2>* y;
     public:
-        MinLBFGS(AtomsMD*,ForceFieldMD*,int);
-        ~MinLBFGS();
+        MinLBFGSDMD(AtomsDMD*,ForceFieldDMD*,int);
+        ~MinLBFGSDMD();
         void run(int);
         void init();
         void fin();
@@ -23,10 +23,10 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            MinLBFGS* min;
-            AtomsMD::Object* atoms;
+            MinLBFGSDMD* min;
+            AtomsDMD::Object* atoms;
         }Object;
-
+        
         static PyTypeObject TypeObject;
         static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
         static int __init__(PyObject*, PyObject*,PyObject*);
@@ -43,6 +43,4 @@ namespace MAPP_NS
         static void setup_tp();
     };
 }
-
-#endif
-
+#endif 

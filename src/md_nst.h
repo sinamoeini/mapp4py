@@ -53,7 +53,7 @@ namespace MAPP_NS
         void change_dt(type0);
         void dof_consistency();
     public:
-        MDNST(class AtomsMD*&,class ForceFieldMD*&,type0(&)[__dim__][__dim__],type0,type0);
+        MDNST(class AtomsMD*,class ForceFieldMD*,type0(&)[__dim__][__dim__],type0,type0);
         virtual ~MDNST();
         
         void init();

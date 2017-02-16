@@ -1,34 +1,15 @@
-/*--------------------------------------------
- Created by Sina on 07/02/14.
- Copyright (c) 2013 MIT. All rights reserved.
- 
- L-BFGS minimization is written based on
- Numerical Optimization written by Nocedal & 
- Wright, second edition, pages 177-179, 
- Algorithm 7.4 & 7.5 Equation (7.20)
- 
- with respect to notations in Nocedal:
- new_y_i=y_i
- new_rho_i=rho_i
- new_alpha_i=alpha_i
- new_beta=beta
- --------------------------------------------*/
-#include <stdlib.h>
-#include "min_l-bfgs.h"
-#include "ff.h"
-#include "thermo_dynamics.h"
-#include "ls.h"
-#include "dynamic_md.h"
+#include "min_l-bfgs_dmd.h"
 #include "memory.h"
-#include "atoms_md.h"
-#include "ff_styles.h"
+#include "dynamic_dmd.h"
+#include "thermo_dynamics.h"
+#include "ff_dmd.h"
 #include "MAPP.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinLBFGS::MinLBFGS(AtomsMD* __atoms,ForceFieldMD* __ff,int __m):
-MinCG(__atoms,__ff),
+MinLBFGSDMD::MinLBFGSDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,int __m):
+MinCGDMD(__atoms,__ff),
 m(__m),
 s(NULL),
 y(NULL),
@@ -39,26 +20,26 @@ rho(NULL)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinLBFGS::~MinLBFGS()
+MinLBFGSDMD::~MinLBFGSDMD()
 {
 }
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinLBFGS::init()
+void MinLBFGSDMD::init()
 {
-    MinCG::init();
-    
+    MinCGDMD::init();
+    const int c_dim=atoms->c->dim;
     if(m)
     {
-        s=new VecTens<type0,1>[m];
-        y=new VecTens<type0,1>[m];
+        s=new VecTens<type0,2>[m];
+        y=new VecTens<type0,2>[m];
         for(int i=0;i<m;i++)
         {
             s[i].~VecTens();
-            new (s+i) VecTens<type0,1>(atoms,chng_box,__dim__);
+            new (s+i) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
             y[i].~VecTens();
-            new (y+i) VecTens<type0,1>(atoms,chng_box,__dim__);
+            new (y+i) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
         }
         Memory::alloc(rho,m);
         Memory::alloc(alpha,m);
@@ -67,7 +48,7 @@ void MinLBFGS::init()
 /*--------------------------------------------
  fin after a run
  --------------------------------------------*/
-void MinLBFGS::fin()
+void MinLBFGSDMD::fin()
 {
     Memory::dealloc(rho);
     Memory::dealloc(alpha);
@@ -76,19 +57,19 @@ void MinLBFGS::fin()
     delete [] s;
     delete [] y;
     s=y=NULL;
-    MinCG::fin();
+    MinCGDMD::fin();
 }
 /*--------------------------------------------
  run
  --------------------------------------------*/
-void MinLBFGS::run(int nsteps)
+void MinLBFGSDMD::run(int nsteps)
 {
     init();
     
-    if(atoms->x_d)
-        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
-    else
-        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]});
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
+    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
     
     if(atoms->dof)
         dynamic->add_xchng(atoms->dof);
@@ -96,7 +77,9 @@ void MinLBFGS::run(int nsteps)
     for(int i=0;i<m;i++)
     {
         dynamic->add_xchng(s[i].vecs[0]);
+        dynamic->add_xchng(s[i].vecs[1]);
         dynamic->add_xchng(y[i].vecs[0]);
+        dynamic->add_xchng(y[i].vecs[1]);
     }
     
     dynamic->init();
@@ -220,7 +203,7 @@ void MinLBFGS::run(int nsteps)
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinLBFGS::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinLBFGSDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -229,9 +212,9 @@ PyObject* MinLBFGS::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinLBFGS::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<AtomsMD>,int> f("__init__",{"atoms","m"});
+    FuncAPI<OP<AtomsDMD>,int> f("__init__",{"atoms","m"});
     f.noptionals=1;
     f.logics<1>()[0]=VLogics("ge",0);
     f.val<1>()=2;
@@ -239,8 +222,8 @@ int MinLBFGS::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    AtomsMD::Object* atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob);
-    __self->min=new MinLBFGS(atoms->atoms,atoms->ff,f.val<1>());
+    AtomsDMD::Object* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob);
+    __self->min=new MinLBFGSDMD(atoms->atoms,atoms->ff,f.val<1>());
     __self->atoms=atoms;
     Py_INCREF(atoms);
     return 0;
@@ -248,7 +231,7 @@ int MinLBFGS::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinLBFGS::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinLBFGSDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     __self->ob_type=type;
@@ -260,7 +243,7 @@ PyObject* MinLBFGS::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinLBFGS::__dealloc__(PyObject* self)
+void MinLBFGSDMD::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -270,9 +253,9 @@ void MinLBFGS::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinLBFGS::TypeObject ={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinLBFGSDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MinLBFGS::setup_tp()
+void MinLBFGSDMD::setup_tp()
 {
     TypeObject.tp_name="min_lbfgs";
     TypeObject.tp_doc="l-BFGS minimization";
@@ -289,25 +272,25 @@ void MinLBFGS::setup_tp()
     setup_tp_getset();
     TypeObject.tp_getset=getset;
     
-    TypeObject.tp_base=&MinCG::TypeObject;
+    TypeObject.tp_base=&MinCGDMD::TypeObject;
 }
 /*--------------------------------------------*/
-PyMethodDef MinLBFGS::methods[]={[0 ... 0]={NULL}};
+PyMethodDef MinLBFGSDMD::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
-void MinLBFGS::setup_tp_methods()
+void MinLBFGSDMD::setup_tp_methods()
 {
 }
 /*--------------------------------------------*/
-PyGetSetDef MinLBFGS::getset[]={[0 ... 1]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinLBFGSDMD::getset[]={[0 ... 1]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
-void MinLBFGS::setup_tp_getset()
+void MinLBFGSDMD::setup_tp_getset()
 {
     getset_m(getset[0]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinLBFGS::getset_m(PyGetSetDef& getset)
+void MinLBFGSDMD::getset_m(PyGetSetDef& getset)
 {
     getset.name=(char*)"m";
     getset.doc=(char*)"number of vectors to store in memory";
@@ -325,3 +308,5 @@ void MinLBFGS::getset_m(PyGetSetDef& getset)
         return 0;
     };
 }
+
+

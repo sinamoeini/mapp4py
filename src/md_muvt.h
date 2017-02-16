@@ -14,7 +14,7 @@ namespace MAPP_NS
     protected:
         void update_x_d__x(type0);
     public:
-        MDMuVT(class AtomsMD*&,class ForceFieldMD*&,type0,type0,type0,elem_type,int);
+        MDMuVT(class AtomsMD*,class ForceFieldMD*,type0,type0,type0,elem_type,int);
         ~MDMuVT();
         void run(int);
         

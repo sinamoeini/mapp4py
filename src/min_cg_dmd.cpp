@@ -11,17 +11,12 @@ LineSearch* MinCGDMD::ls=NULL;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCGDMD::MinCGDMD(AtomsDMD*& __atoms,ForceFieldDMD*& __ff):
+MinCGDMD::MinCGDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff):
 atoms(__atoms),
 ff(__ff),
 world(__atoms->comm.world),
-H_dof{[0 ... __dim__-1][0 ... __dim__-1]=false},
-chng_box(false),
-e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
-affine(false),
-max_dx(1.0),
 max_dalpha(0.01),
-ntally(1000)
+Min(__atoms,__ff)
 {
 }
 /*--------------------------------------------
@@ -29,26 +24,6 @@ ntally(1000)
  --------------------------------------------*/
 MinCGDMD::~MinCGDMD()
 {
-}
-/*--------------------------------------------
- error messages
- --------------------------------------------*/
-void MinCGDMD::print_error()
-{
-    if(err==LS_F_DOWNHILL)
-        fprintf(MAPP::mapp_out,"line search failed: not downhill direction\n");
-    else if(err==LS_F_GRAD0)
-        fprintf(MAPP::mapp_out,"line search failed: gradient is zero\n");
-    else if(err==LS_MIN_ALPHA)
-        fprintf(MAPP::mapp_out,"line search failed: minimum alpha reached\n");
-    else if(err==MIN_S_TOLERANCE)
-        fprintf(MAPP::mapp_out,"minimization finished: energy tolerance reached\n");
-    else if(err==MIN_F_MAX_ITER)
-        fprintf(MAPP::mapp_out,"minimization finished: maximum iteration reached\n");
-    else if(err==B_F_DOWNHILL)
-        fprintf(MAPP::mapp_out,"bracketing failed: not downhill direction\n");
-    else if(err==B_F_MAX_ALPHA)
-        fprintf(MAPP::mapp_out,"bracketing failed: maximum alpha reached\n");
 }
 /*--------------------------------------------
  
@@ -73,24 +48,12 @@ void MinCGDMD::force_calc()
 void MinCGDMD::prepare_affine_h()
 {
     const int natms=atoms->natms;
-    if(chng_box)
-    {
-        Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
-        type0* xvec=x0.vecs[0]->begin();
-        type0* hvec=h.vecs[0]->begin();
-        for(int iatm=0;iatm<natms;iatm++)
-        {
-            Algebra::V_mul_MLT(xvec,MLT,hvec);
-            xvec+=__dim__;
-            hvec+=__dim__;
-        }
-    }
-    else
-    {
-        type0* hvec=h.vecs[0]->begin();
-        for(int iatm=0;iatm<natms;iatm++,hvec+=__dim__)
-            Algebra::zero<__dim__>(hvec);
-    }
+    type0 MLT[__dim__][__dim__];
+    Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
+    type0* xvec=x0.vecs[0]->begin();
+    type0* hvec=h.vecs[0]->begin();
+    for(int iatm=0;iatm<natms;iatm++,xvec+=__dim__,hvec+=__dim__)
+        Algebra::V_mul_MLT(xvec,MLT,hvec);
 }
 /*--------------------------------------------
  
@@ -146,7 +109,7 @@ void MinCGDMD::run(int nsteps)
     force_calc();
     type0 S[__dim__][__dim__];
     
-    ThermoDynamics thermo(8,
+    ThermoDynamics thermo(6,
     "PE",ff->nrgy_strss[0],
     "S[0][0]",S[0][0],
     "S[1][1]",S[1][1],
@@ -155,20 +118,15 @@ void MinCGDMD::run(int nsteps)
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
     
-    Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-    {
-        S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];
-    });
     thermo.init();
+    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
     thermo.print(0);
     
     
-    curr_energy=ff->nrgy_strss[0];
-    type0 prev_energy;
-    
+    type0 e_prev,e_curr=ff->nrgy_strss[0];
     type0 f0_f0,f_f,f_f0;
     type0 ratio,alpha;
-    err=LS_S;
+    int err=nsteps==0? MIN_F_MAX_ITER:LS_S;
     h=f;
     f0_f0=f*f;
     int istep=0;
@@ -183,7 +141,7 @@ void MinCGDMD::run(int nsteps)
         x0=x;
         f0=f;
         
-        prev_energy=curr_energy;
+        e_prev=e_curr;
         
         
         f_h=f*h;
@@ -193,14 +151,14 @@ void MinCGDMD::run(int nsteps)
             f_h=f0_f0;
         }
         if(affine) prepare_affine_h();
-        err=ls->line_min(this,curr_energy,alpha,1);
+        err=ls->line_min(this,e_curr,alpha,1);
         
         if(err!=LS_S)
             continue;
         
         force_calc();
         
-        if(prev_energy-curr_energy<e_tol)
+        if(e_prev-e_curr<e_tol)
             err=MIN_S_TOLERANCE;
         
         if(istep+1==nsteps)
@@ -208,8 +166,7 @@ void MinCGDMD::run(int nsteps)
         
         if((istep+1)%ntally==0)
         {
-            Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-            {S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];});
+            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
             thermo.print(istep+1);
         }
         
@@ -226,19 +183,18 @@ void MinCGDMD::run(int nsteps)
     
     if(istep%ntally)
     {
-        Algebra::DoLT<__dim__>::func([this,&S](const int i,const int j)
-        {S[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2];});
+        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
         thermo.print(istep);
     }
 
     thermo.fin();
-    print_error();
     
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
     fin();
     
+    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
     /*
     type0* xx=atoms->x->begin();
     type0* aa=atoms->alpha->begin();
@@ -442,96 +398,6 @@ void MinCGDMD::setup_tp_getset()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::getset_affine(PyGetSetDef& getset)
-{
-    getset.name=(char*)"affine";
-    getset.doc=(char*)"set to true if transformation is affine";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->min->affine,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<bool> affine("affine");
-        int ichk=affine.set(op);
-        if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->affine=affine.val;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::getset_H_dof(PyGetSetDef& getset)
-{
-    getset.name=(char*)"H_dof";
-    getset.doc=(char*)"unitcell degrees of freedom";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<symm<bool[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->min->H_dof,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<symm<bool[__dim__][__dim__]>> H_dof("H_dof");
-        int ichk=H_dof.set(op);
-        if(ichk==-1) return -1;
-        
-        bool (&__H_dof)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->min->H_dof;
-        bool chng_box=false;
-        Algebra::DoLT<__dim__>::func([&H_dof,&__H_dof,&chng_box](int i,int j)
-        {
-            __H_dof[i][j]=__H_dof[j][i]=H_dof.val[i][j];
-            if(__H_dof[i][j]) chng_box=true;
-        });
-        reinterpret_cast<Object*>(self)->min->chng_box=chng_box;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::getset_e_tol(PyGetSetDef& getset)
-{
-    getset.name=(char*)"e_tol";
-    getset.doc=(char*)"energy tolerance criterion for stopping minimization";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->e_tol,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<type0> e_tol("e_tol");
-        e_tol.logics[0]=VLogics("ge",0.0);
-        int ichk=e_tol.set(op);
-        if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->e_tol=e_tol.val;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::getset_max_dx(PyGetSetDef& getset)
-{
-    getset.name=(char*)"max_dx";
-    getset.doc=(char*)"maximum displacement";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<type0> max_dx("max_dx");
-        max_dx.logics[0]=VLogics("gt",0.0);
-        int ichk=max_dx.set(op);
-        if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->max_dx=max_dx.val;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dalpha";
@@ -547,27 +413,6 @@ void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
         int ichk=max_dalpha.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->min->max_dalpha=max_dalpha.val;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::getset_ntally(PyGetSetDef& getset)
-{
-    getset.name=(char*)"ntally";
-    getset.doc=(char*)"tally thermodynamic quantities every ntally steps";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<int>::build(reinterpret_cast<Object*>(self)->min->ntally,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<int> ntally("ntally");
-        ntally.logics[0]=VLogics("gt",0);
-        int ichk=ntally.set(op);
-        if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->ntally=ntally.val;
         return 0;
     };
 }

@@ -1,34 +1,19 @@
 #ifndef __MAPP__min_cg_dmd__
 #define __MAPP__min_cg_dmd__
+#include "min.h"
 #include "min_vec.h"
-#include "api.h"
 #include "ls.h"
-#include "atoms_dmd.h"
 namespace MAPP_NS
 {
-    class MinCGDMD
+    class MinCGDMD:public Min
     {
     private:
     protected:
-        type0 max_dx;
         type0 max_dalpha;
-        type0 MLT[__dim__][__dim__];
-        bool chng_box;
-        int err;
-        type0 f_h;
-        type0 curr_energy;
         
         void prepare_affine_h();
         type0 calc_ndofs();
         type0 ndofs;
-        
-        
-        bool affine;
-        type0 e_tol;
-        
-        bool H_dof[__dim__][__dim__];
-        
-        int ntally;
         
         VecTens<type0,2> h;
         VecTens<type0,2> x;
@@ -37,14 +22,14 @@ namespace MAPP_NS
         VecTens<type0,2> f0;
         
         MPI_Comm& world;
-        class AtomsDMD*& atoms;
-        class ForceFieldDMD*& ff;
+        class AtomsDMD* atoms;
+        class ForceFieldDMD* ff;
         class DynamicDMD* dynamic;
         void print_error();
         
         vec* uvecs[2];
     public:
-        MinCGDMD(AtomsDMD*&,ForceFieldDMD*&);
+        MinCGDMD(AtomsDMD*,ForceFieldDMD*);
         ~MinCGDMD();
         virtual void run(int);
         void init();
@@ -80,12 +65,8 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
-        static void getset_e_tol(PyGetSetDef&);
-        static void getset_affine(PyGetSetDef&);
-        static void getset_H_dof(PyGetSetDef&);
-        static void getset_max_dx(PyGetSetDef&);
         static void getset_max_dalpha(PyGetSetDef&);
-        static void getset_ntally(PyGetSetDef&);
+        
         
         static void setup_tp();
         

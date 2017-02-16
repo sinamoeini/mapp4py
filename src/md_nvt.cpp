@@ -11,7 +11,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-MDNVT::MDNVT(AtomsMD*& __atoms,ForceFieldMD*& __ff,
+MDNVT::MDNVT(AtomsMD* __atoms,ForceFieldMD* __ff,
 type0 __T,type0 __dt):
 dynamic(NULL),
 atoms(__atoms),

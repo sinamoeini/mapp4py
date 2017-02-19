@@ -90,14 +90,18 @@ void MAPP::init_module(void)
     Py_INCREF(&MAPP_MPI::TypeObject);
     PyModule_AddObject(module,"mpi",reinterpret_cast<PyObject*>(&MAPP_MPI::TypeObject));
     
-    
     ExamplePython::setup_tp();
     if(PyType_Ready(&ExamplePython::TypeObject)<0) return;
     Py_INCREF(&ExamplePython::TypeObject);
     PyModule_AddObject(module,"xmpl",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
     
-    PyModule_AddObject(module,"md",MAPP::MD::init_module());
-    PyModule_AddObject(module,"dmd",MAPP::DMD::init_module());
+    PyObject* md=MAPP::MD::init_module();
+    if(md==NULL) return;
+    PyModule_AddObject(module,"md",md);
+    
+    PyObject* dmd=MAPP::DMD::init_module();
+    if(dmd==NULL) return;
+    PyModule_AddObject(module,"dmd",dmd);
 }
 /*--------------------------------------------*/
 PyMethodDef MAPP::MD::methods[]={[0 ... 1]={NULL}};
@@ -112,7 +116,7 @@ void MAPP::MD::setup_methods()
 PyObject* MAPP::MD::init_module(void)
 {
     setup_methods();
-    PyObject* module=Py_InitModule3("md",methods,"MIT Atomistic Parallel Package");
+    PyObject* module=Py_InitModule3("md",methods,"Molecular Dynamics (MD) module");
     if(module==NULL) return NULL;
     
     AtomsMD::setup_tp();
@@ -164,7 +168,7 @@ void MAPP::DMD::setup_methods()
 PyObject* MAPP::DMD::init_module(void)
 {
     setup_methods();
-    PyObject* module=Py_InitModule3("dmd",methods,"MIT Atomistic Parallel Package");
+    PyObject* module=Py_InitModule3("dmd",methods,"Diffusive Molecular Dynamics (DMD) module");
     if(module==NULL) return NULL;
     
     AtomsDMD::setup_tp();

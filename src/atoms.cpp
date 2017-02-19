@@ -45,7 +45,8 @@ vol(0.0),
 H{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
 B{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
 depth_inv{[0 ... __dim__-1]=0.0},
-dof(NULL)
+dof(NULL),
+step(0)
 {
     x=new Vec<type0>(this,__dim__);
     id= new Vec<unsigned int>(this,1);
@@ -71,7 +72,8 @@ kB(1.0),
 H{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
 B{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
 depth_inv{[0 ... __dim__-1]=0.0},
-dof(NULL)
+dof(NULL),
+step(0)
 {
     x=new Vec<type0>(this,__dim__);
     id=new Vec<unsigned int>(this,1);
@@ -329,21 +331,42 @@ void Atoms::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef Atoms::getset[]={[0 ... 11]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef Atoms::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void Atoms::setup_tp_getset()
 {
-    getset_h(getset[0]);
-    getset_kB(getset[1]);
-    getset_H(getset[2]);
-    getset_B(getset[3]);
-    getset_vol(getset[4]);
-    getset_elems(getset[5]);
-    getset_skin(getset[6]);
-    getset_comm_rank(getset[7]);
-    getset_comm_size(getset[8]);
-    getset_comm_coords(getset[9]);
-    getset_comm_dims(getset[10]);
+    getset_step(getset[0]);
+    getset_h(getset[1]);
+    getset_kB(getset[2]);
+    getset_H(getset[3]);
+    getset_B(getset[4]);
+    getset_vol(getset[5]);
+    getset_elems(getset[6]);
+    getset_skin(getset[7]);
+    getset_comm_rank(getset[8]);
+    getset_comm_size(getset[9]);
+    getset_comm_coords(getset[10]);
+    getset_comm_dims(getset[11]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Atoms::getset_step(PyGetSetDef& getset)
+{
+    getset.name=(char*)"step";
+    getset.doc=(char*)"step number";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<int>::build(reinterpret_cast<Object*>(self)->atoms->step,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        VarAPI<int> step("step");
+        step.logics[0]=VLogics("ge",0);
+        if(step.set(val)==-1) return -1;
+        reinterpret_cast<Object*>(self)->atoms->step=step.val;
+        return 0;
+    };
 }
 /*--------------------------------------------
  

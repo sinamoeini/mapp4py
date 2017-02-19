@@ -405,6 +405,7 @@ namespace MAPP_NS
         int natms;
         int natms_ph;
         int tot_natms;
+        int step;
         type0 H[__dim__][__dim__];
         type0 B[__dim__][__dim__];
         type0 depth_inv[__dim__];
@@ -467,6 +468,7 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
+        static void getset_step(PyGetSetDef&);
         static void getset_h(PyGetSetDef&);
         static void getset_kB(PyGetSetDef&);
         static void getset_H(PyGetSetDef&);

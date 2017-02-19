@@ -130,21 +130,22 @@ void AtomsMD::setup_tp()
     //TypeObject.tp_base=&Atoms::TypeObject;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsMD::getset[]={[0 ... 11]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsMD::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_getset()
 {
-    getset_h(getset[0]);
-    getset_kB(getset[1]);
-    getset_H(getset[2]);
-    getset_B(getset[3]);
-    getset_vol(getset[4]);
-    getset_elems(getset[5]);
-    getset_skin(getset[6]);
-    getset_comm_rank(getset[7]);
-    getset_comm_size(getset[8]);
-    getset_comm_coords(getset[9]);
-    getset_comm_dims(getset[10]);
+    getset_step(getset[0]);
+    getset_h(getset[1]);
+    getset_kB(getset[2]);
+    getset_H(getset[3]);
+    getset_B(getset[4]);
+    getset_vol(getset[5]);
+    getset_elems(getset[6]);
+    getset_skin(getset[7]);
+    getset_comm_rank(getset[8]);
+    getset_comm_size(getset[9]);
+    getset_comm_coords(getset[10]);
+    getset_comm_dims(getset[11]);
 }
 /*--------------------------------------------*/
 PyMethodDef AtomsMD::methods[]={[0 ... 7]={NULL,NULL,0,NULL}};

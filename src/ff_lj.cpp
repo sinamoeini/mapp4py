@@ -72,8 +72,32 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="ff_lj";
-    tp_methods.ml_doc="I will add doc here";
+    tp_methods.ml_doc=R"---(
+Lennard-Jones potential
+
+.. math::
+
+    \frac{1}{2}\sum_{i}\sum_{j\neq i}
+    \left\{\begin{array}{ll}
+    U=4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<{r_c}_{\alpha\beta}\\
+        0 &r_{ij}>{r_c}_{\alpha\beta}
+    \end{array}\right.
     
+Parameters
+----------
+eps : array_like
+    :math:`\epsilon`
+        
+sigma : array_like
+    :math:`\sigma`
+        
+r_c : array_like
+    :math:`r_c`
+        
+shift : bool
+    shift the tail if set to True
+)---";
+        
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {

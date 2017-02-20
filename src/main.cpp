@@ -1,7 +1,7 @@
+#include <Python.h>
 #include <stdio.h>
 #include <iostream>
 #include <mpi.h>
-#include <Python/Python.h>
 #include "MAPP.h"
 
 int main(int nargs,char* args[])

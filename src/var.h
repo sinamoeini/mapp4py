@@ -1,13 +1,13 @@
 #ifndef __MAPP__var__
 #define __MAPP__var__
-#include <Python/Python.h>
+#include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
 #include <numpy/arrayobject.h>
 #include <mpi.h>
 #include "print.h"
-
+#include "global.h"
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -202,21 +202,23 @@ template<class T>
 py_var<T>::py_var(size_t*,void*& data):
 val(type_attr<T>::zero)
 {
-    if(std::is_same<T,bool>::value)
-    {
-        unsigned char* d=static_cast<unsigned char*>(data);
-        if(*d==NPY_TRUE)
-            val=true;
-        else
-            val=false;
-        data=d+1;
-    }
+    T* d=(T*)data;
+    val=*d;
+    data=d+1;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+inline py_var<bool>::py_var(size_t*,void*& data):
+val(type_attr<bool>::zero)
+{
+    unsigned char* d=static_cast<unsigned char*>(data);
+    if(*d==NPY_TRUE)
+        val=true;
     else
-    {
-        T* d=(T*)data;
-        val=*d;
-        data=d+1;
-    }
+        val=false;
+    data=d+1;
 }
 /*--------------------------------------------
  
@@ -1063,7 +1065,8 @@ constexpr int var<T>::get_rank()
 template <class T>
 size_t var<T>::base_hash_code()
 {
-    return typeid(T_BASE).hash_code();
+    //return typeid(T_BASE).hash_code();
+    return 0;
 }
 /*--------------------------------------------
  
@@ -1194,7 +1197,7 @@ ptr(&val),
 Var(get_rank(),base_hash_code())
 {
     size=1;
-    name=std::to_string(val);
+    name=TOSTRING(val);
 }
 /*--------------------------------------------
  copy constructor:
@@ -1567,7 +1570,8 @@ constexpr int var<T[N]>::get_rank()
 template <class T,size_t N>
 size_t var<T[N]>::base_hash_code()
 {
-    return typeid(T_BASE).hash_code();
+    //return typeid(T_BASE).hash_code();
+    return 0;
 }
 /*--------------------------------------------
  
@@ -1622,7 +1626,7 @@ template <class T,size_t N>
 void var<T[N]>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var<size_t>** sz)
 {
     if(N!=pv.size)
-        throw "expected size "+std::to_string(N)+" for argument '"+name+"'";
+        throw "expected size "+TOSTRING(N)+" for argument '"+name+"'";
 
     if(sz)  sz+=1;
     
@@ -1635,7 +1639,7 @@ void var<T[N]>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,v
         
         catch(std::string& err_msg)
         {
-            throw err_msg+"["+std::to_string(i)+"]";
+            throw err_msg+"["+TOSTRING(i)+"]";
         }
     }
 }
@@ -1646,9 +1650,9 @@ template<class T,size_t N>
 std::string var<T[N]>::type_name(var<size_t>** sz)
 {
     if(sz)
-        return std::string("[")+std::to_string(N)
+        return std::string("[")+TOSTRING(N)
         +std::string("]")+var<T>::type_name(sz+1);
-    return std::string("[")+std::to_string(N)
+    return std::string("[")+TOSTRING(N)
     +std::string("]")+var<T>::type_name(sz);
 }
 /*--------------------------------------------
@@ -1713,7 +1717,7 @@ Var(get_rank(),base_hash_code(),std::move(name_))
     for(size_t i=0;i<size;i++)
     {
         (vars+i)->~var<T>();
-        new (vars+i) var<T>(v[i],name+"["+std::to_string(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>(v[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
     }
 }
 /*--------------------------------------------
@@ -1831,7 +1835,7 @@ var<T[N]>& var<T[N]>::operator=(const T (&v)[N])
     for(size_t i=0;i<this->size;i++)
     {
         (this->vars+i)->~var<T>();
-        new (this->vars+i) var<T>(v[i],this->name+"["+std::to_string(i)+"]");
+        new (this->vars+i) var<T>(v[i],this->name+"["+TOSTRING(i)+"]");
     }
     
     return *this;
@@ -1925,9 +1929,9 @@ void var<T[N]>::set(py_var<T_EQUIV>& pv)
     allocate(data_ptr,*ptr,sz);
     for(size_t i=0;i<size;i++)
     {
-        //vars[i]=std::move(var<T>((*ptr)[i],name+"["+std::to_string(i)+"]",pv[i],data_ptr+1));
+        //vars[i]=std::move(var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1));
         (vars+i)->~var<T>();
-        new (vars+i) var<T>((*ptr)[i],name+"["+std::to_string(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
     }
 }
 /*--------------------------------------------
@@ -2023,7 +2027,8 @@ constexpr int var<T*>::get_rank()
 template <class T>
 size_t var<T*>::base_hash_code()
 {
-    return typeid(T_BASE).hash_code();
+    //return typeid(T_BASE).hash_code();
+    return 0;
 }
 /*--------------------------------------------
  
@@ -2087,7 +2092,7 @@ void var<T*>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var
     {
         if(*sz && **sz!=pv.size)
         {
-            throw "expected size "+std::to_string(*((*sz)->ptr))+" ("+(*sz)->name+") for argument '"+name+"'";
+            throw "expected size "+TOSTRING(*((*sz)->ptr))+" ("+(*sz)->name+") for argument '"+name+"'";
         }
         sz+=1;
     }
@@ -2101,7 +2106,7 @@ void var<T*>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var
         
         catch(std::string& err_msg)
         {
-            throw err_msg+"["+std::to_string(i)+"]";
+            throw err_msg+"["+TOSTRING(i)+"]";
         }
     }
 }
@@ -2182,9 +2187,9 @@ ptr(&v)
     vars=new var<T>[size];
     for(size_t i=0;i<size;i++)
     {
-        //vars[i]=std::move(var<T>((*ptr)[i],name+"["+std::to_string(i)+"]",pv[i],data_ptr+1));
+        //vars[i]=std::move(var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1));
         (vars+i)->~var<T>();
-        new (vars+i) var<T>((*ptr)[i],name+"["+std::to_string(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
     }
     *data_ptr=v+size;
 }
@@ -2314,7 +2319,7 @@ var<T*>& var<T*>::operator=(const T (&v_arr)[N])
     for(size_t i=0;i<this->size;i++)
     {
         (this->vars+i)->~var<T>();
-        new (this->vars+i) var<T>(v[i],this->name+"["+std::to_string(i)+"]");
+        new (this->vars+i) var<T>(v[i],this->name+"["+TOSTRING(i)+"]");
     }
     return *this;
 }
@@ -2417,7 +2422,7 @@ void var<T*>::set(py_var<T_EQUIV>& pv)
     for(size_t i=0;i<size;i++)
     {
         (vars+i)->~var<T>();
-        new (vars+i) var<T>((*ptr)[i],name+"["+std::to_string(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
     }
     
 }

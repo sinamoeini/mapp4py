@@ -106,11 +106,11 @@ shift : bool
         
         FuncAPI<symm<type0**>,symm<type0**>,symm<type0**>,bool> f("ff_lj",{"eps","sigma","r_c","shift"});
         f.noptionals=1;
-        f.var<0>().dynamic_size(nelems,nelems);
+        f.v<0>().dynamic_size(nelems,nelems);
         f.logics<0>()[0]=VLogics("gt",0.0);
-        f.var<1>().dynamic_size(nelems,nelems);
+        f.v<1>().dynamic_size(nelems,nelems);
         f.logics<1>()[0]=VLogics("gt",0.0);
-        f.var<2>().dynamic_size(nelems,nelems);
+        f.v<2>().dynamic_size(nelems,nelems);
         f.logics<2>()[0]=VLogics("gt",0.0);
         f.val<3>()=false;
         

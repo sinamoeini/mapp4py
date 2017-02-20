@@ -1,6 +1,6 @@
+#include "min_cg_dmd.h"
 #include <stdlib.h>
 #include "MAPP.h"
-#include "min_cg_dmd.h"
 #include "ff_dmd.h"
 #include "thermo_dynamics.h"
 #include "dynamic_dmd.h"

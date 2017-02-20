@@ -374,7 +374,8 @@ constexpr int var<OB<O,T>>::get_rank()
 template<class O,PyTypeObject& T>
 size_t var<OB<O,T>>::base_hash_code()
 {
-    return typeid(O).hash_code();
+    //return typeid(O).hash_code();
+    return 0;
 }
 /*--------------------------------------------
  

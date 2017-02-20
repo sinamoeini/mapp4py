@@ -2,9 +2,9 @@
  Created by Sina on 07/23/13.
  Copyright (c) 2013 MIT. All rights reserved.
  --------------------------------------------*/
+#include "comm.h"
 #include "read.h"
 #include "print.h"
-#include "comm.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
@@ -67,14 +67,12 @@ world(__world),
 rank(Communication::get_rank(__world)),
 file(NULL),
 finished(false),
-line_no(0)
+line_no(0),
+fst(Communication::get_rank(__world)==0 ? std::ifstream(__file,std::ios_base::in): std::ifstream())
 {
     bool file_xst=true;
     if(!rank)
-    {
-        fst=std::ifstream(__file,std::ios_base::in);
         if(fst.bad()) file_xst=false;
-    }
     MPI_Bcast(&file_xst,1,MPI_BYTE,0,world);
     
     if(!file_xst)

@@ -74,7 +74,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         
         FuncAPI<std::string*> f("ff_eam_funcfl",{"funcfl_files"});
         f.noptionals=1;
-        f.var<0>().dynamic_size(nelems);
+        f.v<0>().dynamic_size(nelems);
         if(f(args,kwds)) return NULL;
         
         size_t nr,nrho;

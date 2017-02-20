@@ -19,7 +19,7 @@ const char* Min::err_msgs[]=
 Min::Min(Atoms* __atoms,ForceField* __ff):
 atoms(__atoms),
 ff(__ff),
-H_dof{[0 ... __dim__-1][0 ... __dim__-1]=false},
+H_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
 chng_box(false),
 e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 affine(false),

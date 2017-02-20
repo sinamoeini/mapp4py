@@ -5,7 +5,6 @@
 #include "elements.h"
 #include "memory.h"
 #include <limits>
-#include <Python/Python.h>
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor

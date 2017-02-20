@@ -16,7 +16,11 @@ template<> MPI_Datatype Vec<unsigned long long>::MPI_T=MPI_UNSIGNED_LONG_LONG;
 template<> MPI_Datatype Vec<float>::MPI_T=MPI_FLOAT;
 template<> MPI_Datatype Vec<double>::MPI_T=MPI_DOUBLE;
 template<> MPI_Datatype Vec<long double>::MPI_T=MPI_LONG_DOUBLE;
+#ifdef MPI_CXX_BOOL
 template<> MPI_Datatype Vec<bool>::MPI_T=MPI_CXX_BOOL;
+#else
+template<> MPI_Datatype Vec<bool>::MPI_T=MPI_BYTE;
+#endif
 /*---------------------------------------------------------------------------
       ___   _____   _____       ___  ___   _____
      /   | |_   _| /  _  \     /   |/   | /  ___/
@@ -42,8 +46,8 @@ elements(new Elements()),
 h(1.0),
 kB(1.0),
 vol(0.0),
-H{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-B{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
+H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 depth_inv{[0 ... __dim__-1]=0.0},
 dof(NULL),
 step(0)
@@ -69,8 +73,8 @@ s_lo(comm.s_lo),
 elements(new Elements()),
 h(1.0),
 kB(1.0),
-H{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-B{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
+H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 depth_inv{[0 ... __dim__-1]=0.0},
 dof(NULL),
 step(0)
@@ -679,8 +683,8 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         
         Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
         
-        type0 H[__dim__][__dim__]{[0 ... __dim__-1][0 ... __dim__-1]=0.0};
-        type0 B[__dim__][__dim__]{[0 ... __dim__-1][0 ... __dim__-1]=0.0};
+        type0 H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 B[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
         Algebra::DoLT<__dim__>::func([&H,&B,&__self](int i,int j)
         {
             H[i][j]=__self->atoms->H[i][j];
@@ -690,8 +694,8 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         type0 (&strain)[__dim__][__dim__]=f.val<0>();
         
         Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
-        type0 F[__dim__][__dim__]{[0 ... __dim__-1][0 ... __dim__-1]=0.0};
-        type0 __H[__dim__][__dim__]{[0 ... __dim__-1][0 ... __dim__-1]=0.0};
+        type0 F[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 __H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
         Algebra::MLT_mul_MSQ(H,strain,__H);
         
         Algebra::MSQ_2_MLT(__H,H);

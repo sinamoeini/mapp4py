@@ -2,8 +2,8 @@
  Created by Sina on 06/05/13.
  Copyright (c) 2013 MIT. All rights reserved.
  --------------------------------------------*/
-#include "pgcmc.h"
 #include "atoms_md.h"
+#include "pgcmc.h"
 #include "memory.h"
 #include "random.h"
 #include "elements.h"

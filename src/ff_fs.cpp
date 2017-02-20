@@ -83,16 +83,16 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
         FuncAPI<type0*,type0**,type0**,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>>
         f("ff_lj",{"A","t1","t2","k1","k2","k3","r_c_phi","r_c_rho"});
 
-        f.var<0>().dynamic_size(nelems);
+        f.v<0>().dynamic_size(nelems);
         f.logics<0>()[0]=VLogics("gt",0.0);
-        f.var<1>().dynamic_size(nelems,nelems);
-        f.var<2>().dynamic_size(nelems,nelems);
-        f.var<3>().dynamic_size(nelems,nelems);
-        f.var<4>().dynamic_size(nelems,nelems);
-        f.var<5>().dynamic_size(nelems,nelems);
-        f.var<6>().dynamic_size(nelems,nelems);
+        f.v<1>().dynamic_size(nelems,nelems);
+        f.v<2>().dynamic_size(nelems,nelems);
+        f.v<3>().dynamic_size(nelems,nelems);
+        f.v<4>().dynamic_size(nelems,nelems);
+        f.v<5>().dynamic_size(nelems,nelems);
+        f.v<6>().dynamic_size(nelems,nelems);
         f.logics<6>()[0]=VLogics("gt",0.0);
-        f.var<7>().dynamic_size(nelems,nelems);
+        f.v<7>().dynamic_size(nelems,nelems);
         f.logics<7>()[0]=VLogics("gt",0.0);
         
         if(f(args,kwds)) return NULL;

@@ -2,10 +2,10 @@
  Created by Sina on 06/05/13.
  Copyright (c) 2013 MIT. All rights reserved.
  --------------------------------------------*/
+#include "elements.h"
 #include "sgcmc.h"
 #include "memory.h"
 #include "random.h"
-#include "elements.h"
 #include "neighbor_md.h"
 #include "ff_md.h"
 #include "xmath.h"

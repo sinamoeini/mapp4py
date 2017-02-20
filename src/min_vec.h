@@ -204,12 +204,11 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 template<typename T,const int N>
 VecTens<T,N>::VecTens():
-vecs{[0 ... N-1]=NULL},
-vecs_alloc{[0 ... N-1]=false},
 A(NULL),
 A_alloc(false)
 {
-    
+    Algebra::Do<N>::func([this](int i)
+    {vecs[i]=NULL; vecs_alloc[i]=false;});
 }
 /*--------------------------------------------
  

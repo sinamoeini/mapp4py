@@ -1,6 +1,6 @@
+#include "min_cg.h"
 #include <stdlib.h>
 #include "MAPP.h"
-#include "min_cg.h"
 #include "ff.h"
 #include "ff_md.h"
 #include "thermo_dynamics.h"

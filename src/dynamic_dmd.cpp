@@ -1,5 +1,5 @@
-#include "dynamic_dmd.h"
 #include "comm.h"
+#include "dynamic_dmd.h"
 #include "atoms_dmd.h"
 #include "xmath.h"
 #include "timer.h"

@@ -1,6 +1,5 @@
 #ifndef __MAPP__logics__
 #define __MAPP__logics__
-
 #include "var_op.h"
 enum {VERB,AUX_VERB};
 

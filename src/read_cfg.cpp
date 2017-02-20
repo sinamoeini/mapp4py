@@ -2,9 +2,9 @@
  Created by Sina on 07/23/13.
  Copyright (c) 2013 MIT. All rights reserved.
  --------------------------------------------*/
+#include "elements.h"
 #include <stdlib.h>
 #include "read_cfg.h"
-#include "elements.h"
 #include "xmath.h"
 #include "memory.h"
 #include "atoms_md.h"

@@ -1,7 +1,7 @@
 #ifndef __MAPP__atoms__
 #define __MAPP__atoms__
-#include <typeinfo>
 #include "api.h"
+#include <typeinfo>
 #include <cmath>
 #include "comm.h"
 #include "macros.h"

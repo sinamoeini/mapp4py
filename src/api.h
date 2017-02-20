@@ -420,7 +420,7 @@ namespace MAPP_NS
         {return FuncElement<I, FuncTuple<T,Ts...> >::var_api(func);}
         
         template <size_t I>
-        var<typename FuncElement<I, FuncTuple<T,Ts...> >::type>& var()
+        var<typename FuncElement<I, FuncTuple<T,Ts...> >::type>& v()
         {return get<I>().__var__;}
         
         template <size_t I>

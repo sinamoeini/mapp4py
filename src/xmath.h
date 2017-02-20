@@ -521,13 +521,13 @@ namespace MAPP_NS
         
         template<>
         class precision<float>
-        {public: static const float val(){return precision_f;};};
+        {public: static float val(){return precision_f;};};
         template<>
         class precision<double>
-        {public: static const float val(){return precision_d;};};
+        {public: static float val(){return precision_d;};};
         template<>
         class precision<long double>
-        {public: static const long double val(){return precision_ld;};};
+        {public: static long double val(){return precision_ld;};};
         
         
         template<const int dim>

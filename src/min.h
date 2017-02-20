@@ -1,7 +1,7 @@
 #ifndef __MAPP__min__
 #define __MAPP__min__
-#include "global.h"
 #include "api.h"
+#include "global.h"
 #include "atoms_styles.h"
 namespace MAPP_NS
 {

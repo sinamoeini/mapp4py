@@ -16,15 +16,15 @@ type0(&__S)[__dim__][__dim__],type0 __T,type0 __dt):
 MDNVT(__atoms,__ff,__T,__dt),
 thermo_baro(__dt/2.0,1000.0*__dt,3,1),
 nreset(0),
-MLT0{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-MLT1{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-MLT2{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-S{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-S_dev{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-B_ref{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-t_relax_S{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-V_H{[0 ... __dim__-1][0 ... __dim__-1]=0.0},
-S_dof{[0 ... __dim__-1][0 ... __dim__-1]=false}
+MLT0{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+MLT1{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+MLT2{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+S{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+S_dev{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+B_ref{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+t_relax_S{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+V_H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}}
 {
     Algebra::DoLT<__dim__>::func([this,&__S,&__dt]
     (int i,int j)
@@ -199,8 +199,8 @@ void MDNST::dof_consistency()
     for(int i=0;i<__dim__;i++)
         for(int j=i;j<__dim__;j++)
             if(S_dof[i][j] && __dof[i])
-                throw "cannot impose stress component ["+std::to_string(i)+"]["+std::to_string(j)
-                +"] while any of the atoms do not have degree freedom in "+std::to_string(i)
+                throw "cannot impose stress component ["+TOSTRING(i)+"]["+TOSTRING(j)
+                +"] while any of the atoms do not have degree freedom in "+TOSTRING(i)
                 +" direction";
     
 }

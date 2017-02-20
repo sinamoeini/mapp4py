@@ -1,5 +1,5 @@
-#include "exchange.h"
 #include "atoms.h"
+#include "exchange.h"
 #include "comm.h"
 #include "xmath.h"
 /*-------temp_remove-------

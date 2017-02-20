@@ -107,7 +107,7 @@ void AtomsDMD::setup_tp()
     setup_tp_methods();
     TypeObject.tp_methods=methods;
     
-    TypeObject.tp_base=&Atoms::TypeObject;
+    //TypeObject.tp_base=&Atoms::TypeObject;
 }
 /*--------------------------------------------*/
 PyGetSetDef AtomsDMD::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};

@@ -1,6 +1,6 @@
 #include "example.h"
 #include <iostream>
-#include <Python/structmember.h>
+#include <structmember.h>
 using namespace MAPP_NS;
 
 /*--------------------------------------------*/

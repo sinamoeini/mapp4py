@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include "ff_eam_dmd.h"
+#include <stdlib.h>
 #include "neighbor_dmd.h"
 #include "elements.h"
 #include "memory.h"
@@ -171,7 +171,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         
         FuncAPI<std::string*> f("ff_eam_funcfl",{"funcfl_files"});
         f.noptionals=1;
-        f.var<0>().dynamic_size(nelems);
+        f.v<0>().dynamic_size(nelems);
         if(f(args,kwds)) return NULL;
         
         size_t nr,nrho;

@@ -451,7 +451,7 @@ PyTypeObject MDNST::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MDNST::setup_tp()
 {
-    TypeObject.tp_name="nst";
+    TypeObject.tp_name="mapp.md.nst";
     TypeObject.tp_doc="MD of isothermal–isobaric ensemble";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

@@ -78,7 +78,6 @@ namespace MAPP_NS
         
         /*things that reference can be removed*/
         type0 (&H)[__dim__][__dim__];
-        type0 (&B)[__dim__][__dim__];
         type0 (&depth_inv)[__dim__];
         type0 (&s_lo)[__dim__];
         type0 (&s_hi)[__dim__];

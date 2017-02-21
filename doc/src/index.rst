@@ -9,7 +9,6 @@ MAPP's documentation!
 :Page Status: Incomplete
 :Last Reviewed: 2017-02-14
 
-Contents:
 
 .. toctree::
    :maxdepth: 2
@@ -23,21 +22,9 @@ Contents:
    io
 
 .. automodule:: mapp
-   :members: 
-   :undoc-members:
 
-.. automodule:: md
-   :members: 
-   :undoc-members:
-
-
-.. automodule:: dmd
-   :members: 
-   :undoc-members:
-
-
-
-
+.. automodule:: mapp.md
+   :members:
 
 Indices and tables
 ==================

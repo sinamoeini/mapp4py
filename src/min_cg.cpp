@@ -333,7 +333,7 @@ PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MinCG::setup_tp()
 {
-    TypeObject.tp_name="min_cg";
+    TypeObject.tp_name="mapp.md.min_cg";
     TypeObject.tp_doc="conjugate gradient minimization";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

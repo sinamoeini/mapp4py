@@ -245,7 +245,6 @@ int& nupdt_vecs_,int& nxchng_vecs_):
 natms(atoms->natms),
 natms_ph(atoms->natms_ph),
 H(atoms->H),
-B(atoms->B),
 depth_inv(atoms->depth_inv),
 
 rank(atoms->comm.rank),

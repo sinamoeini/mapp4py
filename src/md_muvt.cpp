@@ -214,7 +214,7 @@ PyTypeObject MDMuVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MDMuVT::setup_tp()
 {
-    TypeObject.tp_name="muvt";
+    TypeObject.tp_name="mapp.md.muvt";
     TypeObject.tp_doc="MD of canonical ensemble";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

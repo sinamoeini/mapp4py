@@ -257,7 +257,7 @@ PyTypeObject MinLBFGSDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MinLBFGSDMD::setup_tp()
 {
-    TypeObject.tp_name="min_lbfgs";
+    TypeObject.tp_name="mapp.dmd.min_lbfgs";
     TypeObject.tp_doc="l-BFGS minimization";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

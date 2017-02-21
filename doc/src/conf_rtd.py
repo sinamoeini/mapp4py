@@ -28,11 +28,10 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-]
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
+              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
+              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
+              'matplotlib.sphinxext.plot_directive','numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['__templates']
@@ -47,6 +46,8 @@ source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'index'
+
+#numpydoc_show_class_members = False
 
 # General information about the project.
 project = u'MAPP'

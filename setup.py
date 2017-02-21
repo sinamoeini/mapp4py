@@ -21,7 +21,7 @@ module1 = Extension('mapp',
                     sources = cpp_files,
 		    extra_compile_args=['-std=c++11','-Wno-reorder'])
 
-setup (name ='mapp4py',
+setup (name ='mapp',
        version = '0.0.0',
        description = 'MIT Atomistic Parallel Package',
        author = 'Sina Moeini',

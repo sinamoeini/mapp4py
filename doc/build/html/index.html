@@ -86,6 +86,30 @@
 <li class="toctree-l1"><a class="reference internal" href="ff.html">Supported Force Fields</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io.html">I/O</a></li>
 </ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
 
             
           
@@ -160,7 +184,6 @@
 </tr>
 </tbody>
 </table>
-<p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
@@ -173,30 +196,640 @@
 </ul>
 </div>
 <span class="target" id="module-mapp"></span><p>MIT Atomistic Parallel Package</p>
-<dl class="function">
-<dt id="mapp.pause_slave_out">
-<code class="descclassname">mapp.</code><code class="descname">pause_slave_out</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.pause_slave_out" title="Permalink to this definition">¶</a></dt>
-<dd><p>pauses stdout &amp; stderr of non-root processes</p>
+<span class="target" id="module-mapp.md"></span><p>Molecular Dynamics (MD) module</p>
+<dl class="class">
+<dt id="mapp.md.atoms">
+<em class="property">class </em><code class="descclassname">mapp.md.</code><code class="descname">atoms</code><a class="headerlink" href="#mapp.md.atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>I will add doc here</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.B" title="mapp.md.atoms.B"><code class="xref py py-obj docutils literal"><span class="pre">B</span></code></a></td>
+<td>matrix of reciprocal unitcell vectors</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.H" title="mapp.md.atoms.H"><code class="xref py py-obj docutils literal"><span class="pre">H</span></code></a></td>
+<td>matrix of unitcell vectors</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.comm_coords" title="mapp.md.atoms.comm_coords"><code class="xref py py-obj docutils literal"><span class="pre">comm_coords</span></code></a></td>
+<td>coordinates of calling process in cartesian structure</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.comm_dims" title="mapp.md.atoms.comm_dims"><code class="xref py py-obj docutils literal"><span class="pre">comm_dims</span></code></a></td>
+<td>number of processes for each cartesian dimension</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.comm_rank" title="mapp.md.atoms.comm_rank"><code class="xref py py-obj docutils literal"><span class="pre">comm_rank</span></code></a></td>
+<td>rank of the calling process in the communicator</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.comm_size" title="mapp.md.atoms.comm_size"><code class="xref py py-obj docutils literal"><span class="pre">comm_size</span></code></a></td>
+<td>size of the group associated with the communicator</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.elems" title="mapp.md.atoms.elems"><code class="xref py py-obj docutils literal"><span class="pre">elems</span></code></a></td>
+<td>dictionary of elements present in the system</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.h" title="mapp.md.atoms.h"><code class="xref py py-obj docutils literal"><span class="pre">h</span></code></a></td>
+<td>Planck constant</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.kB" title="mapp.md.atoms.kB"><code class="xref py py-obj docutils literal"><span class="pre">kB</span></code></a></td>
+<td>Boltzmann constant</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.skin" title="mapp.md.atoms.skin"><code class="xref py py-obj docutils literal"><span class="pre">skin</span></code></a></td>
+<td>skin size</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.step" title="mapp.md.atoms.step"><code class="xref py py-obj docutils literal"><span class="pre">step</span></code></a></td>
+<td>step number</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.vol" title="mapp.md.atoms.vol"><code class="xref py py-obj docutils literal"><span class="pre">vol</span></code></a></td>
+<td>volume of unitcell</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.create_T" title="mapp.md.atoms.create_T"><code class="xref py py-obj docutils literal"><span class="pre">create_T</span></code></a></td>
+<td>I will add doc here</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.ff_eam_fs" title="mapp.md.atoms.ff_eam_fs"><code class="xref py py-obj docutils literal"><span class="pre">ff_eam_fs</span></code></a></td>
+<td>I will add doc here</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.ff_eam_funcfl" title="mapp.md.atoms.ff_eam_funcfl"><code class="xref py py-obj docutils literal"><span class="pre">ff_eam_funcfl</span></code></a></td>
+<td>I will add doc here</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.ff_eam_setfl" title="mapp.md.atoms.ff_eam_setfl"><code class="xref py py-obj docutils literal"><span class="pre">ff_eam_setfl</span></code></a></td>
+<td>I will add doc here</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.ff_fs" title="mapp.md.atoms.ff_fs"><code class="xref py py-obj docutils literal"><span class="pre">ff_fs</span></code></a></td>
+<td>I will add doc here</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.atoms.ff_lj" title="mapp.md.atoms.ff_lj"><code class="xref py py-obj docutils literal"><span class="pre">ff_lj</span></code></a>(eps,sigma,r_c,shift=False)</td>
+<td>Lennard-Jones potential</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.atoms.strain" title="mapp.md.atoms.strain"><code class="xref py py-obj docutils literal"><span class="pre">strain</span></code></a></td>
+<td>strain the box</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mapp.md.atoms.B">
+<code class="descname">B</code><a class="headerlink" href="#mapp.md.atoms.B" title="Permalink to this definition">¶</a></dt>
+<dd><p>matrix of reciprocal unitcell vectors</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.H">
+<code class="descname">H</code><a class="headerlink" href="#mapp.md.atoms.H" title="Permalink to this definition">¶</a></dt>
+<dd><p>matrix of unitcell vectors</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.comm_coords">
+<code class="descname">comm_coords</code><a class="headerlink" href="#mapp.md.atoms.comm_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>coordinates of calling process in cartesian structure</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.comm_dims">
+<code class="descname">comm_dims</code><a class="headerlink" href="#mapp.md.atoms.comm_dims" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of processes for each cartesian dimension</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.comm_rank">
+<code class="descname">comm_rank</code><a class="headerlink" href="#mapp.md.atoms.comm_rank" title="Permalink to this definition">¶</a></dt>
+<dd><p>rank of the calling process in the communicator</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.comm_size">
+<code class="descname">comm_size</code><a class="headerlink" href="#mapp.md.atoms.comm_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>size of the group associated with the communicator</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.create_T">
+<code class="descname">create_T</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.create_T" title="Permalink to this definition">¶</a></dt>
+<dd><p>I will add doc here</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.elems">
+<code class="descname">elems</code><a class="headerlink" href="#mapp.md.atoms.elems" title="Permalink to this definition">¶</a></dt>
+<dd><p>dictionary of elements present in the system</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.ff_eam_fs">
+<code class="descname">ff_eam_fs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.ff_eam_fs" title="Permalink to this definition">¶</a></dt>
+<dd><p>I will add doc here</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.ff_eam_funcfl">
+<code class="descname">ff_eam_funcfl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.ff_eam_funcfl" title="Permalink to this definition">¶</a></dt>
+<dd><p>I will add doc here</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.ff_eam_setfl">
+<code class="descname">ff_eam_setfl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.ff_eam_setfl" title="Permalink to this definition">¶</a></dt>
+<dd><p>I will add doc here</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.ff_fs">
+<code class="descname">ff_fs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.ff_fs" title="Permalink to this definition">¶</a></dt>
+<dd><p>I will add doc here</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.ff_lj">
+<code class="descname">ff_lj</code><span class="sig-paren">(</span><em>eps</em>, <em>sigma</em>, <em>r_c</em>, <em>shift=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.ff_lj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lennard-Jones potential</p>
+<div class="math">
+<p><img src="_images/math/a49cdee9ebc3466dab0b6c7c2e4b3082cd7dce3a.png" alt="U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
+\left\{\begin{array}{ll}
+4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &amp;r_{ij}&lt;{r_c}_{\alpha\beta}\\
+    0 &amp;r_{ij}&gt;{r_c}_{\alpha\beta}
+\end{array}\right."/></p>
+</div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>eps: array_like</strong></p>
+<blockquote>
+<div><p><img class="math" src="_images/math/19bc0073dde1bcd1a8e6a32b251e80cced668f04.png" alt="\epsilon"/></p>
+</div></blockquote>
+<p><strong>sigma: array_like</strong></p>
+<blockquote>
+<div><p><img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/></p>
+</div></blockquote>
+<p><strong>r_c: array_like</strong></p>
+<blockquote>
+<div><p><img class="math" src="_images/math/c501f44ea1db5d51310372a9fc9ac94128bfb470.png" alt="r_c"/></p>
+</div></blockquote>
+<p><strong>shift: bool</strong></p>
+<blockquote class="last">
+<div><p>shift the tail if set to True</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.h">
+<code class="descname">h</code><a class="headerlink" href="#mapp.md.atoms.h" title="Permalink to this definition">¶</a></dt>
+<dd><p>Planck constant</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.kB">
+<code class="descname">kB</code><a class="headerlink" href="#mapp.md.atoms.kB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boltzmann constant</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.skin">
+<code class="descname">skin</code><a class="headerlink" href="#mapp.md.atoms.skin" title="Permalink to this definition">¶</a></dt>
+<dd><p>skin size</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.step">
+<code class="descname">step</code><a class="headerlink" href="#mapp.md.atoms.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>step number</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.atoms.strain">
+<code class="descname">strain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.strain" title="Permalink to this definition">¶</a></dt>
+<dd><p>strain the box</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.atoms.vol">
+<code class="descname">vol</code><a class="headerlink" href="#mapp.md.atoms.vol" title="Permalink to this definition">¶</a></dt>
+<dd><p>volume of unitcell</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="function">
-<dt id="mapp.resume_slave_out">
-<code class="descclassname">mapp.</code><code class="descname">resume_slave_out</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.resume_slave_out" title="Permalink to this definition">¶</a></dt>
-<dd><p>resumes stdout &amp; stderr of non-root processes</p>
-</dd></dl>
-
-<span class="target" id="module-md"></span><p>Molecular Dynamics (MD) module</p>
-<dl class="function">
-<dt id="md.cfg">
-<code class="descclassname">md.</code><code class="descname">cfg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#md.cfg" title="Permalink to this definition">¶</a></dt>
+<dt id="mapp.md.cfg">
+<code class="descclassname">mapp.md.</code><code class="descname">cfg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.cfg" title="Permalink to this definition">¶</a></dt>
 <dd><p>this function reads cfg file and returns an atoms_md object</p>
 </dd></dl>
 
-<span class="target" id="module-dmd"></span><p>Diffusive Molecular Dynamics (DMD) module</p>
-<dl class="function">
-<dt id="dmd.cfg">
-<code class="descclassname">dmd.</code><code class="descname">cfg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dmd.cfg" title="Permalink to this definition">¶</a></dt>
-<dd><p>this function reads cfg file and returns an atoms_dmd object</p>
+<dl class="class">
+<dt id="mapp.md.min_cg">
+<em class="property">class </em><code class="descclassname">mapp.md.</code><code class="descname">min_cg</code><a class="headerlink" href="#mapp.md.min_cg" title="Permalink to this definition">¶</a></dt>
+<dd><p>conjugate gradient minimization</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.min_cg.H_dof" title="mapp.md.min_cg.H_dof"><code class="xref py py-obj docutils literal"><span class="pre">H_dof</span></code></a></td>
+<td>unitcell degrees of freedom</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.min_cg.affine" title="mapp.md.min_cg.affine"><code class="xref py py-obj docutils literal"><span class="pre">affine</span></code></a></td>
+<td>set to true if transformation is affine</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.min_cg.e_tol" title="mapp.md.min_cg.e_tol"><code class="xref py py-obj docutils literal"><span class="pre">e_tol</span></code></a></td>
+<td>energy tolerance criterion for stopping minimization</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.min_cg.max_dx" title="mapp.md.min_cg.max_dx"><code class="xref py py-obj docutils literal"><span class="pre">max_dx</span></code></a></td>
+<td>maximum displacement</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.min_cg.ntally" title="mapp.md.min_cg.ntally"><code class="xref py py-obj docutils literal"><span class="pre">ntally</span></code></a></td>
+<td>tally thermodynamic quantities every ntally steps</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.min_cg.run" title="mapp.md.min_cg.run"><code class="xref py py-obj docutils literal"><span class="pre">run</span></code></a></td>
+<td>run energy minimization</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mapp.md.min_cg.H_dof">
+<code class="descname">H_dof</code><a class="headerlink" href="#mapp.md.min_cg.H_dof" title="Permalink to this definition">¶</a></dt>
+<dd><p>unitcell degrees of freedom</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.min_cg.affine">
+<code class="descname">affine</code><a class="headerlink" href="#mapp.md.min_cg.affine" title="Permalink to this definition">¶</a></dt>
+<dd><p>set to true if transformation is affine</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.min_cg.e_tol">
+<code class="descname">e_tol</code><a class="headerlink" href="#mapp.md.min_cg.e_tol" title="Permalink to this definition">¶</a></dt>
+<dd><p>energy tolerance criterion for stopping minimization</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.min_cg.max_dx">
+<code class="descname">max_dx</code><a class="headerlink" href="#mapp.md.min_cg.max_dx" title="Permalink to this definition">¶</a></dt>
+<dd><p>maximum displacement</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.min_cg.ntally">
+<code class="descname">ntally</code><a class="headerlink" href="#mapp.md.min_cg.ntally" title="Permalink to this definition">¶</a></dt>
+<dd><p>tally thermodynamic quantities every ntally steps</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.min_cg.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.min_cg.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>run energy minimization</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mapp.md.min_lbfgs">
+<em class="property">class </em><code class="descclassname">mapp.md.</code><code class="descname">min_lbfgs</code><a class="headerlink" href="#mapp.md.min_lbfgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>l-BFGS minimization</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">H_dof</span></code></td>
+<td>unitcell degrees of freedom</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">affine</span></code></td>
+<td>set to true if transformation is affine</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">e_tol</span></code></td>
+<td>energy tolerance criterion for stopping minimization</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.min_lbfgs.m" title="mapp.md.min_lbfgs.m"><code class="xref py py-obj docutils literal"><span class="pre">m</span></code></a></td>
+<td>number of vectors to store in memory</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">max_dx</span></code></td>
+<td>maximum displacement</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">ntally</span></code></td>
+<td>tally thermodynamic quantities every ntally steps</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">run</span></code></td>
+<td>run energy minimization</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mapp.md.min_lbfgs.m">
+<code class="descname">m</code><a class="headerlink" href="#mapp.md.min_lbfgs.m" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of vectors to store in memory</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mapp.md.muvt">
+<em class="property">class </em><code class="descclassname">mapp.md.</code><code class="descname">muvt</code><a class="headerlink" href="#mapp.md.muvt" title="Permalink to this definition">¶</a></dt>
+<dd><p>MD of canonical ensemble</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">T</span></code></td>
+<td>external temperature of simulation</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">dt</span></code></td>
+<td>timestep of MD simulation</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.muvt.gas_element" title="mapp.md.muvt.gas_element"><code class="xref py py-obj docutils literal"><span class="pre">gas_element</span></code></a></td>
+<td>gcmc element</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.muvt.nattempts" title="mapp.md.muvt.nattempts"><code class="xref py py-obj docutils literal"><span class="pre">nattempts</span></code></a></td>
+<td>number of deletion/insertion attempts</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">nchains</span></code></td>
+<td>number of chains in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.muvt.nevery" title="mapp.md.muvt.nevery"><code class="xref py py-obj docutils literal"><span class="pre">nevery</span></code></a></td>
+<td>perform deletion/insertion attempts every nevery steps</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">niters</span></code></td>
+<td>number of iterations in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">ntally</span></code></td>
+<td>tally thermodynamic quantities every ntally steps</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.muvt.seed" title="mapp.md.muvt.seed"><code class="xref py py-obj docutils literal"><span class="pre">seed</span></code></a></td>
+<td>gcmc random seed</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">t_relax</span></code></td>
+<td>thermostat parameter, relaxation time</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">run</span></code></td>
+<td>run simulation for n steps</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mapp.md.muvt.gas_element">
+<code class="descname">gas_element</code><a class="headerlink" href="#mapp.md.muvt.gas_element" title="Permalink to this definition">¶</a></dt>
+<dd><p>gcmc element</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.muvt.nattempts">
+<code class="descname">nattempts</code><a class="headerlink" href="#mapp.md.muvt.nattempts" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of deletion/insertion attempts</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.muvt.nevery">
+<code class="descname">nevery</code><a class="headerlink" href="#mapp.md.muvt.nevery" title="Permalink to this definition">¶</a></dt>
+<dd><p>perform deletion/insertion attempts every nevery steps</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.muvt.seed">
+<code class="descname">seed</code><a class="headerlink" href="#mapp.md.muvt.seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>gcmc random seed</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mapp.md.nst">
+<em class="property">class </em><code class="descclassname">mapp.md.</code><code class="descname">nst</code><a class="headerlink" href="#mapp.md.nst" title="Permalink to this definition">¶</a></dt>
+<dd><p>MD of isothermal–isobaric ensemble</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nst.S" title="mapp.md.nst.S"><code class="xref py py-obj docutils literal"><span class="pre">S</span></code></a></td>
+<td>external stress of isothermal–isobaric ensemble</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nst.S_dof" title="mapp.md.nst.S_dof"><code class="xref py py-obj docutils literal"><span class="pre">S_dof</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">T</span></code></td>
+<td>external temperature of simulation</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">dt</span></code></td>
+<td>timestep of MD simulation</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">nchains</span></code></td>
+<td>number of chains in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nst.nchains_baro" title="mapp.md.nst.nchains_baro"><code class="xref py py-obj docutils literal"><span class="pre">nchains_baro</span></code></a></td>
+<td>number of chains in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">niters</span></code></td>
+<td>number of iterations in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nst.niters_baro" title="mapp.md.nst.niters_baro"><code class="xref py py-obj docutils literal"><span class="pre">niters_baro</span></code></a></td>
+<td>number of iterations in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nst.nreset" title="mapp.md.nst.nreset"><code class="xref py py-obj docutils literal"><span class="pre">nreset</span></code></a></td>
+<td>number of steps to reset initial conf</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">ntally</span></code></td>
+<td>tally thermodynamic quantities every ntally steps</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">t_relax</span></code></td>
+<td>thermostat parameter, relaxation time</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nst.t_relax_S" title="mapp.md.nst.t_relax_S"><code class="xref py py-obj docutils literal"><span class="pre">t_relax_S</span></code></a></td>
+<td>t_relax of external stress of isothermal–isobaric ensemble</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nst.t_relax_baro" title="mapp.md.nst.t_relax_baro"><code class="xref py py-obj docutils literal"><span class="pre">t_relax_baro</span></code></a></td>
+<td>thermostat parameter, relaxation time</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">run</span></code></td>
+<td>run simulation for n steps</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mapp.md.nst.S">
+<code class="descname">S</code><a class="headerlink" href="#mapp.md.nst.S" title="Permalink to this definition">¶</a></dt>
+<dd><p>external stress of isothermal–isobaric ensemble</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nst.S_dof">
+<code class="descname">S_dof</code><a class="headerlink" href="#mapp.md.nst.S_dof" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nst.nchains_baro">
+<code class="descname">nchains_baro</code><a class="headerlink" href="#mapp.md.nst.nchains_baro" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of chains in Nose-Hoover chain thermostat</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nst.niters_baro">
+<code class="descname">niters_baro</code><a class="headerlink" href="#mapp.md.nst.niters_baro" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of iterations in Nose-Hoover chain thermostat</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nst.nreset">
+<code class="descname">nreset</code><a class="headerlink" href="#mapp.md.nst.nreset" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of steps to reset initial conf</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nst.t_relax_S">
+<code class="descname">t_relax_S</code><a class="headerlink" href="#mapp.md.nst.t_relax_S" title="Permalink to this definition">¶</a></dt>
+<dd><p>t_relax of external stress of isothermal–isobaric ensemble</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nst.t_relax_baro">
+<code class="descname">t_relax_baro</code><a class="headerlink" href="#mapp.md.nst.t_relax_baro" title="Permalink to this definition">¶</a></dt>
+<dd><p>thermostat parameter, relaxation time</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mapp.md.nvt">
+<em class="property">class </em><code class="descclassname">mapp.md.</code><code class="descname">nvt</code><a class="headerlink" href="#mapp.md.nvt" title="Permalink to this definition">¶</a></dt>
+<dd><p>MD of canonical ensemble</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nvt.T" title="mapp.md.nvt.T"><code class="xref py py-obj docutils literal"><span class="pre">T</span></code></a></td>
+<td>external temperature of simulation</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nvt.dt" title="mapp.md.nvt.dt"><code class="xref py py-obj docutils literal"><span class="pre">dt</span></code></a></td>
+<td>timestep of MD simulation</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nvt.nchains" title="mapp.md.nvt.nchains"><code class="xref py py-obj docutils literal"><span class="pre">nchains</span></code></a></td>
+<td>number of chains in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nvt.niters" title="mapp.md.nvt.niters"><code class="xref py py-obj docutils literal"><span class="pre">niters</span></code></a></td>
+<td>number of iterations in Nose-Hoover chain thermostat</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nvt.ntally" title="mapp.md.nvt.ntally"><code class="xref py py-obj docutils literal"><span class="pre">ntally</span></code></a></td>
+<td>tally thermodynamic quantities every ntally steps</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mapp.md.nvt.t_relax" title="mapp.md.nvt.t_relax"><code class="xref py py-obj docutils literal"><span class="pre">t_relax</span></code></a></td>
+<td>thermostat parameter, relaxation time</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mapp.md.nvt.run" title="mapp.md.nvt.run"><code class="xref py py-obj docutils literal"><span class="pre">run</span></code></a></td>
+<td>run simulation for n steps</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mapp.md.nvt.T">
+<code class="descname">T</code><a class="headerlink" href="#mapp.md.nvt.T" title="Permalink to this definition">¶</a></dt>
+<dd><p>external temperature of simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nvt.dt">
+<code class="descname">dt</code><a class="headerlink" href="#mapp.md.nvt.dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>timestep of MD simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nvt.nchains">
+<code class="descname">nchains</code><a class="headerlink" href="#mapp.md.nvt.nchains" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of chains in Nose-Hoover chain thermostat</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nvt.niters">
+<code class="descname">niters</code><a class="headerlink" href="#mapp.md.nvt.niters" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of iterations in Nose-Hoover chain thermostat</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nvt.ntally">
+<code class="descname">ntally</code><a class="headerlink" href="#mapp.md.nvt.ntally" title="Permalink to this definition">¶</a></dt>
+<dd><p>tally thermodynamic quantities every ntally steps</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mapp.md.nvt.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.nvt.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>run simulation for n steps</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mapp.md.nvt.t_relax">
+<code class="descname">t_relax</code><a class="headerlink" href="#mapp.md.nvt.t_relax" title="Permalink to this definition">¶</a></dt>
+<dd><p>thermostat parameter, relaxation time</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -261,7 +894,6 @@
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

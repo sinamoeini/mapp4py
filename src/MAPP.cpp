@@ -4,6 +4,7 @@
 #include <numpy/arrayobject.h>
 #include "MAPP.h"
 #include <mpi.h>
+#include <dlfcn.h>
 #include "comm.h"
 #include "example.h"
 #include "atoms_styles.h"
@@ -68,8 +69,19 @@ FILE* MAPP_NS::MAPP::__stderr__(NULL);
 FILE* MAPP_NS::MAPP::mapp_out(NULL);
 FILE* MAPP_NS::MAPP::mapp_err(NULL);
 /*--------------------------------------------*/
+PyMODINIT_FUNC initmapp(void)
+{return MAPP_NS::MAPP::init_module();}
 void MAPP::init_module(void)
 {
+    int mpi_initialized;
+    MPI_Initialized(&mpi_initialized);
+    if(!mpi_initialized)
+    {
+        dlopen("libmpi.so.0",RTLD_GLOBAL | RTLD_LAZY);
+        MPI_Init(NULL,NULL);
+        Py_AtExit([](){MPI_Finalize();});
+    }
+    
     PyObject* posixpath=PyImport_ImportModule("posixpath");
     PyObject* devnull_path_op=PyObject_GetAttrString(posixpath,"devnull");
     devnull_path=PyString_AsString(devnull_path_op);

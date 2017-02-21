@@ -22,6 +22,23 @@ Contents:
    ff
    io
 
+.. automodule:: mapp
+   :members: 
+   :undoc-members:
+
+.. automodule:: md
+   :members: 
+   :undoc-members:
+
+
+.. automodule:: dmd
+   :members: 
+   :undoc-members:
+
+
+
+
+
 Indices and tables
 ==================
 

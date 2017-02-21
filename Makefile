@@ -1,3 +1,4 @@
+
 SHELL 	    = /bin/bash
 SRC         = src/
 PROGRAMS    = main
@@ -24,5 +25,3 @@ clean:
 	rm -rf $(OBJ)
 prep:
 	@mkdir -p $(OBJ); 
-
-

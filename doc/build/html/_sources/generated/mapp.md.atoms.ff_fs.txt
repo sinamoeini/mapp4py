@@ -1,0 +1,6 @@
+mapp.md.atoms.ff_fs
+===================
+
+.. currentmodule:: mapp.md
+
+.. automethod:: atoms.ff_fs

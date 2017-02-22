@@ -1,0 +1,45 @@
+mapp.md.atoms
+=============
+
+.. currentmodule:: mapp.md
+
+.. autoclass:: atoms
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~atoms.create_T
+      ~atoms.ff_eam_fs
+      ~atoms.ff_eam_funcfl
+      ~atoms.ff_eam_setfl
+      ~atoms.ff_fs
+      ~atoms.ff_lj
+      ~atoms.strain
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~atoms.B
+      ~atoms.H
+      ~atoms.comm_coords
+      ~atoms.comm_dims
+      ~atoms.comm_rank
+      ~atoms.comm_size
+      ~atoms.elems
+      ~atoms.h
+      ~atoms.kB
+      ~atoms.skin
+      ~atoms.step
+      ~atoms.vol
+   
+   

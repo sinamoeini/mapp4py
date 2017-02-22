@@ -1,0 +1,6 @@
+mapp.dmd.atoms.ff_eam_fs
+========================
+
+.. currentmodule:: mapp.dmd
+
+.. automethod:: atoms.ff_eam_fs

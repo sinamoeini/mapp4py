@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mapp.md.atoms.ff_lj &mdash; MAPP 0.00 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="MAPP 0.00 documentation" href="../index.html"/>
+        <link rel="up" title="Supported Force Fields" href="../ff.html"/>
+        <link rel="next" title="mapp.md.atoms.ff_fs" href="mapp.md.atoms.ff_fs.html"/>
+        <link rel="prev" title="Supported Force Fields" href="../ff.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/logo.png" class="logo" />
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../md.html">Molecular Dynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dmd.html">Diffusive Molecular Dynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../min.html">Energy Minimization</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../ff.html">Supported Force Fields</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../ff.html#md">MD</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="">mapp.md.atoms.ff_lj</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mapp.md.atoms.ff_fs.html">mapp.md.atoms.ff_fs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mapp.md.atoms.ff_eam_funcfl.html">mapp.md.atoms.ff_eam_funcfl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mapp.md.atoms.ff_eam_setfl.html">mapp.md.atoms.ff_eam_setfl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mapp.md.atoms.ff_eam_fs.html">mapp.md.atoms.ff_eam_fs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ff.html#dmd">DMD</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../io.html">I/O</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MAPP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../ff.html">Supported Force Fields</a> &raquo;</li>
+        
+      <li>mapp.md.atoms.ff_lj</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/generated/mapp.md.atoms.ff_lj.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="mapp-md-atoms-ff-lj">
+<h1>mapp.md.atoms.ff_lj<a class="headerlink" href="#mapp-md-atoms-ff-lj" title="Permalink to this headline">¶</a></h1>
+<dl class="method">
+<dt id="mapp.md.atoms.ff_lj">
+<code class="descclassname">atoms.</code><code class="descname">ff_lj</code><span class="sig-paren">(</span><em>eps</em>, <em>sigma</em>, <em>r_c</em>, <em>shift=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mapp.md.atoms.ff_lj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lennard-Jones potential</p>
+<p>see Notes section below</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>eps</strong> : symmetric double[nelems][nelems]</p>
+<blockquote>
+<div><p><img class="math" src="../_images/math/19bc0073dde1bcd1a8e6a32b251e80cced668f04.png" alt="\epsilon"/></p>
+</div></blockquote>
+<p><strong>sigma</strong> : symmetric double[nelems][nelems]</p>
+<blockquote>
+<div><p><img class="math" src="../_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/></p>
+</div></blockquote>
+<p><strong>r_c</strong> : symmetric double[nelems][nelems]</p>
+<blockquote>
+<div><p><img class="math" src="../_images/math/c501f44ea1db5d51310372a9fc9ac94128bfb470.png" alt="r_c"/></p>
+</div></blockquote>
+<p><strong>shift</strong> : bool</p>
+<blockquote>
+<div><p>shift the tail if set to True</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This is the famous Lennard Jones potential</p>
+<div class="math">
+<p><img src="../_images/math/fcc6bd1467c8adca2cc8054febfec6bfd3c7a532.png" alt="U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
+\left\{\begin{array}{ll}
+4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &amp;r_{ij}&lt;r^{\alpha\beta}_c\\
+0 &amp;r_{ij}&gt;r^{\alpha\beta}_c
+\end{array}\right."/></p>
+</div><p class="rubric">Examples</p>
+<p>Kob-Anderson potential</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mapp</span> <span class="kn">import</span> <span class="n">md</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sim</span><span class="o">=</span><span class="n">md</span><span class="o">.</span><span class="n">cfg</span><span class="p">(</span><span class="s2">&quot;configs/KA.cfg&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sim</span><span class="o">.</span><span class="n">ff_lj</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="p">[[</span><span class="mf">1.0</span><span class="p">],[</span><span class="mf">0.8</span><span class="p">,</span><span class="mf">0.88</span><span class="p">]],</span><span class="n">eps</span><span class="o">=</span><span class="p">[[</span><span class="mf">1.0</span><span class="p">],[</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">0.5</span><span class="p">]],</span><span class="n">r_c</span><span class="o">=</span><span class="p">[[</span><span class="mf">2.5</span><span class="p">],[</span><span class="mf">2.0</span><span class="p">,</span><span class="mf">2.2</span><span class="p">]],</span><span class="n">shift</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="mapp.md.atoms.ff_fs.html" class="btn btn-neutral float-right" title="mapp.md.atoms.ff_fs" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../ff.html" class="btn btn-neutral" title="Supported Force Fields" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Sina Moeini.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.00',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+   
+
+</body>
+</html>

@@ -65,7 +65,6 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
 {
     method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_0.ml_name="ff_eam_funcfl";
-    method_0.ml_doc="I will add doc here";
     method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -98,10 +97,43 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         __self->ff=new ForceFieldEAM(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c));
         Py_RETURN_NONE;
     };
+    method_0.ml_doc=(char*)R"---(
+    ff_eam_funcfl(funcfl_files)
+   
+    Tabulated EAM force field given by FuncFL file/s
+    
+    Assigns EAM force field to system
+    
+    Parameters
+    ----------
+    funcfl_files : string[nelems]
+        list of relative paths to DYNAMO files with FuncFL format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Ni
+    
+    ::
+     
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/Ni.cfg")
+        >>> sim.ff_eam_funcfl("potentials/niu3.eam")
+    
+    
+
+    )---";
     
     method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_1.ml_name="ff_eam_setfl";
-    method_1.ml_doc="I will add doc here";
     method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -133,10 +165,44 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         __self->ff=new ForceFieldEAM(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c));
         Py_RETURN_NONE;
     };
+    method_1.ml_doc=(char*)R"---(
+    ff_eam_setfl(setfl_file)
+   
+    Tabulated EAM force field given by a single SetFL file
+    
+    Assigns EAM force field to system
+    
+    Parameters
+    ----------
+    setfl_file : string
+        relative path to DYNAMO file with SetFL format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Cu
+    
+    ::
+     
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/Cu.cfg")
+        >>> sim.ff_eam_setfl("potentials/Cu_mishin.eam.alloy")
+
+    
+    
+    )---";
+    
     
     method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_2.ml_name="ff_eam_fs";
-    method_2.ml_doc="I will add doc here";
     method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -167,6 +233,40 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         __self->ff=new ForceFieldEAM(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c));
         Py_RETURN_NONE;
     };
+    method_2.ml_doc=(char*)R"---(
+    ff_eam_fs(fs_file)
+   
+    Tabulated Finnis-Sinclair EAM
+    
+    Assigns Finnis-Sinclair EAM force field to system. For explanation of the parameter see the Notes section.
+    
+    Parameters
+    ----------
+    fs_file : string
+        relative path to DYNAMO file with fs format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Finnis-Sinclair Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Iron Hydrogrn mixture
+    ::
+     
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/FeH.cfg")
+        >>> sim.ff_eam_fs("potentials/FeH.eam.fs")
+    
+    
+
+    )---";
+    
 }
 /*--------------------------------------------
  force calculation

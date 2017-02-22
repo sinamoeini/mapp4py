@@ -94,34 +94,51 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
         __self->ff=new ForceFieldLJ(__self->atoms,std::move(f.val<0>()),std::move(f.val<1>()),std::move(f.val<2>()),f.val<3>());
         Py_RETURN_NONE;
     };
-    
+
     tp_methods.ml_doc=R"---(
     ff_lj(eps,sigma,r_c,shift=False)
-    
+   
     Lennard-Jones potential
-
-    .. math::
-        U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
-        \left\{\begin{array}{ll}
-        4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<{r_c}_{\alpha\beta}\\
-        0 &r_{ij}>{r_c}_{\alpha\beta}
-        \end{array}\right.
+    
+    
+    see Notes section below
     
     Parameters
     ----------
-    eps : array_like
-            :math:`\epsilon`
-        
-    sigma : array_like
-            :math:`\sigma`
-        
-    r_c : array_like
-            :math:`r_c`
-        
+    eps : symmetric double[nelems][nelems]
+        :math:`\epsilon`
+    sigma : symmetric double[nelems][nelems]
+        :math:`\sigma`
+    r_c : symmetric double[nelems][nelems]
+        :math:`r_c`
     shift : bool
-            shift the tail if set to True
-)---";
-
+        shift the tail if set to True
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is the famous Lennard Jones potential
+    
+    .. math::
+        U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
+        \left\{\begin{array}{ll}
+        4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<r^{\alpha\beta}_c\\
+        0 &r_{ij}>r^{\alpha\beta}_c
+        \end{array}\right.
+    
+    Examples
+    --------
+    Kob-Anderson potential
+    ::
+     
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/KA.cfg")
+        >>> sim.ff_lj(sigma=[[1.0],[0.8,0.88]],eps=[[1.0],[1.5,0.5]],r_c=[[2.5],[2.0,2.2]],shift=False)
+        
+    )---";
 }
 /*--------------------------------------------
  initiate before a run

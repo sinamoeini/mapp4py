@@ -72,7 +72,6 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="ff_fs";
-    tp_methods.ml_doc="I will add doc here";
     
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
@@ -81,7 +80,7 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
         size_t& nelems=__self->atoms->elements->nelems;
         
         FuncAPI<type0*,type0**,type0**,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>>
-        f("ff_lj",{"A","t1","t2","k1","k2","k3","r_c_phi","r_c_rho"});
+        f("ff_fs",{"A","t1","t2","k1","k2","k3","r_c_phi","r_c_rho"});
 
         f.v<0>().dynamic_size(nelems);
         f.logics<0>()[0]=VLogics("gt",0.0);
@@ -102,6 +101,81 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
         f.mov<3>(),f.mov<4>(),f.mov<5>(),f.mov<6>(),f.mov<7>());
         Py_RETURN_NONE;
     };
+    
+    tp_methods.ml_doc=(char*)R"---(
+    ff_fs(A,t1,t2,k1,k2,k3,r_c_phi,r_c_rho)
+   
+    Finnis-Sinclair EAM
+    
+    Assigns Finnis-Sinclair EAM force field to system. For explanation of the parameter see the Notes section.
+    
+    Parameters
+    ----------
+    A : double[nelems]
+        :math:`A`
+    t1 : double[nelems][nelems]
+        :math:`t_1`
+    t2 : double[nelems][nelems]
+        :math:`t_2`
+    k1 : symmetric double[nelems][nelems]
+        :math:`k_1`
+    k2 : symmetric double[nelems][nelems]
+        :math:`k_2`
+    k3 : symmetric double[nelems][nelems]
+        :math:`k_3`
+    r_c_phi : symmetric double[nelems][nelems]
+        :math:`r_{c,\phi}`
+    r_c_rho : symmetric double[nelems][nelems]
+        :math:`r_{c,\rho}`
+
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is the analytical form of Finnis-Sinclair Embedded Atom Method (EAM) potential
+    
+    .. math::
+        U=\sum_{i}\left( -A_{\alpha}\sqrt{\sum_{j\neq i} \rho_{\beta\alpha}(r_{ij})}  + \frac{1}{2}\sum_{j\neq i} \phi_{\beta\alpha}(r_{ij}) \right),
+    
+    where
+    
+    .. math::
+        \rho_{\beta\alpha}(r)=
+        \left\{\begin{array}{ll}
+        t^{\alpha\beta}_1(r-r^{\alpha\beta}_{c,\rho})^2+t^{\alpha\beta}_2(r-r^{\alpha\beta}_{c,\rho})^3, \quad & r<r^{\alpha\beta}_{c,\rho}\\
+        0 & r>r^{\alpha\beta}_{c,\rho}\
+        \end{array}\right.
+
+            
+    and
+        
+    .. math::
+        \phi_{\beta\alpha}(r)=
+        \left\{\begin{array}{ll}
+        (r-r^{\alpha\beta}_{c,\phi})^2(k^{\alpha\beta}_1+k^{\alpha\beta}_2 r+k^{\alpha\beta}_3 r^2), \quad & r<r^{\alpha\beta}_{c,\phi}\\
+        0 & r>r^{\alpha\beta}_{c,\phi}\
+        \end{array}\right.
+
+    
+    Examples
+    --------
+    Iron Carbon mixture
+    ::
+     
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/Cementite.cfg")
+        >>> sim.ff_fs(A=[1.8289905,2.9588787],t1=[[1.0,10.024001],[10.482408,0.0]],
+                      t2=[[0.504238,1.638980],[3.782595,-7.329211]],
+                      k1=[[1.237115],[8.972488,22.061824]],
+                      k2=[[-0.35921],[-4.086410,-17.468518]],
+                      k3=[[-0.038560],[1.483233,4.812639]],
+                      r_c_phi=[[3.40],[2.468801,2.875598]],
+                      r_c_rho=[[3.569745],[2.545937,2.892070]])
+
+    )---";
 }
 /*--------------------------------------------
  force and energy calculation

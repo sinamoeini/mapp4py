@@ -9,20 +9,6 @@ MAPP's documentation!
 :Page Status: Incomplete
 :Last Reviewed: 2017-02-14
 
-
-
-
-.. automodule:: mapp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: mapp.md
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
 .. toctree::
    :maxdepth: 2
    

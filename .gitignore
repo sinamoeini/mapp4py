@@ -1,6 +1,6 @@
 MAPP.xcodeproj
 DerivedData
 MAPP
-doc/build/doctrees
 build
 doc/src/generated
+doc/build/doctrees

@@ -1,5 +1,4 @@
 #include "example.h"
-#include <iostream>
 #include <structmember.h>
 using namespace MAPP_NS;
 
@@ -13,69 +12,52 @@ void ExamplePython::setup_tp_methods()
     tp_methods[0].ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<double[3],double> f("func",{"x","u"});
-        f.logics<1>()[0]=VLogics("ge",0.0);
-        
-        if(f(args,kwds)==-1)
-            return NULL;
+
         Py_RETURN_NONE;
     };
     
     //tp_methods[0].ml_doc="this is a test function that I created";
-    tp_methods[0].ml_doc=
-R"----(This is test function
-This is test function
-This is test function
-This is test function
-This is test function
-This is test function
-This is test function
-    )----";
+    tp_methods[0].ml_doc=(char *)
+    R"---(
+func(eps)
+
+A one-line summary that does not use variable names or the function name.
+
+Parameters
+----------
+eps : array_like
+    hi
+)---";
 }
 /*--------------------------------------------*/
 PyMemberDef ExamplePython::tp_members[]={[0 ... 1]={NULL}};
 /*--------------------------------------------*/
 void ExamplePython::setup_tp_members()
 {
-    tp_members[0].name=(char*)"mass";
-    tp_members[0].type=T_OBJECT_EX;
-    tp_members[0].offset=offsetof(ExamplePython::Object,mass);
-    tp_members[0].flags=0;
-    tp_members[0].doc=(char*)"defines the masses the simulation";
+    
 }
 /*--------------------------------------------*/
 PyGetSetDef ExamplePython::tp_getset[]={[0 ... 1]={NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void ExamplePython::setup_tp_getset()
-{
+{/*
     tp_getset[0].name=(char*)"mass";
     tp_getset[0].get=get_mass;
     tp_getset[0].set=set_mass;
-    tp_getset[0].doc=(char*)"defines the masses the simulation";
+    tp_getset[0].doc=(char*)"   defines the masses the simulation";*/
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 int ExamplePython::set_mass(PyObject* self,PyObject* op,void*)
 {
-
-    VarAPI<size_t> ntypes("ntypes");
-    ntypes.val=2;
-    
-    VarAPI<symm<double[2][2]>> mass("mass",ntypes.val,ntypes.val);
-    mass.logics[0]=VLogics("gt",0.0)*VLogics("lt",1.0);
-
-    int i=mass.set(op);
-    
-
-    return i;
+    return 0;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 PyObject* ExamplePython::get_mass(PyObject* self,void* closure)
 {
-    printf("get mass\n");
     return NULL;
 }
 /*--------------------------------------------
@@ -107,7 +89,6 @@ int ExamplePython::tp_init(PyObject *self_, PyObject *args, PyObject *kwds)
 void ExamplePython::tp_dealloc(PyObject* self_)
 {
     Object* self=(Object*)self_;
-//    delete self->dt;
     self->ob_type->tp_free((PyObject*)self);
 }
 /*--------------------------------------------
@@ -115,11 +96,6 @@ void ExamplePython::tp_dealloc(PyObject* self_)
  --------------------------------------------*/
 PyObject* ExamplePython::test_func(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<double[3],double> f("f",{"x","u"});
-    f.logics<1>()[0]=VLogics("ge",0.0);
-    
-    if(f(args,kwds)==-1)
-        return NULL;
     Py_RETURN_NONE;
 }
 /*--------------------------------------------*/
@@ -143,5 +119,15 @@ void ExamplePython::setup_tp()
     TypeObject.tp_getset=tp_getset;
     setup_tp_methods();
     TypeObject.tp_methods=tp_methods;
+}
+
+
+PyMODINIT_FUNC initxmpl(void)
+{
+    PyObject* module=Py_InitModule3("xmpl",NULL,"MIT Atomistic Parallel Package");
+    ExamplePython::setup_tp();
+    if(PyType_Ready(&ExamplePython::TypeObject)<0) return;
+    Py_INCREF(&ExamplePython::TypeObject);
+    PyModule_AddObject(module,"obj",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
 }
 

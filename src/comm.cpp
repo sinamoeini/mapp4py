@@ -67,7 +67,7 @@ PyTypeObject MAPP_MPI::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MAPP_MPI::setup_tp()
 {
-    TypeObject.tp_name="mpp.mpi";
+    TypeObject.tp_name="mpi";
     TypeObject.tp_doc="just a simple container for MPI_Comm";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;

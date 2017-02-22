@@ -31,7 +31,7 @@ import os
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'matplotlib.sphinxext.plot_directive','numpydoc']
+              'matplotlib.sphinxext.plot_directive']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['__templates']
@@ -40,6 +40,9 @@ templates_path = ['__templates']
 # You can specify multiple suffix as a list of string:
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
+
+#numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -292,3 +295,12 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# -----------------------------------------------------------------------------
+# Autosummary
+# -----------------------------------------------------------------------------
+
+import glob
+autosummary_generate = glob.glob("*.rst")
+
+

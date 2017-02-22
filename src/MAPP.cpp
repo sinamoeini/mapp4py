@@ -71,12 +71,7 @@ FILE* MAPP_NS::MAPP::mapp_err(NULL);
 /*--------------------------------------------*/
 PyMODINIT_FUNC initmapp(void)
 {return MAPP_NS::MAPP::init_module();}
-/*
-PyMODINIT_FUNC initmapp_md(void)
-{MAPP_NS::MAPP::MD::init_module();}
-PyMODINIT_FUNC initmapp_dmd(void)
-{MAPP_NS::MAPP::DMD::init_module();}
-*/
+
 void MAPP::init_module(void)
 {
     int mpi_initialized;

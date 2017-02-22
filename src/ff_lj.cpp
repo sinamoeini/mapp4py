@@ -95,30 +95,31 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
         Py_RETURN_NONE;
     };
     
-    tp_methods.ml_doc=R"---(ff_lj(eps,sigma,r_c,shift=False)
+    tp_methods.ml_doc=R"---(
+    ff_lj(eps,sigma,r_c,shift=False)
     
-Lennard-Jones potential
+    Lennard-Jones potential
 
-.. math::
-    U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
-    \left\{\begin{array}{ll}
-    4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<{r_c}_{\alpha\beta}\\
+    .. math::
+        U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
+        \left\{\begin{array}{ll}
+        4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<{r_c}_{\alpha\beta}\\
         0 &r_{ij}>{r_c}_{\alpha\beta}
-    \end{array}\right.
+        \end{array}\right.
     
-Parameters
-----------
-eps: array_like
-    :math:`\epsilon`
+    Parameters
+    ----------
+    eps : array_like
+            :math:`\epsilon`
         
-sigma: array_like
-    :math:`\sigma`
+    sigma : array_like
+            :math:`\sigma`
         
-r_c: array_like
-    :math:`r_c`
+    r_c : array_like
+            :math:`r_c`
         
-shift: bool
-    shift the tail if set to True
+    shift : bool
+            shift the tail if set to True
 )---";
 
 }

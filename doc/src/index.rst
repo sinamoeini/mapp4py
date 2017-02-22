@@ -10,6 +10,19 @@ MAPP's documentation!
 :Last Reviewed: 2017-02-14
 
 
+
+
+.. automodule:: mapp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: mapp.md
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 .. toctree::
    :maxdepth: 2
    
@@ -20,11 +33,6 @@ MAPP's documentation!
    min
    ff
    io
-
-.. automodule:: mapp
-
-.. automodule:: mapp.md
-   :members:
 
 Indices and tables
 ==================

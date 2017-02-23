@@ -1,6 +1,0 @@
-mapp.md.atoms.ff_lj
-===================
-
-.. currentmodule:: mapp.md
-
-.. automethod:: atoms.ff_lj

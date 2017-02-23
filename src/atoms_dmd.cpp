@@ -92,7 +92,6 @@ PyTypeObject AtomsDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 void AtomsDMD::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.atoms";
-    TypeObject.tp_doc="I will add doc here";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -107,7 +106,13 @@ void AtomsDMD::setup_tp()
     setup_tp_methods();
     TypeObject.tp_methods=methods;
     
-    //TypeObject.tp_base=&Atoms::TypeObject;
+    TypeObject.tp_doc=R"---(
+    atoms()
+    
+    Container class for system configuration and force field.
+
+    
+    )---";
 }
 /*--------------------------------------------*/
 PyGetSetDef AtomsDMD::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};

@@ -14,6 +14,7 @@ MAPP's documentation!
    
    intro
    start
+   perf_sim
    md
    dmd
    min

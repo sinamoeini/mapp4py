@@ -3,4 +3,7 @@
  Diffusive Molecular Dynamics
 ******************************
 
-EMPTY!
+.. toctree::
+   :maxdepth: 2
+
+   int_quad_hg

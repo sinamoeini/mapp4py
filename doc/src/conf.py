@@ -28,7 +28,7 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.imgmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
               'matplotlib.sphinxext.plot_directive']
@@ -49,8 +49,6 @@ numpydoc_class_members_toctree = False
 
 # The master toctree document.
 master_doc = 'index'
-
-#numpydoc_show_class_members = False
 
 # General information about the project.
 project = u'MAPP'
@@ -119,9 +117,6 @@ import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
 html_theme_options = {
     'sticky_navigation': False,  # Set to False to disable the sticky nav while scrolling.
     'logo_only': True,  # if we have a html_logo below, this shows /only/ the logo with no title text
@@ -213,7 +208,7 @@ html_static_path = ['__static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'MAPPdoc'
+htmlhelp_basename = 'MAPP'
 
 # -- Options for LaTeX output ---------------------------------------------
 

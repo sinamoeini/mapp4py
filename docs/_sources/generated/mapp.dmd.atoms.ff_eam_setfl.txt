@@ -1,6 +1,0 @@
-mapp.dmd.atoms.ff_eam_setfl
-===========================
-
-.. currentmodule:: mapp.dmd
-
-.. automethod:: atoms.ff_eam_setfl

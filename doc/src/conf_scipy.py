@@ -113,16 +113,25 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import sphinx_rtd_theme
-html_theme = 'sphinx_rtd_theme'
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
+if not os.path.isdir(themedir):
+    raise RuntimeError("Get the scipy-sphinx-theme first, "
+                       "via git submodule init && git submodule update")
+
+html_theme = 'scipy'
+html_theme_path = [themedir]
 
 html_theme_options = {
-    'sticky_navigation': False,  # Set to False to disable the sticky nav while scrolling.
-    'logo_only': True,  # if we have a html_logo below, this shows /only/ the logo with no title text
-    'display_version': False
-}
+        "edit_link": False,
+        "sidebar": "left",
+        "scipy_org_logo": False,
+        "rootlinks": []}
 
+html_sidebars = {'index': 'indexsidebar.html'}
+dditional_pages = {
+    'index': 'indexcontent.html',
+}
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
 

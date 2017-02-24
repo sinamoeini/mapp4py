@@ -4,3 +4,4 @@ MAPP
 build
 doc/src/generated
 doc/build
+doc/scipy-sphinx-theme

@@ -695,15 +695,6 @@ void ForceFieldEAMDMD::init()
     cv_ptr=new Vec<type0>(atoms,1);
     dE_ptr=new Vec<type0>(atoms,c_dim);
     ddE_ptr=new Vec<type0>(atoms,c_dim);
-    
-    vec0=new Vec<type0>(atoms,c_dim);
-    vec1=new Vec<type0>(atoms,1);
-    vec2=new Vec<type0>(atoms,c_dim);
-    vec3=new Vec<type0>(atoms,c_dim);
-    
-    type0* mu=mu_ptr->begin();
-    const int n=atoms->natms*c_dim;
-    for(int i=0;i<n;i++) mu[i]=0.0;
 }
 /*--------------------------------------------
  fin
@@ -716,12 +707,6 @@ void ForceFieldEAMDMD::fin()
     Memory::dealloc(drho_phi_dalpha);
     max_pairs=0;
     
-    Memory::dealloc(M_IJ);
-    
-    delete vec3;
-    delete vec2;
-    delete vec1;
-    delete vec0;
 
     delete dE_ptr;
     delete ddE_ptr;
@@ -731,12 +716,35 @@ void ForceFieldEAMDMD::fin()
     mu_ptr=dE_ptr=ddE_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
 }
 /*--------------------------------------------
+ create the sparse matrices
+ --------------------------------------------*/
+void ForceFieldEAMDMD::init_static()
+{
+    Memory::alloc(M_IJ,3*neighbor_dmd->no_pairs_2nd);
+    vec0=new Vec<type0>(atoms,c_dim);
+    vec1=new Vec<type0>(atoms,1);
+    vec2=new Vec<type0>(atoms,c_dim);
+    vec3=new Vec<type0>(atoms,c_dim);
+}
+/*--------------------------------------------
+ create the sparse matrices
+ --------------------------------------------*/
+void ForceFieldEAMDMD::fin_static()
+{
+    
+    delete vec3;
+    delete vec2;
+    delete vec1;
+    delete vec0;
+    Memory::dealloc(M_IJ);
+}
+/*--------------------------------------------
  set the temperature in the simulation
  --------------------------------------------*/
 void ForceFieldEAMDMD::set_temp(type0 T)
 {
-    type0 kb=8.617332478e-5;
-    type0 hbar=6.5821192815e-16;
+    type0 kb=atoms->kB;
+    type0 hbar=atoms->h;
     type0 mass;
     type0 deb_l;
     
@@ -1014,21 +1022,6 @@ void ForceFieldEAMDMD::calc_mu()
         }
     }
     dynamic->update(mu_ptr);
-}
-/*--------------------------------------------
- create the sparse matrices
- --------------------------------------------*/
-void ForceFieldEAMDMD::init_static()
-{
-    delete [] M_IJ;
-    
-    int* neighbor_list_size_2nd=neighbor_dmd->neighbor_list_size_2nd;
-    size_t M_N_sz_sz=0;
-    const int n=atoms->natms*c_dim;
-    for(int i=0;i<n;i++)
-        M_N_sz_sz+=neighbor_list_size_2nd[i];
-    
-    Memory::alloc(M_IJ,3*M_N_sz_sz);
 }
 /*--------------------------------------------
  create the sparse matrices

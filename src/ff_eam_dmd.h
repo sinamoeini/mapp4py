@@ -77,6 +77,7 @@ namespace MAPP_NS
         
         void operator()(Vec<type0>*,Vec<type0>*);
         void init_static();
+        void fin_static();
         type0 update_J(type0,type0*,type0*);
         
         static void ml_new(PyMethodDef&,PyMethodDef&,PyMethodDef&);

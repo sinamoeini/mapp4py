@@ -22,10 +22,17 @@ namespace MAPP_NS
         void init();
         void fin();
         
+        void init_static();
+        void fin_static();
+        
         int** neighbor_list_2nd;
         int* neighbor_list_size_2nd;
         int neighbor_list_size_size_2nd;
         
+        size_t no_pairs_2nd;
+        
+        void mark_redndnt_ph(byte*);
+        void rename_atoms(int*);
     };
 }
 #endif

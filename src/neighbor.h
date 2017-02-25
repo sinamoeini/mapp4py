@@ -35,8 +35,8 @@ namespace MAPP_NS
         
         void print_stats();
         
-        void mark_redndnt_ph(byte*);
-        void rename_atoms(int*);
+        virtual void mark_redndnt_ph(byte*)=0;
+        virtual void rename_atoms(int*)=0;
     };
 }
 

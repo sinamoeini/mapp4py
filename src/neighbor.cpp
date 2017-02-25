@@ -57,28 +57,6 @@ void Neighbor::fin()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Neighbor::mark_redndnt_ph(byte* mark)
-{
-    int natms=atoms->natms;
-    int natms_ph=atoms->natms_ph;
-    memset(mark,'0',natms_ph);
-    for(int iatm=0;iatm<neighbor_list_size_size;iatm++)
-        for(int j=0;j<neighbor_list_size[iatm];j++)
-            if(neighbor_list[iatm][j]>=natms)
-                mark[neighbor_list[iatm][j]-natms]='1';
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void Neighbor::rename_atoms(int* old_2_new)
-{
-    for(int iatm=0;iatm<neighbor_list_size_size;iatm++)
-        for(int j=0;j<neighbor_list_size[iatm];j++)
-            neighbor_list[iatm][j]=old_2_new[neighbor_list[iatm][j]];
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 /*
 template<const int N,const int D,const int B>
 class A

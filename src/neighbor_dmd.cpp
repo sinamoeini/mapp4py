@@ -23,7 +23,8 @@ neighbor_list_2nd(NULL),
 neighbor_list_size_2nd(NULL),
 neighbor_list_size_size_2nd(0),
 scl(__atoms->xi[__atoms->N-1]),
-atoms_dmd(__atoms)
+atoms_dmd(__atoms),
+no_pairs_2nd(0)
 {
 }
 /*--------------------------------------------
@@ -31,6 +32,29 @@ atoms_dmd(__atoms)
  --------------------------------------------*/
 NeighborDMD::~NeighborDMD()
 {
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void NeighborDMD::mark_redndnt_ph(byte* mark)
+{
+    const int c_dim=c_vec->dim;
+    const int n=c_dim*atoms->natms;
+    memset(mark,'0',atoms->natms_ph);
+    for(int i=0;i<neighbor_list_size_size;i++)
+        for(int j=0;j<neighbor_list_size[i];j++)
+            if(neighbor_list[i][j]>=n)
+                mark[(neighbor_list[i][j]-n)/c_dim]='1';
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void NeighborDMD::rename_atoms(int* old_2_new)
+{
+    const int c_dim=c_vec->dim;
+    for(int i=0;i<neighbor_list_size_size;i++)
+        for(int j=0;j<neighbor_list_size[i];j++)
+            neighbor_list[i][j]=old_2_new[neighbor_list[i][j]/c_dim]+(neighbor_list[i][j]%c_dim);
 }
 /*--------------------------------------------
  initiation before DMD
@@ -94,8 +118,6 @@ void NeighborDMD::create_list(bool box_change)
     const type0* c=c_vec->begin();
     const type0* x=atoms->x->begin();
     const type0* alpha=atoms_dmd->alpha->begin();
-    const int x_dim=atoms->x->dim;
-    
 
     
     int** tmp_neigh_list;
@@ -124,10 +146,10 @@ void NeighborDMD::create_list(bool box_change)
     if(pair_wise)
     {
         cell->DO(box_change,[](int){},
-        [&tmp_neigh_list,&tmp_neigh_list_sz,&elem_vec,&x,&alpha,&x_dim,&c,&c_dim,this](int i,int j)
+        [&tmp_neigh_list,&tmp_neigh_list_sz,&elem_vec,&x,&alpha,&c,&c_dim,this](int i,int j)
         {
             if(i>=j) return;
-            type0 r=sqrt(Algebra::RSQ<__dim__>(x+i*x_dim,x+j*x_dim));
+            type0 r=sqrt(Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__));
             type0 const * c_i=c+i*c_dim;
             type0 const * c_j=c+j*c_dim;
             type0 const * alpha_i=alpha+i*c_dim;
@@ -145,10 +167,10 @@ void NeighborDMD::create_list(bool box_change)
     else
     {
         cell->DO(box_change,[](int){},
-        [&tmp_neigh_list,&tmp_neigh_list_sz,&elem_vec,&x,&alpha,&x_dim,&c,&c_dim,this](int i,int j)
+        [&tmp_neigh_list,&tmp_neigh_list_sz,&elem_vec,&x,&alpha,&c,&c_dim,this](int i,int j)
         {
             if(i==j) return;
-            type0 r=sqrt(Algebra::RSQ<__dim__>(x+i*x_dim,x+j*x_dim));
+            type0 r=sqrt(Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__));
             type0 const * c_i=c+i*c_dim;
             type0 const * c_j=c+j*c_dim;
             const elem_type* elem_i=elem_vec+i*c_dim;
@@ -170,78 +192,68 @@ void NeighborDMD::create_list(bool box_change)
     no_neigh_lists++;
 }
 /*--------------------------------------------
+ initiation before DMD
+ --------------------------------------------*/
+void NeighborDMD::init_static()
+{
+    no_pairs_2nd=0;
+}
+/*--------------------------------------------
+ finalize DMD
+ --------------------------------------------*/
+void NeighborDMD::fin_static()
+{
+    
+    if(neighbor_list_size_size_2nd)
+    {
+        for(int i=0;i<neighbor_list_size_size_2nd;i++)
+            delete [] neighbor_list_2nd[i];
+        delete [] neighbor_list_2nd;
+        delete [] neighbor_list_size_2nd;
+    }
+    neighbor_list_size_size_2nd=0;
+    neighbor_list_2nd=NULL;
+    neighbor_list_size_2nd=NULL;
+    no_pairs_2nd=0;
+}
+/*--------------------------------------------
  create the neighbopr list
  s_or_x: 0 for x, 1 for s
  --------------------------------------------*/
 void NeighborDMD::create_2nd_list()
 {
-    type0 rsq;
-    int iatm,jatm,icomp,iicomp;
-    const int natms=atoms->natms;    
-    const type0* x=atoms->x->begin();
-    const type0* c=c_vec->begin();
+
     const int c_dim=c_vec->dim;
-    const int x_dim=atoms->x->dim;
+    const int n=atoms->natms*c_dim;
+    const type0* x=atoms->x->begin();
     elem_type* elem_vec=elem->begin();
+    elem_type elem_i;
+    type0 rsq_crd_ielem;
     
-    
-    
-    int** tmp_neigh_list=NULL;
-    Memory::alloc(tmp_neigh_list,c_dim,atoms->natms+atoms->natms_ph);
-    
-    
-    neighbor_list_size_size_2nd=natms*c_dim;
-    Memory::alloc(neighbor_list_2nd,neighbor_list_size_size_2nd);
-    Memory::alloc(neighbor_list_size_2nd,neighbor_list_size_size_2nd);
-    for(int i=0;i<neighbor_list_size_size_2nd;i++)
-        neighbor_list_size_2nd[i]=0;
-    
-    const type0* xi=x;
-    const type0* xj;
-    const type0* ci=c;
-    const type0* cj;
-    const elem_type* ielem=elem_vec;
-    const elem_type* jelem;
-    for(iatm=0;iatm<natms;iatm++,xi+=x_dim,ci+=c_dim,ielem+=c_dim)
+    int* tmp_neigh_list=NULL;
+    Memory::alloc(tmp_neigh_list,atoms->natms+atoms->natms_ph);
+    type0 x_i[__dim__];
+    no_pairs_2nd=0;
+    for(int i=0;i<n;i++)
     {
-        icomp=(__dim__+c_dim)*iatm;
-        iicomp=c_dim*iatm;
-        for(int j=0;j<neighbor_list_size[iatm];j++)
+        elem_i=elem_vec[i];
+        const int neigh_sz=neighbor_list_size[i];
+        int __neigh_sz=0;
+        Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        rsq_crd_ielem=rsq_crd[elem_i];
+        for(int j,__j=0;__j<neigh_sz;__j++)
         {
-            jatm=neighbor_list[iatm][j];
-            xj=x+x_dim*jatm;
-            cj=c+c_dim*jatm;
-            jelem=elem_vec+c_dim*jatm;
-            
-            rsq=Algebra::RSQ<__dim__>(xi,xj);
-
-            for(int ic_dim=0;ic_dim<c_dim;ic_dim++)
-                for(int jc_dim=0;jc_dim<c_dim;jc_dim++)
-                    if(ielem[ic_dim]==jelem[jc_dim]
-                       && ci[ic_dim]>=0.0
-                       && cj[jc_dim]>=0.0
-                       && rsq<rsq_crd[ielem[ic_dim]])
-                    {
-                        tmp_neigh_list[ic_dim][neighbor_list_size_2nd[c_dim*iatm+ic_dim]]=c_dim*jatm+jc_dim;
-                        neighbor_list_size_2nd[c_dim*iatm+ic_dim]++;
-                    }
-            
+            j=neighbor_list[i][__j];
+            if(elem_vec[j]!=elem_i) continue;
+            if(Algebra::RSQ<__dim__>(x_i,x+(j/c_dim))>=rsq_crd_ielem) continue;
+            tmp_neigh_list[__neigh_sz++]=j;
         }
-        
-        for(int ic_dim=0;ic_dim<c_dim;ic_dim++)
-        {
-            neighbor_list_2nd[c_dim*iatm+ic_dim]=NULL;
-            if(neighbor_list_size_2nd[c_dim*iatm+ic_dim])
-            {
-                Memory::alloc(neighbor_list_2nd[iicomp+ic_dim],neighbor_list_size_2nd[c_dim*iatm+ic_dim]);
-                memcpy(neighbor_list_2nd[c_dim*iatm+ic_dim],tmp_neigh_list[ic_dim],neighbor_list_size_2nd[c_dim*iatm+ic_dim]*sizeof(int));
-            }
-
-        }
+        neighbor_list_2nd[i]=new int[__neigh_sz];
+        memcpy(neighbor_list_2nd[i],tmp_neigh_list,__neigh_sz*sizeof(int));
+        neighbor_list_size_2nd[i]=__neigh_sz;
+        no_pairs_2nd+=__neigh_sz;
     }
     
     Memory::dealloc(tmp_neigh_list);
-    
-    no_neigh_lists++;
 }
 

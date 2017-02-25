@@ -16,6 +16,9 @@ namespace MAPP_NS
         void create_list(bool);
         void init();
         void fin();
+        
+        void mark_redndnt_ph(byte*);
+        void rename_atoms(int*);
     };
 }
 #endif

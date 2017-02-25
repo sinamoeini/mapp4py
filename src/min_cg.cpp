@@ -1,21 +1,13 @@
 #include "min_cg.h"
 #include <stdlib.h>
-#include "MAPP.h"
-#include "ff.h"
-#include "ff_md.h"
-#include "thermo_dynamics.h"
-#include "dynamic_md.h"
-#include "atoms_styles.h"
 using namespace MAPP_NS;
-LineSearch* MinCG::ls=NULL;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCG::MinCG(AtomsMD* __atoms,ForceFieldMD* __ff):
-atoms(__atoms),
-ff(__ff),
-world(__atoms->comm.world),
-Min(__atoms,__ff)
+MinCG::MinCG():
+atoms(NULL),
+ff(NULL),
+Min()
 {
 }
 /*--------------------------------------------
@@ -23,6 +15,8 @@ Min(__atoms,__ff)
  --------------------------------------------*/
 MinCG::~MinCG()
 {
+    atoms=NULL;
+    ff=NULL;
 }
 /*--------------------------------------------
  
@@ -76,8 +70,6 @@ void MinCG::init()
     new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
     f0.~VecTens();
     new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
-    
-    if(!ls) ls=new LineSearchBrent();
 }
 /*--------------------------------------------
  finishing minimization
@@ -95,103 +87,14 @@ void MinCG::fin()
  --------------------------------------------*/
 void MinCG::run(int nsteps)
 {
-    init();
-        
-    if(atoms->x_d)
-        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
-    else
-        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]});
-    if(atoms->dof)
-        dynamic->add_xchng(atoms->dof);
+    if(dynamic_cast<LineSearchGoldenSection*>(ls))
+        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
     
-    dynamic->init();
-    force_calc();
-    type0 S[__dim__][__dim__];
+    if(dynamic_cast<LineSearchBrent*>(ls))
+        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
     
-    ThermoDynamics thermo(6,
-    "PE",ff->nrgy_strss[0],
-    "S[0][0]",S[0][0],
-    "S[1][1]",S[1][1],
-    "S[2][2]",S[2][2],
-    "S[1][2]",S[2][1],
-    "S[2][0]",S[2][0],
-    "S[0][1]",S[1][0]);
-    
-    thermo.init();
-    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-    thermo.print(0);
-    
-    type0 e_prev,e_curr=ff->nrgy_strss[0];
-    type0 f0_f0,f_f,f_f0;
-    type0 ratio,alpha;
-    int err=nsteps==0? MIN_F_MAX_ITER:LS_S;
-    h=f;
-    f0_f0=f*f;
-    int istep=0;
-    for(;istep<nsteps && err==LS_S;istep++)
-    {
-        if(f0_f0==0.0)
-        {
-            err=LS_F_GRAD0;
-            continue;
-        }
-        
-        x0=x;
-        f0=f;
-        
-        e_prev=e_curr;
-        
-        
-        f_h=f*h;
-        if(f_h<0.0)
-        {
-            h=f;
-            f_h=f0_f0;
-        }
-        if(affine) prepare_affine_h();
-        err=ls->line_min(this,e_curr,alpha,1);
-        
-        if(err!=LS_S)
-            continue;
-        
-        force_calc();
-        
-        if(e_prev-e_curr<e_tol)
-            err=MIN_S_TOLERANCE;
-        
-        if(istep+1==nsteps)
-            err=MIN_F_MAX_ITER;
-        
-        if((istep+1)%ntally==0)
-        {
-            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-            thermo.print(istep+1);
-        }
-        
-        if(err) continue;
-        
-        f_f=f*f;
-        f_f0=f*f0;
-        
-        ratio=(f_f-f_f0)/(f0_f0);
-        
-        h=ratio*h+f;
-        f0_f0=f_f;
-    }
-    
-    if(istep%ntally)
-    {
-        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-        thermo.print(istep);
-    }
-
-    thermo.fin();
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    fin();
-    
-    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
+    if(dynamic_cast<LineSearchBackTrack*>(ls))
+        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
 /*--------------------------------------------
  
@@ -259,7 +162,7 @@ void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     for(int i=0;i<n;i++)
         max_h_lcl=MAX(max_h_lcl,fabs(hvec[i]));
     
-    MPI_Allreduce(&max_h_lcl,&max_h,1,Vec<type0>::MPI_T,MPI_MAX,world);
+    MPI_Allreduce(&max_h_lcl,&max_h,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     max_a=fabs(max_dx/max_h);
     
 }
@@ -287,14 +190,11 @@ PyObject* MinCG::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<AtomsMD>> f("__init__",{"atoms"});
+    FuncAPI<> f("__init__");
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    AtomsMD::Object* atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob);
-    __self->min=new MinCG(atoms->atoms,atoms->ff);
-    __self->atoms=atoms;
-    Py_INCREF(atoms);
+    __self->min=new MinCG();
     return 0;
 }
 /*--------------------------------------------
@@ -306,7 +206,6 @@ PyObject* MinCG::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
-    __self->atoms=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -317,8 +216,6 @@ void MinCG::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
-    if(__self->atoms) Py_DECREF(__self->atoms);
-    __self->atoms=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -372,10 +269,36 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
-        FuncAPI<int> f("run",{"max_nsteps"});
-        f.logics<0>()[0]=VLogics("ge",0);
+        FuncAPI<OP<AtomsMD>,int> f("run",{"atoms","max_nsteps"});
+        f.logics<1>()[0]=VLogics("ge",0);
         if(f(args,kwds)) return NULL;
-        __self->min->run(f.val<0>());
+        
+        AtomsMD* __atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldMD* __ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
+        try
+        {
+            __self->min->pre_run_chk(__atoms,__ff);
+        }
+        catch(std::string err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
+        __self->min->atoms=__atoms;
+        __self->min->ff=__ff;
+        if(__self->min->ls)
+            __self->min->run(f.val<1>());
+        else
+        {
+            __self->min->ls=new LineSearchBrent();
+            __self->min->run(f.val<1>());
+            delete __self->min->ls;
+            __self->min->ls=NULL;
+        }
+        __self->min->ff=NULL;
+        __self->min->atoms=NULL;
+        
         Py_RETURN_NONE;
     };
 }

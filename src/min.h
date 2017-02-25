@@ -17,18 +17,17 @@ namespace MAPP_NS
         type0 e_tol;
         bool H_dof[__dim__][__dim__];
         int ntally;
+        class LineSearch* ls;
         
-        class Atoms* atoms;
-        class ForceField* ff;
+        void pre_run_chk(Atoms*,ForceField*);
     public:
-        Min(class Atoms*,class ForceField*);
+        Min();
         virtual ~Min();
         
         typedef struct
         {
             PyObject_HEAD
             Min* min;
-            Atoms::Object* atoms;
         }Object;
         
         static PyTypeObject TypeObject;

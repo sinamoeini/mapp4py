@@ -1,22 +1,14 @@
 #include "min_cg_dmd.h"
 #include <stdlib.h>
-#include "MAPP.h"
-#include "ff_dmd.h"
-#include "thermo_dynamics.h"
-#include "dynamic_dmd.h"
-#include "atoms_styles.h"
 using namespace MAPP_NS;
-
-LineSearch* MinCGDMD::ls=NULL;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCGDMD::MinCGDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff):
-atoms(__atoms),
-ff(__ff),
-world(__atoms->comm.world),
+MinCGDMD::MinCGDMD():
+atoms(NULL),
+ff(NULL),
 max_dalpha(0.01),
-Min(__atoms,__ff)
+Min()
 {
 }
 /*--------------------------------------------
@@ -24,6 +16,8 @@ Min(__atoms,__ff)
  --------------------------------------------*/
 MinCGDMD::~MinCGDMD()
 {
+    atoms=NULL;
+    ff=NULL;
 }
 /*--------------------------------------------
  
@@ -79,7 +73,6 @@ void MinCGDMD::init()
     f0.~VecTens();
     new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     
-    if(!ls) ls=new LineSearchBrent();
 }
 /*--------------------------------------------
  finishing minimization
@@ -97,112 +90,14 @@ void MinCGDMD::fin()
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
 {
-
-    init();
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
-    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
-
+    if(dynamic_cast<LineSearchGoldenSection*>(ls))
+        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
     
-    dynamic->init();
-    force_calc();
-    type0 S[__dim__][__dim__];
+    if(dynamic_cast<LineSearchBrent*>(ls))
+        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
     
-    ThermoDynamics thermo(6,
-    "PE",ff->nrgy_strss[0],
-    "S[0][0]",S[0][0],
-    "S[1][1]",S[1][1],
-    "S[2][2]",S[2][2],
-    "S[1][2]",S[2][1],
-    "S[2][0]",S[2][0],
-    "S[0][1]",S[1][0]);
-    
-    thermo.init();
-    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-    thermo.print(0);
-    
-    
-    type0 e_prev,e_curr=ff->nrgy_strss[0];
-    type0 f0_f0,f_f,f_f0;
-    type0 ratio,alpha;
-    int err=nsteps==0? MIN_F_MAX_ITER:LS_S;
-    h=f;
-    f0_f0=f*f;
-    int istep=0;
-    for(;istep<nsteps && err==LS_S;istep++)
-    {
-        if(f0_f0==0.0)
-        {
-            err=LS_F_GRAD0;
-            continue;
-        }
-        
-        x0=x;
-        f0=f;
-        
-        e_prev=e_curr;
-        
-        
-        f_h=f*h;
-        if(f_h<0.0)
-        {
-            h=f;
-            f_h=f0_f0;
-        }
-        if(affine) prepare_affine_h();
-        err=ls->line_min(this,e_curr,alpha,1);
-        
-        if(err!=LS_S)
-            continue;
-        
-        force_calc();
-        
-        if(e_prev-e_curr<e_tol)
-            err=MIN_S_TOLERANCE;
-        
-        if(istep+1==nsteps)
-            err=MIN_F_MAX_ITER;
-        
-        if((istep+1)%ntally==0)
-        {
-            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-            thermo.print(istep+1);
-        }
-        
-        if(err) continue;
-        
-        f_f=f*f;
-        f_f0=f*f0;
-        
-        ratio=(f_f-f_f0)/(f0_f0);
-        
-        h=ratio*h+f;
-        f0_f0=f_f;
-    }
-    
-    if(istep%ntally)
-    {
-        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-        thermo.print(istep);
-    }
-
-    thermo.fin();
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    fin();
-    
-    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
-    /*
-    type0* xx=atoms->x->begin();
-    type0* aa=atoms->alpha->begin();
-    type0* cc=atoms->c->begin();
-    int n=atoms->natms;
-    for(int i=0;i<n;i++)
-        printf("%lf %lf %lf %e %e\n",xx[3*i],xx[3*i+1],xx[3*i+2],aa[i],cc[i]);
-    */
+    if(dynamic_cast<LineSearchBackTrack*>(ls))
+        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
 /*--------------------------------------------
  
@@ -216,7 +111,7 @@ type0 MinCGDMD::F(type0 alpha)
     type0* c_vec=atoms->c->begin();
     for(int i=0;i<n;i++)
         if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,world);
+    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     
     if(chng_box)
         atoms->update_H();
@@ -236,7 +131,7 @@ type0 MinCGDMD::dF(type0 alpha,type0& drev)
     type0* c_vec=atoms->c->begin();
     for(int i=0;i<n;i++)
         if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,world);
+    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     
     if(chng_box)
         atoms->update_H();
@@ -296,7 +191,7 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     type0 max_a_lcl=MIN(fabs(max_dx/max_h_lcl),max_alpha_ratio);
     max_a_lcl=MIN(max_a_lcl,fabs(max_dalpha/max_h_alpha_lcl));
 
-    MPI_Allreduce(&max_a_lcl,&max_a,1,Vec<type0>::MPI_T,MPI_MIN,world);
+    MPI_Allreduce(&max_a_lcl,&max_a,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
     
 }
 /*--------------------------------------------
@@ -322,14 +217,11 @@ PyObject* MinCGDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<AtomsDMD>> f("__init__",{"atoms"});
+    FuncAPI<> f("__init__");
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    AtomsDMD::Object* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob);
-    __self->min=new MinCGDMD(atoms->atoms,atoms->ff);
-    __self->atoms=atoms;
-    Py_INCREF(atoms);
+    __self->min=new MinCGDMD();
     return 0;
 }
 /*--------------------------------------------
@@ -341,7 +233,6 @@ PyObject* MinCGDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
-    __self->atoms=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -352,8 +243,6 @@ void MinCGDMD::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
-    if(__self->atoms) Py_DECREF(__self->atoms);
-    __self->atoms=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -429,10 +318,38 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
-        FuncAPI<int> f("run",{"max_nsteps"});
-        f.logics<0>()[0]=VLogics("ge",0);
+        FuncAPI<OP<AtomsDMD>,int> f("run",{"atoms","max_nsteps"});
+        f.logics<1>()[0]=VLogics("ge",0);
         if(f(args,kwds)) return NULL;
-        __self->min->run(f.val<0>());
+        
+        AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
+        try
+        {
+            __self->min->pre_run_chk(__atoms,__ff);
+        }
+        catch(std::string err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
+        __self->min->atoms=__atoms;
+        __self->min->ff=__ff;
+        
+        if(__self->min->ls)
+            __self->min->run(f.val<1>());
+        else
+        {
+            __self->min->ls=new LineSearchBrent();
+            __self->min->run(f.val<1>());
+            delete __self->min->ls;
+            __self->min->ls=NULL;
+        }
+        
+        __self->min->ff=NULL;
+        __self->min->atoms=NULL;
+        
         Py_RETURN_NONE;
     };
 }

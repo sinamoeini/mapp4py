@@ -16,7 +16,6 @@ namespace MAPP_NS
     protected:
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
-        MPI_Comm& world;
         
         class DynamicMD* dynamic;
         type0 mvv[__nvoigt__];
@@ -43,9 +42,9 @@ namespace MAPP_NS
         void update_x_d();
         void update_x_d_final(type0);
         virtual void change_dt(type0);
-        virtual void dof_consistency(){};
+        virtual void pre_run_chk(AtomsMD*,ForceFieldMD*);
     public:
-        MDNVT(class AtomsMD*,class ForceFieldMD*,type0,type0);
+        MDNVT(type0,type0);
         virtual ~MDNVT();
         void init();
         virtual void run(int);
@@ -55,7 +54,6 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MDNVT* md;
-            AtomsMD::Object* atoms_md;
         }Object;
         
         static PyTypeObject TypeObject;

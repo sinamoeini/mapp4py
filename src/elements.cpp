@@ -133,7 +133,7 @@ elem_type Elements::find(const char* name)
         if(!strcmp(name,names[i]))
             return i;
     
-    throw "internal error: did not find requested element";
+    throw 0;
 }
 /*--------------------------------------------
  find an elemrnt number given its name

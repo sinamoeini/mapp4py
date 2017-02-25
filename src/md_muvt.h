@@ -8,13 +8,15 @@ namespace MAPP_NS
     private:
         int seed;
         type0 mu;
+        std::string gas_elem_name;
         elem_type gas_elem;
         int nevery;
         int nattempts;
     protected:
         void update_x_d__x(type0);
+        void pre_run_chk(AtomsMD*,ForceFieldMD*);
     public:
-        MDMuVT(class AtomsMD*,class ForceFieldMD*,type0,type0,type0,elem_type,int);
+        MDMuVT(type0,type0,type0,std::string,int);
         ~MDMuVT();
         void run(int);
         
@@ -23,7 +25,6 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MDMuVT* md;
-            AtomsMD::Object* atoms_md;
         }Object;
         
         static PyTypeObject TypeObject;

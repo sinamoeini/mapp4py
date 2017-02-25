@@ -51,9 +51,9 @@ namespace MAPP_NS
         void update_x_d__x__x_d(type0);
         void update_V_H();
         void change_dt(type0);
-        void dof_consistency();
+        void pre_run_chk(AtomsMD*,ForceFieldMD*);
     public:
-        MDNST(class AtomsMD*,class ForceFieldMD*,type0(&)[__dim__][__dim__],type0,type0);
+        MDNST(type0(&)[__dim__][__dim__],type0,type0);
         virtual ~MDNST();
         
         void init();
@@ -67,7 +67,6 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MDNST* md;
-            AtomsMD::Object* atoms_md;
         }Object;
     
         

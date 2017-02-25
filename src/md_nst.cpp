@@ -11,9 +11,8 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-MDNST::MDNST(AtomsMD* __atoms,ForceFieldMD* __ff,
-type0(&__S)[__dim__][__dim__],type0 __T,type0 __dt):
-MDNVT(__atoms,__ff,__T,__dt),
+MDNST::MDNST(type0(&__S)[__dim__][__dim__],type0 __T,type0 __dt):
+MDNVT(__T,__dt),
 thermo_baro(__dt/2.0,1000.0*__dt,3,1),
 nreset(0),
 MLT0{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
@@ -145,7 +144,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
         x_d+=__dim__;
         ++elem;
     }
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
@@ -180,29 +179,45 @@ void MDNST::update_x_d(type0 fac_x_d)
         x_d+=__dim__;
         ++elem;
     }
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
- 
+ pre run check it throw excepctions
  --------------------------------------------*/
-void MDNST::dof_consistency()
+void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
 {
-    if(!atoms->dof) return;
-    bool* dof=atoms->dof->begin();
-    int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
-    for(int i=0;i<atoms->natms;i++,dof+=__dim__)
-        Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
+    //check if configuration is loaded
+    if(!atoms)
+        throw std::string("cannot start md without initial conditions");
     
-    int __dof[__dim__]{[0 ... __dim__-1]=0};
-    MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,world);
-    for(int i=0;i<__dim__;i++)
-        for(int j=i;j<__dim__;j++)
-            if(S_dof[i][j] && __dof[i])
-                throw "cannot impose stress component ["+TOSTRING(i)+"]["+TOSTRING(j)
-                +"] while any of the atoms do not have degree freedom in "+TOSTRING(i)
-                +" direction";
+    //check if force field is loaded
+    if(!ff)
+        throw std::string("cannot start md without governing equations (force field)");
     
+    //check to see if the H_dof components are consistent with stoms->dof
+    if(atoms->dof)
+    {
+        bool* dof=atoms->dof->begin();
+        int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
+        for(int i=0;i<atoms->natms;i++,dof+=__dim__)
+            Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
+        
+        int __dof[__dim__]{[0 ... __dim__-1]=0};
+        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
+        std::string err_msg=std::string();
+        for(int i=0;i<__dim__;i++)
+            for(int j=i;j<__dim__;j++)
+                if(S_dof[i][j] && __dof[i])
+                {
+                    if(!err_msg.empty()) err_msg+="\n";
+                    err_msg+="cannot impose stress component ["+TOSTRING(i)+"]["+TOSTRING(j)
+                    +"] while any of the atoms do not have degree freedom in "+TOSTRING(i)
+                    +" direction";
+                }
+        
+        if(!err_msg.empty()) throw err_msg;
+    }
 }
 /*--------------------------------------------
  
@@ -239,7 +254,7 @@ void MDNST::init()
     });
 }
 /*--------------------------------------------
-     
+ 
 --------------------------------------------*/
 void MDNST::fin()
 {}
@@ -409,17 +424,14 @@ PyObject* MDNST::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MDNST::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<AtomsMD>,symm<type0[__dim__][__dim__]>,type0,type0> f("__init__",{"atoms_md","S","T","dt"});
+    FuncAPI<symm<type0[__dim__][__dim__]>,type0,type0> f("__init__",{"S","T","dt"});
     
+    f.logics<1>()[0]=VLogics("gt",0.0);
     f.logics<2>()[0]=VLogics("gt",0.0);
-    f.logics<3>()[0]=VLogics("gt",0.0);
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    AtomsMD::Object* atoms_md=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob);
-    __self->md=new MDNST(atoms_md->atoms,atoms_md->ff,f.val<1>(),f.val<2>(),f.val<3>());
-    __self->atoms_md=atoms_md;
-    Py_INCREF(atoms_md);
+    __self->md=new MDNST(f.val<0>(),f.val<1>(),f.val<2>());
     return 0;
 }
 /*--------------------------------------------
@@ -431,7 +443,6 @@ PyObject* MDNST::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->md=NULL;
-    __self->atoms_md=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -442,8 +453,6 @@ void MDNST::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->md;
     __self->md=NULL;
-    if(__self->atoms_md) Py_DECREF(__self->atoms_md);
-    __self->atoms_md=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

@@ -16,10 +16,9 @@ const char* Min::err_msgs[]=
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-Min::Min(Atoms* __atoms,ForceField* __ff):
-atoms(__atoms),
-ff(__ff),
+Min::Min():
 H_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
+ls(NULL),
 chng_box(false),
 e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 affine(false),
@@ -32,6 +31,43 @@ ntally(1000)
  --------------------------------------------*/
 Min::~Min()
 {
+}
+/*--------------------------------------------
+ pre run check it throw excepctions
+ --------------------------------------------*/
+void Min::pre_run_chk(Atoms* atoms,ForceField* ff)
+{
+    //check if configuration is loaded
+    if(!atoms)
+        throw std::string("cannot start minimization without initial conditions");
+    
+    //check if force field is loaded
+    if(!ff)
+        throw std::string("cannot start minimization without governing equations (force field)");
+    
+    //check to see if the H_dof components are consistent with stoms->dof
+    if(chng_box && atoms->dof)
+    {
+        bool* dof=atoms->dof->begin();
+        int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
+        for(int i=0;i<atoms->natms;i++,dof+=__dim__)
+            Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
+        
+        int __dof[__dim__]{[0 ... __dim__-1]=0};
+        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
+        std::string err_msg=std::string();
+        for(int i=0;i<__dim__;i++)
+            for(int j=i;j<__dim__;j++)
+                if(H_dof[i][j] && __dof[i])
+                {
+                    if(!err_msg.empty()) err_msg+="\n";
+                    err_msg+="cannot impose stress component ["+TOSTRING(i)+"]["+TOSTRING(j)
+                    +"] while any of the atoms do not have degree freedom in "+TOSTRING(i)
+                    +" direction";
+                }
+        
+        if(!err_msg.empty()) throw err_msg;
+    }
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -47,14 +83,11 @@ PyObject* Min::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int Min::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<Atoms>> f("__init__",{"atoms"});
+    FuncAPI<> f("__init__");
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    Atoms::Object* atoms=reinterpret_cast<Atoms::Object*>(f.val<0>().ob);
-    __self->min=new Min(atoms->atoms,atoms->ff);
-    __self->atoms=atoms;
-    Py_INCREF(atoms);
+    __self->min=new Min();
     return 0;
 }
 /*--------------------------------------------
@@ -66,7 +99,6 @@ PyObject* Min::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
-    __self->atoms=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -77,8 +109,6 @@ void Min::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
-    if(__self->atoms) Py_DECREF(__self->atoms);
-    __self->atoms=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

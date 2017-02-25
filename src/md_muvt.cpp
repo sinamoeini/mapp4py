@@ -8,16 +8,14 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-MDMuVT::MDMuVT(AtomsMD* __atoms,ForceFieldMD* __ff,
-type0 __mu,type0 __T,type0 __dt,elem_type __gas_elem,int __seed):
-MDNVT(__atoms,__ff,__T,__dt),
+MDMuVT::MDMuVT(type0 __mu,type0 __T,type0 __dt,std::string __gas_elem_name,int __seed):
+MDNVT(__T,__dt),
 seed(__seed),
 mu(__mu),
 nevery(1000),
 nattempts(1000),
-gas_elem(__gas_elem)
+gas_elem_name(__gas_elem_name)
 {
-    
 }
 /*--------------------------------------------
  
@@ -52,6 +50,30 @@ void MDMuVT::update_x_d__x(type0 fac_x_d)
         x+=__dim__;
         ++elem;
     }
+}
+/*--------------------------------------------
+ pre run check it throw excepctions
+ --------------------------------------------*/
+void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
+{
+    //check if configuration is loaded
+    if(!atoms)
+        throw std::string("cannot start md without initial conditions");
+    
+    //check if force field is loaded
+    if(!ff)
+        throw std::string("cannot start md without governing equations (force field)");
+    
+    elem_type ielem;
+    try
+    {
+        ielem=atoms->elements->find(gas_elem_name.c_str());
+    }
+    catch(int)
+    {
+        throw "atom "+gas_elem_name+" is not assigned to configuration";
+    }
+    
 }
 /*--------------------------------------------
  
@@ -158,31 +180,15 @@ PyObject* MDMuVT::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MDMuVT::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<AtomsMD>,type0,type0,type0,std::string,int> f("__init__",{"atoms_md","mu","T","dt","gas_element","seed"});
+    FuncAPI<type0,type0,type0,std::string,int> f("__init__",{"mu","T","dt","gas_element","seed"});
     
+    f.logics<1>()[0]=VLogics("gt",0.0);
     f.logics<2>()[0]=VLogics("gt",0.0);
-    f.logics<3>()[0]=VLogics("gt",0.0);
-    f.logics<5>()[0]=VLogics("gt",0);
+    f.logics<4>()[0]=VLogics("gt",0);
     if(f(args,kwds)==-1) return -1;
     
     Object* __self=reinterpret_cast<Object*>(self);
-    AtomsMD::Object* atoms_md=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob);
-    
-    elem_type ielem;
-    try
-    {
-        ielem=atoms_md->atoms->elements->find(f.val<4>().c_str());
-    }
-    catch(const char* err_msg)
-    {
-        PyErr_SetString(PyExc_TypeError,err_msg);
-        return -1;
-    }
-    
-    
-    __self->md=new MDMuVT(atoms_md->atoms,atoms_md->ff,f.val<1>(),f.val<2>(),f.val<3>(),ielem,f.val<5>());
-    __self->atoms_md=atoms_md;
-    Py_INCREF(atoms_md);
+    __self->md=new MDMuVT(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>());
     return 0;
 }
 /*--------------------------------------------
@@ -194,7 +200,6 @@ PyObject* MDMuVT::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->md=NULL;
-    __self->atoms_md=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -205,8 +210,6 @@ void MDMuVT::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->md;
     __self->md=NULL;
-    if(__self->atoms_md) Py_DECREF(__self->atoms_md);
-    __self->atoms_md=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -324,19 +327,7 @@ void MDMuVT::getset_gas_element(PyGetSetDef& getset)
         VarAPI<std::string> gas_element("gas_element");
         int ichk=gas_element.set(op);
         if(ichk==-1) return -1;
-        elem_type ielem;
-        try
-        {
-            ielem=reinterpret_cast<Object*>(self)->md->atoms->elements->find(gas_element.val.c_str());
-        }
-        catch(const char* err_msg)
-        {
-            PyErr_SetString(PyExc_TypeError,err_msg);
-            return -1;
-        }
-        
-        
-        reinterpret_cast<Object*>(self)->md->gas_elem=ielem;
+        reinterpret_cast<Object*>(self)->md->gas_elem_name=gas_element.val;
         return 0;
     };
 }

@@ -11,12 +11,10 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-MDNVT::MDNVT(AtomsMD* __atoms,ForceFieldMD* __ff,
-type0 __T,type0 __dt):
+MDNVT::MDNVT(type0 __T,type0 __dt):
 dynamic(NULL),
-atoms(__atoms),
-ff(__ff),
-world(__atoms->comm.world),
+atoms(NULL),
+ff(NULL),
 dt(__dt),
 T(__T),
 dt2(__dt/2.0),
@@ -101,7 +99,7 @@ void MDNVT::update_x_d()
             ++elem;
         }
     
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
@@ -152,7 +150,7 @@ void MDNVT::update_x_d(type0 fac_x_d)
             ++elem;
         }
     
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
 }
 /*--------------------------------------------
@@ -202,8 +200,21 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
         x_d+=__dim__;
         ++elem;
     }
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+}
+/*--------------------------------------------
+ pre run check it throw excepctions
+ --------------------------------------------*/
+void MDNVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
+{
+    //check if configuration is loaded
+    if(!atoms)
+        throw std::string("cannot start md without initial conditions");
+    
+    //check if force field is loaded
+    if(!ff)
+        throw std::string("cannot start md without governing equations (force field)");
 }
 /*--------------------------------------------
  
@@ -223,7 +234,7 @@ void MDNVT::init()
         for(int i=0;i<n;i++)
             if(!dof[i]) ndof_red_lcl++;
         int ndof_red;
-        MPI_Allreduce(&ndof_red_lcl,&ndof_red,1,MPI_INT,MPI_SUM,world);
+        MPI_Allreduce(&ndof_red_lcl,&ndof_red,1,MPI_INT,MPI_SUM,atoms->world);
         ndof_part-=ndof_red;
     }
     
@@ -246,7 +257,7 @@ void MDNVT::init()
             ++elem;
         }
         
-        MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+        MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
         T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
     }
     else
@@ -315,12 +326,6 @@ void MDNVT::run(int nsteps)
         update_x_d__x__x_d(fac_x_d);
         
         
-        /*
-        update_x_d(fac_x_d);
-        update_x();
-        update_x_d();
-        */
-        
         // particle thermostat
         fac_x_d=fac=thermo_part(T_part/T,ndof_part);
         fac*=fac;
@@ -361,17 +366,14 @@ PyObject* MDNVT::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MDNVT::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<OP<AtomsMD>,type0,type0> f("__init__",{"atoms_md","T","dt"});
+    FuncAPI<type0,type0> f("__init__",{"T","dt"});
     
+    f.logics<0>()[0]=VLogics("gt",0.0);
     f.logics<1>()[0]=VLogics("gt",0.0);
-    f.logics<2>()[0]=VLogics("gt",0.0);
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    AtomsMD::Object* atoms_md=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob);
-    __self->md=new MDNVT(atoms_md->atoms,atoms_md->ff,f.val<1>(),f.val<2>());
-    __self->atoms_md=atoms_md;
-    Py_INCREF(atoms_md);
+    __self->md=new MDNVT(f.val<0>(),f.val<1>());
     return 0;
 }
 /*--------------------------------------------
@@ -383,7 +385,6 @@ PyObject* MDNVT::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->md=NULL;
-    __self->atoms_md=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -394,8 +395,6 @@ void MDNVT::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->md;
     __self->md=NULL;
-    if(__self->atoms_md) Py_DECREF(__self->atoms_md);
-    __self->atoms_md=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -604,21 +603,29 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
-        FuncAPI<int> f("run",{"nsteps"});
-        f.logics<0>()[0]=VLogics("ge",0);
+        FuncAPI<OP<AtomsMD>,int> f("run",{"atoms","nsteps"});
+        f.logics<1>()[0]=VLogics("ge",0);
         if(f(args,kwds)) return NULL;
         
+        AtomsMD* __atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldMD* __ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
         try
         {
-            __self->md->dof_consistency();
+            __self->md->pre_run_chk(__atoms,__ff);
         }
-        catch (std::string& err_msg)
+        catch(std::string err_msg)
         {
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
             return NULL;
         }
         
-        __self->md->run(f.val<0>());
+        __self->md->atoms=__atoms;
+        __self->md->ff=__ff;
+        
+        __self->md->run(f.val<1>());
+        
+        __self->md->ff=NULL;
+        __self->md->atoms=NULL;
         
         Py_RETURN_NONE;
     };

@@ -1,5 +1,6 @@
 #ifndef __MAPP__ls__
 #define __MAPP__ls__
+#include <Python.h>
 #include "global.h"
 #include <limits>
 #include <stdio.h>
@@ -42,10 +43,129 @@ namespace MAPP_NS
         
         LineSearch();
         virtual ~LineSearch();
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+namespace MAPP_NS
+{
+    class LineSearchGoldenSection:public LineSearch
+    {
+    private:
+        type0 tol;
+        int max_iter;
+        bool brack;
+    protected:
+    public:
+        LineSearchGoldenSection();
+        ~LineSearchGoldenSection();
+        template<class Func>
+        int min(Func*,type0&,type0&,int);
         
-        virtual int line_min(class MinCG*,type0&,type0&,int)=0;
-        virtual int line_min(class MinCGDMD*,type0&,type0&,int)=0;
+        typedef struct
+        {
+            PyObject_HEAD
+            LineSearchGoldenSection* ls;
+        }Object;
         
+        static PyTypeObject TypeObject;
+        static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
+        static int __init__(PyObject*, PyObject*,PyObject*);
+        static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
+        static void __dealloc__(PyObject*);
+        
+        static PyMethodDef methods[];
+        static void setup_tp_methods();
+        
+        static PyGetSetDef getset[];
+        static void setup_tp_getset();
+        static void getset_bracket(PyGetSetDef&);
+        static void getset_max_iter(PyGetSetDef&);
+        static void getset_tol(PyGetSetDef&);
+        static void setup_tp();
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+namespace MAPP_NS
+{
+    class LineSearchBrent:public LineSearch
+    {
+    private:
+        type0 tol,zeps;
+        int max_iter;
+        bool brack;
+    protected:
+    public:
+        LineSearchBrent();
+        ~LineSearchBrent();
+        template<class Func>
+        int min(Func*,type0&,type0&,int);
+        
+        typedef struct
+        {
+            PyObject_HEAD
+            LineSearchBrent* ls;
+        }Object;
+        
+        static PyTypeObject TypeObject;
+        static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
+        static int __init__(PyObject*, PyObject*,PyObject*);
+        static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
+        static void __dealloc__(PyObject*);
+        
+        static PyMethodDef methods[];
+        static void setup_tp_methods();
+        
+        static PyGetSetDef getset[];
+        static void setup_tp_getset();
+        static void getset_bracket(PyGetSetDef&);
+        static void getset_max_iter(PyGetSetDef&);
+        static void getset_tol(PyGetSetDef&);
+        static void getset_zeps(PyGetSetDef&);
+        static void setup_tp();
+    };
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+namespace MAPP_NS
+{
+    class LineSearchBackTrack:public LineSearch
+    {
+    private:
+    protected:
+        type0 c,rho,min_alpha;
+    public:
+        LineSearchBackTrack();
+        ~LineSearchBackTrack();
+        template<class Func>
+        int min(Func*,type0&,type0&,int);
+        
+        typedef struct
+        {
+            PyObject_HEAD
+            LineSearchBackTrack* ls;
+        }Object;
+        
+        static PyTypeObject TypeObject;
+        static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
+        static int __init__(PyObject*, PyObject*,PyObject*);
+        static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
+        static void __dealloc__(PyObject*);
+        
+        static PyMethodDef methods[];
+        static void setup_tp_methods();
+        
+        static PyGetSetDef getset[];
+        static void setup_tp_getset();
+        static void getset_rho(PyGetSetDef&);
+        static void getset_c(PyGetSetDef&);
+        static void getset_min_alpha(PyGetSetDef&);
+        static void setup_tp();
     };
 }
 /*--------------------------------------------
@@ -173,27 +293,6 @@ type0& b,type0& c,type0& fa,type0& fb,type0& fc)
     }
     
     return B_S;
-}
-/*------------------------------------------------------------------------------------------------------------------------------------
- 
- ------------------------------------------------------------------------------------------------------------------------------------*/
-namespace MAPP_NS
-{
-    class LineSearchGoldenSection : public LineSearch
-    {
-    private:
-        type0 tol;
-        type0 max_iter;
-        bool brack;
-    protected:
-    public:
-        LineSearchGoldenSection();
-        ~LineSearchGoldenSection();
-        template<class Func>
-        int min(Func*,type0&,type0&,int);
-        int line_min(class MinCG*,type0&,type0&,int);
-        int line_min(class MinCGDMD*,type0&,type0&,int);
-    };
 }
 /*--------------------------------------------
  minimize line
@@ -379,28 +478,6 @@ int LineSearchGoldenSection::min(Func* func,type0& nrgy
 
     prev_val=-dfa*alpha;
     return LS_S;
-}
-/*------------------------------------------------------------------------------------------------------------------------------------
- 
- ------------------------------------------------------------------------------------------------------------------------------------*/
-namespace MAPP_NS
-{
-    class LineSearchBrent : public LineSearch
-    {
-    private:
-        type0 tol,zeps;
-        int max_iter;
-        bool brack;
-    protected:
-    public:
-        LineSearchBrent();
-        ~LineSearchBrent();
-        template<class Func>
-        int min(Func*,type0&,type0&,int);
-        int line_min(class MinCG*,type0&,type0&,int);
-        int line_min(class MinCGDMD*,type0&,type0&,int);
-    };
-    
 }
 /*--------------------------------------------
  minimize line
@@ -590,26 +667,6 @@ int LineSearchBrent::min(Func* func,type0& nrgy
     
     prev_val=alpha;
     return LS_S;
-}
-/*------------------------------------------------------------------------------------------------------------------------------------
- 
- ------------------------------------------------------------------------------------------------------------------------------------*/
-namespace MAPP_NS
-{
-    
-    class LineSearchBackTrack : public LineSearch
-    {
-    private:
-    protected:
-        type0 c,rho,min_alpha;
-    public:
-        LineSearchBackTrack();
-        ~LineSearchBackTrack();
-        template<class Func>
-        int min(Func*,type0&,type0&,int);
-        int line_min(class MinCG*,type0&,type0&,int);
-        int line_min(class MinCGDMD*,type0&,type0&,int);
-    };
 }
 /*--------------------------------------------
  minimize line

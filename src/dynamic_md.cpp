@@ -158,6 +158,7 @@ void DynamicMD::fin()
         atoms->vecs[ivec]->vec_sz=atoms->natms;
         atoms->vecs[ivec]->shrink_to_fit();
     }
+    atoms->natms_ph=0;
 }
 /*--------------------------------------------
  

@@ -423,7 +423,7 @@ int LineSearchGoldenSection::min(Func* func,type0& nrgy
     {
         type0 delta,f0,f3;
         f1=f2=0.0;
-        x0=0.0;
+        x0=x1=x2=0.0;
         f0=fa;
         x3=max_a;
         f3=func->F(x3);

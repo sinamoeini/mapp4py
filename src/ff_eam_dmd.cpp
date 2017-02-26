@@ -1011,6 +1011,7 @@ void ForceFieldEAMDMD::calc_mu()
         const int neigh_sz=neighbor_list_size[i];
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
         {
+            j=neighbor_list[i][__j];
             mu[i]+=c[j]*(rho_phi[istart+0]+rho_phi[istart+1]*dE[j]);
             if(j<n)
             {

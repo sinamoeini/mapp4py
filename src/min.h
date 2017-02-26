@@ -1,6 +1,8 @@
 #ifndef __MAPP__min__
 #define __MAPP__min__
 #include "api.h"
+#include "ls.h"
+
 #include "global.h"
 #include "atoms_styles.h"
 namespace MAPP_NS
@@ -28,6 +30,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             Min* min;
+            LineSearch::Object* ls;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -46,6 +49,7 @@ namespace MAPP_NS
         static void getset_H_dof(PyGetSetDef&);
         static void getset_max_dx(PyGetSetDef&);
         static void getset_ntally(PyGetSetDef&);
+        static void getset_ls(PyGetSetDef&);
         
         static void setup_tp();
     };

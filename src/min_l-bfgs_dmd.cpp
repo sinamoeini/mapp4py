@@ -28,8 +28,17 @@ MinLBFGSDMD::~MinLBFGSDMD()
  --------------------------------------------*/
 void MinLBFGSDMD::init()
 {
-    MinCGDMD::init();
     const int c_dim=atoms->c->dim;
+    x.~VecTens();
+    new (&x) VecTens<type0,2>(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
+    f.~VecTens();
+    new (&f) VecTens<type0,2>(atoms,chng_box,ff->f,ff->f_alpha);
+    h.~VecTens();
+    new (&h) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+    x0.~VecTens();
+    new (&x0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+    f0.~VecTens();
+    new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     if(m)
     {
         s=new VecTens<type0,2>[m];
@@ -41,37 +50,74 @@ void MinLBFGSDMD::init()
             y[i].~VecTens();
             new (y+i) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
         }
-        Memory::alloc(rho,m);
-        Memory::alloc(alpha,m);
     }
-}
-/*--------------------------------------------
- fin after a run
- --------------------------------------------*/
-void MinLBFGSDMD::fin()
-{
-    Memory::dealloc(rho);
-    Memory::dealloc(alpha);
-    rho=alpha=NULL;
     
-    delete [] s;
-    delete [] y;
-    s=y=NULL;
-    MinCGDMD::fin();
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
+    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
+    
+    if(atoms->dof)
+        dynamic->add_xchng(atoms->dof);
+    
+    for(int i=0;i<m;i++)
+    {
+        dynamic->add_xchng(s[i].vecs[0]);
+        dynamic->add_xchng(s[i].vecs[1]);
+        dynamic->add_xchng(y[i].vecs[0]);
+        dynamic->add_xchng(y[i].vecs[1]);
+    }
+    
+    dynamic->init();
+    
+    Memory::alloc(rho,m);
+    Memory::alloc(alpha,m);
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
 }
 /*--------------------------------------------
  run
  --------------------------------------------*/
 void MinLBFGSDMD::run(int nsteps)
 {
-    if(dynamic_cast<LineSearchGoldenSection*>(ls))
-        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+    if(ls)
+    {
+        if(dynamic_cast<LineSearchGoldenSection*>(ls))
+            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBrent*>(ls))
+            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBackTrack*>(ls))
+            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    }
+    LineSearchBrent* __ls=new LineSearchBrent();
+    run(__ls,nsteps);
+    delete __ls;
+}
+/*--------------------------------------------
+ fin after a run
+ --------------------------------------------*/
+void MinLBFGSDMD::fin()
+{
+    uvecs[1]=NULL;
+    uvecs[0]=NULL;
     
-    if(dynamic_cast<LineSearchBrent*>(ls))
-        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+    Memory::dealloc(alpha);
+    Memory::dealloc(rho);
+    rho=alpha=NULL;
     
-    if(dynamic_cast<LineSearchBackTrack*>(ls))
-        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
+    
+    delete [] s;
+    delete [] y;
+    s=y=NULL;
+ 
+    f0.~VecTens();
+    x0.~VecTens();
+    h.~VecTens();
+    f.~VecTens();
+    x.~VecTens();
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -96,6 +142,7 @@ int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->min=new MinLBFGSDMD(f.val<0>());
+    __self->ls=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -107,6 +154,7 @@ PyObject* MinLBFGSDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
+    __self->ls=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -117,6 +165,8 @@ void MinLBFGSDMD::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
+    if(__self->ls) Py_DECREF(__self->ls);
+    __self->ls=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

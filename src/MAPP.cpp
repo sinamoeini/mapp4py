@@ -127,6 +127,7 @@ PyObject* MAPP::MD::init_module(void)
     PyObject* module=Py_InitModule3("mapp.md",methods,"Molecular Dynamics (MD) module");
     if(module==NULL) return NULL;
     
+    
     AtomsMD::setup_tp();
     if(PyType_Ready(&AtomsMD::TypeObject)<0) return NULL;
     Py_INCREF(&AtomsMD::TypeObject);
@@ -148,6 +149,30 @@ PyObject* MAPP::MD::init_module(void)
     if(PyType_Ready(&MDMuVT::TypeObject)<0) return NULL;
     Py_INCREF(&MDMuVT::TypeObject);
     PyModule_AddObject(module,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
+    
+
+    LineSearch::setup_tp();
+    if(PyType_Ready(&LineSearch::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearch::TypeObject);
+    PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
+    
+    
+    LineSearchGoldenSection::setup_tp();
+    if(PyType_Ready(&LineSearchGoldenSection::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearchGoldenSection::TypeObject);
+    PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
+    
+    
+    LineSearchBrent::setup_tp();
+    if(PyType_Ready(&LineSearchBrent::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearchBrent::TypeObject);
+    PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
+    
+    
+    LineSearchBackTrack::setup_tp();
+    if(PyType_Ready(&LineSearchBackTrack::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearchBackTrack::TypeObject);
+    PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
     
     
     MinCG::setup_tp();
@@ -179,15 +204,42 @@ PyObject* MAPP::DMD::init_module(void)
     PyObject* module=Py_InitModule3("mapp.dmd",methods,"Diffusive Molecular Dynamics (DMD) module");
     if(module==NULL) return NULL;
     
+    
     AtomsDMD::setup_tp();
     if(PyType_Ready(&AtomsDMD::TypeObject)<0) return NULL;
     Py_INCREF(&AtomsDMD::TypeObject);
     PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
     
+    
+    LineSearch::setup_tp();
+    if(PyType_Ready(&LineSearch::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearch::TypeObject);
+    PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
+    
+    
+    LineSearchGoldenSection::setup_tp();
+    if(PyType_Ready(&LineSearchGoldenSection::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearchGoldenSection::TypeObject);
+    PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
+    
+    
+    LineSearchBrent::setup_tp();
+    if(PyType_Ready(&LineSearchBrent::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearchBrent::TypeObject);
+    PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
+    
+    
+    LineSearchBackTrack::setup_tp();
+    if(PyType_Ready(&LineSearchBackTrack::TypeObject)<0) return NULL;
+    Py_INCREF(&LineSearchBackTrack::TypeObject);
+    PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
+    
+    
     MinCGDMD::setup_tp();
     if(PyType_Ready(&MinCGDMD::TypeObject)<0) return NULL;
     Py_INCREF(&MinCGDMD::TypeObject);
     PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
+    
     
     MinLBFGSDMD::setup_tp();
     if(PyType_Ready(&MinLBFGSDMD::TypeObject)<0) return NULL;

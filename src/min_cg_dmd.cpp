@@ -73,31 +73,51 @@ void MinCGDMD::init()
     f0.~VecTens();
     new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     
-}
-/*--------------------------------------------
- finishing minimization
- --------------------------------------------*/
-void MinCGDMD::fin()
-{
-    f0.~VecTens();
-    x0.~VecTens();
-    h.~VecTens();
-    f.~VecTens();
-    x.~VecTens();
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
+    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
+    
+    dynamic->init();
+    
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
 }
 /*--------------------------------------------
  min
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
 {
-    if(dynamic_cast<LineSearchGoldenSection*>(ls))
-        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+    if(ls)
+    {
+        if(dynamic_cast<LineSearchGoldenSection*>(ls))
+            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBrent*>(ls))
+            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBackTrack*>(ls))
+            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    }
+    LineSearchBackTrack* __ls=new LineSearchBackTrack();
+    run(__ls,nsteps);
+    delete __ls;
+}
+/*--------------------------------------------
+ finishing minimization
+ --------------------------------------------*/
+void MinCGDMD::fin()
+{
+    uvecs[1]=NULL;
+    uvecs[0]=NULL;
     
-    if(dynamic_cast<LineSearchBrent*>(ls))
-        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
     
-    if(dynamic_cast<LineSearchBackTrack*>(ls))
-        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    f0.~VecTens();
+    x0.~VecTens();
+    h.~VecTens();
+    f.~VecTens();
+    x.~VecTens();
 }
 /*--------------------------------------------
  
@@ -222,6 +242,7 @@ int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->min=new MinCGDMD();
+    __self->ls=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -233,6 +254,7 @@ PyObject* MinCGDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
+    __self->ls=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -243,6 +265,8 @@ void MinCGDMD::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
+    if(__self->ls) Py_DECREF(__self->ls);
+    __self->ls=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -273,7 +297,7 @@ void MinCGDMD::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCGDMD::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinCGDMD::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp_getset()
 {
@@ -282,7 +306,8 @@ void MinCGDMD::setup_tp_getset()
     getset_affine(getset[2]);
     getset_H_dof(getset[3]);
     getset_ntally(getset[4]);
-    getset_max_dalpha(getset[5]);
+    getset_ls(getset[5]);
+    getset_max_dalpha(getset[6]);
 }
 /*--------------------------------------------
  
@@ -337,15 +362,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         __self->min->atoms=__atoms;
         __self->min->ff=__ff;
         
-        if(__self->min->ls)
-            __self->min->run(f.val<1>());
-        else
-        {
-            __self->min->ls=new LineSearchBrent();
-            __self->min->run(f.val<1>());
-            delete __self->min->ls;
-            __self->min->ls=NULL;
-        }
+        __self->min->run(f.val<1>());
         
         __self->min->ff=NULL;
         __self->min->atoms=NULL;

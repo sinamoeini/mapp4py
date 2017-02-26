@@ -26,6 +26,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MinLBFGSDMD* min;
+            LineSearch::Object* ls;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -52,24 +53,6 @@ template<class C>
 void MinLBFGSDMD::run(C* ls,int nsteps)
 {
     init();
-    
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
-    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
-    
-    if(atoms->dof)
-        dynamic->add_xchng(atoms->dof);
-    
-    for(int i=0;i<m;i++)
-    {
-        dynamic->add_xchng(s[i].vecs[0]);
-        dynamic->add_xchng(s[i].vecs[1]);
-        dynamic->add_xchng(y[i].vecs[0]);
-        dynamic->add_xchng(y[i].vecs[1]);
-    }
-    
-    dynamic->init();
     
     force_calc();
     type0 S[__dim__][__dim__];
@@ -180,9 +163,6 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
     }
 
     thermo.fin();
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
     fin();
     
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);

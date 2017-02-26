@@ -47,7 +47,16 @@ MinLBFGS::~MinLBFGS()
  --------------------------------------------*/
 void MinLBFGS::init()
 {
-    MinCG::init();
+    x.~VecTens();
+    new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
+    f.~VecTens();
+    new (&f) VecTens<type0,1>(atoms,chng_box,ff->f);
+    h.~VecTens();
+    new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x0.~VecTens();
+    new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
+    f0.~VecTens();
+    new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
     
     if(m)
     {
@@ -60,37 +69,69 @@ void MinLBFGS::init()
             y[i].~VecTens();
             new (y+i) VecTens<type0,1>(atoms,chng_box,__dim__);
         }
-        Memory::alloc(rho,m);
-        Memory::alloc(alpha,m);
     }
+    
+    if(atoms->x_d)
+        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
+    else
+        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]});
+    
+    if(atoms->dof)
+        dynamic->add_xchng(atoms->dof);
+    
+    for(int i=0;i<m;i++)
+    {
+        dynamic->add_xchng(s[i].vecs[0]);
+        dynamic->add_xchng(y[i].vecs[0]);
+    }
+    
+    dynamic->init();
+    
+    Memory::alloc(rho,m);
+    Memory::alloc(alpha,m);
 }
 /*--------------------------------------------
  fin after a run
  --------------------------------------------*/
 void MinLBFGS::fin()
 {
-    Memory::dealloc(rho);
     Memory::dealloc(alpha);
+    Memory::dealloc(rho);
     rho=alpha=NULL;
+    
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
     
     delete [] s;
     delete [] y;
     s=y=NULL;
-    MinCG::fin();
+    
+    f0.~VecTens();
+    x0.~VecTens();
+    h.~VecTens();
+    f.~VecTens();
+    x.~VecTens();
 }
 /*--------------------------------------------
  run
  --------------------------------------------*/
 void MinLBFGS::run(int nsteps)
 {
-    if(dynamic_cast<LineSearchGoldenSection*>(ls))
-        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    
-    if(dynamic_cast<LineSearchBrent*>(ls))
-        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    
-    if(dynamic_cast<LineSearchBackTrack*>(ls))
-        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    if(ls)
+    {
+        if(dynamic_cast<LineSearchGoldenSection*>(ls))
+            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBrent*>(ls))
+            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBackTrack*>(ls))
+            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    }
+    LineSearchBrent* __ls=new LineSearchBrent();
+    run(__ls,nsteps);
+    delete __ls;
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -115,6 +156,7 @@ int MinLBFGS::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->min=new MinLBFGS(f.val<0>());
+    __self->ls=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -126,6 +168,7 @@ PyObject* MinLBFGS::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
+    __self->ls=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -136,6 +179,8 @@ void MinLBFGS::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
+    if(__self->ls) Py_DECREF(__self->ls);
+    __self->ls=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

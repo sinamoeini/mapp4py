@@ -70,31 +70,50 @@ void MinCG::init()
     new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
     f0.~VecTens();
     new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
-}
-/*--------------------------------------------
- finishing minimization
- --------------------------------------------*/
-void MinCG::fin()
-{
-    f0.~VecTens();
-    x0.~VecTens();
-    h.~VecTens();
-    f.~VecTens();
-    x.~VecTens();
+    
+    if(atoms->x_d)
+        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
+    else
+        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]});
+    if(atoms->dof)
+        dynamic->add_xchng(atoms->dof);
+    
+    dynamic->init();
 }
 /*--------------------------------------------
  min
  --------------------------------------------*/
 void MinCG::run(int nsteps)
 {
-    if(dynamic_cast<LineSearchGoldenSection*>(ls))
-        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+    if(ls)
+    {
+        if(dynamic_cast<LineSearchGoldenSection*>(ls))
+            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBrent*>(ls))
+            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBackTrack*>(ls))
+            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    }
+    LineSearchBackTrack* __ls=new LineSearchBackTrack();
+    run(__ls,nsteps);
+    delete __ls;
+}
+/*--------------------------------------------
+ finishing minimization
+ --------------------------------------------*/
+void MinCG::fin()
+{
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
     
-    if(dynamic_cast<LineSearchBrent*>(ls))
-        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    
-    if(dynamic_cast<LineSearchBackTrack*>(ls))
-        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    f0.~VecTens();
+    x0.~VecTens();
+    h.~VecTens();
+    f.~VecTens();
+    x.~VecTens();
 }
 /*--------------------------------------------
  
@@ -195,6 +214,7 @@ int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->min=new MinCG();
+    __self->ls=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -206,6 +226,7 @@ PyObject* MinCG::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
+    __self->ls=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -216,6 +237,8 @@ void MinCG::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
+    if(__self->ls) Py_DECREF(__self->ls);
+    __self->ls=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -246,7 +269,7 @@ void MinCG::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCG::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinCG::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinCG::setup_tp_getset()
 {
@@ -255,6 +278,7 @@ void MinCG::setup_tp_getset()
     getset_affine(getset[2]);
     getset_H_dof(getset[3]);
     getset_ntally(getset[4]);
+    getset_ls(getset[5]);
 }
 /*--------------------------------------------
  
@@ -287,15 +311,9 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         
         __self->min->atoms=__atoms;
         __self->min->ff=__ff;
-        if(__self->min->ls)
-            __self->min->run(f.val<1>());
-        else
-        {
-            __self->min->ls=new LineSearchBrent();
-            __self->min->run(f.val<1>());
-            delete __self->min->ls;
-            __self->min->ls=NULL;
-        }
+        
+        __self->min->run(f.val<1>());
+        
         __self->min->ff=NULL;
         __self->min->atoms=NULL;
         

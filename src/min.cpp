@@ -88,6 +88,7 @@ int Min::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->min=new Min();
+    __self->ls=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -99,6 +100,7 @@ PyObject* Min::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->min=NULL;
+    __self->ls=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -109,6 +111,8 @@ void Min::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
     __self->min=NULL;
+    if(__self->ls) Py_DECREF(__self->ls);
+    __self->ls=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -256,6 +260,33 @@ void Min::getset_ntally(PyGetSetDef& getset)
         int ichk=ntally.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->min->ntally=ntally.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Min::getset_ls(PyGetSetDef& getset)
+{
+    getset.name=(char*)"ls";
+    getset.doc=(char*)"line search";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        LineSearch::Object* ls=reinterpret_cast<Object*>(self)->ls;
+        if(!ls) Py_RETURN_NONE;
+        Py_INCREF(ls);
+        return reinterpret_cast<PyObject*>(ls);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<OP<LineSearch>> ls("ls");
+        int ichk=ls.set(op);
+        if(ichk==-1) return -1;
+        LineSearch* __ls=&reinterpret_cast<LineSearch::Object*>(ls.val.ob)->ls;
+        if(reinterpret_cast<Object*>(self)->ls) Py_DECREF(reinterpret_cast<Object*>(self)->ls);
+        Py_INCREF(ls.val.ob);
+        reinterpret_cast<Object*>(self)->ls=reinterpret_cast<LineSearch::Object*>(ls.val.ob);
+        reinterpret_cast<Object*>(self)->min->ls=__ls;
         return 0;
     };
 }

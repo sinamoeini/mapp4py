@@ -32,17 +32,41 @@ namespace MAPP_NS
     {
     private:
     protected:
+    
         
         const type0 epsilon_3_4;
         const type0 sqrt_epsilon;
         const type0 golden;
         type0 prev_val;
+    public:
         template<class Func>
         int bracket(Func*,type0,type0,type0&,type0&,type0&,type0&,type0&,type0&);
-    public:
-        
+    
         LineSearch();
-        virtual ~LineSearch();
+        virtual ~LineSearch(){};
+        //template<class Func>int min(Func*,type0&,type0&,int){return 0;}
+        
+        struct Object;
+        
+        static PyTypeObject TypeObject;
+        static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
+        static int __init__(PyObject*, PyObject*,PyObject*);
+        static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
+        static void __dealloc__(PyObject*);
+        
+        static PyMethodDef methods[];
+        static void setup_tp_methods();
+        
+        static PyGetSetDef getset[];
+        static void setup_tp_getset();
+        
+        static void setup_tp();
+    };
+    
+    struct LineSearch::Object
+    {
+        PyObject_HEAD
+        LineSearch ls;
     };
 }
 /*--------------------------------------------
@@ -53,21 +77,18 @@ namespace MAPP_NS
     class LineSearchGoldenSection:public LineSearch
     {
     private:
+    protected:
+    public:
         type0 tol;
         int max_iter;
         bool brack;
-    protected:
-    public:
+    
         LineSearchGoldenSection();
-        ~LineSearchGoldenSection();
+        ~LineSearchGoldenSection(){};
         template<class Func>
         int min(Func*,type0&,type0&,int);
         
-        typedef struct
-        {
-            PyObject_HEAD
-            LineSearchGoldenSection* ls;
-        }Object;
+        struct Object;
         
         static PyTypeObject TypeObject;
         static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
@@ -85,6 +106,12 @@ namespace MAPP_NS
         static void getset_tol(PyGetSetDef&);
         static void setup_tp();
     };
+    
+    struct LineSearchGoldenSection::Object
+    {
+        PyObject_HEAD
+        LineSearchGoldenSection ls;
+    };
 }
 /*--------------------------------------------
  
@@ -94,21 +121,18 @@ namespace MAPP_NS
     class LineSearchBrent:public LineSearch
     {
     private:
+    protected:
+    public:
         type0 tol,zeps;
         int max_iter;
         bool brack;
-    protected:
-    public:
+    
         LineSearchBrent();
-        ~LineSearchBrent();
+        ~LineSearchBrent(){};
         template<class Func>
         int min(Func*,type0&,type0&,int);
         
-        typedef struct
-        {
-            PyObject_HEAD
-            LineSearchBrent* ls;
-        }Object;
+        struct Object;
         
         static PyTypeObject TypeObject;
         static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
@@ -128,6 +152,11 @@ namespace MAPP_NS
         static void setup_tp();
     };
     
+    struct LineSearchBrent::Object
+    {
+        PyObject_HEAD
+        LineSearchBrent ls;
+    };
 }
 /*--------------------------------------------
  
@@ -138,18 +167,16 @@ namespace MAPP_NS
     {
     private:
     protected:
-        type0 c,rho,min_alpha;
     public:
+        type0 c,rho,min_alpha;
+    
         LineSearchBackTrack();
-        ~LineSearchBackTrack();
+        ~LineSearchBackTrack(){};
         template<class Func>
         int min(Func*,type0&,type0&,int);
         
-        typedef struct
-        {
-            PyObject_HEAD
-            LineSearchBackTrack* ls;
-        }Object;
+        struct Object;
+        struct Object1;
         
         static PyTypeObject TypeObject;
         static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
@@ -166,6 +193,18 @@ namespace MAPP_NS
         static void getset_c(PyGetSetDef&);
         static void getset_min_alpha(PyGetSetDef&);
         static void setup_tp();
+    };
+    
+    struct LineSearchBackTrack::Object
+    {
+        PyObject_HEAD
+        LineSearchBackTrack ls;
+    };
+    
+    struct LineSearchBackTrack::Object1
+    {
+        PyObject_HEAD
+        LineSearchBackTrack* ls1;
     };
 }
 /*--------------------------------------------

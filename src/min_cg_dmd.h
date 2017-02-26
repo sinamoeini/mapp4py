@@ -1,7 +1,6 @@
 #ifndef __MAPP__min_cg_dmd__
 #define __MAPP__min_cg_dmd__
 #include "min.h"
-#include "ls.h"
 #include "min_vec.h"
 #include "ff_dmd.h"
 #include "atoms_dmd.h"
@@ -54,6 +53,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MinCGDMD* min;
+            LineSearch::Object* ls;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -85,14 +85,8 @@ using namespace MAPP_NS;
 template<class C>
 void MinCGDMD::run(C* ls,int nsteps)
 {
-        init();
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
-    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
-
+    init();
     
-    dynamic->init();
     force_calc();
     type0 S[__dim__][__dim__];
     
@@ -175,10 +169,6 @@ void MinCGDMD::run(C* ls,int nsteps)
     }
 
     thermo.fin();
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
     fin();
     
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);

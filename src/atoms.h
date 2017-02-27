@@ -509,7 +509,8 @@ name(__name),
 atoms(__atoms)
 {
     atoms->push(this);
-    resize(atoms->natms+atoms->natms_ph);
+    reserve(atoms->natms+atoms->natms_ph);
+    resize(atoms->natms);
 }
 /*--------------------------------------------
  

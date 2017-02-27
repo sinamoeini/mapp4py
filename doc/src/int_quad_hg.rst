@@ -2,73 +2,42 @@
 Numerical Integration Details
 ******************************
 
-The objectuve of this section is to outline a numerical approach to calculate the integrations of the form 
+The objectuve of this section is to outline a numerical approach to calculate the integrations of the form
 
-.. math::
-   g(x,\alpha)=\left(\frac{\alpha}{\pi}\right)^{3/2}\int d^3\mathbf{r}e^{-\alpha(\mathbf{r}-\mathbf{x})^2} f(|\mathbf{r}|)
+.. math:: g(\mathbf{x},\alpha)=\frac{1}{\left(\alpha\sqrt{\pi}\right)^{3}}\int d^3\mathbf{r}e^{-\left(\mathbf{y}-\mathbf{x}\right)^2/\alpha^2} f(|\mathbf{y}|),
 
-Rotating the coordinate system such that :math:`\mathbf{x}` is positioned on :math:`z` axis and using the spherical coordinate system,
+rotating the coordinate system such that :math:`\mathbf{x}` is positioned on :math:`z` axis and using the spherical coordinate system,
 
-.. math::
-   g(x,\alpha)=\left(\frac{\alpha}{\pi}\right)^{3/2}\int_0^{\infty}\!\!\!\int_0^{\pi}\!\!\!\int_0^{2\pi}\!\!\!dr d\theta d\phi r^2\sin\theta e^{-\alpha (r^2+x^2-2rx\cos\theta)} f(r),
+.. math:: g(|\mathbf{x}|,\alpha)=\frac{1}{\left(\alpha\sqrt{\pi}\right)^{3}}\int_0^{\infty}\!\!\!\int_0^{\pi}\!\!\!\int_0^{2\pi}\!\!\!dr d\phi d\theta r^2\sin\phi e^{-\left(r^2+x^2-2rx\cos\phi\right)/\alpha^2} f(r),
 
 One can reduce the three dimensional integration to a one dimensional one
 
-.. math::
-   g(x,\alpha)&=2\pi\left(\frac{\alpha}{\pi}\right)^{3/2}\int_0^{\infty}\!\!\!\int_0^{\pi}\!\!\!dr d\theta r^2\sin\theta e^{-\alpha (r^2+x^2-2rx\cos\theta)} f(r),\\
-   &=\frac{1}{x}\left(\frac{\alpha}{\pi}\right)^{1/2}\int_0^{\infty}\!\!\!dr rf(r) \biggl[e^{-\alpha (x-r)^2}-e^{-\alpha (x+r)^2} \biggr]
+.. math:: g(x,\alpha)=\frac{1}{x\alpha\sqrt{\pi}}\int_0^{\infty}\!\!\!dr rf(r) \biggl[e^{-(x-r)^2/\alpha^2}-e^{-(x+r)^2/\alpha^2} \biggr],
 
-In our case the potential functions have cutoff :math:`r_c`. Therefore,
+In our case the potential functions normal have a cutoff radius namely, :math:`r_c`. Therefore, we can limit our integration domain from zero to :math:`r_c`
 
-.. math::
-   g(x,\alpha)=\frac{1}{x}\left(\frac{\alpha}{\pi}\right)^{1/2}\int_0^{r_c}\!\!\!dr rf(r) \biggl[e^{-\alpha (x-r)^2}-e^{-\alpha (x+r)^2} \biggr].
+.. math:: g(x,\alpha)=\frac{1}{x\alpha\sqrt{\pi}}\int_0^{r_c}\!\!\!dr rf(r) \biggl[e^{-(x-r)^2/\alpha^2}-e^{-(x+r)^2/\alpha^2} \biggr],
 
-One can reduce the equation to
+Employing two change of variables the integration simplifies to
 
-.. math::
-   g(x,\alpha)=\frac{1}{x\sqrt{\pi}}\int_{(x-r_c)\sqrt{\alpha}}^{(x+r_c)\sqrt{\alpha}}\!\!\!\!\!\!\!\!\!dt e^{-t^2} \left(x-\frac{t}{\sqrt{\alpha}}\right)f\left(|x-\frac{t}{\sqrt{\alpha}}|\right),
+.. math:: g(x,\alpha)=\frac{1}{x\sqrt{\pi}}\int_{\left(x-r_c\right)/\alpha}^{\left(x+r_c\right)/\alpha}\!\!\!dt e^{-t^2} \left(x-\alpha t\right)f(|x-\alpha t |),
 
-Now we can employ Hermite-Gauss quadrature to calculate such integrations
+where :math:`|.|` denotes absolute value. Before going further it is instructive to show the derivative of :math:`g(x,\alpha)` with respect to :math:`x` and :math:`\alpha`, in terms of this simplified integration
 
 .. math::
-   g(x,\alpha)\approx\frac{1}{x\sqrt{\pi}}\sum_{i=1}^M \left(x-\frac{t_i}{\sqrt{\alpha}}\right)f\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)W_i,
+   \frac{\partial}{\partial x}g(x,\alpha)=&\frac{1}{x\sqrt{\pi}}\int_{\left(x-r_c\right)/\alpha}^{\left(x+r_c\right)/\alpha}\!\!\!dt e^{-t^2} \biggl[f'(|x-\alpha t |)+|x-\alpha t| f(|x-\alpha t |)\biggr]\\
+   &-\frac{g(x,\alpha)}{x}
 
-where :math:`M`, and :math:`t_i` is the number of quadrature points and quadrature abscissas, respectively; and
+.. math:: \frac{\partial}{\partial \alpha}g(x,\alpha)=-\frac{1}{x\sqrt{\pi}}\int_{\left(x-r_c\right)/\alpha}^{\left(x+r_c\right)/\alpha}\!\!\!dt t e^{-t^2} \biggl[f'(|x-\alpha t |)+|x-\alpha t| f(|x-\alpha t |)\biggr],
 
-.. math::
-   W_i=\left\{\begin{array}{lr}
-   \text{Hermite-Gauss Weight}\quad& (x-r_c)\sqrt{\alpha}<t_i<(x+r_c)\sqrt{\alpha}\\
-   0 & \text{otherwise}
-   \end{array}\right.
+Now we are ready employ Hermite-Gauss quadrature to calculate such integrations
 
-in addition to calculating :math:`g(x,\alpha)`, one needs to calculate the values of its derivative with respect to :math:`x` and :math:`\alpha`. Using the second fundamental theorem of calculus and the gaussian quadrature theory
+.. math:: g(x,\alpha)\approx\frac{1}{x\sqrt{\pi}}\sum_{i=1}^m \left(x-\alpha x_i\right)f\left(|x-\alpha x_i|\right)w_i,
 
+where :math:`m` is the number of quadrature points and :math:`x_i` and :math:`w_i` are the quadrature abscissas and weight at :math:`i` th point, respectively. Of course if :math:`|x-\alpha x_i|\ge r_c` that term would be ignored. Considering the fact that Hermite-Gauss quadrature abscissas range from a negative value to absolute value of the same value i.e.
 
-.. math::
-   \frac{\partial g(x,\alpha)}{\partial x}\approx &\frac{1}{x\sqrt{\pi}}\sum_{i=1}^m W_i\bigg[\frac{-1}{x}\left(x-\frac{t_i}{\sqrt{\alpha}}\right)f\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)\\
-   &+f\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)+|x-\frac{t_i}{\sqrt{\alpha}}|f'\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)\bigg]
+.. math:: -x_{\mathrm{max}}\le x_i\le x_{\mathrm{max}}, \quad i=1, \cdots, m
 
+it can be realized that the result of this numerical scheme is null when
 
-.. math::
-   \frac{\partial g(x,\alpha)}{\partial \alpha}\approx&\frac{1}{2\alpha^{3/2}x\sqrt{\pi}}\sum_{i=1}^m W_it_i\bigg[f\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)\\
-   &+|x-\frac{t_i}{\sqrt{\alpha}}|f'\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)\bigg]
-
-
-.. math::
-   \frac{\partial g(x,\alpha)}{\partial x}\approx &\frac{1}{x\sqrt{\pi}}\sum_{i=1}^m W_i\bigg[\frac{t_i}{x\sqrt{\alpha}}f\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)\\
-   &+|x-\frac{t_i}{\sqrt{\alpha}}|f'\left(|x-\frac{t_i}{\sqrt{\alpha}}|\right)\bigg]
-
-
-.. math::
-   g(x,\alpha)&=\frac{\sqrt{\alpha}}{x} \frac{r_c}{\sqrt{\pi}} \int_{-1}^{1}dt tr_c f(|t r_c|)e^{-\alpha(x-tr_c)^2}
-
-.. math::
-   -\frac{\partial}{\partial x}g(x,\alpha)
-   &=\frac{\sqrt{\alpha}}{x} \frac{r_c}{\sqrt{\pi}}\int_{-1}^{1}dt tr_cf(|t r_c|)e^{-\alpha(x-tr_c)^2}\bigg[\frac{1}{x}+2\alpha(x-tr_c)\bigg]
-
-.. math::
-   -\frac{\partial}{\partial \alpha}g(x,\alpha)
-   &=\frac{\sqrt{\alpha}}{x} \frac{r_c}{\sqrt{\pi}}\int_{-1}^{1}dt tr_cf(|t r_c|)e^{-\alpha(x-tr_c)^2}\bigg[(x-tr_c)^2-\frac{1}{2\alpha}\bigg]
-
-
-
+.. math:: r_c\le x-\alpha x_{\mathrm{max}}

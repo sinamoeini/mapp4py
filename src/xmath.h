@@ -599,7 +599,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline T func(T* V0,T* V1)
+            static inline T func(T*,T*)
             {
                 return 0;
             }
@@ -769,7 +769,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T* M,T* Minv)
+            static inline void func(T*,T*)
             {}
         };
 
@@ -918,7 +918,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T& scl,T* x,T* v)
+            static inline void func(T&,T*,T*)
             {
             }
         };
@@ -1185,7 +1185,7 @@ namespace MAPP_NS
             
         }
         
-        inline void opt_comm_grid(const type0 (&h)[1],int no,int (&opt_grid)[1])
+        inline void opt_comm_grid(const type0 (&)[1],int no,int (&opt_grid)[1])
         {
             opt_grid[0]=no;
         }
@@ -1598,7 +1598,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T* v)
+            static inline void func(T*)
             {
             }
         };
@@ -1706,7 +1706,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline T func(T* vec0,T* vec1)
+            static inline T func(T*,T*)
             {
                 return 0;
             }
@@ -1928,7 +1928,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T* MLT,T* MLT_inv)
+            static inline void func(T*,T*)
             {}
         };
         
@@ -2587,7 +2587,7 @@ namespace MAPP_NS
         {
         public:
             template<class T>
-            static void func(T* x)
+            static void func(T*)
             {
             };
         };

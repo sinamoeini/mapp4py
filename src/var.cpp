@@ -315,28 +315,28 @@ bool Var::operator != (Var& r)
 /*--------------------------------------------
  
  --------------------------------------------*/
-bool Var::operator > (Var& r)
+bool Var::operator > (Var&)
 {
     return false;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-bool Var::operator >= (Var& r)
+bool Var::operator >= (Var&)
 {
     return false;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-bool Var::operator <= (Var& r)
+bool Var::operator <= (Var&)
 {
     return false;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-bool Var::operator < (Var& r)
+bool Var::operator < (Var&)
 {
     return false;
 }

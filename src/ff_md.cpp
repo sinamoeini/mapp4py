@@ -7,7 +7,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-ForceFieldMD::ForceFieldMD(AtomsMD*& __atoms):
+ForceFieldMD::ForceFieldMD(AtomsMD* __atoms):
 ForceField(__atoms),
 atoms(__atoms),
 elem(__atoms->elem)

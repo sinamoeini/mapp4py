@@ -11,7 +11,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ForceFieldEAM::ForceFieldEAM(AtomsMD*& atoms,
+ForceFieldEAM::ForceFieldEAM(AtomsMD* atoms,
 type0 __dr,type0 __drho,size_t __nr,size_t __nrho,
 type0(***&& __r_phi_arr)[7],type0(***&& __rho_arr)[7],type0(**&& __F_arr)[7],
 type0**&& __cut):

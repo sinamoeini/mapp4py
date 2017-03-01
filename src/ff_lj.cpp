@@ -14,7 +14,7 @@ using namespace MAPP_NS;
  constructor
  --------------------------------------------*/
 ForceFieldLJ::
-ForceFieldLJ(AtomsMD*& atoms,type0**&& __epsilon,
+ForceFieldLJ(AtomsMD* atoms,type0**&& __epsilon,
 type0**&& __sigma,type0**&& __cut,bool __shift):
 ForceFieldMD(atoms),
 epsilon(__epsilon),

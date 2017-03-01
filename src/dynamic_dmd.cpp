@@ -5,7 +5,7 @@
 #include "timer.h"
 #include "MAPP.h"
 #include "ff_styles.h"
-#include "neighbor.h"
+#include "neighbor_dmd.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  

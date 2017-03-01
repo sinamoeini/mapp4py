@@ -7,7 +7,7 @@
 #include "memory.h"
 #include "random.h"
 #include "elements.h"
-#include "neighbor.h"
+#include "neighbor_md.h"
 #include "ff_md.h"
 #include "xmath.h"
 #include "MAPP.h"

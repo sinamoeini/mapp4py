@@ -9,11 +9,11 @@ namespace MAPP_NS
     private:
     protected:
         class DynamicDMD* dynamic;
-        class AtomsDMD*& atoms;
-        class NeighborDMD* neighbor_dmd;
+        class AtomsDMD* atoms;
+        
         
     public:
-        ForceFieldDMD(class AtomsDMD*&);
+        ForceFieldDMD(class AtomsDMD*);
         virtual ~ForceFieldDMD();
         type0* rsq_crd;
         type0* r_crd;
@@ -22,6 +22,9 @@ namespace MAPP_NS
         int x_dim;
         
         void setup();
+        
+        class NeighborDMD* neighbor;
+        
         type0 max_cut;
         type0** cut_sk;
         
@@ -32,6 +35,14 @@ namespace MAPP_NS
         void derivative_timer();
         void derivative_timer(type0(*&)[__dim__]);
         Vec<type0>* f_alpha;
+        
+        
+        
+        virtual void init_static()=0;
+        virtual void fin_static()=0;
+        virtual void operator()(Vec<type0>*,Vec<type0>*)=0;
+        virtual type0 update_J(type0,type0*,type0*)=0;
+        virtual type0 ddc_norm()=0;
     };
 }
 #endif 

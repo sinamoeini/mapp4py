@@ -1,6 +1,3 @@
-#ifdef FF_Style
-    FFStyle(ForceField_eam,eam)
-#else
 #ifndef __MAPP__ff_eam__
 #define __MAPP__ff_eam__
 #include "ff_md.h"
@@ -34,7 +31,7 @@ namespace MAPP_NS
         type0 xchng_energy(GCMC*);
         void post_xchng_energy(GCMC*);
     public:
-        ForceFieldEAM(AtomsMD*&,
+        ForceFieldEAM(AtomsMD*,
         type0,type0,size_t,size_t,
         type0(***&&)[7],type0(***&&)[7],type0(**&&)[7],
         type0**&&);
@@ -52,4 +49,4 @@ namespace MAPP_NS
     
 }
 #endif
-#endif
+

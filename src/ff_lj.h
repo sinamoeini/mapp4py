@@ -20,7 +20,7 @@ namespace MAPP_NS
         type0 xchng_energy(GCMC*);
         void post_xchng_energy(GCMC*);
     public:
-        ForceFieldLJ(class AtomsMD*&,type0**&&,type0**&&,type0**&&,bool);
+        ForceFieldLJ(class AtomsMD*,type0**&&,type0**&&,type0**&&,bool);
         ~ForceFieldLJ();
         
         static void ml_new(PyMethodDef&);

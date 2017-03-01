@@ -15,10 +15,10 @@ using namespace MAPP_NS;
  constructor
  --------------------------------------------*/
 ForceFieldEAMDMD::
-ForceFieldEAMDMD(AtomsDMD*& atoms,
+ForceFieldEAMDMD(AtomsDMD* atoms,
 type0 __dr,type0 __drho,size_t __nr,size_t __nrho,
 type0(***&& __r_phi_arr)[4],type0(***&& __rho_arr)[4],type0(**&& __F_arr)[5],
-type0**&& __cut):
+type0**&& __cut,type0*&& __r_crd):
 ForceFieldDMD(atoms),
 dr(__dr),
 drho(__drho),
@@ -68,7 +68,12 @@ N(atoms->N)
         wi_1[i]=wi_0[i]*xi[i];
 
 
-    
+    for(elem_type elem_i=0;elem_i<nelems;elem_i++)
+    {
+        g_fac[elem_i]=1.0;
+        r_crd[elem_i]=__r_crd[elem_i];
+    }
+    Memory::dealloc(__r_crd);
     
     for(elem_type elem_i=0;elem_i<nelems;elem_i++)
     {
@@ -127,9 +132,10 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
         size_t& nelems=__self->atoms->elements->nelems;
         
-        FuncAPI<std::string*> f("ff_eam_funcfl",{"funcfl_files"});
-        f.noptionals=1;
+        FuncAPI<std::string*,type0*> f("ff_eam_funcfl",{"funcfl_files","r_crd"});
         f.v<0>().dynamic_size(nelems);
+        f.v<1>().dynamic_size(nelems);
+        f.logics<1>()[0]=VLogics("gt",0.0);
         if(f(args,kwds)) return NULL;
         
         size_t nr,nrho;
@@ -149,8 +155,19 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
             return NULL;
         }
         
+        for(size_t i=0;i<nelems;i++)
+            if(f.v<1>()[i]>r_c[i][i])
+            {
+                Memory::dealloc(r_c);
+                Memory::dealloc(F);
+                Memory::dealloc(r_phi);
+                Memory::dealloc(rho);
+                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
+                return NULL;
+            }
+        
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c));
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
         Py_RETURN_NONE;
     };
     method_0.ml_doc=(char*)R"---(
@@ -195,8 +212,9 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
         size_t& nelems=__self->atoms->elements->nelems;
-        FuncAPI<std::string> f("ff_eam_setfl",{"setfl_file"});
-        f.noptionals=1;
+        FuncAPI<std::string,type0*> f("ff_eam_setfl",{"setfl_file","r_crd"});
+        f.v<1>().dynamic_size(nelems);
+        f.logics<1>()[0]=VLogics("gt",0.0);
         if(f(args,kwds)) return NULL;
         
         
@@ -217,8 +235,19 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
             return NULL;
         }
         
+        for(size_t i=0;i<nelems;i++)
+            if(f.v<1>()[i]>r_c[i][i])
+            {
+                Memory::dealloc(r_c);
+                Memory::dealloc(F);
+                Memory::dealloc(r_phi);
+                Memory::dealloc(rho);
+                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
+                return NULL;
+            }
+        
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c));
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
         Py_RETURN_NONE;
     };
     method_1.ml_doc=(char*)R"---(
@@ -263,8 +292,9 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
         size_t& nelems=__self->atoms->elements->nelems;
-        FuncAPI<std::string> f("ff_eam_fs",{"fs_file"});
-        f.noptionals=1;
+        FuncAPI<std::string,type0*> f("ff_eam_fs",{"fs_file","r_crd"});
+        f.v<1>().dynamic_size(nelems);
+        f.logics<1>()[0]=VLogics("gt",0.0);
         if(f(args,kwds)) return NULL;
         
         size_t nr,nrho;
@@ -284,8 +314,19 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
             return NULL;
         }
         
+        for(size_t i=0;i<nelems;i++)
+            if(f.v<1>()[i]>r_c[i][i])
+            {
+                Memory::dealloc(r_c);
+                Memory::dealloc(F);
+                Memory::dealloc(r_phi);
+                Memory::dealloc(rho);
+                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
+                return NULL;
+            }
+        
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c));
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
         Py_RETURN_NONE;
     };
     method_2.ml_doc=(char*)R"---(
@@ -720,7 +761,7 @@ void ForceFieldEAMDMD::fin()
  --------------------------------------------*/
 void ForceFieldEAMDMD::init_static()
 {
-    Memory::alloc(M_IJ,3*neighbor_dmd->no_pairs_2nd);
+    Memory::alloc(M_IJ,3*neighbor->no_pairs_2nd);
     vec0=new Vec<type0>(atoms,c_dim);
     vec1=new Vec<type0>(atoms,1);
     vec2=new Vec<type0>(atoms,c_dim);
@@ -744,7 +785,7 @@ void ForceFieldEAMDMD::fin_static()
 void ForceFieldEAMDMD::set_temp(type0 T)
 {
     type0 kb=atoms->kB;
-    type0 hbar=atoms->h;
+    type0 h=atoms->h;
     type0 mass;
     type0 deb_l;
     
@@ -752,8 +793,7 @@ void ForceFieldEAMDMD::set_temp(type0 T)
     {
         mass=atoms->elements->masses[i];
         c_1[i]=sqrt(0.5*kb*T/mass)/M_PI;
-        mass*=1.0364269184093291236e-28;
-        deb_l=hbar*hbar*2.0/(mass*kb*T);
+        deb_l=h*h/(2.0*M_PI*M_PI*mass*kb*T);
         c_0[i]=1.5*kb*T*(log(deb_l)-1.0);
     }
     
@@ -798,8 +838,8 @@ void ForceFieldEAMDMD::dc()
     const int n=atoms->natms*c_dim;
     for(int i=0;i<n;i++) c_d[i]=0.0;
     
-    int** neighbor_list=neighbor_dmd->neighbor_list_2nd;
-    int* neighbor_list_size=neighbor_dmd->neighbor_list_size_2nd;
+    int** neighbor_list=neighbor->neighbor_list_2nd;
+    int* neighbor_list_size=neighbor->neighbor_list_size_2nd;
     elem_type elem_i;
     type0 rsq,alpha_i,alpha_j,alpha_i_sq,alpha_j_sq,gamma_i,gamma_j,mu_i,mu_ji;
     type0 Qi,alpha_Q_sq,d_i,d_j;
@@ -1038,10 +1078,12 @@ void ForceFieldEAMDMD::calc_mu()
  internal vecs
  type0* mu=mu_ptr->begin();
  type0* cv=cv_ptr->begin();
+ 
+ F=c-beta*c_d(c)+a
  --------------------------------------------*/
-type0 ForceFieldEAMDMD::update_J(type0 __alpha_tmp,type0* a,type0* g)
+type0 ForceFieldEAMDMD::update_J(type0 beta,type0* a,type0* F)
 {
-    type0 iota=log(__alpha_tmp);
+    type0 iota=log(beta);
     
     calc_mu();
     
@@ -1058,10 +1100,10 @@ type0 ForceFieldEAMDMD::update_J(type0 __alpha_tmp,type0* a,type0* g)
     type0* mu=mu_ptr->begin();
     
     const int n=atoms->natms*c_dim;
-    for(int i=0;i<n;i++) g[i]=c_d[i]=0.0;
+    for(int i=0;i<n;i++) F[i]=c_d[i]=0.0;
     
-    int** neighbor_list=neighbor_dmd->neighbor_list_2nd;
-    int* neighbor_list_size=neighbor_dmd->neighbor_list_size_2nd;
+    int** neighbor_list=neighbor->neighbor_list_2nd;
+    int* neighbor_list_size=neighbor->neighbor_list_size_2nd;
     elem_type elem_i;
     type0 rsq,alpha_i,alpha_j,alpha_i_sq,alpha_j_sq,gamma_i,gamma_j,mu_i,mu_ji;
     type0 Qi,alpha_Q_sq,theta_i,theta_j,exp_mod_Qi,exp_mod_Qj,d_i,d_j;
@@ -1103,17 +1145,17 @@ type0 ForceFieldEAMDMD::update_J(type0 __alpha_tmp,type0* a,type0* g)
             M_IJ[istart+1]=d_i*exp_mod_Qi;
             M_IJ[istart+2]=d_j*exp_mod_Qj;
             
-            g[i]-=dg_ij;
+            F[i]-=dg_ij;
             c_d[i]+=dc_ij;
             
             if(j<n)
             {
-                g[j]+=dg_ij;
+                F[j]+=dg_ij;
                 c_d[j]-=dc_ij;
             }
         }
-        g[i]+=c[i]+a[i];
-        ans_lcl+=g[i]*g[i];
+        F[i]+=c[i]+a[i];
+        ans_lcl+=F[i]*F[i];
     }
     
     type0 ans;
@@ -1136,6 +1178,10 @@ type0 ForceFieldEAMDMD::update_J(type0 __alpha_tmp,type0* a,type0* g)
  input vecs
  x_ptr;
  Ax_ptr;
+ 
+ F_i=c_i-beta*(d c_i)/dt
+ J_ij=d F_i/(d c_j)
+ Ax_i=-J_ij*x_j;
  --------------------------------------------*/
 void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
 {
@@ -1153,8 +1199,8 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
     type0* x=x_ptr->begin();
     type0* Ax=Ax_ptr->begin();
     
-    int** neighbor_list=neighbor_dmd->neighbor_list;
-    int* neighbor_list_size=neighbor_dmd->neighbor_list_size;
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
     size_t istart=0;
     const int n=atoms->natms*c_dim;
     for(int i=0;i<n;i++) b0[i]=Ax[i]=0.0;
@@ -1206,8 +1252,8 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
         Ax[i]=-x[i];
     
     
-    neighbor_list=neighbor_dmd->neighbor_list_2nd;
-    neighbor_list_size=neighbor_dmd->neighbor_list_size_2nd;
+    neighbor_list=neighbor->neighbor_list_2nd;
+    neighbor_list_size=neighbor->neighbor_list_size_2nd;
     istart=0;
     for(int i=0;i<n;i++)
     {

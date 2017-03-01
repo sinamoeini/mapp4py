@@ -23,7 +23,7 @@ namespace MAPP_NS
         type0 xchng_energy(GCMC*);
         void post_xchng_energy(GCMC*);
     public:
-        ForceFieldFS(class AtomsMD*&,type0*&&,
+        ForceFieldFS(class AtomsMD*,type0*&&,
         type0**&&,type0**&&,type0**&&,type0**&&,
         type0**&&,type0**&&,type0**&&);
         ~ForceFieldFS();

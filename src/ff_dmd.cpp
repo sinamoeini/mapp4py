@@ -7,7 +7,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-ForceFieldDMD::ForceFieldDMD(AtomsDMD*& __atoms):
+ForceFieldDMD::ForceFieldDMD(AtomsDMD* __atoms):
 ForceField(__atoms),
 atoms(__atoms),
 rsq_crd(NULL),
@@ -15,12 +15,9 @@ r_crd(NULL),
 f_alpha(new Vec<type0>(__atoms,__atoms->c->dim))
 {
     Memory::alloc(cut_sk,nelems,nelems);
-    if(nelems)
-    {
-        rsq_crd=new type0[nelems];
-        r_crd=new type0[nelems];
-    }
-    neighbor=neighbor_dmd=new NeighborDMD(__atoms,cut_sk,rsq_crd);
+    Memory::alloc(rsq_crd,nelems);
+    Memory::alloc(r_crd,nelems);
+    neighbor=new NeighborDMD(__atoms,cut_sk,rsq_crd);
     
 }
 /*--------------------------------------------
@@ -28,11 +25,11 @@ f_alpha(new Vec<type0>(__atoms,__atoms->c->dim))
  --------------------------------------------*/
 ForceFieldDMD::~ForceFieldDMD()
 {
+    delete neighbor;
+    Memory::dealloc(r_crd);
+    Memory::dealloc(rsq_crd);
     Memory::dealloc(cut_sk);
     delete f_alpha;
-    delete neighbor_dmd;
-    delete [] rsq_crd;
-    delete [] r_crd;
 }
 /*--------------------------------------------
  

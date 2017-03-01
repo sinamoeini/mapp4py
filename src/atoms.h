@@ -24,13 +24,13 @@ namespace MAPP_NS
     private:
     protected:
     public:
-        class Atoms* atoms;
-        const char* name;
-        byte* data;
         int dim;
         int byte_sz;
         unsigned int vec_sz;
         unsigned int vec_cpcty;
+        class Atoms* atoms;
+        const char* name;
+        byte* data;
         static constexpr unsigned int vec_grw=128;
         
         void* begin()const{return data;};

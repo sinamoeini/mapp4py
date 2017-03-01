@@ -90,15 +90,9 @@ namespace MAPP_NS
     };
 }
 
-namespace MAPP_NS
-{
-    namespace MDMath
-    {
-    
-        
-    };
-    
-}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 #include "xmath.h"
 namespace MAPP_NS
 {

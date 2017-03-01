@@ -29,7 +29,6 @@ namespace MAPP_NS
         virtual void setup()=0;
         virtual void init()=0;
         virtual void fin()=0;
-        class Neighbor* neighbor;
         type0* rsq_crd;
         type0** cut;
         type0** cut_sq;

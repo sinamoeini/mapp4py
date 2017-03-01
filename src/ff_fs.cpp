@@ -17,7 +17,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ForceFieldFS::ForceFieldFS(AtomsMD*& __atoms,type0*&& __A,
+ForceFieldFS::ForceFieldFS(AtomsMD* __atoms,type0*&& __A,
 type0**&& __t1,type0**&& __t2,type0**&& __k1,type0**&& __k2,
 type0**&& __k3,type0**&& r_c_phi,type0**&& r_c_rho):
 ForceFieldMD(__atoms),

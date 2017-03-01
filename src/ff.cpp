@@ -9,7 +9,6 @@
 #include "memory.h"
 #include "atoms.h"
 #include "comm.h"
-#include "neighbor_md.h"
 #include "xmath.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
@@ -17,8 +16,7 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 ForceField::ForceField(Atoms* __atoms):
 nelems(__atoms->elements->nelems),
-world(__atoms->comm.world),
-neighbor(NULL)
+world(__atoms->comm.world)
 {
     Memory::alloc(cut,nelems,nelems);
     Memory::alloc(cut_sq,nelems,nelems);

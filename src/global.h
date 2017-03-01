@@ -4,6 +4,8 @@
 #define MAX(A,B) (A>B?A:B)
 
 #define RESTRICT __restrict__
+
+
 #ifndef __MAPP__type_def__
 #define __MAPP__type_def__
 
@@ -12,7 +14,7 @@
 typedef double type0;
 typedef unsigned char elem_type;
 typedef unsigned char byte;
-
+#define MPI_TYPE0 MPI_DOUBLE
 namespace MAPP_NS
 {
     template<int N, elem_type ... Rest>

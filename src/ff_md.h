@@ -9,17 +9,21 @@ namespace MAPP_NS
     private:
     protected:
         class DynamicMD* dynamic;
+        class AtomsMD* atoms;
+        
         virtual void pre_xchng_energy(class GCMC*)=0;
         virtual type0 xchng_energy(class GCMC*)=0;
         virtual void post_xchng_energy(class GCMC*)=0;
-        class AtomsMD*& atoms;
+        
         Vec<elem_type>*& elem;
     public:
-        ForceFieldMD(class AtomsMD*&);
+        ForceFieldMD(class AtomsMD*);
         virtual ~ForceFieldMD();
         void setup();
         virtual void init_xchng()=0;
         virtual void fin_xchng()=0;
+        class NeighborMD* neighbor;
+        
         type0 max_cut;
         
         void pre_xchng_energy_timer(class GCMC*);

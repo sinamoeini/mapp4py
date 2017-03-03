@@ -19,7 +19,6 @@ namespace MAPP_NS
         type0* r_crd;
         void reset();
         int c_dim;
-        int x_dim;
         
         void setup();
         

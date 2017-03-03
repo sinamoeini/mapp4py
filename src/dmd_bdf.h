@@ -18,8 +18,7 @@ namespace MAPP_NS
         int nconst_q;
         int nconst_dt;
         
-        type0 err;
-        type0 dt;
+        
         type0 eta[3];
         
         type0 lo_err_fac[2];
@@ -185,7 +184,7 @@ namespace MAPP_NS
         
         
         
-        void l_calc(int q,type0& dt,type0 (&t)[DMDBDF::max_q+1],type0 (&l)[DMDBDF::max_q+1])
+        inline void l_calc(int q,type0& dt,type0 (&t)[DMDBDF::max_q+1],type0 (&l)[DMDBDF::max_q+1])
         {
             l[0]=1.0;
             for(int i=1;i<q+1;i++)
@@ -203,7 +202,7 @@ namespace MAPP_NS
         
         
         // f_flc
-        type0 beta_calc(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1])
+        inline type0 beta_calc(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1])
         {
             type0 iq=0.0;
             type0 beta_inv=0.0;
@@ -216,7 +215,7 @@ namespace MAPP_NS
         
         
         // f_flc
-        void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1],int dq,type0 (&l)[DMDBDF::max_q+1],type0 (&A_bar)[DMDBDF::max_q+1][DMDBDF::max_q+1])
+        inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1],int dq,type0 (&l)[DMDBDF::max_q+1],type0 (&A_bar)[DMDBDF::max_q+1][DMDBDF::max_q+1])
         {
             if(dq==1)
             {
@@ -272,7 +271,7 @@ namespace MAPP_NS
         
         
         // f_flc
-        type0  err_fac_calc(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2])
+        inline type0  err_fac_calc(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2])
         {
             type0 u_q=0.0,s_bar_q=0.0;
             type0 iq=0.0;

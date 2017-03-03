@@ -26,15 +26,14 @@ namespace MAPP_NS
         T solve_y(int,type0*);
         void restart();
         void start(T*);
-        
-        
         MPI_Comm& world;
     protected:
     public:
         GMRES(Atoms*,int,int,C0&);
         ~GMRES();
         void refresh();
-        T solve(T,T*,T*,int&,T&);
+        bool solve(T,Vec<T>*,Vec<T>*,T&,T&);
+        bool solve(Vec<T>*,T,T&,Vec<T>*);
         
     };
 }
@@ -102,23 +101,66 @@ void GMRES<T,C0>::refresh()
  
  --------------------------------------------*/
 template<class T,class C0>
-T GMRES<T,C0>::solve(T tol,T* b,T* x,int& iter,T& norm)
+bool GMRES<T,C0>::solve(Vec<T>* b_ptr,T tol,T& norm,Vec<T>* x_ptr)
 {
-    T last_h=0.0,tmp_0,res_norm,b_norm;
+    type0* x=x_ptr->begin();
+    type0* b=b_ptr->begin();
+    for(int i=0;i<n;i++) x[i]=0.0;
+    T last_h=0.0,tmp_0,b_norm,res_norm;
+    start(b);
+    res_norm=b_norm=b_hat[0];
+    for(int i=0;i<m;i++)
+    {
+        kernel(vecs[i],vecs[i+1]);
+        
+        last_h=calc(i);
+        
+        for(int j=0;j<i;j++)
+        {
+            tmp_0=cos[j]*H[i][j]-sin[j]*H[i][j+1];
+            H[i][j+1]=sin[j]*H[i][j]+cos[j]*H[i][j+1];
+            H[i][j]=tmp_0;
+        }
+        
+        tmp_0=sqrt(H[i][i]*H[i][i]+last_h*last_h);
+        
+        cos[i]=H[i][i]/tmp_0;
+        sin[i]=-last_h/tmp_0;
+        
+        H[i][i]=cos[i]*H[i][i]-sin[i]*last_h;
+        b_hat[i+1]=sin[i]*b_hat[i];
+        b_hat[i]*=cos[i];
+        
+        res_norm=fabs(b_hat[i+1]);
+        if(res_norm<tol)
+        {
+            norm=solve_y(i+1,x);
+            return true;
+        }
+    }
+    
+    norm=solve_y(m,x);
+    return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+
+template<class T,class C0>
+bool GMRES<T,C0>::solve(T tol,Vec<T>* b,Vec<T>* x,T& res_norm,T& norm)
+{
+    for(int i=0;i<n;i++) x[i]=0.0;
+    T last_h=0.0,tmp_0,b_norm;
     int max_iter=1;
-    iter=0;
     start(b);
     
-    b_norm=b_hat[0];
-    
-    res_norm=b_norm;
-    
+    res_norm=b_norm=b_hat[0];
     while (res_norm>tol && max_iter)
     {
         for(int i=0;i<m;i++)
         {
             kernel(vecs[i],vecs[i+1]);
-            iter++;
+
             
             last_h=calc(i);
             
@@ -140,11 +182,10 @@ T GMRES<T,C0>::solve(T tol,T* b,T* x,int& iter,T& norm)
             
             res_norm=fabs(b_hat[i+1]);
             
-            
             if(res_norm<tol)
             {
                 norm=solve_y(i+1,x);
-                return fabs(b_hat[i+1]);
+                return true;
             }
         }
         
@@ -158,7 +199,9 @@ T GMRES<T,C0>::solve(T tol,T* b,T* x,int& iter,T& norm)
             return fabs(b_hat[m]);
         restart();
     }
-    return b_hat[m];
+    
+    
+    return false;
 }
 /*--------------------------------------------
  
@@ -198,6 +241,35 @@ T GMRES<T,C0>::calc(int ivec)
 template<class T,class C0>
 T GMRES<T,C0>::solve_y(int nvecs,type0* x)
 {
+    /*
+    printf("H={");
+    for(int i=0;i<nvecs;i++)
+    {
+        printf("{");
+        for(int j=0;j<nvecs;j++)
+        {
+            if(i>j)
+                printf("0.0");
+            else
+                printf("%0.10lf",H[j][i]);
+            if(j!=nvecs-1)
+                printf(",");
+        }
+        printf("}");
+        
+        if(i!=nvecs-1)
+            printf(",");
+    }
+    printf("};\n\n");
+    printf("b={");
+    for(int i=0;i<nvecs;i++)
+    {
+        printf("%0.10lf",b_hat[i]);
+        if(i!=nvecs-1)
+            printf(",");
+    }
+    printf("};\n\n");*/
+        
     for(int i=nvecs-1;i>-1;i--)
     {
         y[i]=b_hat[i];
@@ -205,6 +277,30 @@ T GMRES<T,C0>::solve_y(int nvecs,type0* x)
             y[i]-=H[j][i]*y[j];
         y[i]/=H[i][i];
     }
+    /*
+    printf("y={");
+    for(int i=0;i<nvecs;i++)
+    {
+        printf("%0.10lf",y[i]);
+        if(i!=nvecs-1)
+            printf(",");
+    }
+    printf("};\n\n");*/
+    
+    /*
+    printf("r={");
+    for(int i=0;i<nvecs;i++)
+    {
+        type0 r=b_hat[i];
+        for(int j=i;j<nvecs;j++)
+            r-=H[j][i]*y[j];
+        printf("%0.10lf",r);
+        if(i!=nvecs-1)
+            printf(",");
+    }
+    printf("};\n\n");
+    */
+    
     
     
     for(int i=0;i<n;i++)
@@ -268,4 +364,80 @@ void GMRES<T,C0>::start(T* b)
     
     b_hat[0]=norm;
 }
+
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+namespace MAPP_NS
+{
+    class __GMRES
+    {
+    private:
+        const int m;
+        const int dim;
+        const int n;
+        Vec<type0>** vecs;
+        type0* Q;
+        type0** H;
+        type0* b_hat;
+        type0* cos;
+        type0* sin;
+        
+        type0* y;
+        type0* ans_lcl;
+        
+
+        type0 calc(type0*,type0*);
+        type0 calc(int,type0*,type0*);
+        
+        type0 solve_y(int,type0*);
+        
+        
+        MPI_Comm& world;
+    protected:
+    public:
+        __GMRES(Atoms*,int,int);
+        ~__GMRES();
+        template<class KERNEL>
+        bool solve(KERNEL&,Vec<type0>*,type0,type0&,Vec<type0>*);
+        
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class KERNEL>
+bool __GMRES::solve(KERNEL& A,Vec<type0>* Ax,type0 tol,type0& norm,Vec<type0>* x)
+{
+    type0* __Ax=Ax->begin();
+    type0* __x=x->begin();
+    calc(__Ax,__x);
+    
+    for(int i=0;i<m;i++)
+    {
+        A(x,Ax);
+        if(calc(i,__Ax,__x)<tol)
+        {
+            norm=solve_y(i+1,__x);
+            return true;
+        }
+    }
+    
+    norm=solve_y(m,__x);
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif

@@ -10,6 +10,7 @@ namespace MAPP_NS
     protected:
         bool nonlin();
         type0 update_c();
+        void J_test();
     public:
         int max_niters_nonlin;
         int max_niters_lin;
@@ -26,13 +27,16 @@ namespace MAPP_NS
         
         type0* y_0;
         type0* c_0;
+        type0* a;
         type0* del_c;
         type0* F;
-        type0* a;
+        Vec<type0>* F_ptr;
+        Vec<type0>* del_c_ptr;
         
         
         
         class GMRES<type0,ForceFieldDMD>* gmres;
+        class __GMRES* __gmres;
         
         DMDImplicit();
         virtual ~DMDImplicit();
@@ -40,6 +44,28 @@ namespace MAPP_NS
         void fin_static();
 
         
+        typedef struct
+        {
+            PyObject_HEAD
+            DMDImplicit* dmd;
+        }Object;
+        
+        
+        static PyTypeObject TypeObject;
+        static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
+        static int __init__(PyObject*, PyObject*,PyObject*);
+        static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
+        static void __dealloc__(PyObject*);
+        
+        static PyMethodDef methods[];
+        static void setup_tp_methods();
+        
+        static PyGetSetDef getset[];
+        static void setup_tp_getset();
+        static void getset_max_niters_nonlin(PyGetSetDef&);
+        static void getset_max_niters_lin(PyGetSetDef&);
+        
+        static void setup_tp();
     };
 }
 #endif 

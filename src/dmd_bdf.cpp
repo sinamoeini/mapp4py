@@ -40,46 +40,50 @@ DMDBDF::~DMDBDF()
 void DMDBDF::init_static()
 {
     DMDImplicit::init_static();
-    dy=new type0[(max_q+2)*ncs];
+    Memory::alloc(dy,(max_q+2)*ncs);
     z=dy+ncs;
     
-    dynamic=new DynamicDMD(atoms,ff,false,{atoms->elem,atoms->c},{},{});
-    dynamic->init();
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void DMDBDF::fin_static()
-{
-    delete dynamic;
-    dynamic=NULL;
-    delete [] dy;
-    dy=z=NULL;
-    DMDImplicit::fin_static();
+    ff->derivative_timer();
+    ff->neighbor->init_static();
+    ff->neighbor->create_2nd_list();
+    ff->init_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void DMDBDF::run_static(type0 t_tot)
 {
-    ff->derivative_timer();
-    ff->neighbor->init_static();
-    ff->neighbor->create_2nd_list();
+    init_static();
+    
     
     t_cur=0.0;
     t_fin=t_tot;
-    nconst_q=0;
-    nconst_dt=0;
+    nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
+    /*
+    for(int i=0;i<ncs;i++)
+        printf("%d\t%e\n",i,c[i]);
+     */
     
+    int __max_q=1;
+    type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
+    reset();
     type0 dt_prev;
     int q_prev;
     int istep=0;
-    for(;istep<max_nsteps;istep++)
+    for(;istep<max_nsteps && t_cur<t_fin;istep++)
     {
         dt_prev=dt;
         q_prev=q;
         
-        while(!integrate()) integrate_fail();
+        
+        
+        while(!integrate())
+            integrate_fail();
+        printf("step %d %e %e %e\n",istep,t_cur+dt,c[0],c_d[0]);
+        
+        __max_q=MAX(q,__max_q);
+        __max_dt=MAX(dt,__max_dt);
+        __min_dt=MIN(dt,__min_dt);
         
         
         if(q_prev!=q) nconst_q=1;
@@ -93,16 +97,40 @@ void DMDBDF::run_static(type0 t_tot)
         
         dt_prev=dt;
         q_prev=q;
+        t_cur+=dt_prev;
         prep_for_next();
         
         if(dt_prev!=dt)
             nconst_dt=0;
         if(q_prev!=q)
             nconst_q=0;
-        t_cur+=dt_prev;
+        
     }
+    /*
     
+    for(int i=0;i<ncs;i++)
+        printf("%d\t%e\n",i,c[i]);
+    */
+    
+    printf("nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
+    printf("intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
+    printf("integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+    printf("maximum order: %d\n",__max_q);
+    printf("maximum timestep: %e\n",__max_dt);
+    printf("minimum timestep: %e\n",__min_dt);
+    
+    fin_static();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DMDBDF::fin_static()
+{
+    ff->fin_static();
     ff->neighbor->fin_static();
+    Memory::dealloc(dy);
+    z=NULL;
+    DMDImplicit::fin_static();
 }
 /*--------------------------------------------
  
@@ -118,14 +146,11 @@ bool DMDBDF::integrate()
          if jumps out of boundary do
          a fail safe interpolation
          */
-        
         if(!interpolate())
         {
             interpolate_fail();
             continue;
         }
-        
-            
         
         /*
          solve the nonlinear equation
@@ -165,16 +190,20 @@ bool DMDBDF::integrate()
         norm_lcl+=dy[i]*dy[i];
     }
     MPI_Allreduce(&norm_lcl,&norm,1,MPI_TYPE0,MPI_SUM,atoms->world);
+    
+    
     err=err_fac*sqrt(norm/nc_dofs)/a_tol;
-    
-    if(err>1.0)
+    //printf("Error: %e\n",err);
+    if(err<1.0)
     {
-        ninteg_rej++;
-        return false;
+        ninteg_acc++;
+        return true;
     }
-    
-    ninteg_acc++;
-    return true;
+
+    memcpy(c,c_0,ncs*sizeof(type0));
+    dynamic->update(atoms->c);
+    ninteg_rej++;
+    return false;
 }
 /*--------------------------------------------
  we want to solve:
@@ -187,7 +216,6 @@ bool DMDBDF::integrate()
  but we have to be careful not to exceed the
  boundary i.e.
  0 <= y_0 <= 1
- 
  --------------------------------------------*/
 bool DMDBDF::interpolate()
 {
@@ -201,23 +229,25 @@ bool DMDBDF::interpolate()
             __dt*=dt;
         }
     }
+    beta=DMDBDFMath::beta_calc(q,dt,t);
     
     /*
      to unroll the loops
      otherwise it'll be shitty
      */
+    
     bool in_domain=true;
     switch(q)
     {
-        case 1: in_domain=DMDBDFMath::interpolate<1>(ncs,beta,A[0],&A[1][1],z,y_0,a);
+        case 1: in_domain=DMDBDFMath::interpolate<1>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 2: in_domain=DMDBDFMath::interpolate<2>(ncs,beta,A[0],&A[1][1],z,y_0,a);
+        case 2: in_domain=DMDBDFMath::interpolate<2>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 3: in_domain=DMDBDFMath::interpolate<3>(ncs,beta,A[0],&A[1][1],z,y_0,a);
+        case 3: in_domain=DMDBDFMath::interpolate<3>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 4: in_domain=DMDBDFMath::interpolate<4>(ncs,beta,A[0],&A[1][1],z,y_0,a);
+        case 4: in_domain=DMDBDFMath::interpolate<4>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        default: in_domain=DMDBDFMath::interpolate<max_q>(ncs,beta,A[0],&A[1][1],z,y_0,a);
+        default: in_domain=DMDBDFMath::interpolate<max_q>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
     }
     
     int domain_err,domain_err_lcl=in_domain ? 0:1;
@@ -246,7 +276,7 @@ void DMDBDF::prep_for_next()
     eta[1]=pow(0.5/err,1.0/(iq+1.0));
     eta[0]=eta[2]=0.0;
     
-    if(nconst_q>q && q<max_q)
+    if(q<max_q)
     {
         type0 norm_lcl=0.0;
         for(int i=0;i<ncs;i++)
@@ -283,44 +313,49 @@ void DMDBDF::prep_for_next()
     }
     
     
-    type0 dt_r;
-    if(eta[0]>eta[1] && eta[0]>eta[2])
+    type0 dt_r=1.0;
+    dq=0;
+    if(nconst_q>2+q && nconst_dt>2+q)
     {
-        dq=-1;
-        dt_r=eta[0];
-    }
-    else if(eta[2]>eta[0] && eta[2]>eta[1])
-    {
-        dq=1;
-        dt_r=eta[2];
-    }
-    else
-    {
-        dq=0;
-        dt_r=eta[1];
+        if(eta[0]>eta[1] && eta[0]>eta[2])
+        {
+            dq=-1;
+            dt_r=eta[0];
+        }
+        else if(eta[2]>eta[0] && eta[2]>eta[1])
+        {
+            dq=1;
+            dt_r=eta[2];
+        }
+        else
+        {
+            dq=0;
+            dt_r=eta[1];
+        }
     }
     
     
-    if(10.0<dt_r)
+    if(1.0e2<dt_r)
         dt_r=10.0;
-    else if(1.0<=dt_r && dt_r<1.5)
-        dt_r=1.0;
     else if(dt_r<=0.5)
         dt_r=0.5;
     
     type0 new_dt;
     if(dt_r*dt>t_fin-t_cur)
+    {
+        
         new_dt=t_fin-t_cur;
+    }
     else
     {
-        if(t_fin-t_cur<=2.0*dt_min)
-            new_dt=2.0*dt_min;
+        if(t_fin-t_cur<=2.0*min_dt)
+            new_dt=2.0*min_dt;
         else
         {
-            if(dt_r*dt<dt_min)
-                new_dt=dt_min;
-            else if(dt_r*dt>=t_fin-t_cur-dt_min)
-                new_dt=t_fin-t_cur-dt_min;
+            if(dt_r*dt<min_dt)
+                new_dt=min_dt;
+            else if(dt_r*dt>=t_fin-t_cur-min_dt)
+                new_dt=t_fin-t_cur-min_dt;
             else
                 new_dt=dt_r*dt;
         }
@@ -379,7 +414,7 @@ void DMDBDF::update_z()
  --------------------------------------------*/
 void DMDBDF::nonlin_fail()
 {
-    if(t_fin-t_cur<=2.0*dt_min)
+    if(t_fin-t_cur<=2.0*min_dt)
     {
         if(q>1)
             q--;
@@ -390,7 +425,7 @@ void DMDBDF::nonlin_fail()
     }
     else
     {
-        if(dt==dt_min)
+        if(dt==min_dt)
         {
             if(q>1)
                 q--;
@@ -402,10 +437,10 @@ void DMDBDF::nonlin_fail()
         else
         {
             type0 r=0.25;
-            if(r*dt<dt_min)
-                dt=dt_min;
-            else if(r*dt>t_fin-t_cur-dt_min)
-                dt=t_fin-t_cur-dt_min;
+            if(r*dt<min_dt)
+                dt=min_dt;
+            else if(r*dt>t_fin-t_cur-min_dt)
+                dt=t_fin-t_cur-min_dt;
             else
                 dt*=r;
         }
@@ -414,9 +449,8 @@ void DMDBDF::nonlin_fail()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::interpolate_fail()
+void DMDBDF::reset()
 {
-
     auto get_max_dt=[](type0 x,type0 x_d)->type0
     {
         
@@ -431,14 +465,15 @@ void DMDBDF::interpolate_fail()
         {
             type0 ans=-x/x_d;
             while(x+x_d*ans<0.0)
-                ans=std::nextafter(ans,1.0);
+                ans=std::nextafter(ans,-1.0);
             return ans;
         }
         else
             return std::numeric_limits<type0>::infinity();
     };
     
-    
+    // ddc^2
+    type0 norm=ff->ddc_norm()/sqrt(nc_dofs);
     type0 max_dt_lcl=std::numeric_limits<type0>::infinity();
     type0* __z=z;
     for(int i=0;i<ncs;i++,__z+=max_q+1)
@@ -453,24 +488,29 @@ void DMDBDF::interpolate_fail()
             __z[0]=__z[1]=0.0;
     }
     
+    
+    
     type0 max_dt;
     MPI_Allreduce(&max_dt_lcl,&max_dt,1,MPI_TYPE0,MPI_MIN,atoms->world);
+
     
-    // ddc^2
-    type0 norm=ff->ddc_norm()/sqrt(nc_dofs);
     q=1;
-    type0 __dt=MIN(sqrt(2.0*a_tol/norm),max_dt);
-    if(__dt<min_dt)
-    {
-        
-    }
+    dt=MAX(MIN(MIN(sqrt(2.0*a_tol/norm),(t_fin-t_cur)*0.001),max_dt),min_dt);
+    Algebra::zero<max_q+1>(t);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DMDBDF::interpolate_fail()
+{
+    reset();
 }
 /*--------------------------------------------
  run
  --------------------------------------------*/
 void DMDBDF::integrate_fail()
 {
-    if(t_fin-t_cur<=2.0*dt_min)
+    if(t_fin-t_cur<=2.0*min_dt)
     {
         if(q>1)
             q--;
@@ -481,7 +521,7 @@ void DMDBDF::integrate_fail()
     }
     else
     {
-        if(dt==dt_min)
+        if(dt==min_dt)
         {
             if(q>1)
                 q--;
@@ -494,10 +534,13 @@ void DMDBDF::integrate_fail()
         {
             type0 r=pow(0.5/err,1.0/static_cast<type0>(q+1));
             
-            if(r*dt<dt_min)
-                dt=dt_min;
-            else if(r*dt>t_fin-t_cur-dt_min)
-                dt=t_fin-t_cur-dt_min;
+            
+            
+            
+            if(r*dt<min_dt)
+                dt=min_dt;
+            else if(r*dt>t_fin-t_cur-min_dt)
+                dt=t_fin-t_cur-min_dt;
             else
                 dt*=r;
         }
@@ -521,8 +564,8 @@ int DMDBDF::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 
     
     if(f(args,kwds)==-1) return -1;
-    
-    
+    Object* __self=reinterpret_cast<Object*>(self);
+    __self->dmd=new DMDBDF();
     return 0;
 }
 /*--------------------------------------------
@@ -546,8 +589,84 @@ void DMDBDF::__dealloc__(PyObject* self)
     __self->dmd=NULL;
     delete __self;
 }
-
-
-
-
+/*--------------------------------------------*/
+PyMethodDef DMDBDF::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void DMDBDF::setup_tp_methods()
+{
+    ml_run(methods[0]);
+}
+/*--------------------------------------------*/
+PyTypeObject DMDBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
+/*--------------------------------------------*/
+void DMDBDF::setup_tp()
+{
+    TypeObject.tp_name="mapp.dmd.dmd_bdf";
+    TypeObject.tp_doc="chemical integration";
+    
+    TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
+    TypeObject.tp_basicsize=sizeof(Object);
+    
+    TypeObject.tp_new=__new__;
+    TypeObject.tp_init=__init__;
+    TypeObject.tp_alloc=__alloc__;
+    TypeObject.tp_dealloc=__dealloc__;
+    setup_tp_methods();
+    TypeObject.tp_methods=methods;
+    setup_tp_getset();
+    TypeObject.tp_getset=getset;
+}
+/*--------------------------------------------*/
+PyGetSetDef DMDBDF::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+/*--------------------------------------------*/
+void DMDBDF::setup_tp_getset()
+{
+    getset_a_tol(getset[0]);
+    getset_max_nsteps(getset[1]);
+    getset_min_dt(getset[2]);
+    getset_max_niters_lin(getset[3]);
+    getset_max_niters_nonlin(getset[4]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DMDBDF::ml_run(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="run";
+    tp_methods.ml_doc="run chemical integration";
+    
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsDMD>,type0> f("run",{"atoms","t"});
+        f.logics<1>()[0]=VLogics("ge",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
+        /*
+        try
+        {
+            __self->min->pre_run_chk(__atoms,__ff);
+        }
+        catch(std::string err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }*/
+        
+        __self->dmd->atoms=
+        __atoms;
+        __self->dmd->ff=__ff;
+        
+        __self->dmd->run_static(f.val<1>());
+        
+        __self->dmd->ff=NULL;
+        __self->dmd->atoms=NULL;
+        
+        Py_RETURN_NONE;
+    };
+}
 

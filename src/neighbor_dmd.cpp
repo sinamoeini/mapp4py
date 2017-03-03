@@ -225,6 +225,20 @@ void NeighborDMD::create_2nd_list()
 
     const int c_dim=c_vec->dim;
     const int n=atoms->natms*c_dim;
+    if(neighbor_list_size_size_2nd)
+    {
+        for(int i=0;i<neighbor_list_size_size_2nd;i++)
+            delete [] neighbor_list_2nd[i];
+        delete [] neighbor_list_2nd;
+        delete [] neighbor_list_size_2nd;
+    }
+    neighbor_list_size_size_2nd=n;
+    Memory::alloc(neighbor_list_2nd,neighbor_list_size_size_2nd);
+    Memory::alloc(neighbor_list_size_2nd,neighbor_list_size_size_2nd);
+    
+    
+    
+    
     const type0* x=atoms->x->begin();
     elem_type* elem_vec=elem->begin();
     elem_type elem_i;
@@ -245,7 +259,7 @@ void NeighborDMD::create_2nd_list()
         {
             j=neighbor_list[i][__j];
             if(elem_vec[j]!=elem_i) continue;
-            if(Algebra::RSQ<__dim__>(x_i,x+(j/c_dim))>=rsq_crd_ielem) continue;
+            if(Algebra::RSQ<__dim__>(x_i,x+(j/c_dim)*__dim__)>=rsq_crd_ielem) continue;
             tmp_neigh_list[__neigh_sz++]=j;
         }
         neighbor_list_2nd[i]=new int[__neigh_sz];

@@ -59,11 +59,6 @@ void DAEBDF::run_static(type0 t_tot)
     t_cur=0.0;
     t_fin=t_tot;
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
-    /*
-    for(int i=0;i<ncs;i++)
-        printf("%d\t%e\n",i,c[i]);
-     */
-    
     int __max_q=1;
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     reset();
@@ -110,10 +105,10 @@ void DAEBDF::run_static(type0 t_tot)
     
     
     /*
-    type0* alpha=atoms->alpha->begin();
+    //type0* alpha=atoms->alpha->begin();
     for(int i=0;i<ncs;i++)
-        printf("%d\t%e\t%e\t%e\n",i,c[i],c_d[i],alpha[i]);
-     */
+        printf("%d\t%e\t%e\n",i,c[i],c_d[i]);
+    */
     
     printf("nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
     printf("intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);

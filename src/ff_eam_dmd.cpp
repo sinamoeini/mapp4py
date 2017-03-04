@@ -818,6 +818,7 @@ inline type0 ForceFieldEAMDMD::calc_ent(type0 x)
  --------------------------------------------*/
 void ForceFieldEAMDMD::dc()
 {
+    /*
     calc_mu();
     
     //external vecs
@@ -859,7 +860,7 @@ void ForceFieldEAMDMD::dc()
             gamma_i=rsq/alpha_i_sq;
             gamma_j=rsq/alpha_j_sq;
             mu_ji=beta*(mu[j]-mu_i);
-            calc_Q(elem_i,gamma_i,gamma_j,mu_ji,Qi,alpha_Q_sq);
+            calc_Q(gamma_i,gamma_j,mu_ji,Qi,alpha_Q_sq);
             
             d_i=d_j=-c_1[elem_i]*rsq*alpha_Q_sq;
             d_i/=alpha_i_sq*alpha_i;
@@ -873,6 +874,7 @@ void ForceFieldEAMDMD::dc()
                 c_d[j]-=dc_ij;
         }
     }
+     */
 }
 /*--------------------------------------------
  calculate norm of d^2c/dt^2
@@ -912,7 +914,7 @@ type0 ForceFieldEAMDMD::ddc_norm()
     type0 ans_lcl=0.0,ans;
     for(int i=0;i<n;i++)
         if(c[i]>=0.0)
-            ans_lcl+=(t[i]+s[i])*(t[i]+s[i]);
+            ans_lcl+=(t[i]-s[i])*(t[i]-s[i]);
     
     MPI_Allreduce(&ans_lcl,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return sqrt(ans);
@@ -1013,22 +1015,10 @@ void ForceFieldEAMDMD::calc_mu()
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
         {
             j=neighbor_list[i][__j];
-            
             rho[i]+=c[j]*rho_phi[istart+2];
-            /*
-            if((i==1 || i==2) && rho_phi[istart+2]!=0.0)
-                printf("%d %e %e %e %e %e\n",i,c[j]*rho_phi[istart+2],sqrt(Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__))
-                       ,sqrt(__alpha[i]*__alpha[i]+__alpha[j]*__alpha[j]),__alpha[i],__alpha[j]);
-             */
+
             if(j<n)
-            {
                 rho[j]+=c[i]*rho_phi[istart+1];
-                /*
-                if((j==1 || j==2) && rho_phi[istart+1]!=0.0)
-                    printf("%d %e %e %e %e %e\n",j,c[i]*rho_phi[istart+1],sqrt(Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__))
-                           ,sqrt(__alpha[i]*__alpha[i]+__alpha[j]*__alpha[j]),__alpha[i],__alpha[j]);
-                 */
-            }
         }
         
         __rho=rho[i];
@@ -1089,11 +1079,11 @@ void ForceFieldEAMDMD::calc_mu()
  type0* mu=mu_ptr->begin();
  type0* cv=cv_ptr->begin();
  
- F=c-beta*c_d(c)+a
+ F=c-scalar*c_d(c)+a
  --------------------------------------------*/
-type0 ForceFieldEAMDMD::update_J(type0 beta,type0* a,type0* F)
+type0 ForceFieldEAMDMD::update_J(type0 scalar,type0* a,type0* F)
 {
-    type0 iota=log(beta);
+    type0 iota=log(scalar);
     
     calc_mu();
     
@@ -1113,10 +1103,9 @@ type0 ForceFieldEAMDMD::update_J(type0 beta,type0* a,type0* F)
     for(int i=0;i<n;i++) F[i]=c_d[i]=0.0;
     
     
-    elem_type elem_i;
-    type0 rsq,alpha_i,alpha_j,alpha_i_sq,alpha_j_sq,gamma_i,gamma_j,mu_i,mu_ji;
-    type0 Qi,alpha_Q_sq,theta_i,theta_j,exp_mod_Qi,exp_mod_Qj,d_i,d_j;
-    type0 dc_ij,dg_ij;
+    type0 rsq,alpha_i,alpha_j,alpha_sq_i,alpha_sq_j,gamma_i,gamma_j,mu_i,mu_ji;
+    type0 Q_i,gamma_ij_inv,theta_i,theta_j,exp_mod_Q_i,exp_mod_Q_j,d_i,d_j;
+    type0 dc_ij,dg_ij,c_1_ielem;
     type0 ans_lcl=0.0;
     size_t istart=0;
     int** neighbor_list=neighbor->neighbor_list_2nd;
@@ -1124,308 +1113,58 @@ type0 ForceFieldEAMDMD::update_J(type0 beta,type0* a,type0* F)
     for(int i=0;i<n;i++)
     {
         if(c[i]<0.0) continue;
-        elem_i=elem_vec[i];
         alpha_i=alpha[i];
-        alpha_i_sq=alpha_i*alpha_i;
+        alpha_sq_i=alpha_i*alpha_i;
         mu_i=mu[i];
+        c_1_ielem=c_1[elem_vec[i]];
         const int neigh_sz=neighbor_list_size[i];
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
         {
             j=neighbor_list[i][__j];
             alpha_j=alpha[j];
-            alpha_j_sq=alpha_j*alpha_j;
+            alpha_sq_j=alpha_j*alpha_j;
             rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
-            gamma_i=rsq/alpha_i_sq;
-            gamma_j=rsq/alpha_j_sq;
+            gamma_i=rsq/alpha_sq_i;
+            gamma_j=rsq/alpha_sq_j;
             mu_ji=beta*(mu[j]-mu_i);
-            calc_Q(elem_i,gamma_i,gamma_j,mu_ji,Qi,alpha_Q_sq,theta_i);
+            calc_Q(gamma_i,gamma_j,mu_ji,Q_i,gamma_ij_inv,theta_i);
             
-            exp_mod_Qi=exp(-Qi+iota);
-            exp_mod_Qj=exp(-Qi+mu_ji+iota);
+            exp_mod_Q_i=exp(-Q_i+iota);
+            exp_mod_Q_j=exp(-Q_i+mu_ji+iota);
             
-            d_i=d_j=-c_1[elem_i]*rsq*alpha_Q_sq;
-            d_i/=alpha_i_sq*alpha_i;
-            d_j/=alpha_j_sq*alpha_j;
+            d_i=d_j=-c_1_ielem*rsq*gamma_ij_inv;
+            d_i/=alpha_sq_i*alpha_i;
+            d_j/=alpha_sq_j*alpha_j;
             theta_j=theta_i+1.0;
             
-            dc_ij=d_i*exp(-Qi)*c[i]*cv[j/c_dim]-d_j*exp(-Qi+mu_ji)*c[j]*cv[i/c_dim];
-            dg_ij=d_i*exp_mod_Qi*c[i]*cv[j/c_dim]-d_j*exp_mod_Qj*c[j]*cv[i/c_dim];
+            //dc_ij=d_i*exp(-Q_i)*c[i]*cv[j/c_dim]-d_j*exp(-Q_i+mu_ji)*c[j]*cv[i/c_dim];
+            //dg_ij=d_j*exp_mod_Q_j*c[j]*cv[i/c_dim]-d_i*exp_mod_Q_i*c[i]*cv[j/c_dim];
+            
+            dc_ij=exp(-Q_i)*(d_i*c[i]*cv[j/c_dim]-d_j*exp(mu_ji)*c[j]*cv[i/c_dim]);
+            dg_ij=exp(-Q_i+iota)*(d_j*exp(mu_ji)*c[j]*cv[i/c_dim]-d_i*c[i]*cv[j/c_dim]);
             
             
-            M_IJ[istart]=beta*(d_i*theta_i*exp_mod_Qi*c[i]*cv[j/c_dim]-d_j*theta_j*exp_mod_Qj*c[j]*cv[i/c_dim]);
-            M_IJ[istart+1]=d_i*exp_mod_Qi;
-            M_IJ[istart+2]=d_j*exp_mod_Qj;
+            //M_IJ[istart]=beta*(d_i*theta_i*exp_mod_Q_i*c[i]*cv[j/c_dim]-d_j*theta_j*exp_mod_Q_j*c[j]*cv[i/c_dim]);
+            M_IJ[istart]=beta*exp(-Q_i+iota)*(d_i*theta_i*c[i]*cv[j/c_dim]-d_j*theta_j*exp(mu_ji)*c[j]*cv[i/c_dim]);
+            M_IJ[istart+1]=d_i*exp_mod_Q_i;
+            M_IJ[istart+2]=d_j*exp_mod_Q_j;
             
-            F[i]-=dg_ij;
+            F[i]+=dg_ij;
             c_d[i]+=dc_ij;
 
             if(j<n)
             {
-                F[j]+=dg_ij;
+                F[j]-=dg_ij;
                 c_d[j]-=dc_ij;
             }
         }
         F[i]+=c[i]+a[i];
         ans_lcl+=F[i]*F[i];
     }
-
     
     type0 ans;
     MPI_Allreduce(&ans_lcl,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return sqrt(ans);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMD::update_J(type0* F)
-{
-    calc_mu();
-    memcpy(F,mu_ptr->begin(),atoms->natms*c_dim*sizeof(type0));
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMD::update_J2(type0* F)
-{
-    calc_mu();
-    
-    //external vecs
-    const type0* x=atoms->x->begin();
-    const type0* alpha=atoms->alpha->begin();
-    const type0* c=atoms->c->begin();
-    const elem_type* elem_vec=atoms->elem->begin();
-    
-    
-    //internal vecs
-    type0* cv=cv_ptr->begin();
-    type0* mu=mu_ptr->begin();
-    
-    const int n=atoms->natms*c_dim;
-    for(int i=0;i<n;i++) F[i]=0.0;
-    
-    
-    elem_type elem_i;
-    type0 rsq,alpha_i,alpha_j,alpha_i_sq,alpha_j_sq,gamma_i,gamma_j,mu_i,mu_ji;
-    type0 Qi,alpha_Q_sq,theta_i,theta_j,exp_mod_Qi,exp_mod_Qj,d_i,d_j;
-    type0 dg_ij;
-
-    size_t istart=0;
-    int** neighbor_list=neighbor->neighbor_list_2nd;
-    int* neighbor_list_size=neighbor->neighbor_list_size_2nd;
-    for(int i=0;i<n;i++)
-    {
-        if(c[i]<0.0) continue;
-        elem_i=elem_vec[i];
-        alpha_i=alpha[i];
-        alpha_i_sq=alpha_i*alpha_i;
-        mu_i=mu[i];
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            alpha_j=alpha[j];
-            alpha_j_sq=alpha_j*alpha_j;
-            rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
-            gamma_i=rsq/alpha_i_sq;
-            gamma_j=rsq/alpha_j_sq;
-            mu_ji=beta*(mu[j]-mu_i);
-            calc_Q(elem_i,gamma_i,gamma_j,mu_ji,Qi,alpha_Q_sq,theta_i);
-            
-            exp_mod_Qi=exp(-Qi);
-            exp_mod_Qj=exp(-Qi+mu_ji);
-            
-            d_i=d_j=-c_1[elem_i]*rsq*alpha_Q_sq;
-            d_i/=alpha_i_sq*alpha_i;
-            d_j/=alpha_j_sq*alpha_j;
-            theta_j=theta_i+1.0;
-            
-            dg_ij=d_i*exp_mod_Qi*c[i]*cv[j/c_dim]-d_j*exp_mod_Qj*c[j]*cv[i/c_dim];
-            
-            
-            M_IJ[istart]=beta*(d_i*theta_i*exp_mod_Qi*c[i]*cv[j/c_dim]-d_j*theta_j*exp_mod_Qj*c[j]*cv[i/c_dim]);
-            M_IJ[istart+1]=d_i*exp_mod_Qi;
-            M_IJ[istart+2]=d_j*exp_mod_Qj;
-            
-            /*
-            type0 val=dg_ij;
-            type0 dval=M_IJ[istart];
-            for(int k=0;k<100;k++)
-            {
-                type0 delta=k*5.0*1.0e-3*kbT;
-                type0 mu_ji0=beta*(mu[j]-mu_i+delta);
-                calc_Q(elem_i,gamma_i,gamma_j,mu_ji0,Qi,alpha_Q_sq,theta_i);
-                
-                exp_mod_Qi=exp(-Qi);
-                exp_mod_Qj=exp(-Qi+mu_ji0);
-                
-                d_i=d_j=-c_1[elem_i]*rsq*alpha_Q_sq;
-                d_i/=alpha_i_sq*alpha_i;
-                d_j/=alpha_j_sq*alpha_j;
-                theta_j=theta_i+1.0;
-                
-                type0 val0=d_i*exp_mod_Qi*c[i]*cv[j/c_dim]-d_j*exp_mod_Qj*c[j]*cv[i/c_dim];
-                
-                printf("%e %e %e\n",delta,dval*delta,val0-val);
-            }
-            */
-            
-            
-            
-            F[i]+=dg_ij;
-            
-            if(j<n)
-            {
-                F[j]-=dg_ij;
-            }
-        }
-    }
-
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMD::kernel(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
-{
-    dynamic->update(x_ptr);
-    
-    //external vecs
-    type0* c=atoms->c->begin();
-    
-    //internal vecs
-    type0* ddE=ddE_ptr->begin();
-    type0* dE=dE_ptr->begin();
-    type0* b0=vec0->begin();
-    
-    //input vecs
-    type0* x=x_ptr->begin();
-    type0* Ax=Ax_ptr->begin();
-    
-    int** neighbor_list=neighbor->neighbor_list;
-    int* neighbor_list_size=neighbor->neighbor_list_size;
-    size_t istart=0;
-    const int n=atoms->natms*c_dim;
-    for(int i=0;i<n;i++) b0[i]=Ax[i]=0.0;
-    for(int i=0;i<n;i++)
-    {
-        const int neigh_sz=neighbor_list_size[i];
-        type0 ci_dEEi=c[i]*ddE[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            Ax[i]+=ci_dEEi*rho_phi[istart+2]*x[j];
-            if(j<n)
-                Ax[j]+=c[j]*ddE[j]*rho_phi[istart+1]*x[i];
-        }
-    }
-    dynamic->update(Ax_ptr);
-    
-    type0 tmp0;
-    istart=0;
-    for(int i=0;i<n;i++)
-    {
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            tmp0=rho_phi[istart]+dE[i]*rho_phi[istart+2]+dE[j]*rho_phi[istart+1];
-            b0[i]+=rho_phi[istart+1]*Ax[j]+tmp0*x[j];
-            if(j<n)
-                b0[j]+=rho_phi[istart+2]*Ax[i]+tmp0*x[i];
-        }
-    }
-    
-    memcpy(Ax,b0,n*sizeof(type0));
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMD::kernel2(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
-{
-    dynamic->update(x_ptr);
-    
-    //external vecs
-    type0* c=atoms->c->begin();
-    
-    //internal vecs
-    type0* ddE=ddE_ptr->begin();
-    type0* dE=dE_ptr->begin();
-    type0* b0=vec0->begin();
-    
-    //input vecs
-    type0* x=x_ptr->begin();
-    type0* Ax=Ax_ptr->begin();
-    
-    int** neighbor_list=neighbor->neighbor_list;
-    int* neighbor_list_size=neighbor->neighbor_list_size;
-    size_t istart=0;
-    const int n=atoms->natms*c_dim;
-    for(int i=0;i<n;i++) b0[i]=Ax[i]=0.0;
-    for(int i=0;i<n;i++)
-    {
-        const int neigh_sz=neighbor_list_size[i];
-        type0 ci_dEEi=c[i]*ddE[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            Ax[i]+=ci_dEEi*rho_phi[istart+2]*x[j];
-            if(j<n)
-                Ax[j]+=c[j]*ddE[j]*rho_phi[istart+1]*x[i];
-        }
-    }
-    dynamic->update(Ax_ptr);
-    
-    type0 tmp0;
-    istart=0;
-    for(int i=0;i<n;i++)
-    {
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            tmp0=rho_phi[istart]+dE[i]*rho_phi[istart+2]+dE[j]*rho_phi[istart+1];
-            b0[i]+=rho_phi[istart+1]*Ax[j]+tmp0*x[j];
-            if(j<n)
-                b0[j]+=rho_phi[istart+2]*Ax[i]+tmp0*x[i];
-        }
-    }
-    
-    dynamic->update(vec0);
-    
-    //internal vecs
-    type0* xv=vec1->begin();
-    type0* cv=cv_ptr->begin();
-    
-    const int nall=atoms->natms+atoms->natms_ph;
-    for(int i=0;i<nall;i++)
-    {
-        xv[i]=0.0;
-        for(int j=0;j<c_dim;j++)
-            if(c[i*c_dim+j]>=0.0)
-                xv[i]+=x[i*c_dim+j];
-    }
-    
-    for(int i=0;i<n;i++)
-        Ax[i]=0.0;
-    
-    
-    neighbor_list=neighbor->neighbor_list_2nd;
-    neighbor_list_size=neighbor->neighbor_list_size_2nd;
-    istart=0;
-    for(int i=0;i<n;i++)
-    {
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            
-            tmp0=M_IJ[istart]*(b0[j]-b0[i]);
-            tmp0+=M_IJ[istart+1]*(cv[j/c_dim]*x[i]-c[i]*xv[j/c_dim]);
-            tmp0-=M_IJ[istart+2]*(cv[i/c_dim]*x[j]-c[j]*xv[i/c_dim]);
-            Ax[i]+=tmp0;
-            
-            if(j<n) Ax[j]-=tmp0;
-        }
-    }
 }
 /*--------------------------------------------
  create the sparse matrices
@@ -1514,7 +1253,7 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
     }
 
     for(int i=0;i<n;i++)
-        Ax[i]=-x[i];
+        Ax[i]=x[i];
     
     
     neighbor_list=neighbor->neighbor_list_2nd;
@@ -1530,9 +1269,9 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
             tmp0=M_IJ[istart]*(b0[j]-b0[i]);
             tmp0+=M_IJ[istart+1]*(cv[j/c_dim]*x[i]-c[i]*xv[j/c_dim]);
             tmp0-=M_IJ[istart+2]*(cv[i/c_dim]*x[j]-c[j]*xv[i/c_dim]);
-            Ax[i]+=tmp0;
+            Ax[i]-=tmp0;
             
-            if(j<n) Ax[j]-=tmp0;
+            if(j<n) Ax[j]+=tmp0;
         }
     }
     
@@ -1609,7 +1348,7 @@ void ForceFieldEAMDMD::force_calc_static()
  alpha_Q_sq=alpha_U_sq/(x_ij*x_ij)
  --------------------------------------------*/
 inline void ForceFieldEAMDMD::
-calc_Q(elem_type& elem_i,type0& gamma_i,type0& gamma_j,type0& mu_ji
+calc_Q(type0& gamma_i,type0& gamma_j,type0& mu_ji
 ,type0& Q,type0& alpha_Q_sq)
 {
     type0 z0;
@@ -1643,7 +1382,7 @@ calc_Q(elem_type& elem_i,type0& gamma_i,type0& gamma_j,type0& mu_ji
  dalpha_Q_sq/dmu_ji
  --------------------------------------------*/
 inline void ForceFieldEAMDMD::
-calc_Q(elem_type& elem_i,type0& gamma_i,type0& gamma_j,type0& mu_ji
+calc_Q(type0& gamma_i,type0& gamma_j,type0& mu_ji
 ,type0& Q,type0& alpha_Q_sq,type0& theta)
 {
     type0 z0,dz0,dQ;
@@ -1665,40 +1404,3 @@ calc_Q(elem_type& elem_i,type0& gamma_i,type0& gamma_j,type0& mu_ji
     theta=alpha_Q_sq*(gamma_i-gamma_j)*dz0-dQ;
 
 }
-/*--------------------------------------------
- gamma_i = x_ij*x_ij/(alpha_i*alpha_i)
- gamma_j = x_ij*x_ij/(alpha_j*alpha_j)
- mu_ji = beta*(mu_j-mu_i)
- 
- Q=beta*U
- 
- dz0: derivative of z0 w.r.t. mu_ji
- dQ:  derivative of Q  w.r.t. mu_ji
- 
- alpha_Q_sq=alpha_U_sq/(x_ij*x_ij)
- dalpha_Q_sq/dmu_ji
- --------------------------------------------*/
-inline void ForceFieldEAMDMD::
-__calc_Q(elem_type& elem_i,type0& gamma_i,type0& gamma_j,type0& mu_ji
-,type0& Q,type0& alpha_Q_sq,type0& theta,type0& dQ,type0& dalpha_Q_sq)
-{
-    type0 z0,dz0;
-    type0 a=5.0*(gamma_i-gamma_j-6.0*mu_ji);
-    type0 xi=-2.0*(gamma_i+gamma_j);
-    type0 delta_sqrt=sqrt((xi-a)*(xi-a)-8.0*a*gamma_i);
-    z0=-4.0*gamma_i/((xi-a)-delta_sqrt);
-    dz0=30.0*z0*(1.0-z0)/delta_sqrt;
-    /*
-     here 
-    
-     
-     */
-    dQ=z0*z0*z0*(6.0*z0*z0-15.0*z0+10.0);
-    Q=z0*z0*(1.0-z0)*(1.0-z0)*((1.0-z0)*gamma_i+z0*gamma_j);
-    Q+=dQ*mu_ji;
-    
-    alpha_Q_sq=1.0/((1.0-z0)*gamma_i+z0*gamma_j);
-    theta=alpha_Q_sq*(gamma_i-gamma_j)*dz0-dQ;
-    dalpha_Q_sq=alpha_Q_sq*alpha_Q_sq*(gamma_i-gamma_j)*dz0;
-}
-

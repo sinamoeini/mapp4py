@@ -4,7 +4,7 @@
 namespace MAPP_NS
 {
     template<class T,class C0>
-    class GMRES
+    class __GMRES
     {
     private:
         const int m;
@@ -29,8 +29,8 @@ namespace MAPP_NS
         MPI_Comm& world;
     protected:
     public:
-        GMRES(Atoms*,int,int,C0&);
-        ~GMRES();
+        __GMRES(Atoms*,int,int,C0&);
+        ~__GMRES();
         void refresh();
         bool solve(T,Vec<T>*,Vec<T>*,T&,T&);
         bool solve(Vec<T>*,T,T&,Vec<T>*);
@@ -42,7 +42,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<class T,class C0>
-GMRES<T,C0>::GMRES(Atoms* __atoms,int __m,int __dim,C0& __kernel):
+__GMRES<T,C0>::__GMRES(Atoms* __atoms,int __m,int __dim,C0& __kernel):
 atoms(__atoms),
 world(__atoms->world),
 m(__m),
@@ -73,7 +73,7 @@ kernel(__kernel)
  
  --------------------------------------------*/
 template<class T,class C0>
-GMRES<T,C0>::~GMRES()
+__GMRES<T,C0>::~__GMRES()
 {
     for(int ivec=0;ivec<m+1;ivec++)
         delete vecs[ivec];
@@ -91,7 +91,7 @@ GMRES<T,C0>::~GMRES()
  
  --------------------------------------------*/
 template<class T,class C0>
-void GMRES<T,C0>::refresh()
+void __GMRES<T,C0>::refresh()
 {
     for(int ivec=0;ivec<m+1;ivec++)
         Q[ivec]=vecs[ivec]->begin();
@@ -101,7 +101,7 @@ void GMRES<T,C0>::refresh()
  
  --------------------------------------------*/
 template<class T,class C0>
-bool GMRES<T,C0>::solve(Vec<T>* b_ptr,T tol,T& norm,Vec<T>* x_ptr)
+bool __GMRES<T,C0>::solve(Vec<T>* b_ptr,T tol,T& norm,Vec<T>* x_ptr)
 {
     type0* x=x_ptr->begin();
     type0* b=b_ptr->begin();
@@ -145,9 +145,8 @@ bool GMRES<T,C0>::solve(Vec<T>* b_ptr,T tol,T& norm,Vec<T>* x_ptr)
 /*--------------------------------------------
  
  --------------------------------------------*/
-
 template<class T,class C0>
-bool GMRES<T,C0>::solve(T tol,Vec<T>* b,Vec<T>* x,T& res_norm,T& norm)
+bool __GMRES<T,C0>::solve(T tol,Vec<T>* b,Vec<T>* x,T& res_norm,T& norm)
 {
     for(int i=0;i<n;i++) x[i]=0.0;
     T last_h=0.0,tmp_0,b_norm;
@@ -207,7 +206,7 @@ bool GMRES<T,C0>::solve(T tol,Vec<T>* b,Vec<T>* x,T& res_norm,T& norm)
  
  --------------------------------------------*/
 template<class T,class C0>
-T GMRES<T,C0>::calc(int ivec)
+T __GMRES<T,C0>::calc(int ivec)
 {
     for(int j=0;j<ivec+1;j++)
         ans_lcl[j]=0.0;
@@ -216,7 +215,7 @@ T GMRES<T,C0>::calc(int ivec)
         for(int j=0;j<ivec+1;j++)
             ans_lcl[j]+=Q[ivec+1][i]*Q[j][i];
     
-    MPI_Allreduce(ans_lcl,H[ivec],ivec+1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(ans_lcl,H[ivec],ivec+1,Vec<type0>::MPI_T,MPI_SUM,world);
     
     T ans_lcl_=0.0,ans;
     for(int i=0;i<n;i++)
@@ -227,7 +226,7 @@ T GMRES<T,C0>::calc(int ivec)
         ans_lcl_+=Q[ivec+1][i]*Q[ivec+1][i];
     }
     
-    MPI_Allreduce(&ans_lcl_,&ans,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&ans_lcl_,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
     ans=1.0/sqrt(ans);
     
     for(int i=0;i<n;i++)
@@ -239,7 +238,7 @@ T GMRES<T,C0>::calc(int ivec)
  
  --------------------------------------------*/
 template<class T,class C0>
-T GMRES<T,C0>::solve_y(int nvecs,type0* x)
+T __GMRES<T,C0>::solve_y(int nvecs,type0* x)
 {
     /*
     printf("H={");
@@ -318,7 +317,7 @@ T GMRES<T,C0>::solve_y(int nvecs,type0* x)
  
  --------------------------------------------*/
 template<class T,class C0>
-void GMRES<T,C0>::restart()
+void __GMRES<T,C0>::restart()
 {
     T tmp_0=fabs(b_hat[m]);
     
@@ -349,13 +348,13 @@ void GMRES<T,C0>::restart()
  
  --------------------------------------------*/
 template<class T,class C0>
-void GMRES<T,C0>::start(T* b)
+void __GMRES<T,C0>::start(T* b)
 {
     T ans_lcl=0.0,norm,inv_norm;
     for(int i=0;i<n;i++)
         ans_lcl+=b[i]*b[i];
     
-    MPI_Allreduce(&ans_lcl,&norm,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&ans_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
     norm=sqrt(norm);
     inv_norm=1.0/norm;
     
@@ -370,7 +369,7 @@ void GMRES<T,C0>::start(T* b)
  --------------------------------------------*/
 namespace MAPP_NS
 {
-    class __GMRES
+    class GMRES
     {
     private:
         const int m;
@@ -378,12 +377,12 @@ namespace MAPP_NS
         const int n;
         Vec<type0>** vecs;
         type0* Q;
-        type0** H;
-        type0* b_hat;
-        type0* cos;
-        type0* sin;
+        type0** A_hat;
+        type0* Ax_hat;
+        type0(* cos_sin)[2];
         
-        type0* y;
+        
+        type0* x_hat;
         type0* ans_lcl;
         
 
@@ -396,8 +395,8 @@ namespace MAPP_NS
         MPI_Comm& world;
     protected:
     public:
-        __GMRES(Atoms*,int,int);
-        ~__GMRES();
+        GMRES(Atoms*,int,int);
+        ~GMRES();
         template<class KERNEL>
         bool solve(KERNEL&,Vec<type0>*,type0,type0&,Vec<type0>*);
         
@@ -407,7 +406,7 @@ namespace MAPP_NS
  
  --------------------------------------------*/
 template<class KERNEL>
-bool __GMRES::solve(KERNEL& A,Vec<type0>* Ax,type0 tol,type0& norm,Vec<type0>* x)
+bool GMRES::solve(KERNEL& A,Vec<type0>* Ax,type0 tol,type0& norm,Vec<type0>* x)
 {
     type0* __Ax=Ax->begin();
     type0* __x=x->begin();

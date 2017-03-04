@@ -3,7 +3,7 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-__GMRES::__GMRES(Atoms* __atoms,int __m,int __dim):
+GMRES::GMRES(Atoms* __atoms,int __m,int __dim):
 world(__atoms->world),
 m(__m),
 dim(__dim),
@@ -11,42 +11,40 @@ n(__dim*__atoms->natms)
 {
     
     
-    H=new type0*[m+1];
-    *H=new type0[m*(m+1)/2+1];
-    for(int i=1;i<m+1;i++)
-        H[i]=H[i-1]+i;
+    A_hat=new type0*[m];
+    *A_hat=new type0[m*(m+1)/2];
+    for(int i=1;i<m;i++)
+        A_hat[i]=A_hat[i-1]+i;
     
-    Memory::alloc(b_hat,m+1);
-    Memory::alloc(cos,m+1);
-    Memory::alloc(sin,m+1);
-    Memory::alloc(y,m+1);
+    Memory::alloc(Ax_hat,m+1);
+    Memory::alloc(cos_sin,m+1);
+    Memory::alloc(x_hat,m+1);
     Memory::alloc(ans_lcl,m+1);
     Memory::alloc(Q,(m+1)*n);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-__GMRES::~__GMRES()
+GMRES::~GMRES()
 {
     Memory::dealloc(Q);
     Memory::dealloc(ans_lcl);
-    Memory::dealloc(y);
-    Memory::dealloc(sin);
-    Memory::dealloc(cos);
-    Memory::dealloc(b_hat);
-    delete [] *H;
-    delete [] H;
+    Memory::dealloc(x_hat);
+    Memory::dealloc(cos_sin);
+    Memory::dealloc(Ax_hat);
+    delete [] *A_hat;
+    delete [] A_hat;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 __GMRES::calc(type0* Ax,type0* x)
+type0 GMRES::calc(type0* Ax,type0* x)
 {
     type0 norm_sq_lcl=0.0,norm;
     for(int i=0;i<n;i++)
         norm_sq_lcl+=Ax[i]*Ax[i];
     
-    MPI_Allreduce(&norm_sq_lcl,&norm,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&norm_sq_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
     norm=sqrt(norm);
     type0 norm_inv=1.0/norm;
     
@@ -54,15 +52,15 @@ type0 __GMRES::calc(type0* Ax,type0* x)
     for(int i=0;i<n;i++,q+=m+1)
         x[i]=*q=norm_inv*Ax[i];
     
-    b_hat[0]=norm;
+    Ax_hat[0]=norm;
     return norm;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 __GMRES::calc(int iter,type0* Ax,type0* x)
+type0 GMRES::calc(int iter,type0* RESTRICT Ax,type0* RESTRICT x)
 {
-    type0* h=H[iter];
+    type0* h=A_hat[iter];
     int ivec=iter+1;
     for(int j=0;j<ivec;j++)
         ans_lcl[j]=0.0;
@@ -77,7 +75,7 @@ type0 __GMRES::calc(int iter,type0* Ax,type0* x)
     }
     
     
-    MPI_Allreduce(ans_lcl,h,ivec,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(ans_lcl,h,ivec,Vec<type0>::MPI_T,MPI_SUM,world);
     type0 norm_sq_lcl=0.0,norm;
     
     q=Q;
@@ -89,7 +87,7 @@ type0 __GMRES::calc(int iter,type0* Ax,type0* x)
         norm_sq_lcl+=q[ivec]*q[ivec];
     }
     
-    MPI_Allreduce(&norm_sq_lcl,&norm,1,MPI_TYPE0,MPI_SUM,world);
+    MPI_Allreduce(&norm_sq_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
     norm=sqrt(norm);
     type0 norm_inv=1.0/norm;
     
@@ -102,28 +100,28 @@ type0 __GMRES::calc(int iter,type0* Ax,type0* x)
     type0 tmp;
     for(int i=0;i<iter;i++)
     {
-        tmp=cos[i]*h[i]-sin[i]*h[i+1];
-        h[i+1]=sin[i]*h[i]+cos[i]*h[i+1];
+        tmp=cos_sin[i][0]*h[i]-cos_sin[i][1]*h[i+1];
+        h[i+1]=cos_sin[i][1]*h[i]+cos_sin[i][0]*h[i+1];
         h[i]=tmp;
     }
     
     tmp=sqrt(h[iter]*h[iter]+norm*norm);
-    cos[iter]=h[iter]/tmp;
-    sin[iter]=-norm/tmp;
+    cos_sin[iter][0]=h[iter]/tmp;
+    cos_sin[iter][1]=-norm/tmp;
    
-    h[iter]=cos[iter]*h[iter]-sin[iter]*norm;
-    b_hat[iter+1]=sin[iter]*b_hat[iter];
-    b_hat[iter]*=cos[iter];
+    h[iter]=cos_sin[iter][0]*h[iter]-cos_sin[iter][1]*norm;
+    Ax_hat[iter+1]=cos_sin[iter][1]*Ax_hat[iter];
+    Ax_hat[iter]*=cos_sin[iter][0];
 
     
     
-    return fabs(b_hat[iter+1]);
+    return fabs(Ax_hat[iter+1]);
     
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 __GMRES::solve_y(int nvecs,type0* x)
+type0 GMRES::solve_y(int nvecs,type0* x)
 {
     /*
      printf("H={");
@@ -156,10 +154,10 @@ type0 __GMRES::solve_y(int nvecs,type0* x)
     
     for(int i=nvecs-1;i>-1;i--)
     {
-        y[i]=b_hat[i];
+        x_hat[i]=Ax_hat[i];
         for(int j=i+1;j<nvecs;j++)
-            y[i]-=H[j][i]*y[j];
-        y[i]/=H[i][i];
+            x_hat[i]-=A_hat[j][i]*x_hat[j];
+        x_hat[i]/=A_hat[i][i];
     }
     /*
      printf("y={");
@@ -191,12 +189,12 @@ type0 __GMRES::solve_y(int nvecs,type0* x)
     {
         x[i]=0.0;
         for(int ivec=0;ivec<nvecs;ivec++)
-            x[i]+=y[ivec]*q[ivec];
+            x[i]+=x_hat[ivec]*q[ivec];
     }
     
     type0 norm=0.0;
     for(int ivec=0;ivec<nvecs;ivec++)
-        norm+=y[ivec]*y[ivec];
+        norm+=x_hat[ivec]*x_hat[ivec];
     
     return sqrt(norm);
 }

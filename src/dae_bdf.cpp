@@ -1,4 +1,4 @@
-#include "dmd_bdf.h"
+#include "dae_bdf.h"
 #include "atoms_dmd.h"
 #include "ff_dmd.h"
 #include "dynamic_dmd.h"
@@ -9,8 +9,8 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-DMDBDF::DMDBDF():
-DMDImplicit(),
+DAEBDF::DAEBDF():
+DAEImplicit(),
 t{[0 ... max_q]=0.0},
 l{[0 ... max_q]=0.0},
 A{[0 ... max_q]={[0 ... max_q]= 0.0}},
@@ -29,7 +29,7 @@ dy(NULL)
 /*--------------------------------------------
  
  --------------------------------------------*/
-DMDBDF::~DMDBDF()
+DAEBDF::~DAEBDF()
 {
     delete dy;
     delete z;
@@ -37,9 +37,9 @@ DMDBDF::~DMDBDF()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::init_static()
+void DAEBDF::init_static()
 {
-    DMDImplicit::init_static();
+    DAEImplicit::init_static();
     Memory::alloc(dy,(max_q+2)*ncs);
     z=dy+ncs;
     
@@ -51,7 +51,7 @@ void DMDBDF::init_static()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::run_static(type0 t_tot)
+void DAEBDF::run_static(type0 t_tot)
 {
     init_static();
     
@@ -67,6 +67,7 @@ void DMDBDF::run_static(type0 t_tot)
     int __max_q=1;
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     reset();
+
     type0 dt_prev;
     int q_prev;
     int istep=0;
@@ -106,11 +107,13 @@ void DMDBDF::run_static(type0 t_tot)
             nconst_q=0;
         
     }
-    /*
     
+    
+    /*
+    type0* alpha=atoms->alpha->begin();
     for(int i=0;i<ncs;i++)
-        printf("%d\t%e\n",i,c[i]);
-    */
+        printf("%d\t%e\t%e\t%e\n",i,c[i],c_d[i],alpha[i]);
+     */
     
     printf("nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
     printf("intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
@@ -119,23 +122,24 @@ void DMDBDF::run_static(type0 t_tot)
     printf("maximum timestep: %e\n",__max_dt);
     printf("minimum timestep: %e\n",__min_dt);
     
+
     fin_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::fin_static()
+void DAEBDF::fin_static()
 {
     ff->fin_static();
     ff->neighbor->fin_static();
     Memory::dealloc(dy);
     z=NULL;
-    DMDImplicit::fin_static();
+    DAEImplicit::fin_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-bool DMDBDF::integrate()
+bool DAEBDF::integrate()
 {
     
     while (true)
@@ -189,7 +193,7 @@ bool DMDBDF::integrate()
         dy[i]=c[i]-y_0[i];
         norm_lcl+=dy[i]*dy[i];
     }
-    MPI_Allreduce(&norm_lcl,&norm,1,MPI_TYPE0,MPI_SUM,atoms->world);
+    MPI_Allreduce(&norm_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     
     
     err=err_fac*sqrt(norm/nc_dofs)/a_tol;
@@ -217,7 +221,7 @@ bool DMDBDF::integrate()
  boundary i.e.
  0 <= y_0 <= 1
  --------------------------------------------*/
-bool DMDBDF::interpolate()
+bool DAEBDF::interpolate()
 {
     type0 __dt;
     for(int i=0;i<q+1;i++)
@@ -229,7 +233,7 @@ bool DMDBDF::interpolate()
             __dt*=dt;
         }
     }
-    beta=DMDBDFMath::beta_calc(q,dt,t);
+    beta=DAEBDFMath::beta_calc(q,dt,t);
     
     /*
      to unroll the loops
@@ -239,15 +243,15 @@ bool DMDBDF::interpolate()
     bool in_domain=true;
     switch(q)
     {
-        case 1: in_domain=DMDBDFMath::interpolate<1>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 1: in_domain=DAEBDFMath::interpolate<1>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 2: in_domain=DMDBDFMath::interpolate<2>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 2: in_domain=DAEBDFMath::interpolate<2>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 3: in_domain=DMDBDFMath::interpolate<3>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 3: in_domain=DAEBDFMath::interpolate<3>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 4: in_domain=DMDBDFMath::interpolate<4>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 4: in_domain=DAEBDFMath::interpolate<4>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        default: in_domain=DMDBDFMath::interpolate<max_q>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        default: in_domain=DAEBDFMath::interpolate<max_q>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
     }
     
     int domain_err,domain_err_lcl=in_domain ? 0:1;
@@ -259,7 +263,7 @@ bool DMDBDF::interpolate()
         return false;
     }
     
-    err_fac=DMDBDFMath::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac);
+    err_fac=DAEBDFMath::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac);
     
     nintpol_acc++;
     return true;
@@ -267,7 +271,7 @@ bool DMDBDF::interpolate()
 /*--------------------------------------------
  here A and l are already updated
  --------------------------------------------*/
-void DMDBDF::prep_for_next()
+void DAEBDF::prep_for_next()
 {
     //first decide the new order and new time step
     
@@ -288,7 +292,7 @@ void DMDBDF::prep_for_next()
             }
         }
         
-        MPI_Allreduce(&norm_lcl,&tmp,1,MPI_TYPE0,MPI_SUM,atoms->world);
+        MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
         norm=hi_err_fac[0]*sqrt(tmp/nc_dofs)/a_tol;
         eta[2]=pow(0.5/norm,1.0/(iq+2.0));
     }
@@ -307,7 +311,7 @@ void DMDBDF::prep_for_next()
             
             __z+=max_q+1;
         }
-        MPI_Allreduce(&norm_lcl,&tmp,1,MPI_TYPE0,MPI_SUM,atoms->world);
+        MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
         norm=lo_err_fac[0]*sqrt(tmp/nc_dofs)/a_tol;
         eta[0]=pow(0.5/norm,1.0/(iq));
     }
@@ -315,6 +319,8 @@ void DMDBDF::prep_for_next()
     
     type0 dt_r=1.0;
     dq=0;
+    
+    
     if(nconst_q>2+q && nconst_dt>2+q)
     {
         if(eta[0]>eta[1] && eta[0]>eta[2])
@@ -334,9 +340,8 @@ void DMDBDF::prep_for_next()
         }
     }
     
-    
-    if(1.0e2<dt_r)
-        dt_r=10.0;
+    if(2.0<dt_r)
+        dt_r=2.0;
     else if(dt_r<=0.5)
         dt_r=0.5;
     
@@ -373,38 +378,38 @@ void DMDBDF::prep_for_next()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::update_z()
+void DAEBDF::update_z()
 {
-    DMDBDFMath::prep_A_bar_l(q,dt,t,dq,l,A_bar);
+    DAEBDFMath::prep_A_bar_l(q,dt,t,dq,l,A_bar);
     
     if(dq==1)
     {
         switch(q)
         {
-            case 1: DMDBDFMath::update_z_inc<1>(ncs,A_bar[0],z,dy,l);
+            case 1: DAEBDFMath::update_z_inc<1>(ncs,A_bar[0],z,dy,l);
                 break;
-            case 2: DMDBDFMath::update_z_inc<2>(ncs,A_bar[0],z,dy,l);
+            case 2: DAEBDFMath::update_z_inc<2>(ncs,A_bar[0],z,dy,l);
                 break;
-            case 3: DMDBDFMath::update_z_inc<3>(ncs,A_bar[0],z,dy,l);
+            case 3: DAEBDFMath::update_z_inc<3>(ncs,A_bar[0],z,dy,l);
                 break;
-            case 4: DMDBDFMath::update_z_inc<4>(ncs,A_bar[0],z,dy,l);
+            case 4: DAEBDFMath::update_z_inc<4>(ncs,A_bar[0],z,dy,l);
                 break;
-            default: DMDBDFMath::update_z_inc<max_q>(ncs,A_bar[0],z,dy,l);
+            default: DAEBDFMath::update_z_inc<max_q>(ncs,A_bar[0],z,dy,l);
         }
     }
     else
     {
         switch(q+dq)
         {
-            case 1: DMDBDFMath::update_z<1>(ncs,A_bar[0],z,dy,l);
+            case 1: DAEBDFMath::update_z<1>(ncs,A_bar[0],z,dy,l);
                 break;
-            case 2: DMDBDFMath::update_z<2>(ncs,A_bar[0],z,dy,l);
+            case 2: DAEBDFMath::update_z<2>(ncs,A_bar[0],z,dy,l);
                 break;
-            case 3: DMDBDFMath::update_z<3>(ncs,A_bar[0],z,dy,l);
+            case 3: DAEBDFMath::update_z<3>(ncs,A_bar[0],z,dy,l);
                 break;
-            case 4: DMDBDFMath::update_z<4>(ncs,A_bar[0],z,dy,l);
+            case 4: DAEBDFMath::update_z<4>(ncs,A_bar[0],z,dy,l);
                 break;
-            default: DMDBDFMath::update_z<max_q>(ncs,A_bar[0],z,dy,l);
+            default: DAEBDFMath::update_z<max_q>(ncs,A_bar[0],z,dy,l);
 
         }
     }
@@ -412,7 +417,7 @@ void DMDBDF::update_z()
 /*--------------------------------------------
  run
  --------------------------------------------*/
-void DMDBDF::nonlin_fail()
+void DAEBDF::nonlin_fail()
 {
     if(t_fin-t_cur<=2.0*min_dt)
     {
@@ -449,7 +454,7 @@ void DMDBDF::nonlin_fail()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::reset()
+void DAEBDF::reset()
 {
     auto get_max_dt=[](type0 x,type0 x_d)->type0
     {
@@ -491,7 +496,7 @@ void DMDBDF::reset()
     
     
     type0 max_dt;
-    MPI_Allreduce(&max_dt_lcl,&max_dt,1,MPI_TYPE0,MPI_MIN,atoms->world);
+    MPI_Allreduce(&max_dt_lcl,&max_dt,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
 
     
     q=1;
@@ -501,14 +506,14 @@ void DMDBDF::reset()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::interpolate_fail()
+void DAEBDF::interpolate_fail()
 {
     reset();
 }
 /*--------------------------------------------
  run
  --------------------------------------------*/
-void DMDBDF::integrate_fail()
+void DAEBDF::integrate_fail()
 {
     if(t_fin-t_cur<=2.0*min_dt)
     {
@@ -549,7 +554,7 @@ void DMDBDF::integrate_fail()
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* DMDBDF::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* DAEBDF::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -558,50 +563,50 @@ PyObject* DMDBDF::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int DMDBDF::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int DAEBDF::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<> f("__init__");
 
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->dmd=new DMDBDF();
+    __self->dae=new DAEBDF();
     return 0;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* DMDBDF::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* DAEBDF::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     __self->ob_type=type;
     __self->ob_refcnt=1;
-    __self->dmd=NULL;
+    __self->dae=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::__dealloc__(PyObject* self)
+void DAEBDF::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
-    delete __self->dmd;
-    __self->dmd=NULL;
+    delete __self->dae;
+    __self->dae=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef DMDBDF::methods[]={[0 ... 1]={NULL}};
+PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};
 /*--------------------------------------------*/
-void DMDBDF::setup_tp_methods()
+void DAEBDF::setup_tp_methods()
 {
     ml_run(methods[0]);
 }
 /*--------------------------------------------*/
-PyTypeObject DMDBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject DAEBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void DMDBDF::setup_tp()
+void DAEBDF::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.dmd_bdf";
+    TypeObject.tp_name="mapp.dmd.bdf";
     TypeObject.tp_doc="chemical integration";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -617,20 +622,20 @@ void DMDBDF::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef DMDBDF::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
-void DMDBDF::setup_tp_getset()
+void DAEBDF::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_max_niters_lin(getset[3]);
-    getset_max_niters_nonlin(getset[4]);
+    getset_max_ngmres_iters(getset[3]);
+    getset_max_nnewton_iters(getset[4]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDBDF::ml_run(PyMethodDef& tp_methods)
+void DAEBDF::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";
@@ -657,16 +662,15 @@ void DMDBDF::ml_run(PyMethodDef& tp_methods)
             return NULL;
         }*/
         
-        __self->dmd->atoms=
+        __self->dae->atoms=
         __atoms;
-        __self->dmd->ff=__ff;
+        __self->dae->ff=__ff;
         
-        __self->dmd->run_static(f.val<1>());
+        __self->dae->run_static(f.val<1>());
         
-        __self->dmd->ff=NULL;
-        __self->dmd->atoms=NULL;
+        __self->dae->ff=NULL;
+        __self->dae->atoms=NULL;
         
         Py_RETURN_NONE;
     };
 }
-

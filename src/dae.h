@@ -1,10 +1,10 @@
-#ifndef __MAPP__dmd__
-#define __MAPP__dmd__
+#ifndef __MAPP__dea__
+#define __MAPP__dea__
 #include "api.h"
 namespace MAPP_NS
 {
     template<typename> class Vec;
-    class DMD
+    class DAE
     {
     private:
     protected:
@@ -34,8 +34,8 @@ namespace MAPP_NS
         
         
         
-        DMD();
-        virtual ~DMD();
+        DAE();
+        virtual ~DAE();
         void init_static();
         void fin_static();
         
@@ -43,7 +43,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            DMD* dmd;
+            DAE* dae;
         }Object;
         
         

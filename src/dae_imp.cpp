@@ -1,4 +1,4 @@
-#include "dmd_implicit.h"
+#include "dae_imp.h"
 #include "atoms_dmd.h"
 #include "ff_dmd.h"
 #include "dynamic_dmd.h"
@@ -8,10 +8,10 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-DMDImplicit::DMDImplicit():
-DMD(),
-max_niters_nonlin(5),
-max_niters_lin(5),
+DAEImplicit::DAEImplicit():
+DAE(),
+max_nnewton_iters(5),
+max_ngmres_iters(5),
 y_0(NULL),
 c_0(NULL),
 del_c(NULL),
@@ -19,14 +19,13 @@ F(NULL),
 a(NULL),
 F_ptr(NULL),
 del_c_ptr(NULL),
-gmres(NULL),
-__gmres(NULL)
+gmres(NULL)
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-DMDImplicit::~DMDImplicit()
+DAEImplicit::~DAEImplicit()
 {
     delete [] y_0;
     y_0=c_0=a=NULL;
@@ -36,9 +35,9 @@ DMDImplicit::~DMDImplicit()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDImplicit::init_static()
+void DAEImplicit::init_static()
 {
-    DMD::init_static();
+    DAE::init_static();
     Memory::alloc(y_0,3*ncs);
     c_0=y_0+ncs;
     a=y_0+2*ncs;
@@ -46,16 +45,14 @@ void DMDImplicit::init_static()
     del_c=del_c_ptr->begin();
     F_ptr=new Vec<type0>(atoms,c_dim);
     F=F_ptr->begin();
-    gmres=new GMRES<type0,ForceFieldDMD>(atoms,max_niters_lin,c_dim,*ff);
-    __gmres=new __GMRES(atoms,max_niters_lin,c_dim);
+    
+    gmres=new GMRES(atoms,max_ngmres_iters,c_dim);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDImplicit::fin_static()
+void DAEImplicit::fin_static()
 {
-    delete __gmres;
-    __gmres=NULL;
     delete gmres;
     gmres=NULL;
     delete F_ptr;
@@ -66,12 +63,12 @@ void DMDImplicit::fin_static()
     del_c=NULL;
     Memory::dealloc(y_0);
     y_0=c_0=a=NULL;
-    DMD::fin_static();
+    DAE::fin_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline type0 DMDImplicit::update_c()
+inline type0 DAEImplicit::update_c()
 {
     type0 tmp;
     type0 r,r_lcl=1.0;
@@ -79,17 +76,17 @@ inline type0 DMDImplicit::update_c()
     {
         if(c[i]>=0.0)
         {
-            tmp=c[i]+r_lcl*del_c[i];
+            tmp=c[i]-r_lcl*del_c[i];
             if(tmp>1.0)
             {
-                r_lcl=(1.0-c[i])/del_c[i];
-                while(c[i]+r_lcl*del_c[i]>1.0)
+                r_lcl=(c[i]-1.0)/del_c[i];
+                while(c[i]-r_lcl*del_c[i]>1.0)
                     r_lcl=nextafter(r_lcl,0.0);
             }
             if(tmp<0.0)
             {
-                r_lcl=-c[i]/del_c[i];
-                while(c[i]+r_lcl*del_c[i]<0.0)
+                r_lcl=c[i]/del_c[i];
+                while(c[i]-r_lcl*del_c[i]<0.0)
                     r_lcl=nextafter(r_lcl,0.0);
             }
         }
@@ -98,12 +95,12 @@ inline type0 DMDImplicit::update_c()
     }
     
     
-    MPI_Allreduce(&r_lcl,&r,1,MPI_TYPE0,MPI_MIN,atoms->world);
+    MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
     
     volatile type0 c0;
     for(int i=0;i<ncs;i++)
     {
-        c0=c[i]+r*del_c[i];
+        c0=c[i]-r*del_c[i];
         --++c0;
         c[i]=c0;
     }
@@ -116,8 +113,10 @@ inline type0 DMDImplicit::update_c()
  nc_dofs
  err_fac
  --------------------------------------------*/
-bool DMDImplicit::nonlin()
+bool DAEImplicit::nonlin()
 {
+    //J_test();
+    
     type0 res_tol=0.005*a_tol*sqrt(nc_dofs)/err_fac;
     type0 denom=0.1*a_tol*sqrt(nc_dofs)/err_fac;
     type0 norm=1.0,delta=0.0,delta_prev=0.0,ratio=1.0,R=1.0;
@@ -135,14 +134,10 @@ bool DMDImplicit::nonlin()
     //printf("THE COST %d %e\n",0,cost);
     
     bool converge=false,diverge=false;
-    while(iter<max_niters_nonlin && !converge && !diverge)
+    while(iter<max_nnewton_iters && !converge && !diverge)
     {
-        //gmres->solve(F_ptr,res_tol,norm,del_c_ptr);
-        __gmres->solve(*ff,F_ptr,res_tol,norm,del_c_ptr);
+        gmres->solve(*ff,F_ptr,res_tol,norm,del_c_ptr);
 
-        
-        
-        
         ratio=update_c();
         dynamic->update(atoms->c);
         
@@ -151,6 +146,7 @@ bool DMDImplicit::nonlin()
         if(iter) R=MAX(0.3*R,delta/delta_prev);
         if(iter>1 && R*delta<1.0)
         {
+            ff->update_J(beta,a,F);
             converge=true;
             continue;
         }
@@ -164,7 +160,7 @@ bool DMDImplicit::nonlin()
         delta_prev=delta;
         
         cost=ff->update_J(beta,a,F)/(a_tol*sqrt(nc_dofs));
-        //printf("THE COST %d %e\n",iter+1,cost);
+        //printf("THE COST %d %e | %e\n",iter+1,cost,delta);
         iter++;
     }
 
@@ -187,15 +183,13 @@ bool DMDImplicit::nonlin()
 #include <iostream>
 #include "random.h"
 #include "ff_eam_dmd.h"
-void DMDImplicit::J_test()
+void DAEImplicit::J_test()
 {
     
-    
-    Random rand(234464565);
+    Random rand(562148245);
     constexpr int nvecs=100;
     type0 delta=1.0e-9;
     
-
     Vec<type0>* h =new Vec<type0>(atoms,c_dim);
     Vec<type0>* Jh =new Vec<type0>(atoms,c_dim);
     type0** dFs;
@@ -208,28 +202,15 @@ void DMDImplicit::J_test()
         c[i]=rand.uniform();
         if(rand.uniform()>0.5)
         {
-            __h[i]=0.00001*rand.uniform()*((1.0-c[i])/(delta*nvecs));
+            __h[i]=rand.uniform()*((1.0-c[i])/(delta*nvecs));
         }
         else
         {
-            __h[i]=-0.00001*rand.uniform()*(c[i]/(delta*nvecs));
+            __h[i]=-rand.uniform()*(c[i]/(delta*nvecs));
         }
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     ForceFieldEAMDMD* __ff=dynamic_cast<ForceFieldEAMDMD*>(ff);
-    
-    
-    
     
     dynamic->update(atoms->c);
     __ff->update_J(beta,a,F);
@@ -253,45 +234,20 @@ void DMDImplicit::J_test()
     FILE* fp=fopen("/Users/sina/Desktop/data.txt","w");
     for(int i=0;i<ncs;i++)
         for(int ivec=0;ivec<nvecs;ivec++)
-            fprintf(fp,"%e\t%e\t%e\n",ivec*delta,dFs[ivec][i],-__Jh[i]*ivec*delta);
+            fprintf(fp,"%e\t%e\t%e\n",ivec*delta,dFs[ivec][i],__Jh[i]*ivec*delta);
 
     
     fclose(fp);
-    
-    
     
 
     Memory::dealloc(dFs);
     delete Jh;
     delete h;
-    
-    
-    
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* DMDImplicit::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* DAEImplicit::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -300,49 +256,48 @@ PyObject* DMDImplicit::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int DMDImplicit::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int DAEImplicit::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<> f("__init__");
     
-    
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->dmd=new DMDImplicit();
+    __self->dae=new DAEImplicit();
     return 0;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* DMDImplicit::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* DAEImplicit::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     __self->ob_type=type;
     __self->ob_refcnt=1;
-    __self->dmd=NULL;
+    __self->dae=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDImplicit::__dealloc__(PyObject* self)
+void DAEImplicit::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
-    delete __self->dmd;
-    __self->dmd=NULL;
+    delete __self->dae;
+    __self->dae=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef DMDImplicit::methods[]={[0 ... 0]={NULL}};
+PyMethodDef DAEImplicit::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
-void DMDImplicit::setup_tp_methods()
+void DAEImplicit::setup_tp_methods()
 {
 }
 /*--------------------------------------------*/
-PyTypeObject DMDImplicit::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject DAEImplicit::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void DMDImplicit::setup_tp()
+void DAEImplicit::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.dmd_implicit";
+    TypeObject.tp_name="mapp.dmd.dae_implicit";
     TypeObject.tp_doc="chemical integration";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -358,52 +313,52 @@ void DMDImplicit::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef DMDImplicit::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEImplicit::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
-void DMDImplicit::setup_tp_getset()
+void DAEImplicit::setup_tp_getset()
 {
-    getset_max_niters_lin(getset[0]);
-    getset_max_niters_nonlin(getset[1]);
+    getset_max_ngmres_iters(getset[0]);
+    getset_max_nnewton_iters(getset[1]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDImplicit::getset_max_niters_lin(PyGetSetDef& getset)
+void DAEImplicit::getset_max_ngmres_iters(PyGetSetDef& getset)
 {
-    getset.name=(char*)"max_niters_lin";
+    getset.name=(char*)"max_ngmres_iters";
     getset.doc=(char*)"maximum number of iterations of linear solver (GMRES)";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->dmd->max_niters_lin,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_ngmres_iters,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<int> max_niters_lin("max_niters_lin");
-        max_niters_lin.logics[0]=VLogics("gt",0);
-        int ichk=max_niters_lin.set(op);
+        VarAPI<int> max_ngmres_iters("max_ngmres_iters");
+        max_ngmres_iters.logics[0]=VLogics("gt",0);
+        int ichk=max_ngmres_iters.set(op);
         if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->dmd->max_niters_lin=max_niters_lin.val;
+        reinterpret_cast<Object*>(self)->dae->max_ngmres_iters=max_ngmres_iters.val;
         return 0;
     };
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DMDImplicit::getset_max_niters_nonlin(PyGetSetDef& getset)
+void DAEImplicit::getset_max_nnewton_iters(PyGetSetDef& getset)
 {
-    getset.name=(char*)"max_niters_nonlin";
+    getset.name=(char*)"max_nnewton_iters";
     getset.doc=(char*)"maximum number of iterations of linear solver (GMRES)";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->dmd->max_niters_nonlin,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nnewton_iters,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<int> max_niters_nonlin("max_niters_nonlin");
-        max_niters_nonlin.logics[0]=VLogics("gt",0);
-        int ichk=max_niters_nonlin.set(op);
+        VarAPI<int> max_nnewton_iters("max_nnewton_iters");
+        max_nnewton_iters.logics[0]=VLogics("gt",0);
+        int ichk=max_nnewton_iters.set(op);
         if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->dmd->max_niters_nonlin=max_niters_nonlin.val;
+        reinterpret_cast<Object*>(self)->dae->max_nnewton_iters=max_nnewton_iters.val;
         return 0;
     };
 }

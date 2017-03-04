@@ -53,10 +53,8 @@ namespace MAPP_NS
         type0* M_IJ;
         
         /*--------------------------------------------*/
-        
-        void calc_Q(elem_type&,type0&,type0&,type0&,type0&,type0&);
-        void calc_Q(elem_type&,type0&,type0&,type0&,type0&,type0&,type0&);
-        void __calc_Q(elem_type&,type0&,type0&,type0&,type0&,type0&,type0&,type0&,type0&);
+        void calc_Q(type0&,type0&,type0&,type0&,type0&);
+        void calc_Q(type0&,type0&,type0&,type0&,type0&,type0&);
         /*--------------------------------------------*/
                 
     protected:
@@ -79,11 +77,6 @@ namespace MAPP_NS
         void fin_static();
         void operator()(Vec<type0>*,Vec<type0>*);
         type0 update_J(type0,type0*,type0*);
-        
-        void update_J(type0*);
-        void update_J2(type0*);
-        void kernel(Vec<type0>*,Vec<type0>*);
-        void kernel2(Vec<type0>*,Vec<type0>*);
         
         type0 ddc_norm();
         static void ml_new(PyMethodDef&,PyMethodDef&,PyMethodDef&);

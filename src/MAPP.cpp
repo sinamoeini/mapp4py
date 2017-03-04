@@ -11,7 +11,7 @@
 #include "md_styles.h"
 #include "min_styles.h"
 #include "read_styles.h"
-#include "dmd_styles.h"
+#include "dae_styles.h"
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
@@ -248,10 +248,10 @@ PyObject* MAPP::DMD::init_module(void)
     PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMD::TypeObject));
     
     
-    DMDBDF::setup_tp();
-    if(PyType_Ready(&DMDBDF::TypeObject)<0) return NULL;
-    Py_INCREF(&DMDBDF::TypeObject);
-    PyModule_AddObject(module,"dmd_bdf",reinterpret_cast<PyObject*>(&DMDBDF::TypeObject));
+    DAEBDF::setup_tp();
+    if(PyType_Ready(&DAEBDF::TypeObject)<0) return NULL;
+    Py_INCREF(&DAEBDF::TypeObject);
+    PyModule_AddObject(module,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
     
     return module;
 }

@@ -14,7 +14,7 @@
 typedef double type0;
 typedef unsigned char elem_type;
 typedef unsigned char byte;
-#define MPI_TYPE0 MPI_DOUBLE
+
 namespace MAPP_NS
 {
     template<int N, elem_type ... Rest>

@@ -1,10 +1,10 @@
-#ifndef __MAPP__dmd_bdf__
-#define __MAPP__dmd_bdf__
-#include "dmd_implicit.h"
+#ifndef __MAPP__dae_bdf__
+#define __MAPP__dae_bdf__
+#include "dae_imp.h"
 namespace MAPP_NS
 {
     template<typename> class Vec;
-    class DMDBDF:public DMDImplicit
+    class DAEBDF:public DAEImplicit
     {
     private:
     protected:
@@ -34,7 +34,6 @@ namespace MAPP_NS
         type0* z;
         type0* dy;
         
-
         
         
         
@@ -45,8 +44,9 @@ namespace MAPP_NS
         
         
         
-        DMDBDF();
-        ~DMDBDF();
+        
+        DAEBDF();
+        ~DAEBDF();
         
         void init_static();
         void fin_static();
@@ -58,7 +58,7 @@ namespace MAPP_NS
         void update_z();
         void prep_for_next();
         void reset();
-
+        
         
         
         
@@ -69,7 +69,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            DMDBDF* dmd;
+            DAEBDF* dae;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -88,7 +88,7 @@ namespace MAPP_NS
         static void setup_tp_getset();
         
         static void setup_tp();
-
+        
     };
 }
 using namespace MAPP_NS;
@@ -98,9 +98,9 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 namespace MAPP_NS
 {
-    namespace DMDBDFMath
+    namespace DAEBDFMath
     {
-
+        
         template<const int i,const int dim>
         class A_z_y_l
         {
@@ -109,14 +109,14 @@ namespace MAPP_NS
             static inline void func0(T* RESTRICT A,T* RESTRICT z,T dy,T* RESTRICT l)
             {
                 *z=Algebra::V_mul_V<i>(A,z)+dy**l;
-                A_z_y_l<i-1,dim>::func0(A+DMDBDF::max_q+2,z+1,dy,l+1);
+                A_z_y_l<i-1,dim>::func0(A+DAEBDF::max_q+2,z+1,dy,l+1);
             }
         };
         
         template<const int dim>
         class A_z_y_l<1,dim>
         {
-            public:
+        public:
             template<class T>
             static inline void func0(T* RESTRICT A,T* RESTRICT z,T dy,T* RESTRICT l)
             {
@@ -127,7 +127,7 @@ namespace MAPP_NS
         
         
         
-
+        
         
         
         template<const int dim>
@@ -136,7 +136,7 @@ namespace MAPP_NS
             for(int i=0;i<n;i++)
             {
                 A_z_y_l<dim+1,dim+1>::func0(A,z,dy[i],l);
-                z+=DMDBDF::max_q+1;
+                z+=DAEBDF::max_q+1;
             }
             
         }
@@ -148,7 +148,7 @@ namespace MAPP_NS
             {
                 z[dim+1]=l[dim+1]*dy[i];
                 A_z_y_l<dim+1,dim+1>::func0(A,z,dy[i],l);
-                z+=DMDBDF::max_q+1;
+                z+=DAEBDF::max_q+1;
             }
         }
         
@@ -166,7 +166,7 @@ namespace MAPP_NS
                 
                 y_0[i]=y0;
                 a[i]=Algebra::V_mul_V<dim>(A1,z+1)*beta-y0;
-                z+=DMDBDF::max_q+1;
+                z+=DAEBDF::max_q+1;
             }
             
             return true;
@@ -184,7 +184,7 @@ namespace MAPP_NS
         
         
         
-        inline void l_calc(int q,type0& dt,type0 (&t)[DMDBDF::max_q+1],type0 (&l)[DMDBDF::max_q+1])
+        inline void l_calc(int q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&l)[DAEBDF::max_q+1])
         {
             l[0]=1.0;
             for(int i=1;i<q+1;i++)
@@ -202,7 +202,7 @@ namespace MAPP_NS
         
         
         // f_flc
-        inline type0 beta_calc(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1])
+        inline type0 beta_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1])
         {
             type0 iq=0.0;
             type0 beta_inv=0.0;
@@ -215,7 +215,7 @@ namespace MAPP_NS
         
         
         // f_flc
-        inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1],int dq,type0 (&l)[DMDBDF::max_q+1],type0 (&A_bar)[DMDBDF::max_q+1][DMDBDF::max_q+1])
+        inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
         {
             if(dq==1)
             {
@@ -271,7 +271,7 @@ namespace MAPP_NS
         
         
         // f_flc
-        inline type0  err_fac_calc(int& q,type0& dt,type0 (&t)[DMDBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2])
+        inline type0  err_fac_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2])
         {
             type0 u_q=0.0,s_bar_q=0.0;
             type0 iq=0.0;
@@ -290,7 +290,7 @@ namespace MAPP_NS
             
             type0 err_fac=fabs(u_q/(s_bar_q*(1.0+iq*u_q)));
             
-            if(q<DMDBDF::max_q)
+            if(q<DAEBDF::max_q)
             {
                 type0 r=1.0;
                 for(int i=1;i<q;i++)
@@ -325,10 +325,9 @@ namespace MAPP_NS
             return err_fac;
         }
         
-
+        
         
         
     }
 }
-
-#endif
+#endif 

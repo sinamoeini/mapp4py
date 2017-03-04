@@ -1,10 +1,9 @@
-#ifndef __MAPP__dmd_implicit__
-#define __MAPP__dmd_implicit__
-#include "dmd.h"
+#ifndef __MAPP__dae_imp__
+#define __MAPP__dae_imp__
+#include "dae.h"
 namespace MAPP_NS
 {
-    template<typename,class> class GMRES;
-    class DMDImplicit:public DMD
+    class DAEImplicit:public DAE
     {
     private:
     protected:
@@ -12,8 +11,8 @@ namespace MAPP_NS
         type0 update_c();
         void J_test();
     public:
-        int max_niters_nonlin;
-        int max_niters_lin;
+        int max_nnewton_iters;
+        int max_ngmres_iters;
         
         int nnonlin_acc;
         int nnonlin_rej;
@@ -35,11 +34,10 @@ namespace MAPP_NS
         
         
         
-        class GMRES<type0,ForceFieldDMD>* gmres;
-        class __GMRES* __gmres;
+        class GMRES* gmres;
         
-        DMDImplicit();
-        virtual ~DMDImplicit();
+        DAEImplicit();
+        virtual ~DAEImplicit();
         void init_static();
         void fin_static();
 
@@ -47,7 +45,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            DMDImplicit* dmd;
+            DAEImplicit* dae;
         }Object;
         
         
@@ -62,10 +60,12 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
-        static void getset_max_niters_nonlin(PyGetSetDef&);
-        static void getset_max_niters_lin(PyGetSetDef&);
+        static void getset_max_nnewton_iters(PyGetSetDef&);
+        static void getset_max_ngmres_iters(PyGetSetDef&);
         
         static void setup_tp();
     };
 }
+
+
 #endif 

@@ -19,7 +19,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 Exchange::Exchange(Atoms* atoms,int& nxchng_vecs_):
-natms(atoms->natms),
+natms_lcl(atoms->natms_lcl),
 x(atoms->x),
 world(atoms->comm.world),
 rank(atoms->comm.rank),
@@ -136,7 +136,7 @@ inline int Exchange::xchng_buff(int idim,int idir)
 void Exchange::full_xchng()
 {
     for(int ivec=0;ivec<nxchng_vecs;ivec++)
-        vecs[ivec]->resize(natms);
+        vecs[ivec]->resize(natms_lcl);
     int disp;
     type0 s,ds_lo,ds_hi;
     int iatm;
@@ -210,7 +210,7 @@ void Exchange::full_xchng()
     int xchng;
     MPI_Allreduce(&xchng_lcl,&xchng,1,MPI_INT,MPI_MAX,world);
     if(xchng) xchng_id++;
-    natms=x->vec_sz;
+    natms_lcl=x->vec_sz;
 }
 /*--------------------------------------------
  
@@ -242,7 +242,7 @@ void Exchange::full_xchng_all()
  --------------------------------------------*/
 Update::Update(Atoms* atoms,
 int& nupdt_vecs_,int& nxchng_vecs_):
-natms(atoms->natms),
+natms_lcl(atoms->natms_lcl),
 natms_ph(atoms->natms_ph),
 H(atoms->H),
 depth_inv(atoms->depth_inv),
@@ -407,7 +407,7 @@ void Update::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
     int tot_byte_sz=0;
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
     {
-        updt_vecs[ivec]->vec_sz=natms;
+        updt_vecs[ivec]->vec_sz=natms_lcl;
         tot_byte_sz+=updt_vecs[ivec]->byte_sz;
     }
     snd_buff_sz=rcv_buff_sz=0;
@@ -458,7 +458,7 @@ void Update::update(vec* updt_vec,bool x_xst)
     int x_dim=x->dim;
     snd_buff_sz=0;
     reserve_snd_buff(updt_vec->byte_sz*max_snd_atms_lst_sz);
-    updt_vec->vec_sz=natms;
+    updt_vec->vec_sz=natms_lcl;
     
     int icurs=0;
     int icomm=0;
@@ -551,7 +551,7 @@ void Update::list()
             dir=!dir;
         }
     }
-    natms_ph=x->vec_sz-natms;
+    natms_ph=x->vec_sz-natms_lcl;
     for(int ivec=nxchng_vecs;ivec<nvecs;ivec++)
     {
         vecs[ivec]->vec_sz=0;
@@ -603,8 +603,8 @@ void Update::rm_rdndncy()
                 {
                     if(rcv_buff[i]=='1')
                     {
-                        if(snd_atms_lst[jcomm][i]>=natms)
-                            mark[snd_atms_lst[jcomm][i]-natms]='1';
+                        if(snd_atms_lst[jcomm][i]>=natms_lcl)
+                            mark[snd_atms_lst[jcomm][i]-natms_lcl]='1';
                         snd_atms_lst_[snd_atms_lst_sz_++]=snd_atms_lst[jcomm][i];
                     }
                 }
@@ -628,7 +628,7 @@ void Update::rm_rdndncy()
     
     delete [] snd_atms_lst_;
     
-    int old_2_new_cpcty=natms+natms_ph;
+    int old_2_new_cpcty=natms_lcl+natms_ph;
     int* old_2_new=NULL;
     if(old_2_new_cpcty) old_2_new=new int[old_2_new_cpcty];
     
@@ -637,12 +637,12 @@ void Update::rm_rdndncy()
     int* list=NULL;
     if(list_cpcty) list=new int[list_cpcty];
     
-    for(int iatm=0;iatm<natms;iatm++)
+    for(int iatm=0;iatm<natms_lcl;iatm++)
         old_2_new[iatm]=iatm;
     
-    icurs=natms;
-    for(int iatm=natms;iatm<natms+natms_ph;iatm++)
-        if(mark[iatm-natms]=='1')
+    icurs=natms_lcl;
+    for(int iatm=natms_lcl;iatm<natms_lcl+natms_ph;iatm++)
+        if(mark[iatm-natms_lcl]=='1')
         {
             old_2_new[iatm]=icurs++;
             list[list_sz++]=iatm;
@@ -660,8 +660,8 @@ void Update::rm_rdndncy()
     
     int* list_=list;
     
-    int vec_sz=natms;
-    while(*list_==natms+icurs)
+    int vec_sz=natms_lcl;
+    while(*list_==natms_lcl+icurs)
     {
         list_++;
         vec_sz++;

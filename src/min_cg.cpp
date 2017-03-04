@@ -40,12 +40,12 @@ void MinCG::force_calc()
  --------------------------------------------*/
 void MinCG::prepare_affine_h()
 {
-    const int natms=atoms->natms;
+    const int natms_lcl=atoms->natms_lcl;
     type0 MLT[__dim__][__dim__];
     Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
     type0* xvec=x0.vecs[0]->begin();
     type0* hvec=h.vecs[0]->begin();
-    for(int iatm=0;iatm<natms;iatm++,xvec+=__dim__,hvec+=__dim__)
+    for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,hvec+=__dim__)
         Algebra::V_mul_MLT(xvec,MLT,hvec);
 }
 /*--------------------------------------------
@@ -177,7 +177,7 @@ void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     type0 max_h_lcl=0.0;
     type0 max_h;
     type0* hvec=h.vecs[0]->begin();
-    const int n=atoms->natms*__dim__;
+    const int n=atoms->natms_lcl*__dim__;
     for(int i=0;i<n;i++)
         max_h_lcl=MAX(max_h_lcl,fabs(hvec[i]));
     

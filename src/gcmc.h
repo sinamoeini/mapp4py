@@ -60,7 +60,7 @@ namespace MAPP_NS
         //constants
         type0 gas_mass,beta,kbT,T,mu,lambda,sigma,z_fac;
         
-        int& natms;
+        int& natms_lcl;
         int& natms_ph;
         type0 cut;
         type0**& cut_sq;

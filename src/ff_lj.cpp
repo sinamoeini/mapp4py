@@ -186,7 +186,7 @@ void ForceFieldLJ::pre_xchng_energy(GCMC* gcmc)
     
     type0 sig2,sig6;
     
-    const int natms=atoms->natms;
+    const int natms_lcl=atoms->natms_lcl;
     
     for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
     {
@@ -197,7 +197,7 @@ void ForceFieldLJ::pre_xchng_energy(GCMC* gcmc)
                 sig2=sigma[ielem][jelem]*sigma[ielem][jelem]/rsq;
                 sig6=sig2*sig2*sig2;
                 
-                if(jatm<natms)
+                if(jatm<natms_lcl)
                     en+=4.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+offset[ielem][jelem];
                 else
                     en+=2.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+offset[ielem][jelem];
@@ -246,8 +246,8 @@ void ForceFieldLJ::force_calc()
     
     type0 x_i[__dim__];
     type0 dx_ij[__dim__];
-    const int natms=atoms->natms;
-    for(int iatm=0;iatm<natms;iatm++)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         Algebra::V_eq<__dim__>(x+iatm*__dim__,x_i);
@@ -269,7 +269,7 @@ void ForceFieldLJ::force_calc()
             
             Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
             
-            if(jatm<natms)
+            if(jatm<natms_lcl)
                 Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+__dim__*jatm);
             else
             {
@@ -299,8 +299,8 @@ void ForceFieldLJ::energy_calc()
     int* neighbor_list_size=neighbor->neighbor_list_size;
     
     type0 xi[__dim__];
-    const int natms=atoms->natms;
-    for(int iatm=0;iatm<natms;iatm++)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         Algebra::V_eq<__dim__>(x+iatm*__dim__,xi);
@@ -315,7 +315,7 @@ void ForceFieldLJ::energy_calc()
             type0 sig2=sigma[ielem][jelem]*sigma[ielem][jelem]/rsq;
             type0 sig6=sig2*sig2*sig2;
             
-            if(jatm<natms)
+            if(jatm<natms_lcl)
                 nrgy_strss_lcl[0]+=4.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+offset[ielem][jelem];
             else
                 nrgy_strss_lcl[0]+=2.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+0.5*offset[ielem][jelem];

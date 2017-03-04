@@ -211,7 +211,7 @@ void PGCMC::xchng(bool box_chng,int nattmpts)
     cell_vec_p=new Vec<int>(atoms,1);
     next_vec_p=new Vec<int>(atoms,1);
     s_vec_p=new Vec<type0>(atoms,__dim__);
-    memcpy(s_vec_p->begin(),atoms->x->begin(),sizeof(type0)*natms*__dim__);
+    memcpy(s_vec_p->begin(),atoms->x->begin(),sizeof(type0)*natms_lcl*__dim__);
     
     /*--------------------------------------------------
      here we reset head_atm
@@ -225,8 +225,8 @@ void PGCMC::xchng(bool box_chng,int nattmpts)
      --------------------------------------------------*/
     int* next_vec=next_vec_p->begin();
     int* cell_vec=cell_vec_p->begin();
-    type0* s=atoms->x->begin()+(natms-1)*__dim__;
-    for(int i=natms-1;i>-1;i--,s-=__dim__)
+    type0* s=atoms->x->begin()+(natms_lcl-1)*__dim__;
+    for(int i=natms_lcl-1;i>-1;i--,s-=__dim__)
     {
         find_cell_no(s,cell_vec[i]);
         next_vec[i]=head_atm[cell_vec[i]];
@@ -237,11 +237,11 @@ void PGCMC::xchng(bool box_chng,int nattmpts)
     
     ff->init_xchng();
     for(int i=0;i<atoms->nvecs;i++)
-        atoms->vecs[i]->resize(natms);
+        atoms->vecs[i]->resize(natms_lcl);
     
     ngas=0;
     elem_type* elem=atoms->elem->begin();
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         if(elem[i]==gas_type) ngas++;
     MPI_Allreduce(&ngas,&tot_ngas,1,MPI_INT,MPI_SUM,world);
     
@@ -257,7 +257,7 @@ void PGCMC::xchng(bool box_chng,int nattmpts)
     
     
     ff->fin_xchng();
-    memcpy(atoms->x->begin(),s_vec_p->begin(),sizeof(type0)*natms*__dim__);
+    memcpy(atoms->x->begin(),s_vec_p->begin(),sizeof(type0)*natms_lcl*__dim__);
     
     delete s_vec_p;
     delete next_vec_p;
@@ -385,15 +385,15 @@ void PGCMC::next_iatm()
      give the atom a number that cannot be the
      same as the existing ones:
      
-     iatm=natms+natms_ph+itrial_atm;
+     iatm=natms_lcl+natms_ph+itrial_atm;
      
-     natms+natms_ph <= iatm
-     iatm < natms+natms_ph+ntrial_atms
+     natms_lcl+natms_ph <= iatm
+     iatm < natms_lcl+natms_ph+ntrial_atms
      --------------------------------------------------*/
     if(itrial_atm==0 && im_root && xchng_mode==DEL_MODE)
         iatm=del_idx;
     else
-        iatm=natms+itrial_atm;
+        iatm=natms_lcl+itrial_atm;
     
     /*--------------------------------------------------
      assign the cell number and the already calculated
@@ -482,7 +482,7 @@ inline void PGCMC::next_jatm_self()
             return;
         }
         
-        jatm=natms+iself;
+        jatm=natms_lcl+iself;
         jx=s_x_buff[icomm]+iself*__dim__;
         jelem=gas_type;
         rsq=XMatrixVector::rsq<__dim__>(ix,jx);
@@ -530,7 +530,7 @@ void PGCMC::reset_icomm()
 void PGCMC::success2tag()
 {
     int* tag=tag_vec_p->begin();
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         if(tag[i]!=-1)
             tag[i]=success[tag[i]];
 }
@@ -540,7 +540,7 @@ void PGCMC::success2tag()
 void PGCMC::reset_tag()
 {
     int* tag=tag_vec_p->begin();
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         tag[i]=-1;
 }
 /*--------------------------------------------
@@ -635,34 +635,34 @@ void PGCMC::del_succ()
      --------------------------------------------------*/
     *p_2_idx=next_vec_p->begin()[del_idx];
     
-    if(del_idx!=natms-1)
+    if(del_idx!=natms_lcl-1)
     {
         /*--------------------------------------------------
          1.0 find the first link to after del_idx
          --------------------------------------------------*/
-        int* p_2_first_aft_del=head_atm+cell_vec_p->begin()[natms-1];
+        int* p_2_first_aft_del=head_atm+cell_vec_p->begin()[natms_lcl-1];
         while(*p_2_first_aft_del<del_idx)
             p_2_first_aft_del=next_vec_p->begin()+*p_2_first_aft_del;
         
         /*--------------------------------------------------
-         1.1 find the link to natms-1
+         1.1 find the link to natms_lcl-1
          --------------------------------------------------*/
         int* p_2_last=p_2_first_aft_del;
-        while(*p_2_last!=natms-1)
+        while(*p_2_last!=natms_lcl-1)
             p_2_last=next_vec_p->begin()+*p_2_last;
         
         
         /*--------------------------------------------------
-         1.2 remove the link to natms-1 and end it ther
+         1.2 remove the link to natms_lcl-1 and end it ther
          --------------------------------------------------*/
         *p_2_last=-1;
         
         /*--------------------------------------------------
          1.3 insert the new link at del_idx, but for now it
-         is at natms-1 after the move operation which
+         is at natms_lcl-1 after the move operation which
          happens next it will go del_idx
          --------------------------------------------------*/
-        next_vec_p->begin()[natms-1]=*p_2_first_aft_del;
+        next_vec_p->begin()[natms_lcl-1]=*p_2_first_aft_del;
         *p_2_first_aft_del=del_idx;
         
     }
@@ -678,30 +678,30 @@ void PGCMC::ins_succ()
 {
     atoms->add();
     for(int i=0;i<__dim__;i++) vel_buff[i]=lcl_random->gaussian()*sigma;
-    memcpy(atoms->x->begin()+(natms-1)*__dim__,s_x_buff[0],__dim__*sizeof(type0));
-    memcpy(atoms->x_d->begin()+(natms-1)*__dim__,vel_buff,__dim__*sizeof(type0));
-    atoms->elem->begin()[natms-1]=gas_type;
-    atoms->id->begin()[natms-1]=new_id;
-    if(tag_vec_p) tag_vec_p->begin()[natms-1]=-1;
+    memcpy(atoms->x->begin()+(natms_lcl-1)*__dim__,s_x_buff[0],__dim__*sizeof(type0));
+    memcpy(atoms->x_d->begin()+(natms_lcl-1)*__dim__,vel_buff,__dim__*sizeof(type0));
+    atoms->elem->begin()[natms_lcl-1]=gas_type;
+    atoms->id->begin()[natms_lcl-1]=new_id;
+    if(tag_vec_p) tag_vec_p->begin()[natms_lcl-1]=-1;
     if(atoms->dof)
     {
-        bool* dof=atoms->dof->begin()+(natms-1)*__dim__;
+        bool* dof=atoms->dof->begin()+(natms_lcl-1)*__dim__;
         for(int i=0;i<__dim__;i++) dof[i]=true;
     }
     
     
-    memcpy(s_vec_p->begin()+(natms-1)*__dim__,s_buff[0],__dim__*sizeof(type0));
+    memcpy(s_vec_p->begin()+(natms_lcl-1)*__dim__,s_buff[0],__dim__*sizeof(type0));
     
     int cell_=0;
     for(int i=0;i<__dim__;i++) cell_+=B_cells[i]*cell_coord_buff[0][i];
-    cell_vec_p->begin()[natms-1]=cell_;
+    cell_vec_p->begin()[natms_lcl-1]=cell_;
     
     
     int* nxt_p=head_atm+cell_;
     while(*nxt_p!=-1)
         nxt_p=next_vec_p->begin()+*nxt_p;
-    *nxt_p=natms-1;
-    next_vec_p->begin()[natms-1]=-1;
+    *nxt_p=natms_lcl-1;
+    next_vec_p->begin()[natms_lcl-1]=-1;
     ngas++;
 }
 
@@ -1234,7 +1234,7 @@ void PGCMC::finalize()
     add_del_id(int_buff+2,int_buff_sz-2);
 
     tot_ngas+=int_buff[0];
-    atoms->tot_natms+=int_buff[0];
+    atoms->natms+=int_buff[0];
     dof_diff+=int_buff[0]*__dim__;
 }
 

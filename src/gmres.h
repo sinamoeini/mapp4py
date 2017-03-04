@@ -95,7 +95,7 @@ void __GMRES<T,C0>::refresh()
 {
     for(int ivec=0;ivec<m+1;ivec++)
         Q[ivec]=vecs[ivec]->begin();
-    n=atoms->natms*dim;
+    n=atoms->natms_lcl*dim;
 }
 /*--------------------------------------------
  

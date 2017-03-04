@@ -195,11 +195,11 @@ void ForceFieldFS::force_calc()
     
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
-    const int natms=atoms->natms;
-    for(int i=0;i<natms;i++)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
         rho[i]=0.0;
     
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=3*iatm;
@@ -221,7 +221,7 @@ void ForceFieldFS::force_calc()
                 rho[iatm]+=dr_rho*dr_rho*(t1[jelem][ielem]
                 +t2[jelem][ielem]*dr_rho);
                 
-                if(jatm<natms)
+                if(jatm<natms_lcl)
                     rho[jatm]+=dr_rho*dr_rho*(t1[ielem][jelem]
                     +t2[ielem][jelem]*dr_rho);
                 
@@ -231,7 +231,7 @@ void ForceFieldFS::force_calc()
     
     dynamic->update(rho_ptr);
     
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=3*iatm;
@@ -274,14 +274,14 @@ void ForceFieldFS::force_calc()
                     fvec[icomp+1]+=dx1*rho_coef;
                     fvec[icomp+2]+=dx2*rho_coef;
                     
-                    if(jatm<natms)
+                    if(jatm<natms_lcl)
                     {
                         fvec[jcomp]-=dx0*rho_coef;
                         fvec[jcomp+1]-=dx1*rho_coef;
                         fvec[jcomp+2]-=dx2*rho_coef;
                     }
                     
-                    if(jatm>=natms)
+                    if(jatm>=natms_lcl)
                         rho_coef*=0.5;
                     
                     nrgy_strss_lcl[1]-=rho_coef*dx0*dx0;
@@ -304,14 +304,14 @@ void ForceFieldFS::force_calc()
                     fvec[icomp+1]+=dx1*phi_coef;
                     fvec[icomp+2]+=dx2*phi_coef;
                     
-                    if(jatm<natms)
+                    if(jatm<natms_lcl)
                     {
                         fvec[jcomp]-=dx0*phi_coef;
                         fvec[jcomp+1]-=dx1*phi_coef;
                         fvec[jcomp+2]-=dx2*phi_coef;
                     }
                     
-                    if(jatm>=natms)
+                    if(jatm>=natms_lcl)
                     {
                         phi_coef*=0.5;
                         en*=0.5;
@@ -348,11 +348,11 @@ void ForceFieldFS::energy_calc()
     
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
-    const int natms=atoms->natms;
-    for(int i=0;i<natms;i++)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
         rho[i]=0.0;
     
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=__dim__*iatm;
@@ -377,7 +377,7 @@ void ForceFieldFS::energy_calc()
                     rho[iatm]+=dr_rho*dr_rho*(t1[jelem][ielem]
                     +t2[jelem][ielem]*dr_rho);
                     
-                    if(jatm<natms)
+                    if(jatm<natms_lcl)
                         rho[jatm]+=dr_rho*dr_rho*(t1[ielem][jelem]
                         +t2[ielem][jelem]*dr_rho);
                 }
@@ -385,7 +385,7 @@ void ForceFieldFS::energy_calc()
                 if(rsq<cut_sq_phi[ielem][jelem])
                 {
                     dr_phi=r-sqrt(cut_sq_phi[ielem][jelem]);
-                    if(jatm<natms)
+                    if(jatm<natms_lcl)
                         nrgy_strss_lcl[0]+=dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
                     else
                         nrgy_strss_lcl[0]+=0.5*dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);

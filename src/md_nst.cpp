@@ -73,7 +73,7 @@ void MDNST::update_x()
     
     type0* x=atoms->x->begin();
     type0* x_d=atoms->x_d->begin();
-    for(int i=0;i<atoms->natms;++i)
+    for(int i=0;i<atoms->natms_lcl;++i)
     {
         Algebra::V_mul_MLT(x,MLT0,v0);
         Algebra::V_mul_MLT(x_d,MLT1,v1);
@@ -101,7 +101,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     elem_type* RESTRICT elem=atoms->elem->begin();
     type0* m=atoms->elements->masses;
     type0 m_i,m_inv;
-    const int natms0=atoms->natms;
+    const int natms0=atoms->natms_lcl;
     for(int i=0;i<natms0;++i)
     {
         m_inv=1.0/m[*elem];
@@ -131,7 +131,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     x_d=atoms->x_d->begin();
     elem=atoms->elem->begin();
     Algebra::zero(__vec_lcl);
-    const int natms1=atoms->natms;
+    const int natms1=atoms->natms_lcl;
     for(int i=0;i<natms1;++i)
     {
         m_i=m[*elem];
@@ -166,7 +166,7 @@ void MDNST::update_x_d(type0 fac_x_d)
     type0 m_i;
     Algebra::zero(__vec_lcl);
     
-    for(int i=0;i<atoms->natms;++i)
+    for(int i=0;i<atoms->natms_lcl;++i)
     {
         Algebra::V_mul_MLT(x_d,MLT1,v0);
         Algebra::V_mul_MLT(f,MLT2,v1);
@@ -200,7 +200,7 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     {
         bool* dof=atoms->dof->begin();
         int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
-        for(int i=0;i<atoms->natms;i++,dof+=__dim__)
+        for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
         int __dof[__dim__]{[0 ... __dim__-1]=0};

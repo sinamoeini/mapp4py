@@ -199,23 +199,16 @@ namespace MAPP_NS
                     l[j]+=k0*l[j-1];
             }
         }
+
         
         
-        // f_flc
-        inline type0 beta_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1])
-        {
-            type0 iq=0.0;
-            type0 beta_inv=0.0;
-            for(int i=0;i<q;i++,iq++)
-                beta_inv+=1.0/(iq+1.0);
-            beta_inv/=dt;
-            return 1.0/beta_inv;
-        }
-        
-        
-        
-        // f_flc
-        inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
+    }
+    
+    
+    class BDF_FLC_f
+    {
+    public:
+        static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
         {
             if(dq==1)
             {
@@ -224,14 +217,14 @@ namespace MAPP_NS
                     k2+=1.0/(dt*(iq+1.0))-1.0/(dt-t[i]);
                 
                 
-                l_calc(q,dt,t,l);
+                DAEBDFMath::l_calc(q,dt,t,l);
                 l[q+1]=0.0;
                 for(int i=q+1;i>0;i--)
                     l[i]+=k2*l[i-1];
             }
             else if(dq==-1)
             {
-                l_calc(q-2,dt,t,l);
+                DAEBDFMath::l_calc(q-2,dt,t,l);
                 type0 p_q_2=1.0;
                 for(int i=0;i<q-2;i++)
                     p_q_2*=dt-t[i];
@@ -251,7 +244,7 @@ namespace MAPP_NS
             }
             else
             {
-                l_calc(q-1,dt,t,l);
+                DAEBDFMath::l_calc(q-1,dt,t,l);
                 
                 type0 k0=0.0,iq=0.0;
                 for(int i=0;i<q-1;i++,iq++)
@@ -263,18 +256,18 @@ namespace MAPP_NS
                     l[i]+=k0*l[i-1];
             }
         }
-        
-        
-        
-        
-        
-        
-        
-        // f_flc
-        inline type0  err_fac_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2])
+
+        static inline type0 err_fac_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2],type0& beta)
         {
-            type0 u_q=0.0,s_bar_q=0.0;
             type0 iq=0.0;
+            type0 beta_inv=0.0;
+            for(int i=0;i<q;i++,iq++)
+                beta_inv+=1.0/(iq+1.0);
+            beta_inv/=dt;
+            beta=1.0/beta_inv;
+            
+            type0 u_q=0.0,s_bar_q=0.0;
+            iq=0.0;
             
             for(int i=0;i<q;i++,iq++)
             {
@@ -324,10 +317,208 @@ namespace MAPP_NS
             }
             return err_fac;
         }
+    };
+    
+    class BDF_FLC_y
+    {
+    public:
+        static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
+        {
+            if(dq==1)
+                DAEBDFMath::l_calc(q+1,dt,t,l);
+            else if(dq==-1)
+            {
+                DAEBDFMath::l_calc(q-1,dt,t,l);
+                type0 p_q_1=1.0;
+                for(int i=0;i<q-1;i++)
+                    p_q_1*=dt-t[i];
+                for(int i=1;i<q;i++)
+                    A_bar[i][q]-=p_q_1*l[i-1];
+            }
+            else
+                DAEBDFMath::l_calc(q,dt,t,l);
+        }
         
+        static inline type0 err_fac_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2],type0& beta)
+        {
+            type0 iq=0.0;
+            type0 beta_inv=0.0;
+            for(int i=0;i<q;i++,iq++)
+                beta_inv+=1.0/(iq+1.0);
+            
+            beta=dt/beta_inv;
+            
+            type0 alpha_q=0.0,s_qq=0.0;
+            iq=0.0;
+            
+            for(int i=0;i<q;i++,iq++)
+            {
+                alpha_q+=1.0/(iq+1.0);
+                s_qq+=1.0/(dt-t[i]);
+            }
+            
+            s_qq+=1.0/(dt-t[q]);
+            
+            type0 err_fac=fabs(1.0-dt*s_qq/alpha_q);
+            
+            if(q<DAEBDF::max_q)
+            {
+                type0 r=-dt/t[q+1];
+                type0 alpha_qq=alpha_q+1.0/(iq+1.0);
+                type0 s_qqq=s_qq+1.0/(dt-t[q+1]);
+                for(int i=1;i<q+1;i++)
+                    r*=(t[i]-dt)/t[i];
+                
+                hi_err_fac[0]=fabs((1.0-t[q+1]/dt)*(1.0-dt*s_qqq/alpha_qq)/(iq+2.0));
+                hi_err_fac[1]=-r;
+            }
+            
+            if(q>1)
+            {
+                type0 alpha_qq=alpha_q-1.0/iq;
+                type0 s_qqq=s_qq-1.0/(dt-t[q]);
+                type0 p_q=1.0;
+                for(int i=0;i<q;i++,iq++)
+                    p_q*=dt-t[i];
+                
+                lo_err_fac[0]=fabs(1.0-s_qqq*dt/alpha_qq);
+                lo_err_fac[1]=p_q;
+            }
+            
+            return err_fac;
+        }
+    };
+    
+    class BDF_VC_f
+    {
+    public:
+        static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
+        {
+            if(dq==1)
+            {
+                DAEBDFMath::l_calc(q,dt,t,l);
+                l[q+1]=0.0;
+            }
+            else if(dq==-1)
+            {
+                DAEBDFMath::l_calc(q-2,dt,t,l);
+                type0 p_q_2=1.0;
+                for(int i=0;i<q-2;i++)
+                    p_q_2*=dt-t[i];
+                for(int i=2;i<q;i++)
+                    A_bar[i][q]-=p_q_2*l[i-2];
+                
+                type0 k0=1.0/(dt-t[q-1])+1.0/(dt-t[q-2]);
+                
+                l[q-1]=0.0;
+                for(int i=q-1;i>0;i--)
+                    l[i]+=k0*l[i-1];
+            }
+            else
+                DAEBDFMath::l_calc(q,dt,t,l);
+        }
         
+        static inline type0 err_fac_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2],type0& beta)
+        {
+            type0 beta_inv=0.0;
+            for(int i=0;i<q;i++)
+                beta_inv+=1.0/(dt-t[i]);
+            beta=1.0/beta_inv;
+            
+            type0 s_q=0.0,r=1.0,iq=0.0;
+            for(int i=0;i<q;i++)
+                s_q+=1.0/(dt-t[i]);
+            for(int i=1;i<q;i++,iq++)
+                r*=(t[i]-dt)/t[i];
+            
+            
+            type0 err_fac=fabs(1.0/(s_q*(1.0+r)*dt));
+            
+            if(q<DAEBDF::max_q)
+            {
+                type0 r_p=1.0;
+                for(int i=1;i<q;i++)
+                    r_p*=t[i+1]/(t[i+1]-t[1]);
+                
+                type0 tmp=(dt-t[q])/(dt*dt*(iq+2.0)*r);
+                tmp/=s_q+1.0/(dt-t[q]);
+                
+                hi_err_fac[0]=fabs(tmp);
+                hi_err_fac[1]=-dt*dt*r*(1.0+r)/(t[1]*t[q]*(1.0+r_p));
+            }
+            
+            if(q>1)
+            {
+                type0 p_q=1.0;
+                for(int i=0;i<q;i++,iq++)
+                    p_q*=dt-t[i];
+                
+                lo_err_fac[0]=fabs(1.0/((dt-t[q])*s_q-1.0));
+                lo_err_fac[1]=p_q;
+            }
+            return err_fac;
+        }
+    };
+    
+    class BDF_VC_y
+    {
+    public:
+        static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
+        {
+            if(dq==1)
+                DAEBDFMath::l_calc(q+1,dt,t,l);
+            else if(dq==-1)
+            {
+                DAEBDFMath::l_calc(q-1,dt,t,l);
+                type0 p_q_1=1.0;
+                for(int i=0;i<q-1;i++)
+                    p_q_1*=dt-t[i];
+                for(int i=1;i<q;i++)
+                    A_bar[i][q]-=p_q_1*l[i-1];
+            }
+            else
+                DAEBDFMath::l_calc(q,dt,t,l);
+        }
         
-        
-    }
+        static inline type0 err_fac_calc(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],type0 (&lo_err_fac)[2],type0 (&hi_err_fac)[2],type0& beta)
+        {
+            type0 beta_inv=0.0;
+            for(int i=0;i<q;i++)
+                beta_inv+=1.0/(dt-t[i]);
+            beta=1.0/beta_inv;
+            
+            type0 s_q=0.0,iq=0.0;
+            for(int i=0;i<q;i++,iq++)
+                s_q+=1.0/(dt-t[i]);
+            
+            
+            type0 err_fac=fabs(1.0/(s_q*(dt-t[q])));
+            
+            if(q<DAEBDF::max_q)
+            {
+                type0 r=-dt/t[q+1];
+                for(int i=1;i<q+1;i++)
+                    r*=(t[i]-dt)/t[i];
+                
+                type0 s_qq=s_q+1.0/(dt-t[q]);
+                
+                hi_err_fac[0]=fabs(1.0/(dt*(iq+2.0)*s_qq));
+                hi_err_fac[1]=-r;
+            }
+            
+            if(q>1)
+            {
+                type0 p_q=1.0;
+                for(int i=0;i<q;i++,iq++)
+                    p_q*=dt-t[i];
+                type0 s_q_1=s_q-1.0/(dt-t[q-1]);
+                
+                lo_err_fac[0]=fabs(1.0/((dt-t[q])*s_q_1));
+                lo_err_fac[1]=p_q;
+            }
+            
+            return err_fac;
+        }
+    };
 }
-#endif 
+#endif

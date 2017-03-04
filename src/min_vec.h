@@ -72,7 +72,7 @@ namespace MAPP_NS
         
         
         int size(const int i) const
-        { return vecs[i]->atoms->natms*vecs[i]->dim;}
+        { return vecs[i]->atoms->natms_lcl*vecs[i]->dim;}
         
         template<const int I>
         T& operator[](int i){return vecs[I]->begin()[i];}
@@ -265,7 +265,7 @@ box_chng(r.box_chng)
     {
         vecs_alloc[i]=true;
         vecs[i]=new Vec<T>(r.vecs[i]->atoms,r.vecs[i]->dim);
-        memcpy(vecs[i]->begin(),r.vecs[i]->begin(),vecs[i]->dim*r.vecs[i]->atoms->natms*sizeof(T));
+        memcpy(vecs[i]->begin(),r.vecs[i]->begin(),vecs[i]->dim*r.vecs[i]->atoms->natms_lcl*sizeof(T));
     });
     A_alloc=false;
     if(box_chng)
@@ -323,13 +323,13 @@ template<typename T,const int N>
 T VecTens<T,N>::operator*(const VecTens<T,N>& r)
 {
     T ans_lcl=0.0;
-    const int natms=vecs[0]->atoms->natms;
-    Algebra::Do<N>::func([this,&ans_lcl,&natms,&r](int j)
+    const int natms_lcl=vecs[0]->atoms->natms_lcl;
+    Algebra::Do<N>::func([this,&ans_lcl,&natms_lcl,&r](int j)
     {
         const int dim=vecs[j]->dim;
         T* v0=vecs[j]->begin();
         T* v1=r.vecs[j]->begin();
-        for(int i=0;i<natms*dim;i++)
+        for(int i=0;i<natms_lcl*dim;i++)
             ans_lcl+=v0[i]*v1[i];
     });
     
@@ -346,12 +346,12 @@ template<typename T,const int N>
 VecTens<T,N>& VecTens<T,N>::operator*=(const T& scl)
 {
     
-    const int natms=vecs[0]->atoms->natms;
-    Algebra::Do<N>::func([this,&scl,&natms](int j)
+    const int natms_lcl=vecs[0]->atoms->natms_lcl;
+    Algebra::Do<N>::func([this,&scl,&natms_lcl](int j)
     {
         const int dim=vecs[j]->dim;
         T* v0=vecs[j]->begin();
-        for(int i=0;i<natms*dim;i++)
+        for(int i=0;i<natms_lcl*dim;i++)
             v0[i]*=scl;
     });
     
@@ -377,13 +377,13 @@ VecTens<T,N>& VecTens<T,N>::operator+=(const VecTensExpr<T,N,E>& expr)
 template<typename T,const int N>
 VecTens<T,N>& VecTens<T,N>::operator+=(const VecTens<T,N>& r)
 {
-    const int natms=vecs[0]->atoms->natms;
-    Algebra::Do<N>::func([this,&natms,&r](int j)
+    const int natms_lcl=vecs[0]->atoms->natms_lcl;
+    Algebra::Do<N>::func([this,&natms_lcl,&r](int j)
     {
         const int dim=vecs[j]->dim;
         T* v0=vecs[j]->begin();
         const T* v1=r.vecs[j]->begin();
-        for(int i=0;i<natms*dim;i++)
+        for(int i=0;i<natms_lcl*dim;i++)
             v0[i]+=*v1[i];
     });
     if(box_chng)
@@ -407,13 +407,13 @@ VecTens<T,N>& VecTens<T,N>::operator-=(const VecTensExpr<T,N,E>& expr)
 template<typename T,const int N>
 VecTens<T,N>& VecTens<T,N>::operator-=(const VecTens<T,N>& r)
 {
-    const int natms=vecs[0]->atoms->natms;
-    Algebra::Do<N>::func([this,&natms,&r](int j)
+    const int natms_lcl=vecs[0]->atoms->natms_lcl;
+    Algebra::Do<N>::func([this,&natms_lcl,&r](int j)
     {
         const int dim=vecs[j]->dim;
         T* v0=vecs[j]->begin();
         const T* v1=r.vecs[j]->begin();
-        for(int i=0;i<natms*dim;i++)
+        for(int i=0;i<natms_lcl*dim;i++)
             v0[i]-=*v1[i];
     });
     if(box_chng)
@@ -437,13 +437,13 @@ VecTens<T,N>& VecTens<T,N>::operator=(const VecTensExpr<T,N,E>& expr)
 template<typename T,const int N>
 VecTens<T,N>& VecTens<T,N>::operator=(const VecTens<T,N>& r)
 {
-    const int natms=vecs[0]->atoms->natms;
-    Algebra::Do<N>::func([this,&natms,&r](int j)
+    const int natms_lcl=vecs[0]->atoms->natms_lcl;
+    Algebra::Do<N>::func([this,&natms_lcl,&r](int j)
     {
         const int dim=vecs[j]->dim;
         T* v0=vecs[j]->begin();
         const T* v1=r.vecs[j]->begin();
-        for(int i=0;i<natms*dim;i++)
+        for(int i=0;i<natms_lcl*dim;i++)
             v0[i]=v1[i];
     });
     if(box_chng)
@@ -688,7 +688,7 @@ T __VecTens<T>::operator*(const __VecTens<T>& rhs)
     T ans_lcl=0.0,ans;
     T* vec0=this->vec->begin();
     T* vec1=rhs.vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++)
         ans_lcl+=vec0[i]*vec1[i];
     
@@ -705,7 +705,7 @@ template<typename T>
 __VecTens<T>& __VecTens<T>::operator*=(T& a)
 {
     T* vec0=this->vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++)
         vec0[i]*=a;
     if(!box_chng) return *this;
@@ -735,7 +735,7 @@ __VecTens<T>& __VecTens<T>::operator=(__VecTens&& other)
 template<typename T>
 __VecTens<T>& __VecTens<T>::operator=(const __VecTens& other)
 {
-    memcpy(this->vec->begin(),other.vec->begin(),this->vec->atoms->natms*this->vec->dim*sizeof(T));
+    memcpy(this->vec->begin(),other.vec->begin(),this->vec->atoms->natms_lcl*this->vec->dim*sizeof(T));
     if(!box_chng) return *this;
     Algebra::DoLT<__dim__>::func([this,&other](int i,int j)
     {this->A[i][j]=other.A[i][j];});
@@ -749,7 +749,7 @@ __VecTens<T>& __VecTens<T>::operator-=(const __VecTens& other)
 {
     T* vec0=this->vec->begin();
     T* vec1=other.vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++) vec0[i]-=vec1[i];
     
     if(!box_chng) return *this;
@@ -766,7 +766,7 @@ __VecTens<T>& __VecTens<T>::operator+=(const __VecTens& other)
 {
     T* vec0=this->vec->begin();
     T* vec1=other.vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++) vec0[i]+=vec1[i];
     
     if(!box_chng) return *this;
@@ -782,7 +782,7 @@ template<typename T>template<class E>
 __VecTens<T>& __VecTens<T>::operator=(const __VecTensExpr<T,E>&& other)
 {
     T* vec0=this->vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++)
         vec0[i]=other[i];
     if(!box_chng) return *this;
@@ -797,7 +797,7 @@ template<typename T>template<class E>
 __VecTens<T>& __VecTens<T>::operator-=(const __VecTensExpr<T,E>&& other)
 {
     T* vec0=this->vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++)
         vec0[i]-=other[i];
     if(!box_chng) return *this;
@@ -812,7 +812,7 @@ template<typename T>template<class E>
 __VecTens<T>& __VecTens<T>::operator+=(const __VecTensExpr<T,E>&& other)
 {
     T* vec0=this->vec->begin();
-    const int n=this->vec->atoms->natms*this->vec->dim;
+    const int n=this->vec->atoms->natms_lcl*this->vec->dim;
     for(int i=0;i<n;i++)
         vec0[i]+=other[i];
     if(!box_chng) return *this;

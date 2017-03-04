@@ -39,7 +39,7 @@ NeighborDMD::~NeighborDMD()
 void NeighborDMD::mark_redndnt_ph(byte* mark)
 {
     const int c_dim=c_vec->dim;
-    const int n=c_dim*atoms->natms;
+    const int n=c_dim*atoms->natms_lcl;
     memset(mark,'0',atoms->natms_ph);
     for(int i=0;i<neighbor_list_size_size;i++)
         for(int j=0;j<neighbor_list_size[i];j++)
@@ -106,7 +106,7 @@ void NeighborDMD::create_list(bool box_change)
     delete [] neighbor_list_size;
     
     const int c_dim=c_vec->dim;
-    neighbor_list_size_size=atoms->natms*c_dim;
+    neighbor_list_size_size=atoms->natms_lcl*c_dim;
     
     Memory::alloc(neighbor_list,neighbor_list_size_size);
     Memory::alloc(neighbor_list_size,neighbor_list_size_size);
@@ -224,7 +224,7 @@ void NeighborDMD::create_2nd_list()
 {
 
     const int c_dim=c_vec->dim;
-    const int n=atoms->natms*c_dim;
+    const int n=atoms->natms_lcl*c_dim;
     if(neighbor_list_size_size_2nd)
     {
         for(int i=0;i<neighbor_list_size_size_2nd;i++)
@@ -245,7 +245,7 @@ void NeighborDMD::create_2nd_list()
     type0 rsq_crd_ielem;
     
     int* tmp_neigh_list=NULL;
-    Memory::alloc(tmp_neigh_list,atoms->natms+atoms->natms_ph);
+    Memory::alloc(tmp_neigh_list,atoms->natms_lcl+atoms->natms_ph);
     type0 x_i[__dim__];
     no_pairs_2nd=0;
     for(int i=0;i<n;i++)

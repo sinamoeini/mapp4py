@@ -31,13 +31,13 @@ NeighborMD::~NeighborMD()
  --------------------------------------------*/
 void NeighborMD::mark_redndnt_ph(byte* mark)
 {
-    int natms=atoms->natms;
+    int natms_lcl=atoms->natms_lcl;
     int natms_ph=atoms->natms_ph;
     memset(mark,'0',natms_ph);
     for(int iatm=0;iatm<neighbor_list_size_size;iatm++)
         for(int j=0;j<neighbor_list_size[iatm];j++)
-            if(neighbor_list[iatm][j]>=natms)
-                mark[neighbor_list[iatm][j]-natms]='1';
+            if(neighbor_list[iatm][j]>=natms_lcl)
+                mark[neighbor_list[iatm][j]-natms_lcl]='1';
 }
 /*--------------------------------------------
  
@@ -86,7 +86,7 @@ void NeighborMD::create_list(bool box_change)
     delete [] neighbor_list_size;
     
 
-    neighbor_list_size_size=atoms->natms;
+    neighbor_list_size_size=atoms->natms_lcl;
     
     Memory::alloc(neighbor_list,neighbor_list_size_size);
     Memory::alloc(neighbor_list_size,neighbor_list_size_size);

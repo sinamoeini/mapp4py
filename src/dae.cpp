@@ -25,7 +25,7 @@ DAE::~DAE()
 void DAE::init_static()
 {
     c_dim=atoms->c_dim;
-    ncs=atoms->natms*c_dim;
+    ncs=atoms->natms_lcl*c_dim;
     // for now
     nc_dofs=static_cast<type0>(ncs);
     if(!atoms->c_d) atoms->c_d=new Vec<type0>(atoms,c_dim);

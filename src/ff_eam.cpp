@@ -300,11 +300,11 @@ void ForceFieldEAM::force_calc()
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
 
-    const int natms=atoms->natms;
-    for(iatm=0;iatm<natms;iatm++) rho[iatm]=0.0;
+    const int natms_lcl=atoms->natms_lcl;
+    for(iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=0.0;
     
     istart=0;
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=3*iatm;
@@ -350,7 +350,7 @@ void ForceFieldEAM::force_calc()
             dphi_dr=z2p*r_inv-phi*r_inv;
             
             rho[iatm]+=rho_i;
-            if(jatm<natms)
+            if(jatm<natms_lcl)
                 rho[jatm]+=rho_j;
             
             fpair=-dphi_dr*r_inv;
@@ -359,14 +359,14 @@ void ForceFieldEAM::force_calc()
             fvec[icomp+1]+=fpair*dx1;
             fvec[icomp+2]+=fpair*dx2;
             
-            if(jatm<natms)
+            if(jatm<natms_lcl)
             {
                 fvec[jcomp]-=fpair*dx0;
                 fvec[jcomp+1]-=fpair*dx1;
                 fvec[jcomp+2]-=fpair*dx2;
             }
             
-            if(jatm>=natms)
+            if(jatm>=natms_lcl)
             {
                 fpair*=0.5;
                 phi*=0.5;
@@ -403,7 +403,7 @@ void ForceFieldEAM::force_calc()
 
     
     istart=0;
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=3*iatm;
@@ -425,14 +425,14 @@ void ForceFieldEAM::force_calc()
                 fvec[icomp+1]+=dx1*fpair;
                 fvec[icomp+2]+=dx2*fpair;
                 
-                if(jatm<natms)
+                if(jatm<natms_lcl)
                 {
                     fvec[jcomp]-=dx0*fpair;
                     fvec[jcomp+1]-=dx1*fpair;
                     fvec[jcomp+2]-=dx2*fpair;
                 }
                 
-                if(jatm>=natms)
+                if(jatm>=natms_lcl)
                     fpair*=0.5;
                 
                 nrgy_strss_lcl[1]-=fpair*dx0*dx0;
@@ -465,10 +465,10 @@ void ForceFieldEAM::energy_calc()
     
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
-    const int natms=atoms->natms;
-    for(iatm=0;iatm<natms;iatm++) rho[iatm]=0.0;
+    const int natms_lcl=atoms->natms_lcl;
+    for(iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=0.0;
     
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=3*iatm;
@@ -498,7 +498,7 @@ void ForceFieldEAM::energy_calc()
                 
                 coef=rho_arr[jelem][ielem][m];
                 rho[iatm]+=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
-                if(jatm<natms)
+                if(jatm<natms_lcl)
                 {
                     coef=rho_arr[ielem][jelem][m];
                     rho[jatm]+=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
@@ -550,8 +550,8 @@ void ForceFieldEAM::pre_xchng_energy(GCMC* gcmc)
     type0* rho=rho_ptr->begin();
     type0* rho_xchng=rho_xchng_ptr->begin();
     int* tag=gcmc->tag_vec_p->begin();
-    const int natms=atoms->natms;
-    for(int i=0;i<natms;i++)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
         rho_xchng[i]=rho[i];
     
     for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
@@ -574,7 +574,7 @@ void ForceFieldEAM::pre_xchng_energy(GCMC* gcmc)
                 
                 coef=r_phi_arr[ielem][jelem][m];
                 
-                if(jatm<natms)
+                if(jatm<natms_lcl)
                 {
                     en+=(((coef[3]*p+coef[2])*p+coef[1])*p+coef[0])/r;
                     coef=rho_arr[ielem][jelem][m];
@@ -596,7 +596,7 @@ void ForceFieldEAM::pre_xchng_energy(GCMC* gcmc)
         
         type0 tmp0;
         en0=0.0;
-        for(int i=0;i<natms;i++)
+        for(int i=0;i<natms_lcl;i++)
             if(tag[i]==icomm)
             {
                 tmp0=rho_xchng[i];
@@ -667,8 +667,8 @@ void ForceFieldEAM::post_xchng_energy(GCMC* gcmc)
     
     type0* rho_xchng=rho_xchng_ptr->begin();
     type0* F_xchng=F_xchng_ptr->begin();
-    const int natms=atoms->natms;
-    for(int i=0;i<natms;i++)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
         if(tag[i]==0)
         {
             rho[i]=rho_xchng[i];
@@ -677,16 +677,16 @@ void ForceFieldEAM::post_xchng_energy(GCMC* gcmc)
     
     if(gcmc->im_root && gcmc->xchng_mode==INS_MODE && gcmc->root_succ)
     {
-        rho[natms-1]=gcmc->vars[1];
-        type0 p=rho[natms-1]*drho_inv;
+        rho[natms_lcl-1]=gcmc->vars[1];
+        type0 p=rho[natms_lcl-1]*drho_inv;
         size_t m=static_cast<size_t>(p);
         m=MIN(m,nrho-2);
         p-=m;
         p=MIN(p,1.0);
         type0* coef=F_arr[gcmc->ielem][m];
-        F[natms-1]=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
-        if(rho[natms-1]>rho_max)
-            F[natms-1]+=((coef[6]*p+coef[5])*p+coef[4])*(rho[natms-1]-rho_max);
+        F[natms_lcl-1]=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+        if(rho[natms_lcl-1]>rho_max)
+            F[natms_lcl-1]+=((coef[6]*p+coef[5])*p+coef[4])*(rho[natms_lcl-1]-rho_max);
     }
 }
 /*--------------------------------------------
@@ -733,10 +733,10 @@ void ForceFieldEAM::init_xchng()
     
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
-    const int natms=atoms->natms;
-    for(iatm=0;iatm<natms;iatm++) rho[iatm]=rho_xchng[iatm]=F_xchng[iatm]=0.0;
+    const int natms_lcl=atoms->natms_lcl;
+    for(iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=rho_xchng[iatm]=F_xchng[iatm]=0.0;
     
-    for(iatm=0;iatm<natms;iatm++)
+    for(iatm=0;iatm<natms_lcl;iatm++)
     {
         ielem=evec[iatm];
         icomp=3*iatm;
@@ -765,7 +765,7 @@ void ForceFieldEAM::init_xchng()
                 
                 coef=rho_arr[jelem][ielem][m];
                 rho[iatm]+=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
-                if(jatm<natms)
+                if(jatm<natms_lcl)
                 {
                     coef=rho_arr[ielem][jelem][m];
                     rho[jatm]+=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];

@@ -19,7 +19,7 @@ namespace MAPP_NS
     private:
         
         /*things that reference cannot be removed*/
-        int& natms;
+        int& natms_lcl;
         Vec<type0>*& x;
         unsigned long& xchng_id;
         
@@ -73,7 +73,7 @@ namespace MAPP_NS
     {
     private:
         /*things that reference cannot be removed*/
-        int& natms;
+        int& natms_lcl;
         int& natms_ph;
         
         /*things that reference can be removed*/

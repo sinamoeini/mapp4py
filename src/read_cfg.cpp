@@ -70,7 +70,7 @@ void ReadCFG::read_header(Atoms* atoms,FileReader& freader,char*& line,size_t& l
                 throw Print::vprintf("Number of particles in %s file should be greater than 0",freader.file);
             if(tmpno==0)
                 empty=true;
-            atoms->tot_natms=tmpno;
+            atoms->natms=tmpno;
             continue;
         }
         
@@ -357,10 +357,10 @@ void ReadCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_t&
     delete [] buff;
     delete [] args;
     
-    int tot_natms;
-    MPI_Allreduce(&(atoms->natms),&tot_natms,1,MPI_INT,MPI_SUM,world);
-    if(tot_natms!=atoms->tot_natms)
-        throw Print::vprintf("expected %d natms in %s but read %d",atoms->tot_natms,freader.file,tot_natms);
+    int natms;
+    MPI_Allreduce(&(atoms->natms_lcl),&natms,1,MPI_INT,MPI_SUM,world);
+    if(natms!=atoms->natms)
+        throw Print::vprintf("expected %d natms_lcl in %s but read %d",atoms->natms,freader.file,natms);
 }
 /*--------------------------------------------
  reads the atom section of the cfg file
@@ -476,10 +476,10 @@ void ReadCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_t&
     delete [] buff;
     delete [] args;
     
-    int tot_natms;
-    MPI_Allreduce(&(atoms->natms),&tot_natms,1,MPI_INT,MPI_SUM,world);
-    if(tot_natms!=atoms->tot_natms)
-        throw Print::vprintf("expected %d natms in %s but read %d",atoms->tot_natms,freader.file,tot_natms);
+    int natms;
+    MPI_Allreduce(&(atoms->natms_lcl),&natms,1,MPI_INT,MPI_SUM,world);
+    if(natms!=atoms->natms)
+        throw Print::vprintf("expected %d natms_lcl in %s but read %d",atoms->natms,freader.file,natms);
 }
 /*--------------------------------------------
  constructor
@@ -566,8 +566,8 @@ AtomsMD* ReadCFGMD::operator()(const char* file)
                 M[i][j]=R*atoms->H[i][j];
             
         type0* x_d=atoms->x_d->begin();
-        int natms=atoms->natms;
-        for(int i=0;i<natms;i++,x_d+=__dim__)
+        int natms_lcl=atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++,x_d+=__dim__)
             XMatrixVector::s2x(x_d,M);
         
     }
@@ -720,7 +720,7 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
     int jcmp;
     elem_type __nelems=static_cast<elem_type>(nelems);
     type0 max_alpha_lcl=0.0;
-    for(int i=0;i<atoms->natms && lcl_err==0;i++,alpha+=vec_dim,c+=vec_dim,__alpha+=c_dim,__c+=c_dim,__elem+=c_dim)
+    for(int i=0;i<atoms->natms_lcl && lcl_err==0;i++,alpha+=vec_dim,c+=vec_dim,__alpha+=c_dim,__c+=c_dim,__elem+=c_dim)
     {
         __max_ncmp=0;
         jcmp=0;

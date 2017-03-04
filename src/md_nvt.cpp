@@ -51,8 +51,8 @@ void MDNVT::update_x()
 {
     type0* x=atoms->x->begin();
     type0* x_d=atoms->x_d->begin();
-    const int natms=atoms->natms;
-    for(int i=0;i<natms;++i)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;++i)
     {
         Algebra::Do<__dim__>::func(
         [&x,&x_d,this](const int j){x[j]+=x_d[j]*dt;});
@@ -72,11 +72,11 @@ void MDNVT::update_x_d()
     type0* m=atoms->elements->masses;
     type0 m_i;
     Algebra::zero(__vec_lcl);
-    const int natms=atoms->natms;
+    const int natms_lcl=atoms->natms_lcl;
     if(atoms->dof)
     {
         bool* dof=atoms->dof->begin();
-        for(int i=0;i<natms;++i)
+        for(int i=0;i<natms_lcl;++i)
         {
             m_i=m[*elem];
             Algebra::Do<__dim__>::func([&dof,&x_d,&f,&m_i,this](const int j){if(dof[j])x_d[j]+=f[j]*dt2/m_i;});
@@ -89,7 +89,7 @@ void MDNVT::update_x_d()
         }
     }
     else
-        for(int i=0;i<natms;++i)
+        for(int i=0;i<natms_lcl;++i)
         {
             m_i=m[*elem];
             Algebra::Do<__dim__>::func([&x_d,&f,&m_i,this](const int j){x_d[j]+=f[j]*dt2/m_i;});
@@ -107,7 +107,7 @@ void MDNVT::update_x_d()
  --------------------------------------------*/
 void MDNVT::update_x_d_final(type0 fac_x_d)
 {
-    const int n=atoms->natms*__dim__;
+    const int n=atoms->natms_lcl*__dim__;
     type0* x_d=atoms->x_d->begin();
     for(int i=0;i<n;i++) x_d[i]*=fac_x_d;
 }
@@ -123,11 +123,11 @@ void MDNVT::update_x_d(type0 fac_x_d)
     type0* m=atoms->elements->masses;
     type0 m_i;
     Algebra::zero(__vec_lcl);
-    const int natms=atoms->natms;
+    const int natms_lcl=atoms->natms_lcl;
     if(atoms->dof)
     {
         bool* dof=atoms->dof->begin();
-        for(int i=0;i<natms;++i)
+        for(int i=0;i<natms_lcl;++i)
         {
             m_i=m[*elem];
             Algebra::Do<__dim__>::func([&dof,&x_d,&f,&m_i,&fac_x_d,this](const int j){if(dof[j])x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;});
@@ -140,7 +140,7 @@ void MDNVT::update_x_d(type0 fac_x_d)
         }
     }
     else
-        for(int i=0;i<natms;++i)
+        for(int i=0;i<natms_lcl;++i)
         {
             m_i=m[*elem];
             Algebra::Do<__dim__>::func([&x_d,&f,&m_i,&fac_x_d,this](const int j){x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;});
@@ -164,7 +164,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements->masses;
     type0 m_i;
-    const int natms0=atoms->natms;
+    const int natms0=atoms->natms_lcl;
     for(int i=0;i<natms0;++i)
     {
         m_i=m[*elem];
@@ -189,7 +189,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     x_d=atoms->x_d->begin();
     elem=atoms->elem->begin();
     Algebra::zero(__vec_lcl);
-    const int natms1=atoms->natms;
+    const int natms1=atoms->natms_lcl;
     for(int i=0;i<natms1;++i)
     {
         m_i=m[*elem];
@@ -225,12 +225,12 @@ void MDNVT::init()
     /*
      calculating the number of degress of freedom
      */
-    ndof_part=atoms->tot_natms*__dim__;
+    ndof_part=atoms->natms*__dim__;
     if(atoms->dof)
     {
         bool* dof=atoms->dof->begin();
         int ndof_red_lcl=0;
-        const int n=atoms->natms*__dim__;
+        const int n=atoms->natms_lcl*__dim__;
         for(int i=0;i<n;i++)
             if(!dof[i]) ndof_red_lcl++;
         int ndof_red;
@@ -248,8 +248,8 @@ void MDNVT::init()
         type0 m_i;
         elem_type* elem=atoms->elem->begin();
         Algebra::zero(__vec_lcl);
-        const int natms=atoms->natms;
-        for(int i=0;i<natms;i++)
+        const int natms_lcl=atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++)
         {
             m_i=m[*elem];
             Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
@@ -264,7 +264,7 @@ void MDNVT::init()
     {
         atoms->x_d=new Vec<type0>(atoms,__dim__,"x_d");
         type0* x_d=atoms->x_d->begin();
-        const int n=atoms->natms*__dim__;
+        const int n=atoms->natms_lcl*__dim__;
         for(int i=0;i<n;i++) x_d[i]=0.0;
         Algebra::Do<__nvoigt__>::func([this](int i){mvv[i]=0.0;});
         T_part=0.0;

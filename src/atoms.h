@@ -402,9 +402,9 @@ namespace MAPP_NS
         type0 (&s_hi)[__dim__];
         
         //keeep these
-        int natms;
+        int natms_lcl;
         int natms_ph;
-        int tot_natms;
+        int natms;
         int step;
         type0 H[__dim__][__dim__];
         type0 B[__dim__][__dim__];
@@ -509,8 +509,8 @@ name(__name),
 atoms(__atoms)
 {
     atoms->push(this);
-    reserve(atoms->natms+atoms->natms_ph);
-    resize(atoms->natms);
+    reserve(atoms->natms_lcl+atoms->natms_ph);
+    resize(atoms->natms_lcl);
 }
 /*--------------------------------------------
  

@@ -35,8 +35,8 @@ void MDMuVT::update_x_d__x(type0 fac_x_d)
     type0* m=atoms->elements->masses;
     type0 m_i;
     
-    const int natms=atoms->natms;
-    for(int i=0;i<natms;++i)
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;++i)
     {
         m_i=m[*elem];
         Algebra::Do<__dim__>::func([&x_d,&x,&f,&m_i,&fac_x_d,this](const int j)

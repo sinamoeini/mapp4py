@@ -50,7 +50,7 @@ void Min::pre_run_chk(Atoms* atoms,ForceField* ff)
     {
         bool* dof=atoms->dof->begin();
         int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
-        for(int i=0;i<atoms->natms;i++,dof+=__dim__)
+        for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
         int __dof[__dim__]{[0 ... __dim__-1]=0};

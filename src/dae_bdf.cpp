@@ -55,7 +55,7 @@ void DAEBDF::run_static(type0 t_tot)
 {
     init_static();
     
-    
+    memset(dy,0,ncs*sizeof(type0));
     t_cur=0.0;
     t_fin=t_tot;
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
@@ -184,14 +184,10 @@ bool DAEBDF::integrate()
     
     type0 norm_lcl=0.0,norm;
     for(int i=0;i<ncs;i++)
-    {
-        dy[i]=c[i]-y_0[i];
-        norm_lcl+=dy[i]*dy[i];
-    }
+        norm_lcl+=(c[i]-y_0[i])*(c[i]-y_0[i]);
     MPI_Allreduce(&norm_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    
-    
     err=err_fac*sqrt(norm/nc_dofs)/a_tol;
+    
     //printf("Error: %e\n",err);
     if(err<1.0)
     {
@@ -228,7 +224,7 @@ bool DAEBDF::interpolate()
             __dt*=dt;
         }
     }
-    beta=DAEBDFMath::beta_calc(q,dt,t);
+    err_fac=BDF_FLC_y::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac,beta);
     
     /*
      to unroll the loops
@@ -258,7 +254,7 @@ bool DAEBDF::interpolate()
         return false;
     }
     
-    err_fac=DAEBDFMath::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac);
+    
     
     nintpol_acc++;
     return true;
@@ -309,6 +305,12 @@ void DAEBDF::prep_for_next()
         MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
         norm=lo_err_fac[0]*sqrt(tmp/nc_dofs)/a_tol;
         eta[0]=pow(0.5/norm,1.0/(iq));
+    }
+    
+    
+    for(int i=0;i<ncs;i++)
+    {
+        dy[i]=c[i]-y_0[i];
     }
     
     
@@ -375,7 +377,7 @@ void DAEBDF::prep_for_next()
  --------------------------------------------*/
 void DAEBDF::update_z()
 {
-    DAEBDFMath::prep_A_bar_l(q,dt,t,dq,l,A_bar);
+    BDF_FLC_y::prep_A_bar_l(q,dt,t,dq,l,A_bar);
     
     if(dq==1)
     {

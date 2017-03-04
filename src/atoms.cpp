@@ -33,8 +33,8 @@ template<> MPI_Datatype Vec<bool>::MPI_T=MPI_BYTE;
 Atoms::Atoms(MPI_Comm& __world):
 nvecs(0),
 vecs(NULL),
-tot_natms(0),
 natms(0),
+natms_lcl(0),
 natms_ph(0),
 comm(__world),
 world(comm.world),
@@ -61,8 +61,8 @@ step(0)
 Atoms::Atoms(Communication& __comm):
 nvecs(0),
 vecs(NULL),
-tot_natms(0),
 natms(0),
+natms_lcl(0),
 natms_ph(0),
 comm(__comm),
 world(comm.world),
@@ -167,7 +167,7 @@ void Atoms::x2s_lcl()
 {
     type0* x_vec=x->begin();
     int x_dim=x->dim;
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         XMatrixVector::x2s<__dim__>(x_vec+i*x_dim,B);
 
 }
@@ -178,7 +178,7 @@ void Atoms::s2x_lcl()
 {
     type0* x_vec=x->begin();
     int x_dim=x->dim;
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         XMatrixVector::s2x<__dim__>(x_vec+i*x_dim,H);
 
 }
@@ -189,7 +189,7 @@ void Atoms::x2s_all()
 {
     type0* x_vec=x->begin();
     int x_dim=x->dim;
-    int nall=natms+natms_ph;
+    int nall=natms_lcl+natms_ph;
     for(int i=0;i<nall;i++)
         XMatrixVector::x2s<__dim__>(x_vec+i*x_dim,B);
 }
@@ -200,7 +200,7 @@ void Atoms::s2x_all()
 {
     type0* x_vec=x->begin();
     int x_dim=x->dim;
-    int nall=natms+natms_ph;
+    int nall=natms_lcl+natms_ph;
     for(int i=0;i<nall;i++)
         XMatrixVector::s2x<__dim__>(x_vec+i*x_dim,H);
 }
@@ -216,7 +216,7 @@ void Atoms::insert(byte* buff,vec** vecs_,int nvecs_,int natms_)
     for(int ivec=0;ivec<nvecs_;ivec++)
         vecs_[ivec]->pst(buff,stride,natms_);
     
-    natms+=natms_;
+    natms_lcl+=natms_;
 }
 /*--------------------------------------------
  make room for some local atoms and phantom 
@@ -233,7 +233,7 @@ void Atoms::add()
 {
     for(int i=0;i<nvecs;i++)
         vecs[i]->add();
-    natms++;
+    natms_lcl++;
 }
 /*--------------------------------------------
  delete some local atoms and phantom atoms; 
@@ -250,15 +250,15 @@ void Atoms::del(int& del_idx)
 {
     for(int i=0;i<nvecs;i++)
         vecs[i]->del(del_idx);
-    natms--;
+    natms_lcl--;
 }
 /*--------------------------------------------
  restart
  --------------------------------------------*/
 void Atoms::restart()
 {
-    tot_natms=0;
     natms=0;
+    natms_lcl=0;
     natms_ph=0;
     while(nvecs)
         delete vecs[0];
@@ -710,8 +710,8 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         
         type0* x=__self->atoms->x->begin();
         int x_dim=__self->atoms->x->dim;
-        int natms=__self->atoms->natms;
-        for(int i=0;i<natms;i++,x+=x_dim)
+        int natms_lcl=__self->atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++,x+=x_dim)
             Algebra::V_mul_MLT(x,F,x);
         
         Py_RETURN_NONE;

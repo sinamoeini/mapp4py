@@ -42,7 +42,7 @@ void AtomsMD::create_T(type0 T,int seed)
     if(dof)
     {
         bool* __dof=dof->begin();
-        for(int i=0;i<natms;i++)
+        for(int i=0;i<natms_lcl;i++)
         {
             fac=sqrt(kB*T/m[*__elem]);
             Algebra::Do<__dim__>::func([&fac,&rand,&__x_d,__dof,this](const int i){if(__dof[i]) __x_d[i]=rand.gaussian()*fac;});
@@ -53,7 +53,7 @@ void AtomsMD::create_T(type0 T,int seed)
     }
     else
     {
-        for(int i=0;i<natms;i++)
+        for(int i=0;i<natms_lcl;i++)
         {
             fac=sqrt(kB*T/m[*__elem]);
             Algebra::Do<__dim__>::func([&fac,&rand,&__x_d,this](const int i){__x_d[i]=rand.gaussian()*fac;});

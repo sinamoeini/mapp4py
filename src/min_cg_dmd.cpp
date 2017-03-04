@@ -41,12 +41,13 @@ void MinCGDMD::force_calc()
  --------------------------------------------*/
 void MinCGDMD::prepare_affine_h()
 {
-    const int natms=atoms->natms;
+    if(!chng_box) return;
+    const int natms_lcl=atoms->natms_lcl;
     type0 MLT[__dim__][__dim__];
     Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
     type0* xvec=x0.vecs[0]->begin();
     type0* hvec=h.vecs[0]->begin();
-    for(int iatm=0;iatm<natms;iatm++,xvec+=__dim__,hvec+=__dim__)
+    for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,hvec+=__dim__)
         Algebra::V_mul_MLT(xvec,MLT,hvec);
 }
 /*--------------------------------------------
@@ -126,7 +127,7 @@ type0 MinCGDMD::F(type0 alpha)
 {
     x=x0+alpha*h;
     type0 max_alpha_lcl=0.0;
-    const int n=atoms->natms*atoms->alpha->dim;
+    const int n=atoms->natms_lcl*atoms->alpha->dim;
     type0* alpha_vec=atoms->alpha->begin();
     type0* c_vec=atoms->c->begin();
     for(int i=0;i<n;i++)
@@ -146,7 +147,7 @@ type0 MinCGDMD::dF(type0 alpha,type0& drev)
 {
     x=x0+alpha*h;
     type0 max_alpha_lcl=0.0;
-    const int n=atoms->natms*atoms->alpha->dim;
+    const int n=atoms->natms_lcl*atoms->alpha->dim;
     type0* alpha_vec=atoms->alpha->begin();
     type0* c_vec=atoms->c->begin();
     for(int i=0;i<n;i++)
@@ -191,8 +192,8 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     //type0 max_a_lcl=max_dx;
     type0 max_h_lcl=0.0;
     type0* hvec=h.vecs[0]->begin();
-    const int natms=atoms->natms;
-    int n=natms*__dim__;
+    const int natms_lcl=atoms->natms_lcl;
+    int n=natms_lcl*__dim__;
     for(int i=0;i<n;i++)
         max_h_lcl=MAX(max_h_lcl,fabs(hvec[i]));
 
@@ -200,7 +201,7 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     type0 max_alpha_ratio=std::numeric_limits<type0>::infinity();
     type0* h_alphavec=h.vecs[1]->begin();
     type0* alphavec=x.vecs[1]->begin();
-    n=natms*atoms->alpha->dim;
+    n=natms_lcl*atoms->alpha->dim;
     type0 max_h_alpha_lcl=0.0;
     for(int i=0;i<n;i++)
     {

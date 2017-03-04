@@ -77,7 +77,7 @@ void ForceFieldDMD::derivative_timer()
     if(!atoms->dof) return;
     type0* fvec=f->begin();
     bool* dof=atoms->dof->begin();
-    const int n=atoms->natms*__dim__;
+    const int n=atoms->natms_lcl*__dim__;
     for(int i=0;i<n;i++) fvec[i]*=dof[i];
 }
 /*--------------------------------------------
@@ -90,15 +90,15 @@ void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
     type0* xvec=atoms->x->begin();
     if(!atoms->dof)
     {
-        const int natms=atoms->natms;
-        for(int i=0;i<natms;i++,fvec+=__dim__,xvec+=__dim__)
+        const int natms_lcl=atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
             Algebra::DyadicV<__dim__>(xvec,fvec,nrgy_strss_lcl+1);
     }
     else
     {
         bool* dof=atoms->dof->begin();
-        const int natms=atoms->natms;
-        for(int i=0;i<natms;i++,fvec+=__dim__,xvec+=__dim__)
+        const int natms_lcl=atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
         {
             Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]*=dof[i];});
             Algebra::DyadicV<__dim__>(xvec,fvec,nrgy_strss_lcl+1);
@@ -119,10 +119,10 @@ void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
 void ForceFieldDMD::reset()
 {
     type0* __f=f->begin();
-    const int n=atoms->natms*__dim__;
+    const int n=atoms->natms_lcl*__dim__;
     for(int i=0;i<n;i++) __f[i]=0.0;
     __f=f_alpha->begin();
-    const int m=atoms->natms*c_dim;
+    const int m=atoms->natms_lcl*c_dim;
     for(int i=0;i<m;i++) __f[i]=0.0;
     for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
 }

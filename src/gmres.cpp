@@ -7,7 +7,7 @@ GMRES::GMRES(Atoms* __atoms,int __m,int __dim):
 world(__atoms->world),
 m(__m),
 dim(__dim),
-n(__dim*__atoms->natms)
+n(__dim*__atoms->natms_lcl)
 {
     
     

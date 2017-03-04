@@ -28,7 +28,7 @@ T(__T),
 cut_sq(__ff->cut_sq),
 s_hi(__atoms->comm.s_hi),
 s_lo(__atoms->comm.s_lo),
-natms(__atoms->natms),
+natms_lcl(__atoms->natms_lcl),
 natms_ph(__atoms->natms_ph),
 ielem(gas_type)
 {
@@ -102,7 +102,7 @@ void GCMC::init()
     
     unsigned int max_id_=0;
     unsigned int* id=atoms->id->begin();
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         max_id_=MAX(id[i],max_id_);
     MPI_Allreduce(&max_id_,&max_id,1,MPI_UNSIGNED,MPI_MAX,world);
     for(int i=0;i<del_ids_sz;i++)
@@ -110,7 +110,7 @@ void GCMC::init()
         
     ngas=0;
     elem_type* elem=atoms->elem->begin();
-    for(int i=0;i<natms;i++)
+    for(int i=0;i<natms_lcl;i++)
         if(elem[i]==gas_type) ngas++;
     MPI_Allreduce(&ngas,&tot_ngas,1,MPI_INT,MPI_SUM,world);
 }

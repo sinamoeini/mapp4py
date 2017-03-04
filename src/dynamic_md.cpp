@@ -155,7 +155,7 @@ void DynamicMD::fin()
     restore_arch_vecs();
     for(int ivec=0;ivec<atoms->nvecs;ivec++)
     {
-        atoms->vecs[ivec]->vec_sz=atoms->natms;
+        atoms->vecs[ivec]->vec_sz=atoms->natms_lcl;
         atoms->vecs[ivec]->shrink_to_fit();
     }
     atoms->natms_ph=0;
@@ -165,7 +165,7 @@ void DynamicMD::fin()
  --------------------------------------------*/
 void DynamicMD::store_x0()
 {
-    int last_atm=atoms->natms;
+    int last_atm=atoms->natms_lcl;
     if(box_chng) last_atm+=atoms->natms_ph;
     memcpy(x0->begin(),atoms->x->begin(),last_atm*__dim__*sizeof(type0));
 }
@@ -178,7 +178,7 @@ inline bool DynamicMD::decide()
     int succ,succ_lcl=1;
     type0* x_vec=atoms->x->begin();
     type0* x0_vec=x0->begin();
-    int last_atm=atoms->natms;
+    int last_atm=atoms->natms_lcl;
     if(box_chng) last_atm+=atoms->natms_ph;
     for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,x0_vec+=__dim__,x_vec+=__dim__)
         if(Algebra::RSQ<__dim__>(x0_vec,x_vec)>skin_sq)
@@ -279,7 +279,7 @@ void DynamicMD::store_arch_vecs()
     id_arch=new Vec<unsigned int>(atoms,1);
     unsigned int* id_0=atoms->id->begin();
     unsigned int* id_1=id_arch->begin();
-    memcpy(id_1,id_0,atoms->natms*sizeof(unsigned int));
+    memcpy(id_1,id_0,atoms->natms_lcl*sizeof(unsigned int));
     atoms->pop(id_arch);
 }
 /*--------------------------------------------

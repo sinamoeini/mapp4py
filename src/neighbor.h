@@ -195,8 +195,8 @@ void Neighbor::Cell<M>::DO(bool box_chng,F0 pre,F1 mid,F2 post)
     for(int i=0;i<ncells;i++)
         head_atm[i]=-1;
     
-    const int natms=atoms->natms;
-    const int nall=atoms->natms_ph+natms;
+    const int natms_lcl=atoms->natms_lcl;
+    const int nall=atoms->natms_ph+natms_lcl;
     
     int* next_vec=NULL;
     int* cell_vec=NULL;
@@ -209,7 +209,7 @@ void Neighbor::Cell<M>::DO(bool box_chng,F0 pre,F1 mid,F2 post)
     const int s_dim=atoms->x->dim;
     type0* s=atoms->x->begin()+(nall-1)*s_dim;
 
-    for(int i=nall-1,cell_no;i>natms-1;i--,s-=s_dim)
+    for(int i=nall-1,cell_no;i>natms_lcl-1;i--,s-=s_dim)
     {
         cell_no=0;
         Algebra::Do<__dim__>::func([&s,&cell_no,this](int i){
@@ -234,7 +234,7 @@ void Neighbor::Cell<M>::DO(bool box_chng,F0 pre,F1 mid,F2 post)
         head_atm[cell_no]=i;
     }
     
-    for(int i=natms-1,cell_no;i>-1;i--,s-=s_dim)
+    for(int i=natms_lcl-1,cell_no;i>-1;i--,s-=s_dim)
     {
         cell_no=0;
         Algebra::Do<__dim__>::func([&s,&cell_no,this](int i){
@@ -248,7 +248,7 @@ void Neighbor::Cell<M>::DO(bool box_chng,F0 pre,F1 mid,F2 post)
     atoms->s2x_all();
     
     
-    for(int i=0,j,icell,jcell,ineigh;i<natms;i++)
+    for(int i=0,j,icell,jcell,ineigh;i<natms_lcl;i++)
     {
         pre(i);
         icell=cell_vec[i];

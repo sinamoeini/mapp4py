@@ -19,7 +19,6 @@ n(__dim*__atoms->natms_lcl)
     Memory::alloc(Ax_hat,m+1);
     Memory::alloc(cos_sin,m+1);
     Memory::alloc(x_hat,m+1);
-    Memory::alloc(ans_lcl,m+1);
     Memory::alloc(Q,(m+1)*n);
 }
 /*--------------------------------------------
@@ -28,7 +27,6 @@ n(__dim*__atoms->natms_lcl)
 GMRES::~GMRES()
 {
     Memory::dealloc(Q);
-    Memory::dealloc(ans_lcl);
     Memory::dealloc(x_hat);
     Memory::dealloc(cos_sin);
     Memory::dealloc(Ax_hat);
@@ -63,19 +61,19 @@ type0 GMRES::calc(int iter,type0* RESTRICT Ax,type0* RESTRICT x)
     type0* h=A_hat[iter];
     int ivec=iter+1;
     for(int j=0;j<ivec;j++)
-        ans_lcl[j]=0.0;
+        x_hat[j]=0.0;
     
     type0* q=Q;
     for(int i=0;i<n;i++)
     {
         type0 __ax=Ax[i];
         for(int j=0;j<ivec;j++)
-            ans_lcl[j]+=__ax*q[j];
+            x_hat[j]+=__ax*q[j];
         q+=m+1;
     }
     
     
-    MPI_Allreduce(ans_lcl,h,ivec,Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(x_hat,h,ivec,Vec<type0>::MPI_T,MPI_SUM,world);
     type0 norm_sq_lcl=0.0,norm;
     
     q=Q;

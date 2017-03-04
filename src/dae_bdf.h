@@ -205,7 +205,7 @@ namespace MAPP_NS
     }
     
     
-    class BDF_FLC_f
+    class FLC_f
     {
     public:
         static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
@@ -319,7 +319,7 @@ namespace MAPP_NS
         }
     };
     
-    class BDF_FLC_y
+    class FLC_y
     {
     public:
         static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
@@ -389,7 +389,7 @@ namespace MAPP_NS
         }
     };
     
-    class BDF_VC_f
+    class VC_f
     {
     public:
         static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])
@@ -460,7 +460,7 @@ namespace MAPP_NS
         }
     };
     
-    class BDF_VC_y
+    class VC_y
     {
     public:
         static inline void prep_A_bar_l(int& q,type0& dt,type0 (&t)[DAEBDF::max_q+1],int dq,type0 (&l)[DAEBDF::max_q+1],type0 (&A_bar)[DAEBDF::max_q+1][DAEBDF::max_q+1])

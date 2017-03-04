@@ -383,7 +383,6 @@ namespace MAPP_NS
         
         
         type0* x_hat;
-        type0* ans_lcl;
         
 
         type0 calc(type0*,type0*);

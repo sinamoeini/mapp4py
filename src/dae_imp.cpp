@@ -114,9 +114,7 @@ inline type0 DAEImplicit::update_c()
  err_fac
  --------------------------------------------*/
 bool DAEImplicit::nonlin()
-{
-    //J_test();
-    
+{    
     type0 res_tol=0.005*a_tol*sqrt(nc_dofs)/err_fac;
     type0 denom=0.1*a_tol*sqrt(nc_dofs)/err_fac;
     type0 norm=1.0,delta=0.0,delta_prev=0.0,ratio=1.0,R=1.0;
@@ -180,6 +178,7 @@ bool DAEImplicit::nonlin()
 /*--------------------------------------------
  
  --------------------------------------------*/
+/*
 #include <iostream>
 #include "random.h"
 #include "ff_eam_dmd.h"
@@ -243,7 +242,7 @@ void DAEImplicit::J_test()
     Memory::dealloc(dFs);
     delete Jh;
     delete h;
-}
+}*/
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/

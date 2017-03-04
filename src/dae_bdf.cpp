@@ -224,7 +224,7 @@ bool DAEBDF::interpolate()
             __dt*=dt;
         }
     }
-    err_fac=BDF_FLC_y::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac,beta);
+    err_fac=FLC_y::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac,beta);
     
     /*
      to unroll the loops
@@ -377,7 +377,7 @@ void DAEBDF::prep_for_next()
  --------------------------------------------*/
 void DAEBDF::update_z()
 {
-    BDF_FLC_y::prep_A_bar_l(q,dt,t,dq,l,A_bar);
+    FLC_y::prep_A_bar_l(q,dt,t,dq,l,A_bar);
     
     if(dq==1)
     {

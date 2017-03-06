@@ -66,6 +66,7 @@ void AtomsMD::create_T(type0 T,int seed)
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
 #include "ff_styles.h"
+#include "read_styles.h"
 PyObject* AtomsMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
@@ -153,7 +154,7 @@ void AtomsMD::setup_tp_getset()
     getset_comm_dims(getset[11]);
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsMD::methods[]={[0 ... 7]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsMD::methods[]={[0 ... 8]={NULL,NULL,0,NULL}};
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {
@@ -162,6 +163,7 @@ void AtomsMD::setup_tp_methods()
     ForceFieldLJ::ml_new(methods[2]);
     ForceFieldEAM::ml_new(methods[3],methods[4],methods[5]);
     ForceFieldFS::ml_new(methods[6]);
+    ReadCFGMD::ml_import(methods[4]);
 }
 /*--------------------------------------------
  
@@ -185,3 +187,4 @@ void AtomsMD::ml_create_T(PyMethodDef& tp_method)
         Py_RETURN_NONE;
     };
 }
+

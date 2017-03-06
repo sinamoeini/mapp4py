@@ -581,14 +581,14 @@ AtomsMD* ReadCFGMD::operator()(const char* file)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ReadCFGMD::ml_cfg(PyMethodDef& tp_methods)
+void ReadCFGMD::ml_import(PyMethodDef& tp_methods)
 {
-    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods.ml_name="cfg";
-    tp_methods.ml_doc="this function reads cfg file and returns an atoms_md object";
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
+    tp_methods.ml_name="import_cfg";
+    tp_methods.ml_doc="this function reads a cfg file and returns an atoms_md object";
     
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<std::string,OP<MAPP_MPI>> f("cfg",{"file","mpi"});
         f.noptionals=1;
@@ -794,14 +794,14 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ReadCFGDMD::ml_cfg(PyMethodDef& tp_methods)
+void ReadCFGDMD::ml_import(PyMethodDef& tp_methods)
 {
-    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods.ml_name="cfg";
-    tp_methods.ml_doc="this function reads cfg file and returns an atoms_dmd object";
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
+    tp_methods.ml_name="import_cfg";
+    tp_methods.ml_doc="this function reads a cfg file and returns an atoms_dmd object";
     
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<int,std::string,OP<MAPP_MPI>> f("cfg",{"N","file","mpi"});
         f.noptionals=1;
@@ -829,7 +829,6 @@ void ReadCFGDMD::ml_cfg(PyMethodDef& tp_methods)
         return op;
     };
 }
-
 
 
 

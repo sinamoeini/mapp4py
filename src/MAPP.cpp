@@ -10,7 +10,6 @@
 #include "atoms_styles.h"
 #include "md_styles.h"
 #include "min_styles.h"
-#include "read_styles.h"
 #include "dae_styles.h"
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
@@ -113,11 +112,10 @@ void MAPP::init_module(void)
     PyModule_AddObject(module,"dmd",dmd);
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::MD::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MAPP::MD::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
 void MAPP::MD::setup_methods()
 {
-    ReadCFGMD::ml_cfg(methods[0]);
 }
 /*--------------------------------------------
  
@@ -190,12 +188,10 @@ PyObject* MAPP::MD::init_module(void)
     return module;
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::DMD::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MAPP::DMD::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
 void MAPP::DMD::setup_methods()
-{
-    ReadCFGDMD::ml_cfg(methods[0]);
-}
+{}
 /*--------------------------------------------
  
  --------------------------------------------*/

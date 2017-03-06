@@ -49,6 +49,7 @@ AtomsDMD::~AtomsDMD()
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
 #include "ff_styles.h"
+#include "read_styles.h"
 PyObject* AtomsDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
@@ -136,12 +137,12 @@ void AtomsDMD::setup_tp_getset()
     getset_comm_dims(getset[11]);
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsDMD::methods[]={[0 ... 4]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsDMD::methods[]={[0 ... 5]={NULL,NULL,0,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
     ml_strain(methods[0]);
     ForceFieldEAMDMD::ml_new(methods[1],methods[2],methods[3]);
-    
+    ReadCFGDMD::ml_import(methods[4]);
 }
 

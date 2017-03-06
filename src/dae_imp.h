@@ -9,7 +9,6 @@ namespace MAPP_NS
     protected:
         bool nonlin();
         type0 update_c();
-        //void J_test();
     public:
         int max_nnewton_iters;
         int max_ngmres_iters;

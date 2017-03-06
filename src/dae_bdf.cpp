@@ -186,7 +186,7 @@ bool DAEBDF::integrate()
     for(int i=0;i<ncs;i++)
         norm_lcl+=(c[i]-y_0[i])*(c[i]-y_0[i]);
     MPI_Allreduce(&norm_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    err=err_fac*sqrt(norm/nc_dofs)/a_tol;
+    err=err_fac*sqrt(norm)/a_tol_sqrt_nc_dofs;
     
     //printf("Error: %e\n",err);
     if(err<1.0)
@@ -224,7 +224,7 @@ bool DAEBDF::interpolate()
             __dt*=dt;
         }
     }
-    err_fac=FLC_y::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac,beta);
+    err_fac=VC_y::err_fac_calc(q,dt,t,lo_err_fac,hi_err_fac,beta);
     
     /*
      to unroll the loops
@@ -284,7 +284,7 @@ void DAEBDF::prep_for_next()
         }
         
         MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-        norm=hi_err_fac[0]*sqrt(tmp/nc_dofs)/a_tol;
+        norm=hi_err_fac[0]*sqrt(tmp)/a_tol_sqrt_nc_dofs;
         eta[2]=pow(0.5/norm,1.0/(iq+2.0));
     }
     
@@ -303,7 +303,7 @@ void DAEBDF::prep_for_next()
             __z+=max_q+1;
         }
         MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-        norm=lo_err_fac[0]*sqrt(tmp/nc_dofs)/a_tol;
+        norm=lo_err_fac[0]*sqrt(tmp)/a_tol_sqrt_nc_dofs;
         eta[0]=pow(0.5/norm,1.0/(iq));
     }
     
@@ -377,7 +377,7 @@ void DAEBDF::prep_for_next()
  --------------------------------------------*/
 void DAEBDF::update_z()
 {
-    FLC_y::prep_A_bar_l(q,dt,t,dq,l,A_bar);
+    VC_y::prep_A_bar_l(q,dt,t,dq,l,A_bar);
     
     if(dq==1)
     {
@@ -475,7 +475,7 @@ void DAEBDF::reset()
     };
     
     // ddc^2
-    type0 norm=ff->ddc_norm()/sqrt(nc_dofs);
+    type0 norm=ff->ddc_norm()/a_tol_sqrt_nc_dofs;
     type0 max_dt_lcl=std::numeric_limits<type0>::infinity();
     type0* __z=z;
     for(int i=0;i<ncs;i++,__z+=max_q+1)
@@ -497,7 +497,7 @@ void DAEBDF::reset()
 
     
     q=1;
-    dt=MAX(MIN(MIN(sqrt(2.0*a_tol/norm),(t_fin-t_cur)*0.001),max_dt),min_dt);
+    dt=MAX(MIN(MIN(sqrt(2.0/norm),(t_fin-t_cur)*0.001),max_dt),min_dt);
     Algebra::zero<max_q+1>(t);
 }
 /*--------------------------------------------
@@ -648,16 +648,16 @@ void DAEBDF::ml_run(PyMethodDef& tp_methods)
         
         AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
         ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
-        /*
+
         try
         {
-            __self->min->pre_run_chk(__atoms,__ff);
+            __self->dae->pre_run_chk(__atoms,__ff);
         }
         catch(std::string err_msg)
         {
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
             return NULL;
-        }*/
+        }
         
         __self->dae->atoms=
         __atoms;

@@ -115,19 +115,16 @@ inline type0 DAEImplicit::update_c()
  --------------------------------------------*/
 bool DAEImplicit::nonlin()
 {    
-    type0 res_tol=0.005*a_tol*sqrt(nc_dofs)/err_fac;
-    type0 denom=0.1*a_tol*sqrt(nc_dofs)/err_fac;
+    type0 res_tol=0.005*a_tol_sqrt_nc_dofs/err_fac;
+    type0 denom=0.1*a_tol_sqrt_nc_dofs/err_fac;
     type0 norm=1.0,delta=0.0,delta_prev=0.0,ratio=1.0,R=1.0;
     
     int iter=0;
-
-    
-    
     
     memcpy(c_0,c,ncs*sizeof(type0));
     memcpy(c,y_0,ncs*sizeof(type0));
     dynamic->update(atoms->c);
-    type0 cost=ff->update_J(beta,a,F)/(a_tol*sqrt(nc_dofs));
+    type0 cost=ff->update_J(beta,a,F)/a_tol_sqrt_nc_dofs;
     //printf("------------------------------------------------\n");
     //printf("THE COST %d %e\n",0,cost);
     
@@ -157,7 +154,7 @@ bool DAEImplicit::nonlin()
 
         delta_prev=delta;
         
-        cost=ff->update_J(beta,a,F)/(a_tol*sqrt(nc_dofs));
+        cost=ff->update_J(beta,a,F)/a_tol_sqrt_nc_dofs;
         //printf("THE COST %d %e | %e\n",iter+1,cost,delta);
         iter++;
     }
@@ -176,7 +173,20 @@ bool DAEImplicit::nonlin()
     return false;
 }
 /*--------------------------------------------
- 
+ natms = 250;
+ No = 100;
+ SetDirectory[NotebookDirectory[]];
+ A = Import["data.txt", "Data"];
+ Manipulate[
+  ListLinePlot[
+   {
+    Table[{A[[i*No + j, 1]], A[[i*No + j, 2]]}, {j, 1, No}],
+    Table[{A[[i*No + j, 1]], A[[i*No + j, 3]]}, {j, 1, No}]
+    },
+   PlotRange -> All,
+   Epilog -> Inset[Graphics[Text[Style[ToString[i], Large]]]]
+   ]
+  , {i, 0, natms - 1, 1}]
  --------------------------------------------*/
 /*
 #include <iostream>

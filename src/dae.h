@@ -8,17 +8,15 @@ namespace MAPP_NS
     {
     private:
     protected:
-    public:
+        int calc_ndofs(class AtomsDMD*);
+        type0 a_tol_sqrt_nc_dofs;
+        void pre_run_chk(class AtomsDMD*,class ForceFieldDMD*);
         int c_dim;
         int ncs;
-        
-        
+    public:
         int max_nsteps;
-        
         type0 a_tol;
         type0 min_dt;
-        
-        type0 nc_dofs;
         
         type0 dt;
         type0 t_cur;

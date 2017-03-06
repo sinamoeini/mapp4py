@@ -373,9 +373,7 @@ namespace MAPP_NS
     {
     private:
         const int m;
-        const int dim;
         const int n;
-        Vec<type0>** vecs;
         type0* Q;
         type0** A_hat;
         type0* Ax_hat;

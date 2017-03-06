@@ -7,6 +7,7 @@ AtomsDMD::AtomsDMD(MPI_Comm& world,int __N):
 N(__N),
 Atoms(world),
 c(NULL),
+c_dof(NULL),
 c_d(NULL),
 elem(NULL),
 alpha(NULL),
@@ -22,6 +23,7 @@ AtomsDMD::AtomsDMD(Communication& comm,int __N):
 N(__N),
 Atoms(comm),
 c(NULL),
+c_dof(NULL),
 c_d(NULL),
 elem(NULL),
 alpha(NULL),
@@ -38,6 +40,7 @@ AtomsDMD::~AtomsDMD()
     delete [] wi;
     delete [] xi;
     delete alpha;
+    delete c_dof;
     delete c;
     delete c_d;
     delete elem;

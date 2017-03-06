@@ -10,7 +10,8 @@ max_nsteps(1000),
 a_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 min_dt(std::numeric_limits<type0>::epsilon()),
 c(NULL),
-c_d(NULL)
+c_d(NULL),
+ncs(0)
 {
 }
 /*--------------------------------------------
@@ -22,12 +23,39 @@ DAE::~DAE()
 /*--------------------------------------------
  
  --------------------------------------------*/
+void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
+{
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int DAE::calc_ndofs(AtomsDMD* __atoms)
+{
+    int ndof_lcl=__atoms->c_dim*__atoms->natms_lcl;
+    int n=ndof_lcl;
+    type0* c=__atoms->c->begin();
+    if(__atoms->c_dof)
+    {
+        bool* c_dof=__atoms->c_dof->begin();
+        for(int i=0;i<n;i++)
+            if(!c_dof[i] || c[i]<0.0) ndof_lcl--;
+    }
+    else
+        for(int i=0;i<n;i++)
+            if(c[i]<0.0) ndof_lcl--;
+    int ndof;
+    MPI_Allreduce(&ndof_lcl,&ndof,1,MPI_INT,MPI_SUM,__atoms->world);
+    return ndof;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void DAE::init_static()
 {
     c_dim=atoms->c_dim;
     ncs=atoms->natms_lcl*c_dim;
-    // for now
-    nc_dofs=static_cast<type0>(ncs);
+    a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
     if(!atoms->c_d) atoms->c_d=new Vec<type0>(atoms,c_dim);
     dynamic=new DynamicDMD(atoms,ff,false,{atoms->elem,atoms->c},{},{});
     dynamic->init();
@@ -39,10 +67,11 @@ void DAE::init_static()
  --------------------------------------------*/
 void DAE::fin_static()
 {
+    c=c_d=NULL;
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
-    c=c_d=NULL;
+    
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

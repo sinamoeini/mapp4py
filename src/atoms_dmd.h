@@ -11,6 +11,7 @@ namespace MAPP_NS
         Vec<type0>* alpha;
         Vec<type0>* c;
         Vec<type0>* c_d;
+        Vec<bool>* c_dof;
         Vec<elem_type>* elem;
         AtomsDMD(MPI_Comm&,int);
         AtomsDMD(Communication&,int);

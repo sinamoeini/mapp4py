@@ -2,7 +2,7 @@
 Numerical Integration Details
 ******************************
 
-The objectuve of this section is to outline a numerical approach to calculate the integrations of the form
+The objective of this section is to outline a numerical approach to calculate the integrations of the form
 
 .. math:: g(\mathbf{x},\alpha)=\frac{1}{\left(\alpha\sqrt{\pi}\right)^{3}}\int d^3\mathbf{r}e^{-\left(\mathbf{y}-\mathbf{x}\right)^2/\alpha^2} f(|\mathbf{y}|),
 
@@ -38,6 +38,13 @@ where :math:`m` is the number of quadrature points and :math:`x_i` and :math:`w_
 
 .. math:: -x_{\mathrm{max}}\le x_i\le x_{\mathrm{max}}, \quad i=1, \cdots, m
 
-it can be realized that the result of this numerical scheme is null when
+it can be realized that the result of this numerical scheme is :math:`0` whenever
 
 .. math:: r_c\le x-\alpha x_{\mathrm{max}}
+
+thus giving us a closed form for the effictive cuttoff radius to be used in the neighbor lists. In other words two atoms (sites) would be interacting if and only if
+
+.. math:: x_{ij}-\alpha_{ij} x_{\mathrm{max}} \le r_c
+
+
+

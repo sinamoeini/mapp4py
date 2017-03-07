@@ -130,4 +130,147 @@ PyMODINIT_FUNC initxmpl(void)
     Py_INCREF(&ExamplePython::TypeObject);
     PyModule_AddObject(module,"obj",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+#include <iostream>
+#include <frameobject.h>
+#include <pyerrors.h>
+void ExamplePython::ml_test(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="test";
+    tp_methods.ml_doc="run simulation for n steps";
+    
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        
+        PyObject* op;
+        if(PyArg_ParseTuple(args, "O:set_callback", &op))
+        {
+         
+            if (!PyFunction_Check(op))
+            {
+                PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+                return NULL;
+            }
+        }
+        else
+            return NULL;
+        
+        
+        
+        
+        
+        
+        
+        //PyFunctionObject* fp=(PyFunctionObject*) PyTuple_GetItem(args,0);
+        
+        
+        
+        /*
+
+        PyObject* temp=PyTuple_GetItem(args,0);
+        
+        if (!PyCallable_Check(temp))
+        {
+            PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+            
+            return NULL;
+        }
+        Py_XINCREF(temp);
+        
+        PyObject* x=PyString_FromString("x");
+        PyObject* __x=PyString_FromString("xooo");
+        PyObject* y=PyString_FromString("y");
+        PyObject* __y=PyFloat_FromDouble(2.0);
+        PyObject* z=PyString_FromString("z");
+        PyObject* __z=PyFloat_FromDouble(0.6);
+        
+        PyObject* dict=PyDict_New();
+        PyDict_SetItem(dict,x,__x);
+        PyDict_SetItem(dict,y,__y);
+        PyDict_SetItem(dict,z,__z);
+        
+        
+        
+        PyCodeObject* co=(PyCodeObject *)PyFunction_GET_CODE(temp);
+        PyObject* co_varnames=co->co_varnames;
+        size_t sz=PyTuple_Size(co_varnames);
+        
+        for(size_t i=0;i<sz;i++)
+        {
+            char* str=PyString_AsString(PyTuple_GetItem(co_varnames,i));
+            printf("%s\n",str);
+        }
+        
+        
+        char* str=PyString_AsString(co->co_name);
+        printf("%s\n",str);
+        
+    
+        
+        PyObject* ptype;
+        PyObject* pvalue;
+        PyObject* ptraceback;
+        PyErr_Fetch(&ptype,&pvalue,&ptraceback);
+        
+        if ( ptype != NULL )
+        {
+            PyObject* pRepr = PyObject_Repr( ptype ) ;
+            std::cout << "- EXC type: " << PyString_AsString(pRepr) << std::endl ;
+            Py_DECREF( pRepr ) ;
+            Py_DECREF( ptype ) ;
+        }
+        if ( pvalue != NULL )
+        {
+            PyObject* pRepr = PyObject_Repr( pvalue ) ;
+            std::cout << "- EXC value: " << PyString_AsString(pRepr) << std::endl ;
+            Py_DECREF( pRepr ) ;
+            Py_DECREF(pvalue) ;
+        }
+        if ( ptraceback != NULL )
+        {
+            PyObject* pRepr = PyObject_Repr( pvalue ) ;
+            std::cout << "- EXC traceback: " << PyString_AsString(pRepr) << std::endl ;
+            Py_DECREF( pRepr ) ;
+            Py_DECREF( ptraceback ) ;
+        }
+        
+         str=PyString_AsString(pvalue);
+         printf("%s\n",str);
+        
+        
+        
+        PyErr_Clear();
+        */
+        Py_RETURN_NONE;
+        
+        
+        /*
+         keywords: 
+            x         [__dim__]
+            x_d       [__dim__]
+            dof       [__dim__]
+            elem
+            id        <readonly>
+
+         
+         keywords:
+            x         [__dim__]
+            dof       [__dim__]
+            alpha     [];
+            alpha_dof [];
+            c         [];
+            c_dof     [];
+            elem      [];
+            id        <readonly>;
+         
+         */
+        
+    };
+}
+
+
 

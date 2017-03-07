@@ -11,7 +11,8 @@ a_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 min_dt(std::numeric_limits<type0>::epsilon()),
 c(NULL),
 c_d(NULL),
-ncs(0)
+ncs(0),
+ntally(1000)
 {
 }
 /*--------------------------------------------
@@ -143,13 +144,14 @@ void DAE::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAE::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAE::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
+    getset_ntally(getset[3]);
 }
 /*--------------------------------------------
  
@@ -211,6 +213,27 @@ void DAE::getset_min_dt(PyGetSetDef& getset)
         int ichk=min_dt.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->dae->min_dt=min_dt.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::getset_ntally(PyGetSetDef& getset)
+{
+    getset.name=(char*)"ntally";
+    getset.doc=(char*)"tally thermodynamic quantities every ntally steps";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->ntally,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<int> ntally("ntally");
+        ntally.logics[0]=VLogics("gt",0);
+        int ichk=ntally.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->dae->ntally=ntally.val;
         return 0;
     };
 }

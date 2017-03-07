@@ -112,7 +112,15 @@ void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]*=-1.0/atoms->vol;});
     
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::force_calc_static_timer()
+{
+    force_calc_static();
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
+    Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
+}
 /*--------------------------------------------
  
  --------------------------------------------*/

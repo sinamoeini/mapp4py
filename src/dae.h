@@ -14,6 +14,7 @@ namespace MAPP_NS
         int c_dim;
         int ncs;
     public:
+        int ntally;
         int max_nsteps;
         type0 a_tol;
         type0 min_dt;
@@ -59,6 +60,7 @@ namespace MAPP_NS
         static void getset_a_tol(PyGetSetDef&);
         static void getset_max_nsteps(PyGetSetDef&);
         static void getset_min_dt(PyGetSetDef&);
+        static void getset_ntally(PyGetSetDef&);
         
         static void setup_tp();
     };

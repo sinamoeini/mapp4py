@@ -72,11 +72,13 @@ fst(Communication::get_rank(__world)==0 ? std::ifstream(__file,std::ios_base::in
 {
     bool file_xst=true;
     if(!rank)
-        if(fst.bad()) file_xst=false;
+        if(fst.fail()) file_xst=false;
+
+    
     MPI_Bcast(&file_xst,1,MPI_BYTE,0,world);
     
     if(!file_xst)
-        throw Print::vprintf("file %s not found",__file);
+        throw Print::vprintf("failed to open %s",__file);
     
     if(!rank)
         str_line.reserve(1024);

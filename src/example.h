@@ -34,7 +34,7 @@ namespace MAPP_NS
         static void setup_tp_methods();
         static void setup_tp();
 
-        
+        static void ml_test(PyMethodDef&);
     };
     
     

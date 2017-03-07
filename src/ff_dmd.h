@@ -11,7 +11,7 @@ namespace MAPP_NS
         class DynamicDMD* dynamic;
         class AtomsDMD* atoms;
         
-        
+        virtual void force_calc_static()=0;
     public:
         ForceFieldDMD(class AtomsDMD*);
         virtual ~ForceFieldDMD();
@@ -36,7 +36,7 @@ namespace MAPP_NS
         Vec<type0>* f_alpha;
         
         
-        
+        void force_calc_static_timer();
         virtual void init_static()=0;
         virtual void fin_static()=0;
         virtual void operator()(Vec<type0>*,Vec<type0>*)=0;

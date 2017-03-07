@@ -365,8 +365,6 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
  --------------------------------------------*/
 void ForceFieldEAMDMD::force_calc()
 {
-    
-    
     if(max_pairs<neighbor->no_pairs)
     {
         delete [] rho_phi;
@@ -402,7 +400,7 @@ void ForceFieldEAMDMD::force_calc()
     
     type0* dE=dE_ptr->begin();
     type0* mu=mu_ptr->begin();
-    type0* rho=ddE_ptr->begin();
+    type0* rho=E_ptr->begin();
     const int n=atoms->natms_lcl*c_dim;
     for(int i=0;i<n;i++) rho[i]=0.0;
     
@@ -533,8 +531,6 @@ void ForceFieldEAMDMD::force_calc()
         nrgy_strss_lcl[0]+=kbT*calc_ent(c_i);
     }
     
-
-    
     const int __natms=atoms->natms_lcl;
     
     for(int i=0;i<__natms;i++)
@@ -547,7 +543,6 @@ void ForceFieldEAMDMD::force_calc()
     }
     
     dynamic->update(dE_ptr);
-
     
     type0* fvec=f->begin();
     type0* f_alphavec=f_alpha->begin();
@@ -597,8 +592,7 @@ void ForceFieldEAMDMD::force_calc()
         
         if((i+1)%c_dim==0)
             Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
-    }
-    
+    }    
 }
 /*--------------------------------------------
  energy calculation
@@ -731,6 +725,7 @@ void ForceFieldEAMDMD::init()
     
     mu_ptr=new Vec<type0>(atoms,c_dim,"mu");
     cv_ptr=new Vec<type0>(atoms,1);
+    E_ptr=new Vec<type0>(atoms,c_dim);
     dE_ptr=new Vec<type0>(atoms,c_dim);
     ddE_ptr=new Vec<type0>(atoms,c_dim);
 }
@@ -745,9 +740,9 @@ void ForceFieldEAMDMD::fin()
     Memory::dealloc(drho_phi_dalpha);
     max_pairs=0;
     
-
-    delete dE_ptr;
     delete ddE_ptr;
+    delete dE_ptr;
+    delete E_ptr;
     delete cv_ptr;
     delete mu_ptr;
     
@@ -990,7 +985,7 @@ void ForceFieldEAMDMD::calc_mu()
      calculate the electron densities
      --------------------------------*/
     //internal vecs
-    type0* rho=ddE_ptr->begin();
+    type0* rho=E_ptr->begin();
     type0* mu=mu_ptr->begin();
     
     int n=atoms->natms_lcl*c_dim;
@@ -1002,9 +997,7 @@ void ForceFieldEAMDMD::calc_mu()
     
     //internal vecs
     type0* dE=dE_ptr->begin();
-    //type0* x=atoms->x->begin();
-    //type0* __alpha=atoms->alpha->begin();
-    type0* ddE=rho;
+    type0* ddE=ddE_ptr->begin();
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
     size_t istart=0;
@@ -1036,11 +1029,10 @@ void ForceFieldEAMDMD::calc_mu()
             __E+=__dE*(__rho-rho_max);
         
         nrgy_strss_lcl[0]+=c[i]*__E;
+        rho[i]=__E;
         mu[i]+=__E;
         dE[i]=__dE;
     }
-    
-    
     
     dynamic->update(dE_ptr);
     
@@ -1052,17 +1044,74 @@ void ForceFieldEAMDMD::calc_mu()
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
         {
             j=neighbor_list[i][__j];
-            mu[i]+=c[j]*(rho_phi[istart+0]+rho_phi[istart+1]*dE[j]);
+            mu[i]+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
             if(j<n)
             {
-                mu[j]+=c[i]*(rho_phi[istart+0]+rho_phi[istart+2]*dE[i]);
-                nrgy_strss_lcl[0]+=c[i]*c[j]*rho_phi[istart+0];
+                mu[j]+=c[i]*(rho_phi[istart]+rho_phi[istart+2]*dE[i]);
+                nrgy_strss_lcl[0]+=c[i]*c[j]*rho_phi[istart];
             }
             else
-                nrgy_strss_lcl[0]+=0.5*c[i]*c[j]*rho_phi[istart+0];
+                nrgy_strss_lcl[0]+=0.5*c[i]*c[j]*rho_phi[istart];
         }
     }
     dynamic->update(mu_ptr);
+}
+/*--------------------------------------------
+ force calculation
+ --------------------------------------------*/
+void ForceFieldEAMDMD::force_calc_static()
+{
+    int n=atoms->natms_lcl*c_dim;
+    type0 const* E=E_ptr->begin();
+    type0 const* c=atoms->c->begin();
+    type0 const* cv=cv_ptr->begin();
+    type0 const* alpha=atoms->alpha->begin();
+    elem_type const* elem=atoms->elem->begin();
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+            nrgy_strss_lcl[0]+=kbT*calc_ent(cv[i]);
+        if(c[i]>=0.0)
+            nrgy_strss_lcl[0]+=c[i]*(E[i]+c_0[elem[i]]-3.0*kbT*log(alpha[i]))+kbT*calc_ent(c[i]);
+    }
+    
+    
+    
+    type0 const* dE=dE_ptr->begin();
+    type0 const* x=atoms->x->begin();
+    
+
+    
+    type0 x_i[__dim__];
+    type0 dx_ij[__dim__];
+    
+    type0 fpair;
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    size_t istart=0;
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0) Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        type0 c_i=c[i];
+        type0 dE_i=dE[i];
+        const int neigh_sz=neighbor_list_size[i];
+        
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            fpair=-(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart])*c_i*c[j];
+            if(j<n)
+                nrgy_strss_lcl[0]+=rho_phi[istart]*c_i*c[j];
+            else
+            {
+                fpair*=0.5;
+                nrgy_strss_lcl[0]+=0.5*rho_phi[istart]*c_i*c[j];
+            }
+            
+            Algebra::DyadicV(-fpair,dx_ij,&nrgy_strss_lcl[1]);
+        }
+    }
 }
 /*--------------------------------------------
  create the sparse matrices
@@ -1270,68 +1319,6 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
         }
     }
     
-}
-/*--------------------------------------------
- force calculation
- --------------------------------------------*/
-void ForceFieldEAMDMD::force_calc_static()
-{
-    type0* dE=dE_ptr->begin();
-    type0 const* c=atoms->c->begin();
-    const type0* x=atoms->x->begin();
-    const type0* alpha=atoms->alpha->begin();
-    type0* fvec=f->begin();
-    type0* f_alphavec=f_alpha->begin();
-    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
-    type0 x_i[__dim__];
-    type0 dx_ij[__dim__];
-    int n=atoms->natms_lcl*c_dim;
-    type0 apair,fpair;
-    int** neighbor_list=neighbor->neighbor_list;
-    int* neighbor_list_size=neighbor->neighbor_list_size;
-    size_t istart=0;
-    for(int i=0;i<n;i++)
-    {
-        if(i%c_dim==0)
-        {
-            Algebra::zero<__dim__>(f_i);
-            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
-        }
-        
-        
-        type0 c_i=c[i];
-        type0 alpha_i=alpha[i];
-        type0 dE_i=dE[i];
-        type0 f_alpha_i=0.0;
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
-            
-            fpair=-(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart])*c_i*c[j];
-            apair=-(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart])*c_i*c[j];
-
-            
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
-            f_alpha_i+=alpha_i*apair;
-            
-            if(j<n)
-            {
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+(j/c_dim)*__dim__);
-                f_alphavec[j]+=alpha[j]*apair;
-            }
-            else
-                fpair*=0.5;
-            Algebra::DyadicV(-fpair,dx_ij,&nrgy_strss_lcl[1]);
-        }
-        
-        f_alpha_i+=3.0*kbT*c_i/alpha_i;
-        f_alphavec[i]+=f_alpha_i;
-        
-        if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
-    }
 }
 /*--------------------------------------------
  gamma_i = x_ij*x_ij/(alpha_i*alpha_i)

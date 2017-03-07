@@ -62,6 +62,56 @@ void AtomsMD::create_T(type0 T,int seed)
         }
     }
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+/*
+void AtomsMD::DO(PyFunctionObject* op)
+{
+    
+    PyCodeObject* co=(PyCodeObject *)PyFunction_GET_CODE(op);
+    PyObject* co_varnames=co->co_varnames;
+    size_t co_nvars=PyTuple_Size(co_varnames);
+    
+    constexpr int atoms_nkwds=5;
+    enum{__id,__elem,__x,__x_d,__dof};
+    const char* atoms_kwds[atoms_nkwds]={[__id]="id",[__elem]="elem",[__x]="x",[__x_d]="x_d",[__dof]="dof"};
+    vec* atoms_vecs[atoms_nkwds]={[__id]=id,[__elem]=elem,[__x]=x,[__x_d]=x_d,[__dof]=dof};
+    bool found[atoms_nkwds]={[0 ... atoms_nkwds-1]=false};
+    
+    
+    for(size_t i=0;i<co_nvars;i++)
+    {
+        char* var_name=PyString_AsString(PyTuple_GetItem(co_varnames,i));
+        bool var_found=false;
+        int j=0;
+        for(;j<atoms_nkwds && !var_found;j++)
+        if(strcmp(var_name,atoms_kwds[j])==0) var_found=true;
+        if(!var_found)
+        throw std::string("unknown parameter: ")+std::string(var_name);
+        found[j-1]=true;
+    }
+    
+    
+    if(found[__dof] && !dof)
+    {
+        dof=new Vec<bool>(this,__dim__,"dof");
+        bool* ___dof=dof->begin();
+        for(int i=0;i<natms_lcl*__dim__;i++) ___dof[i]=true;
+    }
+    if(found[__x_d] && !x_d)
+    {
+        x_d=new Vec<type0>(this,__dim__,"x_d");
+        type0* ___x_d=x_d->begin();
+        for(int i=0;i<natms_lcl*__dim__;i++) ___x_d[i]=0.0;
+    }
+    
+    std::remove_pointer<npy_intp>::type npy__dim__=static_cast<std::remove_pointer<npy_intp>::type>(__dim__);
+    std::remove_pointer<npy_intp>::type npy__1=static_cast<std::remove_pointer<npy_intp>::type>(1);
+    PyObject* Py_x=PyArray_SimpleNewFromData(1,&npy__dim__,cpp_type2type_num<type0>::type_num(),x->begin());
+
+    
+}*/
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -163,7 +213,7 @@ void AtomsMD::setup_tp_methods()
     ForceFieldLJ::ml_new(methods[2]);
     ForceFieldEAM::ml_new(methods[3],methods[4],methods[5]);
     ForceFieldFS::ml_new(methods[6]);
-    ReadCFGMD::ml_import(methods[4]);
+    ReadCFGMD::ml_import(methods[7]);
 }
 /*--------------------------------------------
  
@@ -188,3 +238,8 @@ void AtomsMD::ml_create_T(PyMethodDef& tp_method)
     };
 }
 
+    
+    
+    
+    
+    

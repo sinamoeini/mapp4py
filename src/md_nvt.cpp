@@ -71,7 +71,7 @@ void MDNVT::update_x_d()
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements->masses;
     type0 m_i;
-    Algebra::zero(__vec_lcl);
+    Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms_lcl=atoms->natms_lcl;
     if(atoms->dof)
     {
@@ -122,7 +122,7 @@ void MDNVT::update_x_d(type0 fac_x_d)
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements->masses;
     type0 m_i;
-    Algebra::zero(__vec_lcl);
+    Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms_lcl=atoms->natms_lcl;
     if(atoms->dof)
     {
@@ -188,7 +188,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     f=ff->f->begin();
     x_d=atoms->x_d->begin();
     elem=atoms->elem->begin();
-    Algebra::zero(__vec_lcl);
+    Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms1=atoms->natms_lcl;
     for(int i=0;i<natms1;++i)
     {
@@ -247,7 +247,7 @@ void MDNVT::init()
         type0* m=atoms->elements->masses;
         type0 m_i;
         elem_type* elem=atoms->elem->begin();
-        Algebra::zero(__vec_lcl);
+        Algebra::zero<__nvoigt__>(__vec_lcl);
         const int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++)
         {

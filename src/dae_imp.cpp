@@ -4,6 +4,7 @@
 #include "dynamic_dmd.h"
 #include "gmres.h"
 #include "memory.h"
+#include "xmath.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -96,7 +97,6 @@ inline type0 DAEImplicit::update_c()
     
     
     MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
-    
     volatile type0 c0;
     for(int i=0;i<ncs;i++)
     {
@@ -104,7 +104,6 @@ inline type0 DAEImplicit::update_c()
         --++c0;
         c[i]=c0;
     }
-    
     return r;
 }
 /*--------------------------------------------

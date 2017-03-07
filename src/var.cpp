@@ -35,6 +35,11 @@ const std::string type_attr<long double>::name(){return std::string("long double
 const long double type_attr<long double>::zero=0;
 const std::string type_attr<std::string>::name(){return std::string("std::string");};
 const std::string type_attr<std::string>::zero=std::string();
+
+static_assert(sizeof(bool)==sizeof(char),"sizeof(bool)!=sizeof(char)");
+static_assert(sizeof(bool)==sizeof(npy_bool),"sizeof(bool)!=sizeof(npy_bool)");
+static_assert(static_cast<npy_bool>(true)==NPY_TRUE,"true!=NPY_TRUE");
+static_assert(static_cast<npy_bool>(false)==NPY_FALSE,"true!=NPY_TRUE");
 /*--------------------------------------------*/
 /*--------------------------------------------
  

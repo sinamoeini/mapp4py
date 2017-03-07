@@ -2867,12 +2867,7 @@ namespace MAPP_NS
         
         /*==========================================================================*/
         template<const int dim,typename T>
-        void zero(T(&V)[dim])
-        {
-            __V_zero<dim>::func(V);
-        }
-        template<const int dim,typename T>
-        void zero(T*& V)
+        void zero(T* V)
         {
             __V_zero<dim>::func(V);
         }

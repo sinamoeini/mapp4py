@@ -4,6 +4,7 @@
 #include "dynamic_dmd.h"
 #include "neighbor_dmd.h"
 #include "memory.h"
+#include "thermo_dynamics.h"
 #include <limits>
 using namespace MAPP_NS;
 /*--------------------------------------------
@@ -42,11 +43,6 @@ void DAEBDF::init_static()
     DAEImplicit::init_static();
     Memory::alloc(dy,(max_q+2)*ncs);
     z=dy+ncs;
-    
-    ff->derivative_timer();
-    ff->neighbor->init_static();
-    ff->neighbor->create_2nd_list();
-    ff->init_static();
 }
 /*--------------------------------------------
  
@@ -54,8 +50,17 @@ void DAEBDF::init_static()
 void DAEBDF::run_static(type0 t_tot)
 {
     init_static();
+    ff->reset();
+    ff->derivative_timer();
+    ff->neighbor->init_static();
+    ff->neighbor->create_2nd_list();
+    ff->init_static();
+    /*
+    type0* alpha=atoms->alpha->begin();
+    for(int i=0;i<ncs;i++)
+        printf("%d\t%e\n",i,alpha[i]);
+    */
     
-    memset(dy,0,ncs*sizeof(type0));
     t_cur=0.0;
     t_fin=t_tot;
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
@@ -63,6 +68,22 @@ void DAEBDF::run_static(type0 t_tot)
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     reset();
 
+    
+    type0 S[__dim__][__dim__];
+    
+    ThermoDynamics thermo(6,
+    "Time",t_cur,
+    "FE",ff->nrgy_strss[0],
+    "S[0][0]",S[0][0],
+    "S[1][1]",S[1][1],
+    "S[2][2]",S[2][2],
+    "S[1][2]",S[2][1],
+    "S[2][0]",S[2][0],
+    "S[0][1]",S[1][0]);
+    thermo.init();
+    Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+    thermo.print(0);
+    
     type0 dt_prev;
     int q_prev;
     int istep=0;
@@ -75,7 +96,7 @@ void DAEBDF::run_static(type0 t_tot)
         
         while(!integrate())
             integrate_fail();
-        printf("step %d %e %e %e\n",istep,t_cur+dt,c[0],c_d[0]);
+        //printf("step %d %e %e %e\n",istep,t_cur+dt,c[0],c_d[0]);
         
         __max_q=MAX(q,__max_q);
         __max_dt=MAX(dt,__max_dt);
@@ -101,8 +122,25 @@ void DAEBDF::run_static(type0 t_tot)
         if(q_prev!=q)
             nconst_q=0;
         
+        if((istep+1)%ntally==0)
+        {
+            ff->reset();
+            ff->force_calc_static_timer();
+            Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+            thermo.print(istep+1);
+        }
+        
     }
     
+    if(istep%ntally)
+    {
+        ff->reset();
+        ff->force_calc_static_timer();
+        Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+        thermo.print(istep);
+    }
+    
+    thermo.fin();
     
     /*
     //type0* alpha=atoms->alpha->begin();
@@ -499,6 +537,7 @@ void DAEBDF::reset()
     q=1;
     dt=MAX(MIN(MIN(sqrt(2.0/norm),(t_fin-t_cur)*0.001),max_dt),min_dt);
     Algebra::zero<max_q+1>(t);
+    memset(dy,0,ncs*sizeof(type0));
 }
 /*--------------------------------------------
  
@@ -619,7 +658,7 @@ void DAEBDF::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
@@ -628,6 +667,7 @@ void DAEBDF::setup_tp_getset()
     getset_min_dt(getset[2]);
     getset_max_ngmres_iters(getset[3]);
     getset_max_nnewton_iters(getset[4]);
+    getset_ntally(getset[5]);
 }
 /*--------------------------------------------
  

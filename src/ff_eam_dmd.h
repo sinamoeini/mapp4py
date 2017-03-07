@@ -14,6 +14,7 @@ namespace MAPP_NS
 
         
         
+        Vec<type0>* E_ptr;
         Vec<type0>* dE_ptr;
         Vec<type0>* ddE_ptr;
         Vec<type0>* mu_ptr;

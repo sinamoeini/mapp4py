@@ -5,6 +5,7 @@
 #include "neighbor_dmd.h"
 #include "memory.h"
 #include "thermo_dynamics.h"
+#include "MAPP.h"
 #include <limits>
 using namespace MAPP_NS;
 /*--------------------------------------------
@@ -148,12 +149,12 @@ void DAEBDF::run_static(type0 t_tot)
         printf("%d\t%e\t%e\n",i,c[i],c_d[i]);
     */
     
-    printf("nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
-    printf("intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
-    printf("integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
-    printf("maximum order: %d\n",__max_q);
-    printf("maximum timestep: %e\n",__max_dt);
-    printf("minimum timestep: %e\n",__min_dt);
+    fprintf(MAPP::mapp_out,"nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
+    fprintf(MAPP::mapp_out,"intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
+    fprintf(MAPP::mapp_out,"integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+    fprintf(MAPP::mapp_out,"maximum order: %d\n",__max_q);
+    fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
+    fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
     
 
     fin_static();

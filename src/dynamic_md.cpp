@@ -7,6 +7,63 @@
 #include "ff_styles.h"
 #include "neighbor_md.h"
 using namespace MAPP_NS;
+/*
+ form simulation comes these EXCLUSIVE lists of vectors
+ 0. exchange
+ 1. update
+ 2. archive
+ 
+ there are some default vectors and the ones given by the simulation should not include them
+ exchange: id
+ update:   x,elem
+ 
+
+
+  ------------------------------------ -----------------     -----------------     ---------------
+ | active vectors                     | passive vectors |   | archive vectors |   | empty vectors |
+  ------------------ -----------------  size: natms_lcl |   | size: natms_lcl |   | size: natms   |
+ |                  |                 |      +natms_ph  |   |      +natms_ph  |   |      +natms   |
+ | exchange vectors | update vectors  |                 |   |                 |   |               |        
+ | size: natms_lcl  | size: natms_lcl |                 |   |                 |   |               |        
+ |                  |      +natms_ph  |                 |   |                 |   |               |        
+  ------------------ ----------------- -----------------     -----------------     ---------------
+         |                  |                                       |                      ^        
+         |                  |                                       |                      |        
+          ------------------ --------------------------------------- ----------------------
+
+ passive vectors are the ones that are used for 
+ manipulation they are temporary and are used in
+ spot
+ 
+ at init()
+ go through exchange, update, and archive if they 
+ are any empty vectors segregate them into empty
+ vectors category
+ 
+ pop all the empty vectors from vector stack.
+ pop remaining archive vectors from vector stack.
+ store the archive vectors along with initial id
+ vector
+ 
+ 
+ now sort the vector stack as follows
+   0. all exchange vectors
+   1. all update vectors
+   2. remaining vectors (passive)
+   ** in addition the VERY FIRST exchange vector 
+   and the VERY FIRST update vector should be id 
+   and x, respectively.
+ 
+ 
+ 
+ 
+ at fin()
+   0. restore the archive vectors and push
+      them into stack
+   1. push the empty vectors to stack
+ 
+ */
+
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -118,7 +175,7 @@ DynamicMD::~DynamicMD()
     delete [] arch_vecs;
 }
 /*--------------------------------------------
- init a simulation
+ 
  --------------------------------------------*/
 void DynamicMD::init()
 {

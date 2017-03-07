@@ -37,7 +37,7 @@ namespace MAPP_NS
         Update* updt;
         const type0 skin;
     
-    public:
+    public:        
         DynamicMD(class AtomsMD*,class ForceFieldMD*,
         bool,vec* const *,int,vec* const *,int,vec* const *,int);
         DynamicMD(class AtomsMD*,class ForceFieldMD*,bool,
@@ -55,6 +55,8 @@ namespace MAPP_NS
         void fin_xchng();
         void init();
         void fin();
+        
+        
     };
 }
 

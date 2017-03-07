@@ -13,6 +13,7 @@ namespace MAPP_NS
         Vec<type0>* c_d;
         Vec<bool>* c_dof;
         Vec<elem_type>* elem;
+        void sort_stack(vec**&,int&,vec**&,int&,vec**&,int&,vec**&,int&);
         AtomsDMD(MPI_Comm&,int);
         AtomsDMD(Communication&,int);
         ~AtomsDMD();

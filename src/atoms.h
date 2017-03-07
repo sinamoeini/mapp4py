@@ -60,7 +60,7 @@ namespace MAPP_NS
         void cpy(byte*&,int*,int);
         void pst(byte*&,int);
         void cpy_pst(int*,int);
-    
+        bool is_empty(){return false;};
     };
 }
 #include <cstring>

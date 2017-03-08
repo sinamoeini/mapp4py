@@ -25,7 +25,7 @@ namespace MAPP_NS
         class NeighborMD* neighbor;
         
         type0 max_cut;
-        
+        bool dof_empty;
         void pre_xchng_energy_timer(class GCMC*);
         type0 xchng_energy_timer(class GCMC*);
         void post_xchng_energy_timer(class GCMC*);

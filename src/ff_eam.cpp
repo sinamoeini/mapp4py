@@ -69,7 +69,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         
         FuncAPI<std::string*> f("ff_eam_funcfl",{"funcfl_files"});
         f.noptionals=1;
@@ -138,7 +138,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         FuncAPI<std::string> f("ff_eam_setfl",{"setfl_file"});
         f.noptionals=1;
         if(f(args,kwds)) return NULL;
@@ -152,7 +152,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         type0(*** rho)[7]=NULL;
         try
         {
-            ReadEAM::setfl(nelems,__self->atoms->elements->names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ReadEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {
@@ -207,7 +207,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         FuncAPI<std::string> f("ff_eam_fs",{"fs_file"});
         f.noptionals=1;
         if(f(args,kwds)) return NULL;
@@ -220,7 +220,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         type0(*** rho)[7]=NULL;
         try
         {
-            ReadEAM::fs(nelems,__self->atoms->elements->names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ReadEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {

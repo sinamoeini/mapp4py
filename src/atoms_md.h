@@ -15,9 +15,8 @@ namespace MAPP_NS
 
         //void DO(PyFunctionObject*);
         AtomsMD(MPI_Comm&);
-        AtomsMD(Communication&);
         ~AtomsMD();
-        
+        AtomsMD& operator=(const Atoms&);
         
         typedef struct
         {

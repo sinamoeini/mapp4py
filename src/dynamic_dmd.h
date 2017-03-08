@@ -19,11 +19,18 @@ namespace MAPP_NS
         class ForceFieldDMD* ff;
         class AtomsDMD* atoms;
     protected:
+        void store_empty_vecs();
+        void restore_empty_vecs();
         void store_arch_vecs();
         void restore_arch_vecs();
         
         
         const bool box_chng;
+        
+        vec** empty_vecs;
+        int nempty_xchng_vecs;
+        int nempty_updt_vecs;
+        int nempty_arch_vecs;
         
         vec** arch_vecs;
         int narch_vecs;
@@ -42,7 +49,7 @@ namespace MAPP_NS
     
     public:
         DynamicDMD(class AtomsDMD*,class ForceFieldDMD*,
-        bool,vec* const *,int,vec* const *,int,vec* const *,int);
+        bool,vec* const *,size_t,vec* const *,size_t,vec* const *,size_t);
         DynamicDMD(class AtomsDMD*,class ForceFieldDMD*,bool,
         std::initializer_list<vec*>,std::initializer_list<vec*>,std::initializer_list<vec*>);
         DynamicDMD(class AtomsDMD*,class ForceFieldDMD*,bool,

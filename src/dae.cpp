@@ -36,7 +36,7 @@ int DAE::calc_ndofs(AtomsDMD* __atoms)
     int ndof_lcl=__atoms->c_dim*__atoms->natms_lcl;
     int n=ndof_lcl;
     type0* c=__atoms->c->begin();
-    if(__atoms->c_dof)
+    if(!__atoms->c_dof->is_empty())
     {
         bool* c_dof=__atoms->c_dof->begin();
         for(int i=0;i<n;i++)
@@ -57,8 +57,8 @@ void DAE::init_static()
     c_dim=atoms->c_dim;
     ncs=atoms->natms_lcl*c_dim;
     a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
-    if(!atoms->c_d) atoms->c_d=new Vec<type0>(atoms,c_dim);
-    dynamic=new DynamicDMD(atoms,ff,false,{atoms->elem,atoms->c},{},{});
+    atoms->c_d->fill();
+    dynamic=new DynamicDMD(atoms,ff,false,{},{},{});
     dynamic->init();
     c=atoms->c->begin();
     c_d=atoms->c_d->begin();

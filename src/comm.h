@@ -27,12 +27,14 @@ namespace MAPP_NS
         static int get_rank(MPI_Comm&);
         static int get_size(MPI_Comm&);
         
+        
+        const int rank;
+        const int size;
         type0 skin;
         unsigned long xchng_id;
         
         MPI_Comm world;
-        const int rank;
-        const int size;
+        
         
         
         int coords[__dim__];
@@ -48,6 +50,7 @@ namespace MAPP_NS
         Communication(MPI_Comm,type0(&)[__dim__][__dim__],type0=0.5);
         Communication(MPI_Comm,type0=0.5);
         Communication(const Communication&);
+        Communication& operator=(const Communication&);
     };
 }
 using namespace MAPP_NS;

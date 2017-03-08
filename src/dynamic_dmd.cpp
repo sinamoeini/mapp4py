@@ -12,57 +12,71 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 DynamicDMD::DynamicDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,
 bool __box_chng,
-vec* const * updt_vecs_,int nupdt_vecs_,
-vec* const * xchng_vecs_,int nxchng_vecs_,
-vec* const * arch_vecs_,int narch_vecs_):
+vec* const * __updt_vecs,size_t __nupdt_vecs,
+vec* const * __xchng_vecs,size_t __nxchng_vecs,
+vec* const * __arch_vecs,size_t __narch_vecs):
 atoms(__atoms),
 world(__atoms->comm.world),
 skin(__atoms->comm.skin),
 ff(__ff),
 box_chng(__box_chng),
 c_dim(__atoms->c->dim),
-alpha_scale(__atoms->xi[__atoms->N-1])
+alpha_scale(__atoms->xi[__atoms->N-1]),
+empty_vecs(NULL),
+nempty_xchng_vecs(0),
+nempty_updt_vecs(0),
+nempty_arch_vecs(0)
 {
     
-    auto is_in=[](const vec* v,vec* const * vs,int nvs)->bool
+    auto is_in=[](const vec* v,vec* const * vs,size_t nvs)->bool
     {
         for(int i=0;i<nvs;i++)
             if(vs[i]==v) return true;
         return false;
     };
     
-    int new_nvecs=atoms->nvecs-narch_vecs_;
-    vec** new_vecs=new vec*[new_nvecs];
-    new_vecs[0]=atoms->x;
-    new_vecs[1]=atoms->alpha;
-    memcpy(new_vecs+2,updt_vecs_,nupdt_vecs_*sizeof(vec*));
-    new_vecs[nupdt_vecs_+2]=atoms->id;
-    memcpy(new_vecs+nupdt_vecs_+3,xchng_vecs_,nxchng_vecs_*sizeof(vec*));
-    int ivec=new_nvecs-1;
+    
+    
+    int __nvecs=atoms->nvecs-static_cast<int>(__narch_vecs);
+    vec** __vecs=new vec*[__nvecs];
+    
+    __vecs[0]=atoms->x;
+    __vecs[1]=atoms->alpha;
+    __vecs[2]=atoms->c;
+    __vecs[3]=atoms->elem;
+    memcpy(__vecs+4,__updt_vecs,__nupdt_vecs*sizeof(vec*));
+    nupdt_vecs=static_cast<int>(__nupdt_vecs+4);
+    
+    __vecs[nupdt_vecs]=atoms->id;
+    memcpy(__vecs+nupdt_vecs+1,__xchng_vecs,__nxchng_vecs*sizeof(vec*));
+    nxchng_vecs=static_cast<int>(__nxchng_vecs+1+__nupdt_vecs+4);
+    
+    int ivec=__nvecs-1;
     vec** vecs=atoms->vecs;
-    
-    
     for(int i=0;i<atoms->nvecs;i++)
     {
-        if(is_in(vecs[i],new_vecs,new_nvecs) || is_in(vecs[i],arch_vecs_,narch_vecs_))
+        if(is_in(vecs[i],__vecs,__nvecs) || is_in(vecs[i],__arch_vecs,__narch_vecs))
             continue;
-        new_vecs[ivec--]=vecs[i];
+        __vecs[ivec--]=vecs[i];
     }
     
-    nxchng_vecs=nxchng_vecs_+nupdt_vecs_+3;
-    nupdt_vecs=nupdt_vecs_+2;
     delete [] atoms->vecs;
-    atoms->vecs=new_vecs;
-    atoms->nvecs=new_nvecs;
+    atoms->vecs=__vecs;
+    atoms->nvecs=__nvecs;
     
 
-    
-    narch_vecs=narch_vecs_;
+    narch_vecs=static_cast<int>(__narch_vecs);
     arch_vecs=NULL;
-    if(!narch_vecs) return;
-    
-    arch_vecs=new vec*[narch_vecs];
-    memcpy(arch_vecs,arch_vecs_,narch_vecs*sizeof(vec*));
+    if(narch_vecs) arch_vecs=new vec*[narch_vecs];
+    memcpy(arch_vecs,__arch_vecs,sizeof(vec*)*narch_vecs);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+DynamicDMD::~DynamicDMD()
+{
+    delete [] arch_vecs;
+    delete [] empty_vecs;
 }
 /*--------------------------------------------
  
@@ -71,10 +85,10 @@ DynamicDMD::DynamicDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,
 bool __box_chng,std::initializer_list<vec*> v0,
 std::initializer_list<vec*> v1
 ,std::initializer_list<vec*> v2):
-DynamicDMD(__atoms,__ff,__box_chng,v0.begin(),
-static_cast<int>(v0.size()),v1.begin(),
-static_cast<int>(v1.size()),v2.begin(),
-static_cast<int>(v2.size()))
+DynamicDMD(__atoms,__ff,__box_chng,
+v0.begin(),v0.size(),
+v1.begin(),v1.size(),
+v2.begin(),v2.size())
 {
 }
 /*--------------------------------------------
@@ -83,9 +97,10 @@ static_cast<int>(v2.size()))
 DynamicDMD::DynamicDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,
 bool __box_chng,std::initializer_list<vec*> v0,
 std::initializer_list<vec*> v1):
-DynamicDMD(__atoms,__ff,__box_chng,v0.begin(),
-static_cast<int>(v0.size()),v1.begin(),
-static_cast<int>(v1.size()),NULL,0)
+DynamicDMD(__atoms,__ff,__box_chng,
+v0.begin(),v0.size(),
+v1.begin(),v1.size(),
+NULL,0)
 {
 }
 /*--------------------------------------------
@@ -111,21 +126,19 @@ void DynamicDMD::add_updt(vec* v)
     for(;vecs[ivec]!=v && ivec<nvces;ivec++){}
     vecs[ivec]=vecs[nupdt_vecs];
     vecs[nupdt_vecs++]=v;
-    if(ivec<nxchng_vecs)
+    // I guess this is not correct
+    //if(ivec<nxchng_vecs)
+      //  nxchng_vecs++;
+    // instead
+    if(ivec>=nxchng_vecs)
         nxchng_vecs++;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-DynamicDMD::~DynamicDMD()
-{
-    delete [] arch_vecs;
 }
 /*--------------------------------------------
  init a simulation
  --------------------------------------------*/
 void DynamicDMD::init()
 {
+    store_empty_vecs();
     store_arch_vecs();
     x0=new Vec<type0>(atoms,__dim__);
     alpha0=new Vec<type0>(atoms,c_dim);
@@ -164,6 +177,7 @@ void DynamicDMD::fin()
         atoms->vecs[ivec]->vec_sz=atoms->natms_lcl;
         atoms->vecs[ivec]->shrink_to_fit();
     }
+    restore_empty_vecs();
     atoms->natms_ph=0;
 }
 /*--------------------------------------------
@@ -266,6 +280,116 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
         ff->neighbor->create_list(true);
         store_x0();
     }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DynamicDMD::store_empty_vecs()
+{
+    for(int i=0;i<nupdt_vecs;i++)
+        if(atoms->vecs[i]->is_empty())
+            nempty_updt_vecs++;
+    for(int i=nupdt_vecs;i<nxchng_vecs;i++)
+        if(atoms->vecs[i]->is_empty())
+            nempty_xchng_vecs++;
+    
+    for(int i=0;i<narch_vecs;i++)
+        if(arch_vecs[i]->is_empty())
+            nempty_arch_vecs++;
+    int nempty_vecs=nempty_updt_vecs+
+    nempty_xchng_vecs+nempty_arch_vecs;
+    if(!nempty_vecs) return;
+        
+        
+    empty_vecs=new vec*[nempty_vecs];
+    
+    int iempty_vec=0;
+    if(nempty_xchng_vecs+nempty_updt_vecs)
+    {
+        int __nvecs=atoms->nvecs-
+        nempty_xchng_vecs-nempty_updt_vecs;
+        int ivec=0;
+        vec** __vecs=new vec*[__nvecs];
+        for(int i=0;i<nxchng_vecs;i++)
+        {
+            if(atoms->vecs[i]->is_empty())
+                empty_vecs[iempty_vec++]=atoms->vecs[i];
+            else
+                __vecs[ivec++]=atoms->vecs[i];
+        }
+        
+        memcpy(__vecs+ivec,atoms->vecs+nxchng_vecs,sizeof(vec*)*(atoms->nvecs-nxchng_vecs));
+        delete [] atoms->vecs;
+        atoms->vecs=__vecs;
+        atoms->nvecs=__nvecs;
+        nxchng_vecs-=nempty_xchng_vecs+nempty_updt_vecs;
+        nupdt_vecs-=nempty_updt_vecs;
+    }
+    
+    if(!nempty_arch_vecs) return;
+    int __narch_vecs=narch_vecs-nempty_arch_vecs;
+    vec** __arch_vecs=new vec*[__narch_vecs];
+    int ivec=0;
+    
+    for(int i=0;i<narch_vecs;i++)
+    {
+        if(arch_vecs[i]->is_empty())
+            empty_vecs[iempty_vec++]=arch_vecs[i];
+        else
+            __arch_vecs[ivec++]=arch_vecs[i];
+    }
+    
+    delete [] arch_vecs;
+    arch_vecs=__arch_vecs;
+    narch_vecs=__narch_vecs;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DynamicDMD::restore_empty_vecs()
+{
+    int nempty_vecs=nempty_updt_vecs+
+    nempty_xchng_vecs+nempty_arch_vecs;
+    if(!nempty_vecs) return;
+    
+    if(nempty_xchng_vecs+nempty_updt_vecs)
+    {
+        int __nvecs=atoms->nvecs+
+        nempty_xchng_vecs+nempty_updt_vecs;
+        vec** __vecs=new vec*[__nvecs];
+        vec** ___vecs=__vecs;
+        memcpy(___vecs,atoms->vecs,nupdt_vecs*sizeof(vec*));
+        ___vecs+=nupdt_vecs;
+        memcpy(___vecs,empty_vecs,nempty_updt_vecs*sizeof(vec*));
+        ___vecs+=nempty_updt_vecs;
+        memcpy(___vecs,atoms->vecs+nupdt_vecs,(nxchng_vecs-nupdt_vecs)*sizeof(vec*));
+        ___vecs+=nxchng_vecs-nupdt_vecs;
+        memcpy(___vecs,empty_vecs+nempty_updt_vecs,nempty_xchng_vecs*sizeof(vec*));
+        ___vecs+=nempty_xchng_vecs;
+        memcpy(___vecs,atoms->vecs+nxchng_vecs,(atoms->nvecs-nxchng_vecs)*sizeof(vec*));
+        
+        
+        delete [] atoms->vecs;
+        atoms->vecs=__vecs;
+        atoms->nvecs=__nvecs;
+        nxchng_vecs+=nempty_xchng_vecs+nempty_updt_vecs;
+        nupdt_vecs+=nempty_updt_vecs;
+    }
+    
+    if(nempty_arch_vecs)
+    {
+        int __narch_vecs=narch_vecs+nempty_arch_vecs;
+        vec** __arch_vecs=new vec*[__narch_vecs];
+        memcpy(__arch_vecs,arch_vecs,sizeof(vec*)*narch_vecs);
+        memcpy(__arch_vecs+narch_vecs,empty_vecs+nempty_xchng_vecs+nempty_updt_vecs,sizeof(vec*)*nempty_arch_vecs);
+        delete [] arch_vecs;
+        arch_vecs=__arch_vecs;
+        narch_vecs=__narch_vecs;
+    }
+    
+    delete [] empty_vecs;
+    empty_vecs=NULL;
+    nempty_updt_vecs=nempty_xchng_vecs=nempty_arch_vecs=0;
 }
 /*--------------------------------------------
  

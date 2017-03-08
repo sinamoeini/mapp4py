@@ -77,7 +77,7 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         
         FuncAPI<type0*,type0**,type0**,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>>
         f("ff_fs",{"A","t1","t2","k1","k2","k3","r_c_phi","r_c_rho"});

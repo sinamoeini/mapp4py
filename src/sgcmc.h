@@ -46,7 +46,7 @@ namespace MAPP_NS
     class SGCMC:public GCMC
     {
     private:
-
+        bool dof_empty;
         const int m;
 
         int ngas_before;

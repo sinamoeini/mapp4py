@@ -93,6 +93,7 @@ SGCMC::~SGCMC()
  --------------------------------------------*/
 void SGCMC::init()
 {
+    dof_empty=atoms->dof->is_empty();
     GCMC::init();
     MPI_Scan(&ngas,&ngas_before,1,MPI_INT,MPI_SUM,world);
     ngas_before-=ngas;
@@ -340,7 +341,7 @@ void SGCMC::ins_succ()
         atoms->elem->begin()[natms_lcl-1]=gas_type;
         atoms->id->begin()[natms_lcl-1]=new_id;
         if(tag_vec_p) tag_vec_p->begin()[natms_lcl-1]=-1;
-        if(atoms->dof)
+        if(!dof_empty)
         {
             bool* dof=atoms->dof->begin()+(natms_lcl-1)*__dim__;
             for(int i=0;i<__dim__;i++) dof[i]=true;

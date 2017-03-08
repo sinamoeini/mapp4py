@@ -42,52 +42,28 @@ comm_rank(Communication::get_rank(__world)),
 comm_size(Communication::get_size(__world)),
 s_hi(comm.s_hi),
 s_lo(comm.s_lo),
-elements(new Elements()),
+elements(Elements()),
 h(1.0),
 kB(1.0),
 vol(0.0),
 H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 depth_inv{[0 ... __dim__-1]=0.0},
-dof(NULL),
 step(0)
 {
     x=new Vec<type0>(this,__dim__);
     id= new Vec<unsigned int>(this,1);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-Atoms::Atoms(Communication& __comm):
-nvecs(0),
-vecs(NULL),
-natms(0),
-natms_lcl(0),
-natms_ph(0),
-comm(__comm),
-world(comm.world),
-comm_rank(__comm.rank),
-comm_size(__comm.size),
-s_hi(comm.s_hi),
-s_lo(comm.s_lo),
-elements(new Elements()),
-h(1.0),
-kB(1.0),
-H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-depth_inv{[0 ... __dim__-1]=0.0},
-dof(NULL),
-step(0)
-{
-    x=new Vec<type0>(this,__dim__);
-    id=new Vec<unsigned int>(this,1);
+    dof=new Vec<bool>(this,__dim__);
+    dof->empty(true);
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
 Atoms::~Atoms()
 {
-    delete elements;
+    delete dof;
+    delete id;
+    delete x;
     while(nvecs) delete vecs[0];
 }
 /*--------------------------------------------
@@ -540,7 +516,7 @@ void Atoms::getset_elems(PyGetSetDef& getset)
             PyErr_Format(PyExc_TypeError,"cannot return 'elems' prior to system configuration");
             return NULL;
         }
-        return __self->atoms->elements->get_dict();
+        return __self->atoms->elements.get_dict();
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {

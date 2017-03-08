@@ -25,6 +25,7 @@ namespace MAPP_NS
         class NeighborDMD* neighbor;
         
         type0 max_cut;
+        bool dof_empty;
         type0** cut_sk;
         
         void force_calc_timer();

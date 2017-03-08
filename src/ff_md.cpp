@@ -26,6 +26,7 @@ ForceFieldMD::~ForceFieldMD()
  --------------------------------------------*/
 void ForceFieldMD::setup()
 {
+    dof_empty=atoms->dof->is_empty();
     type0 tmp;
     max_cut=0.0;
     for(size_t i=0;i<nelems;i++)
@@ -97,7 +98,7 @@ void ForceFieldMD::derivative_timer()
     force_calc();
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
-    if(!atoms->dof) return;
+    if(dof_empty) return;
     type0* fvec=f->begin();
     bool* dof=atoms->dof->begin();
     const int n=atoms->natms_lcl*__dim__;
@@ -111,7 +112,7 @@ void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
     force_calc();
     type0* fvec=f->begin();
     type0* xvec=atoms->x->begin();
-    if(!atoms->dof)
+    if(dof_empty)
     {
         const int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)

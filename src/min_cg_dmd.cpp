@@ -74,8 +74,8 @@ void MinCGDMD::init()
     f0.~VecTens();
     new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->elem,atoms->c},
-    {h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{},
+    {atoms->dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
     
     dynamic->init();
     

@@ -10,6 +10,7 @@ namespace MAPP_NS
 #ifdef MPP_DEBUG
         type0 tot_du_test;
 #endif
+        bool dof_empty;
         
         int N_c[__dim__];
         int N_s[__dim__];

@@ -291,7 +291,7 @@ void ReadCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_t&
             {
                 try
                 {
-                    ielem=atoms->elements->add_type(mass,args[0]);
+                    ielem=atoms->elements.add_type(mass,args[0]);
                 }
                 catch(char* err_msg)
                 {
@@ -424,7 +424,7 @@ void ReadCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_t&
         
         try
         {
-            ielem=atoms->elements->add_type(mass,args[1]);
+            ielem=atoms->elements.add_type(mass,args[1]);
         }
         catch(char* err_msg)
         {
@@ -642,8 +642,8 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
     {
         throw err_msg;
     }
-
-    AtomsDMD* atoms=new AtomsDMD(world,N);
+    
+    Atoms* atoms=new Atoms(world);
     char* line=NULL;
     size_t line_cpcty=MAXCHAR;
     if(line_cpcty) line=new char[line_cpcty];
@@ -664,8 +664,12 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
     {
         delete pfreader;
         delete [] line;
-        return atoms;
+        AtomsDMD* atoms_dmd=new AtomsDMD(world,0,N);
+        *atoms_dmd=*atoms;
+        delete atoms;
+        return atoms_dmd;
     }
+    
     
     if(!is_ext)
     {
@@ -689,41 +693,36 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
     
     delete pfreader;
     delete [] line;
-
+    
     
     delete vec_list[1];
     vec_list[1]=NULL;
-    int nelems=static_cast<int>(atoms->elements->nelems);
+    int nelems=static_cast<int>(atoms->elements.nelems);
     if(!vec_list[3] || vec_list[3]->dim<2*nelems)
     {
         delete atoms;
         throw Print::vprintf("values for c and alpha of all elements should be provided for every atom");
     }
     
-    int c_dim=nelems;
     const int vec_dim=vec_list[3]->dim;
     
     
-    atoms->alpha=new Vec<type0>(atoms,c_dim);
-    atoms->c=new Vec<type0>(atoms,c_dim);
-    atoms->elem=new Vec<elem_type>(atoms,c_dim);
+
     
     type0* alpha=dynamic_cast<Vec<type0>*>(vec_list[3])->begin();
     type0* c=alpha+nelems;
-    type0* __alpha=atoms->alpha->begin();
-    type0* __c=atoms->c->begin();
-    elem_type* __elem=atoms->elem->begin();
     
     
     int lcl_err=0;
     int max_ncmp_lcl=0,__max_ncmp=0;
     int jcmp;
     elem_type __nelems=static_cast<elem_type>(nelems);
-    type0 max_alpha_lcl=0.0;
-    for(int i=0;i<atoms->natms_lcl && lcl_err==0;i++,alpha+=vec_dim,c+=vec_dim,__alpha+=c_dim,__c+=c_dim,__elem+=c_dim)
+    type0 __c_sum;
+    for(int i=0;i<atoms->natms_lcl && lcl_err==0;i++,alpha+=vec_dim,c+=vec_dim)
     {
         __max_ncmp=0;
         jcmp=0;
+        __c_sum=0.0;
         for(elem_type j=0;j<__nelems && lcl_err==0;j++)
         {
             if(c[j]>1.0 || (c[j]<0.0 && c[j]!=-1.0))
@@ -742,27 +741,19 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
                 alpha[j]=0.0;
             if(c[j]!=-1.0)
             {
-                __elem[__max_ncmp]=j;
-                __c[__max_ncmp]=c[j];
-                __alpha[__max_ncmp]=alpha[j];
-                max_alpha_lcl=MAX(alpha[j],max_alpha_lcl);
+                __c_sum+=c[i];
                 __max_ncmp++;
             }
         }
         
-        for(int j=__max_ncmp;j<c_dim;j++)
-        {
-            __elem[j]=0;
-            __c[j]=-1.0;
-            __alpha[j]=0.0;
-        }
-        
         max_ncmp_lcl=MAX(max_ncmp_lcl,__max_ncmp);
+        if(__c_sum>1.0) lcl_err=3;
     }
     
     int lcl_err0=lcl_err==1?1:0;
     int lcl_err1=lcl_err==2?1:0;
-    int err0,err1;
+    int lcl_err2=lcl_err==3?1:0;
+    int err0,err1,err2;
     MPI_Allreduce(&lcl_err0,&err0,1,MPI_INT,MPI_MAX,world);
     if(err0)
     {
@@ -778,18 +769,56 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
         throw Print::vprintf("all values of alpha corresponding to present elements (i.e. c!=-1.0) should be greater than 0.0");
     }
     
+    MPI_Allreduce(&lcl_err2,&err2,1,MPI_INT,MPI_MAX,world);
+    if(err2)
+    {
+        delete atoms;
+        throw Print::vprintf("sum of present elements of one site should not exceed 1.0");
+    }
     
-    int max_ncmp;
-    MPI_Allreduce(&max_ncmp_lcl,&max_ncmp,1,MPI_INT,MPI_MAX,world);
-    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,MPI_DOUBLE,MPI_MAX,world);
-    atoms->alpha->change_dim(max_ncmp);
-    atoms->elem->change_dim(max_ncmp);
-    atoms->c->change_dim(max_ncmp);
-    atoms->c_dim=max_ncmp;
+    int c_dim;
+    MPI_Allreduce(&max_ncmp_lcl,&c_dim,1,MPI_INT,MPI_MAX,world);
+    
+    AtomsDMD* atoms_dmd=new AtomsDMD(world,c_dim,N);
+    *atoms_dmd=*atoms;
+    
+    alpha=dynamic_cast<Vec<type0>*>(vec_list[3])->begin();
+    c=alpha+nelems;
+    type0* __alpha=atoms_dmd->alpha->begin();
+    type0* __c=atoms_dmd->c->begin();
+    elem_type* __elem=atoms_dmd->elem->begin();
+    
+    type0 max_alpha_lcl=0.0;
+    for(int i=0;i<atoms->natms_lcl;i++,alpha+=vec_dim,c+=vec_dim,__alpha+=c_dim,__c+=c_dim,__elem+=c_dim)
+    {
+        __max_ncmp=0;
+        jcmp=0;
+        for(elem_type j=0;j<__nelems;j++)
+        {
+            if(c[j]!=-1.0)
+            {
+                __elem[__max_ncmp]=j;
+                __c[__max_ncmp]=c[j];
+                __alpha[__max_ncmp]=alpha[j];
+                max_alpha_lcl=MAX(alpha[j],max_alpha_lcl);
+                __max_ncmp++;
+            }
+        }
+        
+        for(int j=__max_ncmp;j<c_dim;j++)
+        {
+            __elem[j]=0;
+            __c[j]=-1.0;
+            __alpha[j]=0.0;
+        }
+    }
+    MPI_Allreduce(&max_alpha_lcl,&atoms_dmd->max_alpha,1,MPI_DOUBLE,MPI_MAX,world);
+    
     delete vec_list[3];
-    atoms->s2x_lcl();
+    delete atoms;
     
-    return atoms;
+    atoms_dmd->s2x_lcl();
+    return atoms_dmd;
 }
 /*--------------------------------------------
  

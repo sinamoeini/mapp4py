@@ -28,14 +28,13 @@ masses(NULL),
 __nelems__(nelems,"nelems")
 {
     if(nelems==0) return;
-    ptrdiff_t len=0;
-    if(names)
-        len=(strchr(names[nelems-1],'\0')-names[0])+1;
-    
-    char** names=new char*[nelems];
+    ptrdiff_t len=(strchr(r.names[r.nelems-1],'\0')-r.names[0])+1;
+    masses=new type0[nelems];
+    names=new char*[nelems];
     *names=new char[len];
     memcpy(*names,*(r.names),len*sizeof(char));
-    masses=new type0[nelems];
+    for(size_t i=1;i<nelems;i++)
+        names[i]=names[i-1]+(r.names[i]-r.names[i-1]);
     memcpy(masses,r.masses,nelems*sizeof(type0));
 }
 /*--------------------------------------------

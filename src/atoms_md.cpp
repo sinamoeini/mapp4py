@@ -3,19 +3,11 @@
  
  --------------------------------------------*/
 AtomsMD::AtomsMD(MPI_Comm& world):
-Atoms(world),
-x_d(NULL),
-elem(NULL)
+Atoms(world)
 {
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-AtomsMD::AtomsMD(Communication& comm):
-Atoms(comm),
-x_d(NULL),
-elem(NULL)
-{
+    elem=new Vec<elem_type>(this,1);
+    x_d=new Vec<type0>(this,__dim__);
+    x_d->empty(0.0);
 }
 /*--------------------------------------------
  
@@ -24,6 +16,41 @@ AtomsMD::~AtomsMD()
 {
     delete x_d;
     delete elem;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+#include "elements.h"
+AtomsMD& AtomsMD::operator=(const Atoms& r)
+{
+    elements=r.elements;
+    comm=r.comm;
+    natms_lcl=r.natms_lcl;
+    natms_ph=r.natms_ph;
+    natms=r.natms;
+    step=r.step;
+    
+    max_cut=r.max_cut;
+    kB=r.kB;
+    h=r.h;
+    
+    vol=r.vol;
+    for(int i=0;i<__dim__;i++)
+    {
+        depth_inv[i]=r.depth_inv[i];
+        for(int j=0;j<__dim__;j++)
+        {
+            H[i][j]=r.H[i][j];
+            B[i][j]=r.B[i][j];
+        }
+    }
+    
+    for(int i=0;i<nvecs;i++)
+        if(!vecs[i]->is_empty())
+            vecs[i]->resize(natms_lcl);
+    memcpy(x->begin(),r.x->begin(),natms_lcl*__dim__*sizeof(type0));
+    memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
+    return* this;
 }
 /*--------------------------------------------
  
@@ -126,13 +153,13 @@ vec**& empty,int& nempty)
 #include "xmath.h"
 void AtomsMD::create_T(type0 T,int seed)
 {
-    if(!x_d) x_d=new Vec<type0>(this,__dim__);
+    x_d->fill();
     Random rand(seed+comm_rank);
     type0* __x_d=x_d->begin();
-    type0* m=elements->masses;
+    type0* m=elements.masses;
     elem_type* __elem=elem->begin();
     type0 fac;
-    if(dof)
+    if(!dof->is_empty())
     {
         bool* __dof=dof->begin();
         for(int i=0;i<natms_lcl;i++)

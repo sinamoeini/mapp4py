@@ -28,7 +28,7 @@ namespace MAPP_NS
         int ndof_part;
         ThermostatNHC thermo_part;
         
-        
+        bool dof_empty;
         type0 kB;
         type0 T;
         type0 dt;

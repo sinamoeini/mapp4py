@@ -69,11 +69,23 @@ void MDNVT::update_x_d()
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements->masses;
+    type0* m=atoms->elements.masses;
     type0 m_i;
     Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms_lcl=atoms->natms_lcl;
-    if(atoms->dof)
+    if(dof_empty)
+    {
+        for(int i=0;i<natms_lcl;++i)
+        {
+            m_i=m[*elem];
+            Algebra::Do<__dim__>::func([&x_d,&f,&m_i,this](const int j){x_d[j]+=f[j]*dt2/m_i;});
+            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+            f+=__dim__;
+            x_d+=__dim__;
+            ++elem;
+        }
+    }
+    else
     {
         bool* dof=atoms->dof->begin();
         for(int i=0;i<natms_lcl;++i)
@@ -88,16 +100,6 @@ void MDNVT::update_x_d()
             ++elem;
         }
     }
-    else
-        for(int i=0;i<natms_lcl;++i)
-        {
-            m_i=m[*elem];
-            Algebra::Do<__dim__>::func([&x_d,&f,&m_i,this](const int j){x_d[j]+=f[j]*dt2/m_i;});
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            f+=__dim__;
-            x_d+=__dim__;
-            ++elem;
-        }
     
     MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
@@ -120,11 +122,23 @@ void MDNVT::update_x_d(type0 fac_x_d)
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements->masses;
+    type0* m=atoms->elements.masses;
     type0 m_i;
     Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms_lcl=atoms->natms_lcl;
-    if(atoms->dof)
+    if(dof_empty)
+    {
+        for(int i=0;i<natms_lcl;++i)
+        {
+            m_i=m[*elem];
+            Algebra::Do<__dim__>::func([&x_d,&f,&m_i,&fac_x_d,this](const int j){x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;});
+            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+            f+=__dim__;
+            x_d+=__dim__;
+            ++elem;
+        }
+    }
+    else
     {
         bool* dof=atoms->dof->begin();
         for(int i=0;i<natms_lcl;++i)
@@ -139,16 +153,6 @@ void MDNVT::update_x_d(type0 fac_x_d)
             ++elem;
         }
     }
-    else
-        for(int i=0;i<natms_lcl;++i)
-        {
-            m_i=m[*elem];
-            Algebra::Do<__dim__>::func([&x_d,&f,&m_i,&fac_x_d,this](const int j){x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;});
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            f+=__dim__;
-            x_d+=__dim__;
-            ++elem;
-        }
     
     MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
@@ -162,7 +166,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements->masses;
+    type0* m=atoms->elements.masses;
     type0 m_i;
     const int natms0=atoms->natms_lcl;
     for(int i=0;i<natms0;++i)
@@ -221,12 +225,13 @@ void MDNVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
  --------------------------------------------*/
 void MDNVT::init()
 {
+    dof_empty=atoms->dof->is_empty();
     kB=atoms->kB;
     /*
      calculating the number of degress of freedom
      */
     ndof_part=atoms->natms*__dim__;
-    if(atoms->dof)
+    if(!dof_empty)
     {
         bool* dof=atoms->dof->begin();
         int ndof_red_lcl=0;
@@ -244,7 +249,7 @@ void MDNVT::init()
     if(atoms->x_d)
     {
         type0* x_d=atoms->x_d->begin();
-        type0* m=atoms->elements->masses;
+        type0* m=atoms->elements.masses;
         type0 m_i;
         elem_type* elem=atoms->elem->begin();
         Algebra::zero<__nvoigt__>(__vec_lcl);
@@ -284,11 +289,7 @@ void MDNVT::run(int nsteps)
 {    
     init();
     
-    
-    if(atoms->dof)
-        dynamic=new DynamicMD(atoms,ff,false,{atoms->elem},{atoms->x_d,atoms->dof});
-    else
-        dynamic=new DynamicMD(atoms,ff,false,{atoms->elem},{atoms->x_d});
+    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof});
     
     dynamic->init();
     

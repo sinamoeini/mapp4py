@@ -123,6 +123,7 @@ PGCMC::~PGCMC()
  --------------------------------------------*/
 void PGCMC::init()
 {
+    dof_empty=atoms->dof->is_empty();
     GCMC::init();
     box_setup();
 }
@@ -683,7 +684,7 @@ void PGCMC::ins_succ()
     atoms->elem->begin()[natms_lcl-1]=gas_type;
     atoms->id->begin()[natms_lcl-1]=new_id;
     if(tag_vec_p) tag_vec_p->begin()[natms_lcl-1]=-1;
-    if(atoms->dof)
+    if(!dof_empty)
     {
         bool* dof=atoms->dof->begin()+(natms_lcl-1)*__dim__;
         for(int i=0;i<__dim__;i++) dof[i]=true;

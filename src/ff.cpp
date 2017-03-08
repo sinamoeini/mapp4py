@@ -15,7 +15,7 @@ using namespace MAPP_NS;
  constructor
  --------------------------------------------*/
 ForceField::ForceField(Atoms* __atoms):
-nelems(__atoms->elements->nelems),
+nelems(__atoms->elements.nelems),
 world(__atoms->comm.world)
 {
     Memory::alloc(cut,nelems,nelems);

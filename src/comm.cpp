@@ -143,6 +143,15 @@ xchng_id(r.xchng_id)
 /*--------------------------------------------
  
  --------------------------------------------*/
+Communication& Communication::operator=(const Communication& r)
+{
+    this->~Communication();
+    new (this) Communication(r);
+    return *this;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void Communication::grid(type0(&H)[__dim__][__dim__])
 {
     int N[__dim__]={[0 ... __dim__-1]=0};

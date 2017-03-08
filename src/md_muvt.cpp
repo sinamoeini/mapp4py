@@ -32,7 +32,7 @@ void MDMuVT::update_x_d__x(type0 fac_x_d)
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements->masses;
+    type0* m=atoms->elements.masses;
     type0 m_i;
     
     const int natms_lcl=atoms->natms_lcl;
@@ -67,7 +67,7 @@ void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     elem_type ielem;
     try
     {
-        ielem=atoms->elements->find(gas_elem_name.c_str());
+        ielem=atoms->elements.find(gas_elem_name.c_str());
     }
     catch(int)
     {
@@ -83,12 +83,7 @@ void MDMuVT::run(int nsteps)
     
     init();
     
-    
-    
-    if(atoms->dof)
-        dynamic=new DynamicMD(atoms,ff,false,{atoms->elem},{atoms->x_d,atoms->dof});
-    else
-        dynamic=new DynamicMD(atoms,ff,false,{atoms->elem},{atoms->x_d});
+    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof});
     
     dynamic->init();
     
@@ -318,7 +313,7 @@ void MDMuVT::getset_gas_element(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         elem_type gas_elem=reinterpret_cast<Object*>(self)->md->gas_elem;
-        std::string gas_element(reinterpret_cast<Object*>(self)->md->atoms->elements->names[gas_elem]);
+        std::string gas_element(reinterpret_cast<Object*>(self)->md->atoms->elements.names[gas_elem]);
         
         return var<std::string>::build(gas_element,NULL);
     };

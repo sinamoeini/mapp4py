@@ -76,7 +76,7 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         
         FuncAPI<symm<type0**>,symm<type0**>,symm<type0**>,bool> f("ff_lj",{"eps","sigma","r_c","shift"});
         f.noptionals=1;

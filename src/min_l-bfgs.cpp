@@ -71,13 +71,7 @@ void MinLBFGS::init()
         }
     }
     
-    if(atoms->x_d)
-        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
-    else
-        dynamic=new DynamicMD(atoms,ff,chng_box,{atoms->elem},{h.vecs[0],x0.vecs[0],f0.vecs[0]});
-    
-    if(atoms->dof)
-        dynamic->add_xchng(atoms->dof);
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
     
     for(int i=0;i<m;i++)
     {

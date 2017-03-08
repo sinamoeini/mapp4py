@@ -12,13 +12,15 @@ namespace MAPP_NS
         Vec<type0>* c;
         Vec<type0>* c_d;
         Vec<bool>* c_dof;
+        Vec<bool>* alpha_dof;
         Vec<elem_type>* elem;
         void sort_stack(vec**&,int&,vec**&,int&,vec**&,int&,vec**&,int&);
-        AtomsDMD(MPI_Comm&,int);
-        AtomsDMD(Communication&,int);
+        AtomsDMD(MPI_Comm&,int,int);
         ~AtomsDMD();
+        AtomsDMD& operator=(const Atoms&);
+        
         type0 max_alpha;
-        int c_dim;
+        const int c_dim;
         const int N;
         type0* xi;
         type0* wi;

@@ -86,10 +86,10 @@ int GCMC::get_new_id()
 void GCMC::init()
 {
     cut=ff->cut[ielem][0];
-    for(size_t i=1;i<atoms->elements->nelems;i++)
+    for(size_t i=1;i<atoms->elements.nelems;i++)
         cut=MAX(cut,ff->cut[ielem][i]);
     
-    gas_mass=atoms->elements->masses[gas_type];
+    gas_mass=atoms->elements.masses[gas_type];
     kbT=atoms->kB*T;
     beta=1.0/kbT;
     lambda=atoms->h/sqrt(2.0*M_PI*kbT*gas_mass);

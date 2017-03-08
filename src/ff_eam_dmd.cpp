@@ -127,7 +127,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         
         FuncAPI<std::string*,type0*> f("ff_eam_funcfl",{"funcfl_files","r_crd"});
         f.v<0>().dynamic_size(nelems);
@@ -208,7 +208,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         FuncAPI<std::string,type0*> f("ff_eam_setfl",{"setfl_file","r_crd"});
         f.v<1>().dynamic_size(nelems);
         f.logics<1>()[0]=VLogics("gt",0.0);
@@ -223,7 +223,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         type0(*** rho)[4]=NULL;
         try
         {
-            ReadEAM::setfl(nelems,__self->atoms->elements->names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ReadEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {
@@ -288,7 +288,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements->nelems;
+        size_t& nelems=__self->atoms->elements.nelems;
         FuncAPI<std::string,type0*> f("ff_eam_fs",{"fs_file","r_crd"});
         f.v<1>().dynamic_size(nelems);
         f.logics<1>()[0]=VLogics("gt",0.0);
@@ -302,7 +302,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         type0(*** rho)[4]=NULL;
         try
         {
-            ReadEAM::fs(nelems,__self->atoms->elements->names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ReadEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {
@@ -783,7 +783,7 @@ void ForceFieldEAMDMD::set_temp(type0 T)
     
     for(size_t i=0;i<nelems;i++)
     {
-        mass=atoms->elements->masses[i];
+        mass=atoms->elements.masses[i];
         c_1[i]=sqrt(0.5*kb*T/mass)/M_PI;
         deb_l=h*h/(2.0*M_PI*M_PI*mass*kb*T);
         c_0[i]=1.5*kb*T*(log(deb_l)-1.0);

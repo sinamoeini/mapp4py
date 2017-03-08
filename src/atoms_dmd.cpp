@@ -3,34 +3,23 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-AtomsDMD::AtomsDMD(MPI_Comm& world,int __N):
+AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __N):
+c_dim(__c_dim),
 N(__N),
 Atoms(world),
-c(NULL),
-c_dof(NULL),
-c_d(NULL),
-elem(NULL),
-alpha(NULL),
 xi(new type0[__N]),
 wi(new type0[__N])
 {
     XMath::quadrature_hg(N,xi,wi);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-AtomsDMD::AtomsDMD(Communication& comm,int __N):
-N(__N),
-Atoms(comm),
-c(NULL),
-c_dof(NULL),
-c_d(NULL),
-elem(NULL),
-alpha(NULL),
-xi(new type0[__N]),
-wi(new type0[__N])
-{
-    XMath::quadrature_hg(N,xi,wi);
+    alpha=new Vec<type0>(this,c_dim);
+    c=new Vec<type0>(this,c_dim);
+    elem=new Vec<elem_type>(this,c_dim);
+    alpha_dof=new Vec<bool>(this,c_dim);
+    alpha_dof->empty(true);
+    c_dof=new Vec<bool>(this,c_dim);
+    c_dof->empty(true);
+    c_d=new Vec<type0>(this,c_dim);
+    c_d->empty(0.0);
 }
 /*--------------------------------------------
  
@@ -39,11 +28,51 @@ AtomsDMD::~AtomsDMD()
 {
     delete [] wi;
     delete [] xi;
-    delete alpha;
+    
+    delete alpha_dof;
     delete c_dof;
-    delete c;
     delete c_d;
     delete elem;
+    delete c;
+    delete alpha;
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+#include "elements.h"
+AtomsDMD& AtomsDMD::operator=(const Atoms& r)
+{
+    elements=r.elements;
+    comm=r.comm;
+    natms_lcl=r.natms_lcl;
+    natms_ph=r.natms_ph;
+    natms=r.natms;
+    step=r.step;
+    
+    max_cut=r.max_cut;
+    kB=r.kB;
+    h=r.h;
+    
+    vol=r.vol;
+    for(int i=0;i<__dim__;i++)
+    {
+        depth_inv[i]=r.depth_inv[i];
+        for(int j=0;j<__dim__;j++)
+        {
+            H[i][j]=r.H[i][j];
+            B[i][j]=r.B[i][j];
+        }
+    }
+    
+    for(int i=0;i<nvecs;i++)
+        if(!vecs[i]->is_empty())
+            vecs[i]->resize(natms_lcl);
+    
+    
+    memcpy(x->begin(),r.x->begin(),natms_lcl*__dim__*sizeof(type0));
+    memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
+    return* this;
 }
 /*--------------------------------------------
  

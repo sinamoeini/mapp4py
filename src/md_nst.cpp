@@ -99,7 +99,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     type0* RESTRICT x=atoms->x->begin();
     type0* RESTRICT x_d=atoms->x_d->begin();
     elem_type* RESTRICT elem=atoms->elem->begin();
-    type0* m=atoms->elements->masses;
+    type0* m=atoms->elements.masses;
     type0 m_i,m_inv;
     const int natms0=atoms->natms_lcl;
     for(int i=0;i<natms0;++i)
@@ -162,7 +162,7 @@ void MDNST::update_x_d(type0 fac_x_d)
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements->masses;
+    type0* m=atoms->elements.masses;
     type0 m_i;
     Algebra::zero<__nvoigt__>(__vec_lcl);
     
@@ -196,7 +196,8 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
         throw std::string("cannot start md without governing equations (force field)");
     
     //check to see if the H_dof components are consistent with stoms->dof
-    if(atoms->dof)
+    
+    if(!atoms->dof->is_empty())
     {
         bool* dof=atoms->dof->begin();
         int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
@@ -297,10 +298,7 @@ void MDNST::run(int nsteps)
 {
     init();
     
-    if(atoms->dof)
-        dynamic=new DynamicMD(atoms,ff,true,{atoms->elem},{atoms->x_d,atoms->dof});
-    else
-        dynamic=new DynamicMD(atoms,ff,true,{atoms->elem},{atoms->x_d});
+    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof});
     
     dynamic->init();
     

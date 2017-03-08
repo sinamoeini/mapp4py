@@ -46,7 +46,7 @@ void Min::pre_run_chk(Atoms* atoms,ForceField* ff)
         throw std::string("cannot start minimization without governing equations (force field)");
     
     //check to see if the H_dof components are consistent with stoms->dof
-    if(chng_box && atoms->dof)
+    if(chng_box && !atoms->dof->is_empty())
     {
         bool* dof=atoms->dof->begin();
         int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};

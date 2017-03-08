@@ -4,6 +4,7 @@
 #include <typeinfo>
 #include <cmath>
 #include "comm.h"
+#include "elements.h"
 #include "macros.h"
 #include "global.h"
 
@@ -24,6 +25,8 @@ namespace MAPP_NS
     private:
     protected:
     public:
+        
+        bool __is_empty__;
         int dim;
         int byte_sz;
         unsigned int vec_sz;
@@ -60,11 +63,11 @@ namespace MAPP_NS
         void cpy(byte*&,int*,int);
         void pst(byte*&,int);
         void cpy_pst(int*,int);
-        bool is_empty(){return false;};
+        bool is_empty()const{return __is_empty__;};
+        
     };
 }
 #include <cstring>
-#include <new>
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -369,6 +372,7 @@ namespace MAPP_NS
     private:
     protected:
     public:
+        T empty_val;
         Vec(Atoms*,int,const char*);
         Vec(Atoms*,int);
         ~Vec();
@@ -376,6 +380,8 @@ namespace MAPP_NS
         static MPI_Datatype MPI_T;
         T* begin()const{return reinterpret_cast<T*>(data);};
         T* end()const{return reinterpret_cast<T*>(data+vec_sz*byte_sz);};
+        void empty(const T);
+        void fill();
     };
 }
 /*-------------------------------------------------
@@ -393,23 +399,36 @@ namespace MAPP_NS
     private:
     protected:
     public:
-        const int comm_size;
-        const int comm_rank;
-        class Elements* elements;
+        
+        Elements elements;
         Communication comm;
         MPI_Comm& world;
         type0 (&s_lo)[__dim__];
         type0 (&s_hi)[__dim__];
         
-        //keeep these
+        
+        const int comm_size;
+        const int comm_rank;
         int natms_lcl;
         int natms_ph;
         int natms;
         int step;
+        
+        //keeep these
+        //dont know what to do with this
+        type0 max_cut;
+        
+        
+        // boltzmann constant
+        type0 kB;
+        //planck constant
+        type0 h;
+        type0 vol;
+        type0 depth_inv[__dim__];
         type0 H[__dim__][__dim__];
         type0 B[__dim__][__dim__];
-        type0 depth_inv[__dim__];
-        type0 vol;
+        
+        
         void update_H();
         Vec<type0>* x;
         Vec<unsigned int>* id;
@@ -418,7 +437,6 @@ namespace MAPP_NS
         int nvecs;
         
         
-        Atoms(Communication&);
         Atoms(MPI_Comm&);
         virtual ~Atoms();
         vec* find_vec(const char*);
@@ -436,14 +454,7 @@ namespace MAPP_NS
         void del(int&);
         void restart();
         
-        //dont know what to do with this
-        type0 max_cut;
         
-        
-        // boltzmann constant
-        type0 kB;
-        //planck constant
-        type0 h;
         
         
         
@@ -506,7 +517,8 @@ vec_sz(0),
 vec_cpcty(0),
 data(NULL),
 name(__name),
-atoms(__atoms)
+atoms(__atoms),
+__is_empty__(false)
 {
     atoms->push(this);
     reserve(atoms->natms_lcl+atoms->natms_ph);
@@ -540,4 +552,35 @@ vec(__atoms,__dim,sizeof(T),NULL)
 template<typename T>
 inline Vec<T>::~Vec()
 {}
+/*--------------------------------------------
+ filling
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::empty(const T __empty_val)
+{
+    empty_val=__empty_val;
+    if(__is_empty__) return;
+    delete [] data;
+    data=NULL;
+    vec_sz=vec_cpcty=0;
+    __is_empty__=true;
+}
+/*--------------------------------------------
+ filling
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::fill()
+{
+    if(__is_empty__)
+    {
+        reserve(atoms->natms_lcl+atoms->natms_ph);
+        resize(atoms->natms_lcl);
+    }
+    
+    
+    
+    T* __data=begin();
+    for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
+    __is_empty__=false;
+}
 #endif

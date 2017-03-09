@@ -11,7 +11,6 @@ namespace MAPP_NS
         Vec<type0>* x_d;
         Vec<elem_type>* elem;
         void create_T(type0,int);
-        void sort_stack(vec**&,int&,vec**&,int&,vec**&,int&,vec**&,int&);
 
         //void DO(PyFunctionObject*);
         AtomsMD(MPI_Comm&);
@@ -36,7 +35,7 @@ namespace MAPP_NS
         
         static PyMethodDef methods[];
         static void setup_tp_methods();
-        static void ml_create_T(PyMethodDef&);
+        static void ml_create_temp(PyMethodDef&);
         static void ml_import_cfg(PyMethodDef&);
         
         static void setup_tp();

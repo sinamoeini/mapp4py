@@ -3,10 +3,15 @@
 #include "elements.h"
 #include "xmath.h"
 using namespace MAPP_NS;
+#ifdef MPI_CXX_BOOL
+template<> MPI_Datatype Vec<bool>::MPI_T=MPI_CXX_BOOL;
+#else
+template<> MPI_Datatype Vec<bool>::MPI_T=MPI_BYTE;
+#endif
 template<> MPI_Datatype Vec<char>::MPI_T=MPI_CHAR;
 template<> MPI_Datatype Vec<short>::MPI_T=MPI_SHORT;
 template<> MPI_Datatype Vec<int>::MPI_T=MPI_INT;
-template<> MPI_Datatype Vec<long>::MPI_T=MPI_LONG;
+template<> MPI_Datatype Vec<long int>::MPI_T=MPI_LONG;
 template<> MPI_Datatype Vec<long long>::MPI_T=MPI_LONG_LONG;
 template<> MPI_Datatype Vec<unsigned char>::MPI_T=MPI_UNSIGNED_CHAR;
 template<> MPI_Datatype Vec<unsigned short>::MPI_T=MPI_UNSIGNED_SHORT;
@@ -16,11 +21,23 @@ template<> MPI_Datatype Vec<unsigned long long>::MPI_T=MPI_UNSIGNED_LONG_LONG;
 template<> MPI_Datatype Vec<float>::MPI_T=MPI_FLOAT;
 template<> MPI_Datatype Vec<double>::MPI_T=MPI_DOUBLE;
 template<> MPI_Datatype Vec<long double>::MPI_T=MPI_LONG_DOUBLE;
-#ifdef MPI_CXX_BOOL
-template<> MPI_Datatype Vec<bool>::MPI_T=MPI_CXX_BOOL;
-#else
-template<> MPI_Datatype Vec<bool>::MPI_T=MPI_BYTE;
-#endif
+
+
+template<> const char* Vec<bool>::print_format="%d ";
+template<> const char* Vec<char>::print_format="%c ";
+template<> const char* Vec<short>::print_format="%d ";
+template<> const char* Vec<int>::print_format="%d ";
+template<> const char* Vec<long int>::print_format="%ld ";
+template<> const char* Vec<long long>::print_format="%lld ";
+template<> const char* Vec<unsigned char>::print_format="%c ";
+template<> const char* Vec<unsigned short>::print_format="%d ";
+template<> const char* Vec<unsigned int>::print_format="%ud ";
+template<> const char* Vec<unsigned long int>::print_format="%uld ";
+template<> const char* Vec<unsigned long long>::print_format="%ulld ";
+template<> const char* Vec<float>::print_format="%f ";
+template<> const char* Vec<double>::print_format="%lf ";
+template<> const char* Vec<long double>::print_format="%Lf ";
+
 /*---------------------------------------------------------------------------
       ___   _____   _____       ___  ___   _____
      /   | |_   _| /  _  \     /   |/   | /  ___/
@@ -160,9 +177,8 @@ vec* Atoms::find_vec(const char* name)
 void Atoms::x2s(int no)
 {
     type0* x_vec=x->begin();
-    int x_dim=x->dim;
     for(int i=0;i<no;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*x_dim,B);
+        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
 }
 /*--------------------------------------------
  s2x
@@ -170,9 +186,8 @@ void Atoms::x2s(int no)
 void Atoms::s2x(int no)
 {
     type0* x_vec=x->begin();
-    int x_dim=x->dim;
     for(int i=0;i<no;i++)
-        XMatrixVector::s2x<__dim__>(x_vec+i*x_dim,H);
+        XMatrixVector::s2x<__dim__>(x_vec+i*__dim__,H);
 }
 /*--------------------------------------------
  x2s
@@ -180,9 +195,8 @@ void Atoms::s2x(int no)
 void Atoms::x2s_lcl()
 {
     type0* x_vec=x->begin();
-    int x_dim=x->dim;
     for(int i=0;i<natms_lcl;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*x_dim,B);
+        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
 }
 /*--------------------------------------------
  s2x
@@ -190,10 +204,8 @@ void Atoms::x2s_lcl()
 void Atoms::s2x_lcl()
 {
     type0* x_vec=x->begin();
-    int x_dim=x->dim;
     for(int i=0;i<natms_lcl;i++)
-        XMatrixVector::s2x<__dim__>(x_vec+i*x_dim,H);
-
+        XMatrixVector::s2x<__dim__>(x_vec+i*__dim__,H);
 }
 /*--------------------------------------------
  x2s
@@ -201,10 +213,9 @@ void Atoms::s2x_lcl()
 void Atoms::x2s_all()
 {
     type0* x_vec=x->begin();
-    int x_dim=x->dim;
     int nall=natms_lcl+natms_ph;
     for(int i=0;i<nall;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*x_dim,B);
+        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
 }
 /*--------------------------------------------
  s2x
@@ -212,10 +223,18 @@ void Atoms::x2s_all()
 void Atoms::s2x_all()
 {
     type0* x_vec=x->begin();
-    int x_dim=x->dim;
     int nall=natms_lcl+natms_ph;
     for(int i=0;i<nall;i++)
-        XMatrixVector::s2x<__dim__>(x_vec+i*x_dim,H);
+        XMatrixVector::s2x<__dim__>(x_vec+i*__dim__,H);
+}
+/*--------------------------------------------
+ x2s
+ --------------------------------------------*/
+void Atoms::x2s_dump()
+{
+    type0* x_vec=x->begin_dump();
+    for(int i=0;i<natms;i++)
+        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
 }
 /*--------------------------------------------
  insert a number of atoms

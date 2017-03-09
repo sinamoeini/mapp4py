@@ -8,6 +8,7 @@ namespace MAPP_NS
     private:
         Vec<elem_type>*& elem;
         type0**& cut_sk_sq;
+        class AtomsMD* atoms;
     protected:
     public:
         NeighborMD(class AtomsMD*,type0**&);

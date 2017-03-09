@@ -9,12 +9,9 @@ namespace MAPP_NS
     class Neighbor
     {
     private:
-    protected:
-        
-        
-        int no_neigh_lists;
-        
         class Atoms* atoms;
+    protected:
+        int no_neigh_lists;        
     public:
         bool pair_wise;
         int** neighbor_list;

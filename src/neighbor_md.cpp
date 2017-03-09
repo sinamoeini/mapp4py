@@ -15,9 +15,10 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 NeighborMD::NeighborMD(AtomsMD* __atoms,
 type0**& __cut_sk_sq):
+Neighbor(__atoms),
+atoms(__atoms),
 elem(__atoms->elem),
-cut_sk_sq(__cut_sk_sq),
-Neighbor(__atoms)
+cut_sk_sq(__cut_sk_sq)
 {
 }
 /*--------------------------------------------

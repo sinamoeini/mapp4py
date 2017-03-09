@@ -15,7 +15,6 @@ using namespace MAPP_NS;
 NeighborDMD::NeighborDMD(AtomsDMD* __atoms,
 type0**& __cut_sk,type0*& __rsq_crd):
 elem(__atoms->elem),
-c_vec(__atoms->c),
 cut_sk(__cut_sk),
 rsq_crd(__rsq_crd),
 Neighbor(__atoms),
@@ -23,7 +22,7 @@ neighbor_list_2nd(NULL),
 neighbor_list_size_2nd(NULL),
 neighbor_list_size_size_2nd(0),
 scl(__atoms->xi[__atoms->N-1]),
-atoms_dmd(__atoms),
+atoms(__atoms),
 no_pairs_2nd(0)
 {
 }
@@ -38,7 +37,7 @@ NeighborDMD::~NeighborDMD()
  --------------------------------------------*/
 void NeighborDMD::mark_redndnt_ph(byte* mark)
 {
-    const int c_dim=c_vec->dim;
+    const int c_dim=atoms->c_dim;
     const int n=c_dim*atoms->natms_lcl;
     memset(mark,'0',atoms->natms_ph);
     for(int i=0;i<neighbor_list_size_size;i++)
@@ -51,7 +50,7 @@ void NeighborDMD::mark_redndnt_ph(byte* mark)
  --------------------------------------------*/
 void NeighborDMD::rename_atoms(int* old_2_new)
 {
-    const int c_dim=c_vec->dim;
+    const int c_dim=atoms->c_dim;
     for(int i=0;i<neighbor_list_size_size;i++)
         for(int j=0;j<neighbor_list_size[i];j++)
             neighbor_list[i][j]=old_2_new[neighbor_list[i][j]/c_dim]+(neighbor_list[i][j]%c_dim);
@@ -105,7 +104,7 @@ void NeighborDMD::create_list(bool box_change)
     delete [] neighbor_list;
     delete [] neighbor_list_size;
     
-    const int c_dim=c_vec->dim;
+    const int c_dim=atoms->c_dim;
     neighbor_list_size_size=atoms->natms_lcl*c_dim;
     
     Memory::alloc(neighbor_list,neighbor_list_size_size);
@@ -115,9 +114,9 @@ void NeighborDMD::create_list(bool box_change)
     
     
     elem_type* elem_vec=elem->begin();
-    const type0* c=c_vec->begin();
+    const type0* c=atoms->c->begin();
     const type0* x=atoms->x->begin();
-    const type0* alpha=atoms_dmd->alpha->begin();
+    const type0* alpha=atoms->alpha->begin();
 
     
     int** tmp_neigh_list;
@@ -223,7 +222,7 @@ void NeighborDMD::fin_static()
 void NeighborDMD::create_2nd_list()
 {
 
-    const int c_dim=c_vec->dim;
+    const int c_dim=atoms->c_dim;
     const int n=atoms->natms_lcl*c_dim;
     if(neighbor_list_size_size_2nd)
     {

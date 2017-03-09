@@ -11,14 +11,15 @@ xi(new type0[__N]),
 wi(new type0[__N])
 {
     XMath::quadrature_hg(N,xi,wi);
-    alpha=new Vec<type0>(this,c_dim);
-    c=new Vec<type0>(this,c_dim);
-    elem=new Vec<elem_type>(this,c_dim);
-    alpha_dof=new Vec<bool>(this,c_dim);
+    alpha=new DMDVec<type0>(this,0.0,"alpha");
+    c=new DMDVec<type0>(this,-1.0,"c");
+    elem=new Vec<elem_type>(this,c_dim,"elem");
+    alpha_dof=new DMDVec<bool>(this,true,"alpha_dof");
+    c_dof=new DMDVec<bool>(this,true,"c_dof");
+    c_d=new DMDVec<type0>(this,true,"c_d");
+    
     alpha_dof->empty(true);
-    c_dof=new Vec<bool>(this,c_dim);
     c_dof->empty(true);
-    c_d=new Vec<type0>(this,c_dim);
     c_d->empty(0.0);
 }
 /*--------------------------------------------
@@ -26,9 +27,6 @@ wi(new type0[__N])
  --------------------------------------------*/
 AtomsDMD::~AtomsDMD()
 {
-    delete [] wi;
-    delete [] xi;
-    
     delete alpha_dof;
     delete c_dof;
     delete c_d;
@@ -36,6 +34,8 @@ AtomsDMD::~AtomsDMD()
     delete c;
     delete alpha;
     
+    delete [] wi;
+    delete [] xi;
 }
 /*--------------------------------------------
  
@@ -73,103 +73,6 @@ AtomsDMD& AtomsDMD::operator=(const Atoms& r)
     memcpy(x->begin(),r.x->begin(),natms_lcl*__dim__*sizeof(type0));
     memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
     return* this;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-#include "memory.h"
-void AtomsDMD::sort_stack(
-vec**& xchng,int& nxchng,
-vec**& updt,int& nupdt,
-vec**& arch,int& narch,
-vec**& empty,int& nempty)
-{
-    
-    /*
-     go through exchange, update, and archive if they
-     are any empty vectors segregate them into empty
-     vectors category
-     */
-    nempty=0;
-    delete [] empty;
-    int empty_cpcty=nxchng+nupdt+narch;
-    Memory::alloc(empty,empty_cpcty);
-    
-    auto fill_empty_vecs=[&nempty,empty](vec**& vs,int& nvs)->void
-    {
-        int __nvs=nvs;
-        for(int i=0;i<__nvs;)
-            if(vs[i]->is_empty())
-            {
-                empty[nempty++]=vs[i];
-                
-                
-                vs[i]=vs[__nvs-1];
-                __nvs--;
-                
-            }
-            else
-                i++;
-        
-        Memory::shrink_to_fit(vs,__nvs,nvs);
-        nvs=__nvs;
-    };
-    
-    fill_empty_vecs(xchng,nxchng);
-    fill_empty_vecs(updt,nupdt);
-    fill_empty_vecs(arch,narch);
-
-    /*
-     pop all the empty vectors from vector stack.
-     pop remaining archive vectors from vector stack.
-     */
-    for(int i=0;i<nempty;i++)
-        pop(empty[i]);
-    for(int i=0;i<narch;i++)
-        pop(arch[i]);
-    
-    /*
-     now sort the vector stack as follows
-     0. all exchange vectors
-     1. all update vectors
-     2. remaining vectors (passive)
-     ** the VERY FIRST exchange vector: id
-     ** the VERY FIRST update vector: x
-     ** the SECOND update vector: alpha
-     ** the THIRD update vector: c
-     ** the FOURTH update vector elem
-     */
-    vec** __vecs=NULL;
-    if(nvecs) __vecs=new vec*[nvecs];
-    
-    int __nvecs=0;
-    __vecs[__nvecs++]=id;
-    
-    for(int i=0;i<nxchng;i++)
-        __vecs[__nvecs++]=xchng[i];
-    nxchng++;
-    
-    __vecs[__nvecs++]=x;
-    __vecs[__nvecs++]=alpha;
-    __vecs[__nvecs++]=c;
-    __vecs[__nvecs++]=elem;
-    for(int i=0;i<nupdt;i++)
-        __vecs[__nvecs++]=updt[i];
-    
-    nupdt+=4;
-    
-    int ___nevcs=__nvecs;
-    
-    auto is_in=[](const vec* v,vec* const * vs,int nvs)->bool
-    {
-        for(int i=0;i<nvs;i++)
-            if(vs[i]==v) return true;
-        return false;
-    };
-    
-    for(int i=0;i<nvecs;i++)
-        if(!is_in(vecs[i],__vecs,___nevcs))
-            __vecs[__nvecs++]=vecs[i];
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

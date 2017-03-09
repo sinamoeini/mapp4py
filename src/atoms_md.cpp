@@ -55,99 +55,6 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
 /*--------------------------------------------
  
  --------------------------------------------*/
-#include "memory.h"
-void AtomsMD::sort_stack(
-vec**& xchng,int& nxchng,
-vec**& updt,int& nupdt,
-vec**& arch,int& narch,
-vec**& empty,int& nempty)
-{
-    
-    /*
-     go through exchange, update, and archive if they
-     are any empty vectors segregate them into empty
-     vectors category
-     */
-    nempty=0;
-    delete [] empty;
-    int empty_cpcty=nxchng+nupdt+narch;
-    Memory::alloc(empty,empty_cpcty);
-    
-    auto fill_empty_vecs=[&nempty,empty](vec**& vs,int& nvs)->void
-    {
-        int __nvs=nvs;
-        for(int i=0;i<__nvs;)
-            if(vs[i]->is_empty())
-            {
-                empty[nempty++]=vs[i];
-                
-                
-                vs[i]=vs[__nvs-1];
-                __nvs--;
-                
-            }
-            else
-                i++;
-        
-        Memory::shrink_to_fit(vs,__nvs,nvs);
-        nvs=__nvs;
-    };
-    
-    fill_empty_vecs(xchng,nxchng);
-    fill_empty_vecs(updt,nupdt);
-    fill_empty_vecs(arch,narch);
-
-    /*
-     pop all the empty vectors from vector stack.
-     pop remaining archive vectors from vector stack.
-     */
-    for(int i=0;i<nempty;i++)
-        pop(empty[i]);
-    for(int i=0;i<narch;i++)
-        pop(arch[i]);
-    
-    /*
-     now sort the vector stack as follows
-     0. all exchange vectors
-     1. all update vectors
-     2. remaining vectors (passive)
-     ** the VERY FIRST exchange vector: id
-     ** the VERY FIRST update vector: x
-     ** the second update vector: elem
-     */
-    vec** __vecs=NULL;
-    if(nvecs) __vecs=new vec*[nvecs];
-    
-    int __nvecs=0;
-    __vecs[__nvecs++]=id;
-    
-    for(int i=0;i<nxchng;i++)
-        __vecs[__nvecs++]=xchng[i];
-    nxchng++;
-    
-    __vecs[__nvecs++]=x;
-    __vecs[__nvecs++]=elem;
-    for(int i=0;i<nupdt;i++)
-        __vecs[__nvecs++]=updt[i];
-    
-    nupdt+=2;
-    
-    int ___nevcs=__nvecs;
-    
-    auto is_in=[](const vec* v,vec* const * vs,int nvs)->bool
-    {
-        for(int i=0;i<nvs;i++)
-            if(vs[i]==v) return true;
-        return false;
-    };
-    
-    for(int i=0;i<nvecs;i++)
-        if(!is_in(vecs[i],__vecs,___nevcs))
-            __vecs[__nvecs++]=vecs[i];
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 #include "random.h"
 #include "elements.h"
 #include "xmath.h"
@@ -329,7 +236,7 @@ PyMethodDef AtomsMD::methods[]={[0 ... 8]={NULL,NULL,0,NULL}};
 void AtomsMD::setup_tp_methods()
 {
     ml_strain(methods[0]);
-    ml_create_T(methods[1]);
+    ml_create_temp(methods[1]);
     ForceFieldLJ::ml_new(methods[2]);
     ForceFieldEAM::ml_new(methods[3],methods[4],methods[5]);
     ForceFieldFS::ml_new(methods[6]);
@@ -338,16 +245,16 @@ void AtomsMD::setup_tp_methods()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void AtomsMD::ml_create_T(PyMethodDef& tp_method)
+void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
 {
     tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_method.ml_name="create_T";
+    tp_method.ml_name="create_temp";
     tp_method.ml_doc="I will add doc here";
     
     tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<type0,int> f("create_T",{"T","seed"});
+        FuncAPI<type0,int> f("create_temp",{"temp","seed"});
         f.logics<0>()[0]=VLogics("gt",0.0);
         f.logics<1>()[0]=VLogics("gt",0);
         if(f(args,kwds)) return NULL;

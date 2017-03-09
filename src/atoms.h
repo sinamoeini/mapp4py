@@ -373,15 +373,21 @@ namespace MAPP_NS
     protected:
     public:
         T empty_val;
+        T* dump_data;
         Vec(Atoms*,int,const char*);
         Vec(Atoms*,int);
         ~Vec();
         unsigned int size()const{return dim*vec_sz;}
         static MPI_Datatype MPI_T;
+        static const char* print_format;
         T* begin()const{return reinterpret_cast<T*>(data);};
+        T* begin_dump()const{return dump_data;};
         T* end()const{return reinterpret_cast<T*>(data+vec_sz*byte_sz);};
         void empty(const T);
         void fill();
+        virtual void gather_dump();
+        virtual void print(FILE*,int);
+        void clear_dump();
     };
 }
 /*-------------------------------------------------
@@ -449,6 +455,7 @@ namespace MAPP_NS
         void s2x_lcl();
         void x2s_all();
         void s2x_all();
+        void x2s_dump();
         
         void insert(byte*,vec**,int,int);
         void add();
@@ -538,14 +545,16 @@ inline vec::~vec()
  --------------------------------------------*/
 template<typename T>
 Vec<T>::Vec(Atoms* __atoms,int __dim,const char* __name):
-vec(__atoms,__dim,sizeof(T),__name)
+vec(__atoms,__dim,sizeof(T),__name),
+dump_data(NULL)
 {}
 /*--------------------------------------------
  constructor without name;
  --------------------------------------------*/
 template<typename T>
 Vec<T>::Vec(Atoms* __atoms,int __dim):
-vec(__atoms,__dim,sizeof(T),NULL)
+vec(__atoms,__dim,sizeof(T),NULL),
+dump_data(NULL)
 {}
 /*--------------------------------------------
  destructor
@@ -584,39 +593,34 @@ inline void Vec<T>::fill()
     for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
     __is_empty__=false;
 }
-
-/*-----------------------
- _     _   _____   _____  
-| |   / / | ____| /  ___| 
-| |  / /  | |__   | |     
-| | / /   |  __|  | |     
-| |/ /    | |___  | |___  
-|___/     |_____| \_____| 
- -----------------------*/
-namespace MAPP_NS
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::gather_dump()
 {
-    template<typename T,typename K>
-    class ShrinkVec: public Vec<T>
-    {
-    private:
-    protected:
-    public:
-        Vec<K>* key;
-        ShrinkVec(Atoms* __atoms,int __dim,Vec<K>* __key,const char* __name):
-        Vec<T>(__atoms,__dim,__name),
-        key(__key)
-        {}
-        ShrinkVec(Atoms* __atoms,int __dim,Vec<K>* __key):
-        Vec<T>(__atoms,__dim),
-        key(__key)
-        {}
-        ~ShrinkVec(){}
-    };
+    int n=dim*atoms->natms;
+    int n_lcl=dim*atoms->natms_lcl;
+    if(atoms->comm_rank==0 && n)
+        dump_data=new T[n];
+    MPI_Gather(data,n_lcl,MPI_T,dump_data,n,MPI_T,0,atoms->world);
 }
-
-
-
-
-
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::print(FILE* fp,int i)
+{
+    for(int j=0;j<dim;j++)
+        fprintf(fp,print_format,dump_data[dim*i+j]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::clear_dump()
+{
+    delete [] dump_data;
+    dump_data=NULL;
+}
 #endif

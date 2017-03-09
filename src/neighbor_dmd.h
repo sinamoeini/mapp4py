@@ -7,11 +7,10 @@ namespace MAPP_NS
     {
     private:
         Vec<elem_type>*& elem;
-        Vec<type0>*& c_vec;
         type0**& cut_sk;
         type0*& rsq_crd;
         const type0 scl;
-        class AtomsDMD* atoms_dmd;
+        class AtomsDMD* atoms;
     protected:
     public:
         NeighborDMD(class AtomsDMD*,type0**&,type0*&);

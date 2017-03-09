@@ -27,8 +27,8 @@ s_lo(atoms->comm.s_lo),
 s_hi(atoms->comm.s_hi),
 xchng_id(atoms->comm.xchng_id),
 
-vecs(atoms->vecs),
-nvecs(atoms->nvecs),
+vecs(atoms->dynamic_vecs),
+nvecs(atoms->ndynamic_vecs),
 nxchng_vecs(nxchng_vecs_)
 {
     Algebra::V_eq<__dim__*2>(&(atoms->comm.neigh[0][0]), &(neigh[0][0]));
@@ -254,8 +254,8 @@ s_hi(atoms->comm.s_hi),
 max_cut(atoms->max_cut),
 x(atoms->x),
 
-vecs(atoms->vecs),
-nvecs(atoms->nvecs),
+vecs(atoms->dynamic_vecs),
+nvecs(atoms->ndynamic_vecs),
 nupdt_vecs(nupdt_vecs_),
 nxchng_vecs(nxchng_vecs_)
 {

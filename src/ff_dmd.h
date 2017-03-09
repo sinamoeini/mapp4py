@@ -20,7 +20,8 @@ namespace MAPP_NS
         void reset();
         int c_dim;
         
-        void setup();
+        void pre_init();
+        void post_fin();
         
         class NeighborDMD* neighbor;
         
@@ -34,7 +35,6 @@ namespace MAPP_NS
         type0 value_timer();
         void derivative_timer();
         void derivative_timer(type0(*&)[__dim__]);
-        Vec<type0>* f_alpha;
         
         
         void force_calc_static_timer();
@@ -43,6 +43,9 @@ namespace MAPP_NS
         virtual void operator()(Vec<type0>*,Vec<type0>*)=0;
         virtual type0 update_J(type0,type0*,type0*)=0;
         virtual type0 ddc_norm()=0;
+        
+        Vec<type0>* f;
+        Vec<type0>* f_alpha;
     };
 }
 #endif 

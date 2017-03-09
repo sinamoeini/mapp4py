@@ -298,7 +298,7 @@ void MDNST::run(int nsteps)
 {
     init();
     
-    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof});
+    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof},{});
     
     dynamic->init();
     

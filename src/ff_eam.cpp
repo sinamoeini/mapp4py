@@ -693,9 +693,10 @@ void ForceFieldEAM::post_xchng_energy(GCMC* gcmc)
  init before running
  --------------------------------------------*/
 void ForceFieldEAM::init()
-{    
+{
+    pre_init();
     rho_ptr=new Vec<type0>(atoms,1);
-    setup();
+    
 }
 /*--------------------------------------------
  fin after running
@@ -706,6 +707,7 @@ void ForceFieldEAM::fin()
     Memory::dealloc(drhoi_dr);
     max_pairs=0;
     delete rho_ptr;
+    post_fin();
 }
 /*--------------------------------------------
  init xchng

@@ -11,30 +11,31 @@ ForceFieldDMD::ForceFieldDMD(AtomsDMD* __atoms):
 ForceField(__atoms),
 atoms(__atoms),
 rsq_crd(NULL),
-r_crd(NULL),
-f_alpha(new Vec<type0>(__atoms,__atoms->c->dim))
+r_crd(NULL)
 {
     Memory::alloc(cut_sk,nelems,nelems);
     Memory::alloc(rsq_crd,nelems);
     Memory::alloc(r_crd,nelems);
     neighbor=new NeighborDMD(__atoms,cut_sk,rsq_crd);
-    
+    f=new Vec<type0>(atoms,__dim__,"f");
+    f_alpha=new Vec<type0>(atoms,atoms->c_dim,"f_alpha");
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ForceFieldDMD::~ForceFieldDMD()
 {
+    delete f_alpha;
+    delete f;
     delete neighbor;
     Memory::dealloc(r_crd);
     Memory::dealloc(rsq_crd);
     Memory::dealloc(cut_sk);
-    delete f_alpha;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldDMD::setup()
+void ForceFieldDMD::pre_init()
 {
     dof_empty=atoms->dof->is_empty();
     type0 tmp;
@@ -53,6 +54,12 @@ void ForceFieldDMD::setup()
         rsq_crd[i]=r_crd[i]*r_crd[i];
     }
     c_dim=atoms->c->dim;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::post_fin()
+{
 }
 /*--------------------------------------------
  

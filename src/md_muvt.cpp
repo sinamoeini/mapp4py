@@ -83,7 +83,7 @@ void MDMuVT::run(int nsteps)
     
     init();
     
-    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof});
+    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
     
     dynamic->init();
     

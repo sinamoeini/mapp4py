@@ -13,18 +13,20 @@ atoms(__atoms),
 elem(__atoms->elem)
 {
     neighbor=new NeighborMD(__atoms,cut_sk_sq);
+    f=new Vec<type0>(atoms,__dim__,"f");
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ForceFieldMD::~ForceFieldMD()
 {
+    delete f;
     delete neighbor;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldMD::setup()
+void ForceFieldMD::pre_init()
 {
     dof_empty=atoms->dof->is_empty();
     type0 tmp;
@@ -38,6 +40,12 @@ void ForceFieldMD::setup()
             tmp+=atoms->comm.skin;
             cut_sk_sq[i][j]=cut_sk_sq[j][i]=tmp*tmp;
         }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldMD::post_fin()
+{
 }
 /*--------------------------------------------
  
@@ -137,7 +145,16 @@ void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
     Algebra::Do<__nvoigt__>::func([this,&vol](int i){nrgy_strss[i+1]*=-1.0/vol;});
 
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldMD::reset()
+{
+    type0* __f=f->begin();
+    const int n=f->vec_sz*__dim__;
+    for(int i=0;i<n;i++) __f[i]=0.0;
+    for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
+}
 
 
 

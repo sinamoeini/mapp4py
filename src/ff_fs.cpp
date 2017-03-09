@@ -402,7 +402,7 @@ void ForceFieldFS::energy_calc()
  --------------------------------------------*/
 void ForceFieldFS::init()
 {
-    setup();
+    pre_init();
     rho_ptr=new Vec<type0>(atoms,1);
 }
 /*--------------------------------------------
@@ -411,6 +411,7 @@ void ForceFieldFS::init()
 void ForceFieldFS::fin()
 {
     delete rho_ptr;
+    post_fin();
 }
 /*--------------------------------------------
  init xchng

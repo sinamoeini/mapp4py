@@ -720,7 +720,7 @@ void ForceFieldEAMDMD::energy_calc()
  --------------------------------------------*/
 void ForceFieldEAMDMD::init()
 {
-    setup();
+    pre_init();
     set_temp(300.0);
     
     mu_ptr=new Vec<type0>(atoms,c_dim,"mu");
@@ -747,6 +747,7 @@ void ForceFieldEAMDMD::fin()
     delete mu_ptr;
     
     mu_ptr=dE_ptr=ddE_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
+    post_fin();
 }
 /*--------------------------------------------
  create the sparse matrices

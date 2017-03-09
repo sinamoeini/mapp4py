@@ -19,7 +19,8 @@ namespace MAPP_NS
     public:
         ForceFieldMD(class AtomsMD*);
         virtual ~ForceFieldMD();
-        void setup();
+        void pre_init();
+        void post_fin();
         virtual void init_xchng()=0;
         virtual void fin_xchng()=0;
         class NeighborMD* neighbor;
@@ -40,6 +41,9 @@ namespace MAPP_NS
         int gcmc_n_vars;
         int gcmc_n_cutoff;
         bool gcmc_tag_enabled;
+        
+        void reset();
+        Vec<type0>* f;
     };
 }
 

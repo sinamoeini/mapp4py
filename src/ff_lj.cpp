@@ -145,13 +145,14 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
  --------------------------------------------*/
 void ForceFieldLJ::init()
 {
-    setup();
+    pre_init();
 }
 /*--------------------------------------------
  after a run
  --------------------------------------------*/
 void ForceFieldLJ::fin()
 {
+    post_fin();
 }
 /*--------------------------------------------
  init xchng

@@ -93,14 +93,14 @@ namespace MAPP_NS
         
         
         template<class T>
-        static inline void shrink_to_fit(T& data,size_t size,size_t capacity)
+        static inline void shrink_to_fit(T*& data,size_t size,size_t capacity)
         {
             if(capacity==size) return;
             
-            T __data;
-            Mem<T>::alloc(__data,size);
-            memcpy(__data,data,size*sizeof(typename std::remove_pointer<T>::type));
-            Mem<T>::dealloc(data);
+            T* __data=NULL;
+            if(size) __data=new T[size];
+            memcpy(__data,data,size*sizeof(T));
+            delete [] data;
             data=__data;
         }
         

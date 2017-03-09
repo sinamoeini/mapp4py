@@ -5,8 +5,8 @@
 AtomsMD::AtomsMD(MPI_Comm& world):
 Atoms(world)
 {
-    elem=new Vec<elem_type>(this,1);
-    x_d=new Vec<type0>(this,__dim__);
+    elem=new Vec<elem_type>(this,1,"elem");
+    x_d=new Vec<type0>(this,__dim__,"x_d");
     x_d->empty(0.0);
 }
 /*--------------------------------------------

@@ -509,7 +509,7 @@ AtomsMD* ReadCFGMD::operator()(const char* file)
         throw err_msg;
     }
 
-    AtomsMD* atoms=new AtomsMD(world);
+    Atoms* atoms=new Atoms(world);
     char* line=NULL;
     size_t line_cpcty=MAXCHAR;
     if(line_cpcty) line=new char[line_cpcty];
@@ -530,7 +530,10 @@ AtomsMD* ReadCFGMD::operator()(const char* file)
     {
         delete pfreader;
         delete [] line;
-        return atoms;
+        AtomsMD* atoms_md=new AtomsMD(world);
+        *atoms_md=*atoms;
+        delete atoms;
+        return atoms_md;
     }
     
     try
@@ -552,31 +555,46 @@ AtomsMD* ReadCFGMD::operator()(const char* file)
     delete pfreader;
     delete [] line;
     
-    atoms->elem=dynamic_cast<Vec<elem_type>*>(vec_list[1]);
+    
+    AtomsMD* atoms_md=new AtomsMD(world);
+    *atoms_md=*atoms;
+    memcpy(atoms_md->elem->begin(),vec_list[1]->begin(),atoms->natms_lcl*sizeof(elem_type));
+    delete vec_list[1];
     vec_list[1]=NULL;
     if(vel_xst)
     {
-        atoms->x_d=dynamic_cast<Vec<type0>*>(vec_list[3]);
-        atoms->x_d->change_dim(__dim__);
-        vec_list[3]=NULL;
+        atoms_md->x_d->fill();
+        memcpy(atoms_md->x_d->begin(),vec_list[3]->begin(),atoms->natms_lcl*__dim__*sizeof(type0));
+        type0* __x_d=atoms_md->x_d->begin();
+        type0* ___x_d=reinterpret_cast<type0*>(vec_list[3]->begin());
+        int vec_dim=vec_list[3]->dim;
+        for(int i=0;i<atoms->natms_lcl;i++)
+        {
+            memcpy(__x_d,___x_d,__dim__*sizeof(type0));
+            __x_d+=__dim__;
+            ___x_d+=vec_dim;
+        }
+        
+        
         
         type0 M[__dim__][__dim__];
         for(int i=0;i<__dim__;i++)
             for(int j=0;j<__dim__;j++)
                 M[i][j]=R*atoms->H[i][j];
             
-        type0* x_d=atoms->x_d->begin();
+        type0* x_d=atoms_md->x_d->begin();
         int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,x_d+=__dim__)
             XMatrixVector::s2x(x_d,M);
-        
     }
-    else
-        delete vec_list[3];
 
-    atoms->s2x_lcl();
+    delete vec_list[3];
+    vec_list[3]=NULL;
+
+    delete atoms;
+    atoms_md->s2x_lcl();
     
-    return atoms;
+    return atoms_md;
 }
 /*--------------------------------------------
  
@@ -741,7 +759,7 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
                 alpha[j]=0.0;
             if(c[j]!=-1.0)
             {
-                __c_sum+=c[i];
+                __c_sum+=c[j];
                 __max_ncmp++;
             }
         }

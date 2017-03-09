@@ -192,8 +192,8 @@ void SGCMC::xchng(bool box_chng,int nattmpts)
     ff->neighbor->create_list(box_chng);
 
     ff->init_xchng();
-    for(int i=0;i<atoms->nvecs;i++)
-        atoms->vecs[i]->resize(natms_lcl);
+    for(int i=0;i<atoms->ndynamic_vecs;i++)
+        atoms->dynamic_vecs[i]->resize(natms_lcl);
         
     ngas=0;
     elem_type* elem=atoms->elem->begin();

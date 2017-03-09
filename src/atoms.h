@@ -435,7 +435,8 @@ namespace MAPP_NS
         Vec<bool>* dof;
         vec** vecs;
         int nvecs;
-        
+        vec** dynamic_vecs;
+        int ndynamic_vecs;
         
         Atoms(MPI_Comm&);
         virtual ~Atoms();
@@ -453,7 +454,7 @@ namespace MAPP_NS
         void add();
         void del(int&);
         void restart();
-        
+        int is_dynamic(vec*);
         
         
         
@@ -583,4 +584,39 @@ inline void Vec<T>::fill()
     for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
     __is_empty__=false;
 }
+
+/*-----------------------
+ _     _   _____   _____  
+| |   / / | ____| /  ___| 
+| |  / /  | |__   | |     
+| | / /   |  __|  | |     
+| |/ /    | |___  | |___  
+|___/     |_____| \_____| 
+ -----------------------*/
+namespace MAPP_NS
+{
+    template<typename T,typename K>
+    class ShrinkVec: public Vec<T>
+    {
+    private:
+    protected:
+    public:
+        Vec<K>* key;
+        ShrinkVec(Atoms* __atoms,int __dim,Vec<K>* __key,const char* __name):
+        Vec<T>(__atoms,__dim,__name),
+        key(__key)
+        {}
+        ShrinkVec(Atoms* __atoms,int __dim,Vec<K>* __key):
+        Vec<T>(__atoms,__dim),
+        key(__key)
+        {}
+        ~ShrinkVec(){}
+    };
+}
+
+
+
+
+
+
 #endif

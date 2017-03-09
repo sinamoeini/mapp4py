@@ -33,6 +33,8 @@ template<> MPI_Datatype Vec<bool>::MPI_T=MPI_BYTE;
 Atoms::Atoms(MPI_Comm& __world):
 nvecs(0),
 vecs(NULL),
+dynamic_vecs(NULL),
+ndynamic_vecs(0),
 natms(0),
 natms_lcl(0),
 natms_ph(0),
@@ -51,9 +53,9 @@ B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 depth_inv{[0 ... __dim__-1]=0.0},
 step(0)
 {
-    x=new Vec<type0>(this,__dim__);
-    id= new Vec<unsigned int>(this,1);
-    dof=new Vec<bool>(this,__dim__);
+    x=new Vec<type0>(this,__dim__,"x");
+    id= new Vec<unsigned int>(this,1,"id");
+    dof=new Vec<bool>(this,__dim__,"dof");
     dof->empty(true);
 }
 /*--------------------------------------------
@@ -64,6 +66,7 @@ Atoms::~Atoms()
     delete dof;
     delete id;
     delete x;
+    delete [] dynamic_vecs;
     while(nvecs) delete vecs[0];
 }
 /*--------------------------------------------
@@ -90,6 +93,15 @@ void Atoms::push(vec* v)
     delete [] vecs;
     vecs=__vecs;
     vecs[nvecs++]=v;
+    
+    if(ndynamic_vecs)
+    {
+        vec** __dyamic_vecs=new vec*[ndynamic_vecs+1];
+        memcpy(__dyamic_vecs,dynamic_vecs,ndynamic_vecs*sizeof(vec*));
+        delete [] dynamic_vecs;
+        dynamic_vecs=__dyamic_vecs;
+        dynamic_vecs[ndynamic_vecs++]=v;
+    }
 }
 /*--------------------------------------------
  remove a vector
@@ -103,8 +115,34 @@ void Atoms::pop(vec* v)
 
     vec** __vecs=NULL;
     if(nvecs) __vecs=new vec*[nvecs];
-    
     memcpy(__vecs,vecs,(nvecs)*sizeof(vec*));
+    
+    if(ndynamic_vecs)
+    {
+        ivec=ndynamic_vecs-1;
+        for(;dynamic_vecs[ivec]!=v;ivec--){}
+        dynamic_vecs[ivec]=dynamic_vecs[ndynamic_vecs-1];
+        ndynamic_vecs--;
+        vec** __dyamic_vecs=NULL;
+        if(ndynamic_vecs)
+            __dyamic_vecs=new vec*[ndynamic_vecs];
+        
+        
+        
+        
+        memcpy(__dyamic_vecs,dynamic_vecs,ndynamic_vecs*sizeof(vec*));
+        delete [] dynamic_vecs;
+        dynamic_vecs=__dyamic_vecs;
+    }
+}
+/*--------------------------------------------
+ remove a vector
+ --------------------------------------------*/
+int Atoms::is_dynamic(vec* v)
+{
+    for(int i=ndynamic_vecs-1;i>-1;i--)
+        if(v==dynamic_vecs[i]) return i;
+    return -1;
 }
 /*--------------------------------------------
  add a new vec with name
@@ -145,7 +183,6 @@ void Atoms::x2s_lcl()
     int x_dim=x->dim;
     for(int i=0;i<natms_lcl;i++)
         XMatrixVector::x2s<__dim__>(x_vec+i*x_dim,B);
-
 }
 /*--------------------------------------------
  s2x

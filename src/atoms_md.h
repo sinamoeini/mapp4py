@@ -16,7 +16,7 @@ namespace MAPP_NS
         AtomsMD(MPI_Comm&);
         ~AtomsMD();
         AtomsMD& operator=(const Atoms&);
-        
+        void x_d2s_d_dump();
         typedef struct
         {
             PyObject_HEAD

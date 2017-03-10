@@ -1,4 +1,5 @@
 #include "atoms_md.h"
+#include "xmath.h"
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -20,7 +21,6 @@ AtomsMD::~AtomsMD()
 /*--------------------------------------------
  
  --------------------------------------------*/
-#include "elements.h"
 AtomsMD& AtomsMD::operator=(const Atoms& r)
 {
     elements=r.elements;
@@ -51,6 +51,15 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
     memcpy(x->begin(),r.x->begin(),natms_lcl*__dim__*sizeof(type0));
     memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
     return* this;
+}
+/*--------------------------------------------
+ x2s
+ --------------------------------------------*/
+void AtomsMD::x_d2s_d_dump()
+{
+    type0* x_d_vec=x_d->begin_dump();
+    for(int i=0;i<natms;i++)
+        XMatrixVector::x2s<__dim__>(x_d_vec+i*__dim__,B);
 }
 /*--------------------------------------------
  

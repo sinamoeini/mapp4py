@@ -19,10 +19,9 @@ namespace MAPP_NS
         void add_to_default(const char*);
         ~Export();
         class Atoms* atoms;
-        void init();
-        void fin();
         static void gather(class vec**,int);
         static void release(class vec**,int);
+        void find_vecs();
     };
 }
 

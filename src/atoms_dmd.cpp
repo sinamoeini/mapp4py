@@ -3,8 +3,9 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __N):
+AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __nelems,int __N):
 c_dim(__c_dim),
+nelems(__nelems),
 N(__N),
 Atoms(world),
 xi(new type0[__N]),

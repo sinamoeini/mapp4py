@@ -34,6 +34,7 @@ namespace MAPP_NS
         class Atoms* atoms;
         const char* name;
         byte* data;
+        byte* data_dump;
         static constexpr unsigned int vec_grw=128;
         
         void* begin()const{return data;};
@@ -64,6 +65,13 @@ namespace MAPP_NS
         void pst(byte*&,int);
         void cpy_pst(int*,int);
         bool is_empty()const{return __is_empty__;};
+        
+        
+        void* begin_dump()const{return data_dump;}
+        virtual int ndim_dump()const{return dim;};
+        virtual void init_dump();
+        virtual void fin_dump();
+        virtual void print(FILE*,int)=0;
         
     };
 }
@@ -373,7 +381,6 @@ namespace MAPP_NS
     protected:
     public:
         T empty_val;
-        T* dump_data;
         Vec(Atoms*,int,const char*);
         Vec(Atoms*,int);
         ~Vec();
@@ -381,13 +388,11 @@ namespace MAPP_NS
         static MPI_Datatype MPI_T;
         static const char* print_format;
         T* begin()const{return reinterpret_cast<T*>(data);};
-        T* begin_dump()const{return dump_data;};
         T* end()const{return reinterpret_cast<T*>(data+vec_sz*byte_sz);};
+        T* begin_dump()const{return reinterpret_cast<T*>(data_dump);};
         void empty(const T);
         void fill();
-        virtual void gather_dump();
         virtual void print(FILE*,int);
-        void clear_dump();
     };
 }
 /*-------------------------------------------------
@@ -521,12 +526,14 @@ namespace MAPP_NS
 inline vec::vec(Atoms* __atoms,int __dim,size_t __t_size,const char* __name):
 dim(__dim),
 byte_sz(static_cast<int>(__t_size)*__dim),
+data(NULL),
 vec_sz(0),
 vec_cpcty(0),
-data(NULL),
+
 name(__name),
 atoms(__atoms),
-__is_empty__(false)
+__is_empty__(false),
+data_dump(NULL)
 {
     atoms->push(this);
     reserve(atoms->natms_lcl+atoms->natms_ph);
@@ -541,20 +548,43 @@ inline vec::~vec()
     atoms->pop(this);
 }
 /*--------------------------------------------
+ 
+ --------------------------------------------*/
+inline void vec::init_dump()
+{
+    
+    if(atoms->comm_rank)
+        data_dump=data;
+    else
+    {
+        int natms=atoms->natms;
+        if(natms)
+            data_dump=new byte[natms*byte_sz];
+        memcpy(data_dump,data,byte_sz*atoms->natms_lcl);
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+inline void vec::fin_dump()
+{
+    if(atoms->comm_rank==0)
+        delete [] data_dump;
+    data_dump=NULL;
+}
+/*--------------------------------------------
  constructor with name;
  --------------------------------------------*/
 template<typename T>
 Vec<T>::Vec(Atoms* __atoms,int __dim,const char* __name):
-vec(__atoms,__dim,sizeof(T),__name),
-dump_data(NULL)
+vec(__atoms,__dim,sizeof(T),__name)
 {}
 /*--------------------------------------------
  constructor without name;
  --------------------------------------------*/
 template<typename T>
 Vec<T>::Vec(Atoms* __atoms,int __dim):
-vec(__atoms,__dim,sizeof(T),NULL),
-dump_data(NULL)
+vec(__atoms,__dim,sizeof(T),NULL)
 {}
 /*--------------------------------------------
  destructor
@@ -597,30 +627,11 @@ inline void Vec<T>::fill()
  
  --------------------------------------------*/
 template<typename T>
-inline void Vec<T>::gather_dump()
-{
-    int n=dim*atoms->natms;
-    int n_lcl=dim*atoms->natms_lcl;
-    if(atoms->comm_rank==0 && n)
-        dump_data=new T[n];
-    MPI_Gather(data,n_lcl,MPI_T,dump_data,n,MPI_T,0,atoms->world);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<typename T>
 inline void Vec<T>::print(FILE* fp,int i)
 {
+    T* __data_dump=begin_dump()+dim*i;
     for(int j=0;j<dim;j++)
-        fprintf(fp,print_format,dump_data[dim*i+j]);
+        fprintf(fp,print_format,__data_dump[j]);
 }
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<typename T>
-inline void Vec<T>::clear_dump()
-{
-    delete [] dump_data;
-    dump_data=NULL;
-}
+
 #endif

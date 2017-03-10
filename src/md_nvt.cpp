@@ -223,7 +223,7 @@ void MDNVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNVT::init()
+void MDNVT::pre_init()
 {
     dof_empty=atoms->dof->is_empty();
     kB=atoms->kB;
@@ -246,7 +246,13 @@ void MDNVT::init()
     /*
      temperature and kinetic energy tensor
      */
-    if(atoms->x_d)
+    if(atoms->x_d->is_empty())
+    {
+        atoms->x_d->fill();
+        Algebra::Do<__nvoigt__>::func([this](int i){mvv[i]=0.0;});
+        T_part=0.0;
+    }
+    else
     {
         type0* x_d=atoms->x_d->begin();
         type0* m=atoms->elements.masses;
@@ -265,35 +271,31 @@ void MDNVT::init()
         MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
         T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
     }
-    else
-    {
-        atoms->x_d=new Vec<type0>(atoms,__dim__,"x_d");
-        type0* x_d=atoms->x_d->begin();
-        const int n=atoms->natms_lcl*__dim__;
-        for(int i=0;i<n;i++) x_d[i]=0.0;
-        Algebra::Do<__nvoigt__>::func([this](int i){mvv[i]=0.0;});
-        T_part=0.0;
-    }
-
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDNVT::init()
+{
+    pre_init();
+    
+    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
+    dynamic->init();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void MDNVT::fin()
 {
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void MDNVT::run(int nsteps)
 {    
-    init();
-    
-    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
-    
-    dynamic->init();
-    
-    
     ff->reset();
     ff->force_calc_timer();
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
@@ -346,12 +348,6 @@ void MDNVT::run(int nsteps)
     update_x_d_final(fac_x_d);
     
     thermo.fin();
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    fin();
-
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -623,10 +619,27 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
         __self->md->atoms=__atoms;
         __self->md->ff=__ff;
         
+        
+        try
+        {
+            __self->md->init();
+        }
+        catch(std::string err_msg)
+        {
+            __self->md->fin();
+            __self->md->ff=NULL;
+            __self->md->atoms=NULL;
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
+        
         __self->md->run(f.val<1>());
         
+        __self->md->fin();
         __self->md->ff=NULL;
         __self->md->atoms=NULL;
+        
         
         Py_RETURN_NONE;
     };

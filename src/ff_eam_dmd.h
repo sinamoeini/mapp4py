@@ -2,7 +2,8 @@
 #define __MAPP__ff_eam_dmd__
 #include "ff_dmd.h"
 namespace MAPP_NS
-{    
+{
+    template<class> class DMDVec;
     class ForceFieldEAMDMD : public ForceFieldDMD
     {
     private:
@@ -17,7 +18,7 @@ namespace MAPP_NS
         Vec<type0>* E_ptr;
         Vec<type0>* dE_ptr;
         Vec<type0>* ddE_ptr;
-        Vec<type0>* mu_ptr;
+        DMDVec<type0>* mu_ptr;
         Vec<type0>* cv_ptr;
         
         Vec<type0>* vec0;

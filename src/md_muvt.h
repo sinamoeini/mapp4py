@@ -15,11 +15,13 @@ namespace MAPP_NS
     protected:
         void update_x_d__x(type0);
         void pre_run_chk(AtomsMD*,ForceFieldMD*);
+        void pre_init();
     public:
         MDMuVT(type0,type0,type0,std::string,int);
         ~MDMuVT();
+        void init();
         void run(int);
-        
+        void fin();
         
         typedef struct
         {

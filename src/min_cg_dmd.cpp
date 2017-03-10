@@ -83,6 +83,24 @@ void MinCGDMD::init()
     uvecs[1]=atoms->alpha;
 }
 /*--------------------------------------------
+ finishing minimization
+ --------------------------------------------*/
+void MinCGDMD::fin()
+{
+    uvecs[1]=NULL;
+    uvecs[0]=NULL;
+    
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
+    
+    f0.~VecTens();
+    x0.~VecTens();
+    h.~VecTens();
+    f.~VecTens();
+    x.~VecTens();
+}
+/*--------------------------------------------
  min
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
@@ -101,24 +119,6 @@ void MinCGDMD::run(int nsteps)
     LineSearchBackTrack* __ls=new LineSearchBackTrack();
     run(__ls,nsteps);
     delete __ls;
-}
-/*--------------------------------------------
- finishing minimization
- --------------------------------------------*/
-void MinCGDMD::fin()
-{
-    uvecs[1]=NULL;
-    uvecs[0]=NULL;
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    
-    f0.~VecTens();
-    x0.~VecTens();
-    h.~VecTens();
-    f.~VecTens();
-    x.~VecTens();
 }
 /*--------------------------------------------
  
@@ -363,8 +363,23 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         __self->min->atoms=__atoms;
         __self->min->ff=__ff;
         
+        
+        try
+        {
+            __self->min->init();
+        }
+        catch(std::string err_msg)
+        {
+            __self->min->fin();
+            __self->min->ff=NULL;
+            __self->min->atoms=NULL;
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
         __self->min->run(f.val<1>());
         
+        __self->min->fin();
         __self->min->ff=NULL;
         __self->min->atoms=NULL;
         

@@ -71,26 +71,6 @@ void MinLBFGSDMD::init()
     uvecs[1]=atoms->alpha;
 }
 /*--------------------------------------------
- run
- --------------------------------------------*/
-void MinLBFGSDMD::run(int nsteps)
-{
-    if(ls)
-    {
-        if(dynamic_cast<LineSearchGoldenSection*>(ls))
-            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBrent*>(ls))
-            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBackTrack*>(ls))
-            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    }
-    LineSearchBrent* __ls=new LineSearchBrent();
-    run(__ls,nsteps);
-    delete __ls;
-}
-/*--------------------------------------------
  fin after a run
  --------------------------------------------*/
 void MinLBFGSDMD::fin()
@@ -115,6 +95,26 @@ void MinLBFGSDMD::fin()
     h.~VecTens();
     f.~VecTens();
     x.~VecTens();
+}
+/*--------------------------------------------
+ run
+ --------------------------------------------*/
+void MinLBFGSDMD::run(int nsteps)
+{
+    if(ls)
+    {
+        if(dynamic_cast<LineSearchGoldenSection*>(ls))
+            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBrent*>(ls))
+            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+        
+        if(dynamic_cast<LineSearchBackTrack*>(ls))
+            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    }
+    LineSearchBrent* __ls=new LineSearchBrent();
+    run(__ls,nsteps);
+    delete __ls;
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

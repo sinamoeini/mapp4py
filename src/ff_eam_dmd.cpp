@@ -723,7 +723,8 @@ void ForceFieldEAMDMD::init()
     pre_init();
     set_temp(300.0);
     
-    mu_ptr=new Vec<type0>(atoms,c_dim,"mu");
+    
+    mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
     cv_ptr=new Vec<type0>(atoms,1);
     E_ptr=new Vec<type0>(atoms,c_dim);
     dE_ptr=new Vec<type0>(atoms,c_dim);
@@ -746,7 +747,8 @@ void ForceFieldEAMDMD::fin()
     delete cv_ptr;
     delete mu_ptr;
     
-    mu_ptr=dE_ptr=ddE_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
+    dE_ptr=ddE_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
+    mu_ptr=NULL;
     post_fin();
 }
 /*--------------------------------------------

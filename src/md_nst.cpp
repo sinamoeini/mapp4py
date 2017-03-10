@@ -223,10 +223,9 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::init()
+void MDNST::pre_init()
 {
-    MDNVT::init();
-    
+    MDNVT::pre_init();
     ndof_baro=0;
     T_baro=0.0;
     Algebra::DoLT<__dim__>::func([this](int i,int j)
@@ -254,11 +253,6 @@ void MDNST::init()
         S_dev[i][i]=S[i][i]-s_hyd;
     });
 }
-/*--------------------------------------------
- 
---------------------------------------------*/
-void MDNST::fin()
-{}
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -294,14 +288,26 @@ void MDNST::update_V_H()
 /*--------------------------------------------
  
  --------------------------------------------*/
+void MDNST::init()
+{
+    pre_init();
+    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof},{});
+    dynamic->init();
+}
+/*--------------------------------------------
+ 
+--------------------------------------------*/
+void MDNST::fin()
+{
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void MDNST::run(int nsteps)
 {
-    init();
-    
-    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof},{});
-    
-    dynamic->init();
-    
     ff->reset();
     ff->force_calc_timer();
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
@@ -382,11 +388,6 @@ void MDNST::run(int nsteps)
     update_x_d_final(fac_x_d);
     
     thermo.fin();
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    fin();
 }
 
 

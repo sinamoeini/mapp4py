@@ -52,10 +52,6 @@ using namespace MAPP_NS;
 template<class C>
 void MinLBFGS::run(C* ls,int nsteps)
 {
-    init();
-    
-    
-    
     force_calc();
     type0 S[__dim__][__dim__];
     
@@ -165,8 +161,6 @@ void MinLBFGS::run(C* ls,int nsteps)
     }
 
     thermo.fin();
-    fin();
-    
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
 }
 #endif

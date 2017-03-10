@@ -78,15 +78,34 @@ void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDMuVT::run(int nsteps)
+void MDMuVT::pre_init()
 {
-    
-    init();
+    MDNVT::pre_init();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDMuVT::init()
+{
+    pre_init();
     
     dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
-    
     dynamic->init();
-    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDMuVT::fin()
+{
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDMuVT::run(int nsteps)
+{
     PGCMC gcmc(atoms,ff,dynamic,1,gas_elem,mu,T,seed);
     gcmc.init();
                
@@ -155,11 +174,6 @@ void MDMuVT::run(int nsteps)
     thermo.fin();
     
     gcmc.fin();
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    fin();
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

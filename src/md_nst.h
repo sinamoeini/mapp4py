@@ -52,6 +52,7 @@ namespace MAPP_NS
         void update_V_H();
         void change_dt(type0);
         void pre_run_chk(AtomsMD*,ForceFieldMD*);
+        void pre_init();
     public:
         MDNST(type0(&)[__dim__][__dim__],type0,type0);
         virtual ~MDNST();

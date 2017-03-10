@@ -43,12 +43,13 @@ namespace MAPP_NS
         void update_x_d_final(type0);
         virtual void change_dt(type0);
         virtual void pre_run_chk(AtomsMD*,ForceFieldMD*);
+        void pre_init();
     public:
         MDNVT(type0,type0);
         virtual ~MDNVT();
-        void init();
+        virtual void init();
         virtual void run(int);
-        void fin();
+        virtual void fin();
         
         typedef struct
         {

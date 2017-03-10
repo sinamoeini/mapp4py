@@ -82,11 +82,10 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
+#include "write_cfg_dmd.h"
 template<class C>
 void MinCGDMD::run(C* ls,int nsteps)
 {
-    init();
-    
     force_calc();
     type0 S[__dim__][__dim__];
     
@@ -151,6 +150,7 @@ void MinCGDMD::run(C* ls,int nsteps)
             thermo.print(istep+1);
         }
         
+        
         if(err) continue;
         
         f_f=f*f;
@@ -169,8 +169,6 @@ void MinCGDMD::run(C* ls,int nsteps)
     }
 
     thermo.fin();
-    fin();
-    
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
 }
 #endif

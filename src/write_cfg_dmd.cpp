@@ -6,13 +6,13 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-WriteCFGDMD::WriteCFGDMD(AtomsDMD* __atoms,
-const char* __pattern,
-bool __sort):
-atoms(__atoms),
-pattern(__pattern),
+WriteCFGDMD::WriteCFGDMD(const std::string& __pattern,
+std::string* user_vec_names,size_t nuservecs,bool __sort):
+Write({"x","alpha","c"},user_vec_names,nuservecs),
+pattern(__pattern+".%09d.cfg"),
 sort(__sort)
 {
+    if(sort) add_to_default("id");
 }
 /*--------------------------------------------
  
@@ -37,23 +37,30 @@ void WriteCFGDMD::write_header(FILE* fp)
     fprintf(fp,".NO_VELOCITY.\n");
     int nelems=static_cast<int>(atoms->elements.nelems);
     
-    fprintf(fp,"entry_count = %d\n",__dim__+2*nelems);
+    fprintf(fp,"entry_count = %d\n",ndims);
     
     int icmp=0;
     for(int i=0;i<nelems;i++)
         fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,"alpha",i);
     for(int i=0;i<nelems;i++)
         fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,"c",i);
+    
+    vec** usr_vecs=vecs+ndef_vecs;
+    
+    
+    for(int i=0;i<nusr_vecs;i++)
+    {
+        int d=usr_vecs[i]->ndim_dump();
+        for(int j=0;j<d;j++)
+            fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,usr_vecs[i]->name,j);
+    }
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void WriteCFGDMD::write_body_sort(FILE* fp)
 {
-    atoms->x->gather_dump();
-    atoms->alpha->gather_dump();
-    atoms->c->gather_dump();
-    atoms->id->gather_dump();
+    gather(vecs,nvecs);
     
     if(atoms->comm_rank==0)
     {
@@ -71,10 +78,11 @@ void WriteCFGDMD::write_body_sort(FILE* fp)
         int curr_elem=-1;
         int __curr_elem;
         type0* c=atoms->c->begin_dump();
-        type0* __c;
+        type0* __c=c;
         type0 max_c;
         unsigned int iatm;
         
+        vec** usr_vecs=vecs+ndef_vecs;
         for(int i=0;i<natms;i++)
         {
             iatm=id_map[i];
@@ -83,10 +91,10 @@ void WriteCFGDMD::write_body_sort(FILE* fp)
             max_c=*__c;
             __curr_elem=0;
             for(int j=1;j<nelems;j++)
-                if(*__c>max_c)
+                if(__c[j]>max_c)
                 {
-                    max_c=*c;
-                    __curr_elem=i;
+                    max_c=__c[j];
+                    __curr_elem=j;
                 }
             
             if(__curr_elem!=curr_elem)
@@ -98,8 +106,13 @@ void WriteCFGDMD::write_body_sort(FILE* fp)
             }
             
             atoms->x->print(fp,iatm);
-            atoms->c->print(fp,iatm);
             atoms->alpha->print(fp,iatm);
+            atoms->c->print(fp,iatm);
+            
+            for(int j=0;j<nusr_vecs;j++)
+                usr_vecs[j]->print(fp,iatm);
+            
+            fprintf(fp,"\n");
         }
         
         for(int i=0;i<nelems;i++)
@@ -114,20 +127,14 @@ void WriteCFGDMD::write_body_sort(FILE* fp)
     }
     
     
-    
-    atoms->id->clear_dump();
-    atoms->c->clear_dump();
-    atoms->alpha->clear_dump();
-    atoms->c->clear_dump();    
+    release(vecs,nvecs);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void WriteCFGDMD::write_body(FILE* fp)
 {
-    atoms->x->gather_dump();
-    atoms->alpha->gather_dump();
-    atoms->c->gather_dump();
+    gather(vecs,nvecs);
     
     if(atoms->comm_rank==0)
     {
@@ -143,18 +150,23 @@ void WriteCFGDMD::write_body(FILE* fp)
         type0* c=atoms->c->begin_dump();
         type0* __c;
         type0 max_c;
-        
+        vec** usr_vecs=vecs+ndef_vecs;
         for(int i=0;i<natms;i++)
         {
+            
+            
+            
             __c=c+i*nelems;
             max_c=*__c;
             __curr_elem=0;
             for(int j=1;j<nelems;j++)
-                if(*__c>max_c)
+                if(__c[j]>max_c)
                 {
-                    max_c=*c;
-                    __curr_elem=i;
+                    max_c=__c[j];
+                    __curr_elem=j;
                 }
+            
+            
             if(__curr_elem!=curr_elem)
             {
                 curr_elem=__curr_elem;
@@ -164,8 +176,12 @@ void WriteCFGDMD::write_body(FILE* fp)
             }
             
             atoms->x->print(fp,i);
-            atoms->c->print(fp,i);
             atoms->alpha->print(fp,i);
+            atoms->c->print(fp,i);
+            for(int j=0;j<nusr_vecs;j++)
+                usr_vecs[j]->print(fp,i);
+            
+            fprintf(fp,"\n");
         }
         
         for(int i=0;i<nelems;i++)
@@ -177,19 +193,29 @@ void WriteCFGDMD::write_body(FILE* fp)
         
         delete [] elem_printed;
     }
-    
-    
-    
-    atoms->c->clear_dump();
-    atoms->alpha->clear_dump();
-    atoms->x->clear_dump();
+
+    release(vecs,nvecs);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void WriteCFGDMD::write(int stps)
 {
-    char* file_name=Print::vprintf("%s.%09d.cfg",pattern,stps);
+    /*
+     we have a list of vectors
+        defaults 
+        user defined ones 
+     
+     
+     some vectors will just send their regular 
+     others will need preparing 
+     
+     
+     */
+    
+    
+    char* file_name=Print::vprintf(pattern.c_str(),stps);
+    
     FILE* fp=NULL;
     if(atoms->comm_rank==0) fp=fopen(file_name,"w");
     delete [] file_name;
@@ -202,6 +228,5 @@ void WriteCFGDMD::write(int stps)
     if(atoms->comm_rank==0)
         fclose(fp);
 }
-
 
 

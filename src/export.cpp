@@ -1,4 +1,4 @@
-#include "write.h"
+#include "export.h"
 #include "atoms_styles.h"
 #include <string>
 #include "memory.h"
@@ -6,7 +6,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-Write::Write(std::initializer_list<const char*> __def_vec_names,std::string* __user_vec_names,size_t __nuser_vecs):
+Export::Export(std::initializer_list<const char*> __def_vec_names,std::string* __user_vec_names,size_t __nuser_vecs):
 atoms(NULL),
 nvecs(0),
 vecs(NULL),
@@ -77,7 +77,7 @@ vec_names(NULL)
 /*--------------------------------------------
  
  --------------------------------------------*/
-Write::~Write()
+Export::~Export()
 {
     delete [] *vec_names;
     delete [] vec_names;
@@ -86,7 +86,7 @@ Write::~Write()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Write::add_to_default(const char* def_name)
+void Export::add_to_default(const char* def_name)
 {
     ptrdiff_t tot_len=(strchr(vec_names[nvecs-1],'\0')-vec_names[0])+1;
     size_t def_name_len=std::strlen(def_name)+1;
@@ -113,7 +113,7 @@ void Write::add_to_default(const char* def_name)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Write::init()
+void Export::init()
 {
     
     
@@ -156,19 +156,12 @@ void Write::init()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Write::fin()
+void Export::fin()
 {}
 /*--------------------------------------------
  
  --------------------------------------------*/
-Write::Write(Atoms* __atoms):
-atoms(__atoms)
-{
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void Write::gather(vec** vecs,int nvecs)
+void Export::gather(vec** vecs,int nvecs)
 {
     
     for(int i=0;i<nvecs;i++)
@@ -208,7 +201,7 @@ void Write::gather(vec** vecs,int nvecs)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Write::release(vec** vecs,int nvecs)
+void Export::release(vec** vecs,int nvecs)
 {
     for(int i=0;i<nvecs;i++)
         vecs[i]->fin_dump();

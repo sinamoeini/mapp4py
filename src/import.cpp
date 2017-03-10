@@ -9,14 +9,14 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-Read::Read(MPI_Comm& __world):
+Import::Import(MPI_Comm& __world):
 world(__world)
 {
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-Read::~Read()
+Import::~Import()
 {
 
 }

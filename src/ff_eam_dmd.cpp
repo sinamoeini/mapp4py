@@ -77,14 +77,14 @@ N(atoms->N)
     {
         for(size_t i=0;i<nr;i++)
             r_rho_arr[elem_i][0][i][0]*=static_cast<type0>(i)*dr;
-        ReadEAM::interpolate(nr,dr,r_rho_arr[elem_i][0]);
+        ImportEAM::interpolate(nr,dr,r_rho_arr[elem_i][0]);
         for(elem_type elem_j=1;elem_j<nelems;elem_j++)
         {
             if(r_rho_arr[elem_i][elem_j]!=r_rho_arr[elem_i][elem_j-1])
             {
                 for(size_t i=0;i<nr;i++)
                     r_rho_arr[elem_i][elem_j][i][0]*=static_cast<type0>(i)*dr;
-                ReadEAM::interpolate(nr,dr,r_rho_arr[elem_i][elem_j]);
+                ImportEAM::interpolate(nr,dr,r_rho_arr[elem_i][elem_j]);
             }
         }
     }
@@ -143,7 +143,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         type0(*** rho)[4]=NULL;
         try
         {
-            ReadEAM::funcfl(nelems,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ImportEAM::funcfl(nelems,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {
@@ -223,7 +223,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         type0(*** rho)[4]=NULL;
         try
         {
-            ReadEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ImportEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {
@@ -302,7 +302,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         type0(*** rho)[4]=NULL;
         try
         {
-            ReadEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+            ImportEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
         }
         catch(char* err_msg)
         {

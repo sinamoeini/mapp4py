@@ -3,7 +3,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 ReadEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
+type0 ImportEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
 {
     type0 coef0,coef1,coef2,coef3,tmp;
     coef0=arr[k];
@@ -52,7 +52,7 @@ type0 ReadEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
 /*--------------------------------------------
 
  --------------------------------------------*/
-void ReadEAM::interpolate(size_t n,type0 delta,type0(*spline)[4])
+void ImportEAM::interpolate(size_t n,type0 delta,type0(*spline)[4])
 {
     spline[0][1]=spline[1][0]-spline[0][0];
     spline[1][1]=0.5*(spline[2][0]-spline[0][0]);
@@ -77,7 +77,7 @@ void ReadEAM::interpolate(size_t n,type0 delta,type0(*spline)[4])
 /*--------------------------------------------
 
  --------------------------------------------*/
-void ReadEAM::interpolate(size_t n,type0 delta,type0(*spline)[5])
+void ImportEAM::interpolate(size_t n,type0 delta,type0(*spline)[5])
 {
     spline[0][1]=spline[1][0]-spline[0][0];
     spline[1][1]=0.5*(spline[2][0]-spline[0][0]);
@@ -109,7 +109,7 @@ void ReadEAM::interpolate(size_t n,type0 delta,type0(*spline)[5])
 /*--------------------------------------------
 
  --------------------------------------------*/
-void ReadEAM::interpolate(size_t n,type0 delta,type0(*spline)[7])
+void ImportEAM::interpolate(size_t n,type0 delta,type0(*spline)[7])
 {
     spline[0][1]=spline[1][0]-spline[0][0];
     spline[1][1]=0.5*(spline[2][0]-spline[0][0]);
@@ -140,7 +140,7 @@ void ReadEAM::interpolate(size_t n,type0 delta,type0(*spline)[7])
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ReadEAM::read_double(type0* buff,size_t n,FileReader& fr,char*& line,size_t& line_cpcty,char**& args,size_t& args_cpcty)
+void ImportEAM::read_double(type0* buff,size_t n,FileReader& fr,char*& line,size_t& line_cpcty,char**& args,size_t& args_cpcty)
 {
     size_t i=0;
     size_t nargs;
@@ -160,7 +160,7 @@ void ReadEAM::read_double(type0* buff,size_t n,FileReader& fr,char*& line,size_t
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ReadEAM::skip(size_t n,FileReader& fr,char*& line,size_t& line_cpcty)
+void ImportEAM::skip(size_t n,FileReader& fr,char*& line,size_t& line_cpcty)
 {
     size_t i=0;
     size_t nargs;

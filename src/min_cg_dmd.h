@@ -82,7 +82,6 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-#include "write_cfg_dmd.h"
 template<class C>
 void MinCGDMD::run(C* ls,int nsteps)
 {

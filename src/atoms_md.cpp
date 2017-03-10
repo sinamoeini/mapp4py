@@ -240,7 +240,7 @@ void AtomsMD::setup_tp_methods()
     ForceFieldLJ::ml_new(methods[2]);
     ForceFieldEAM::ml_new(methods[3],methods[4],methods[5]);
     ForceFieldFS::ml_new(methods[6]);
-    ReadCFGMD::ml_import(methods[7]);
+    ImportCFGMD::ml_import(methods[7]);
 }
 /*--------------------------------------------
  

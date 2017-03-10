@@ -1,10 +1,10 @@
-#ifndef __MAPP__read_eam__
-#define __MAPP__read_eam__
+#ifndef __MAPP__import_eam__
+#define __MAPP__import_eam__
 #include "global.h"
 #include "import.h"
 namespace MAPP_NS
 {
-    class ReadEAM
+    class ImportEAM
     {
     private:
         static void read_double(type0*,size_t,FileReader&,char*&,size_t&,char**&,size_t&);
@@ -46,7 +46,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<size_t N0>
-void ReadEAM::set_cuttoff(size_t nelems,type0 dr,size_t nr,type0(*** r_phi)[N0],type0(*** rho)[N0],type0** r_c)
+void ImportEAM::set_cuttoff(size_t nelems,type0 dr,size_t nr,type0(*** r_phi)[N0],type0(*** rho)[N0],type0** r_c)
 {
     
     for(size_t i=0;i<nelems;i++)
@@ -62,7 +62,7 @@ void ReadEAM::set_cuttoff(size_t nelems,type0 dr,size_t nr,type0(*** r_phi)[N0],
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ReadEAM::funcfl(size_t nfiles,std::string* files,
+void ImportEAM::funcfl(size_t nfiles,std::string* files,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)
@@ -342,7 +342,7 @@ type0**& r_c,MPI_Comm world)
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ReadEAM::setfl(size_t nelems,char** elems,std::string file,
+void ImportEAM::setfl(size_t nelems,char** elems,std::string file,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)
@@ -598,7 +598,7 @@ type0**& r_c,MPI_Comm world)
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ReadEAM::fs(size_t nelems,char** elems,std::string file,
+void ImportEAM::fs(size_t nelems,char** elems,std::string file,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)

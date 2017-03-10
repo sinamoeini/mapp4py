@@ -1,4 +1,4 @@
-#include "write_cfg_dmd.h"
+#include "export_cfg.h"
 #include "atoms_dmd.h"
 #include "elements.h"
 #include "print.h"
@@ -6,9 +6,9 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-WriteCFGDMD::WriteCFGDMD(const std::string& __pattern,
+ExportCFGDMD::ExportCFGDMD(const std::string& __pattern,
 std::string* user_vec_names,size_t nuservecs,bool __sort):
-Write({"x","alpha","c"},user_vec_names,nuservecs),
+Export({"x","alpha","c"},user_vec_names,nuservecs),
 pattern(__pattern+".%09d.cfg"),
 sort(__sort)
 {
@@ -17,13 +17,13 @@ sort(__sort)
 /*--------------------------------------------
  
  --------------------------------------------*/
-WriteCFGDMD::~WriteCFGDMD()
+ExportCFGDMD::~ExportCFGDMD()
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void WriteCFGDMD::write_header(FILE* fp)
+void ExportCFGDMD::write_header(FILE* fp)
 {
     if(atoms->comm_rank) return;
     
@@ -58,7 +58,7 @@ void WriteCFGDMD::write_header(FILE* fp)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void WriteCFGDMD::write_body_sort(FILE* fp)
+void ExportCFGDMD::write_body_sort(FILE* fp)
 {
     gather(vecs,nvecs);
     
@@ -132,7 +132,7 @@ void WriteCFGDMD::write_body_sort(FILE* fp)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void WriteCFGDMD::write_body(FILE* fp)
+void ExportCFGDMD::write_body(FILE* fp)
 {
     gather(vecs,nvecs);
     
@@ -199,7 +199,7 @@ void WriteCFGDMD::write_body(FILE* fp)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void WriteCFGDMD::write(int stps)
+void ExportCFGDMD::write(int stps)
 {
     /*
      we have a list of vectors

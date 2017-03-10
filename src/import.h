@@ -1,16 +1,16 @@
-#ifndef __MAPP__read__
-#define __MAPP__read__
+#ifndef __MAPP__import__
+#define __MAPP__import__
 #include <mpi.h>
 namespace MAPP_NS
 {
-    class Read
+    class Import
     {
     private:
     protected:
         MPI_Comm& world;
     public:
-        Read(MPI_Comm&);
-        virtual ~Read();
+        Import(MPI_Comm&);
+        virtual ~Import();
 
     };
 }

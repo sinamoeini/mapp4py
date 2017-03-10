@@ -173,6 +173,6 @@ void AtomsDMD::setup_tp_methods()
 {
     ml_strain(methods[0]);
     ForceFieldEAMDMD::ml_new(methods[1],methods[2],methods[3]);
-    ReadCFGDMD::ml_import(methods[4]);
+    ImportCFGDMD::ml_import(methods[4]);
 }
 

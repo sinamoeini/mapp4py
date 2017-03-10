@@ -1,10 +1,10 @@
-#ifndef __MAPP__write_cfg_dmd__
-#define __MAPP__write_cfg_dmd__
-#include "write.h"
+#ifndef __MAPP__export_cfg__
+#define __MAPP__export_cfg__
+#include "export.h"
 
 namespace MAPP_NS
 {
-    class WriteCFGDMD:public Write
+    class ExportCFGDMD:public Export
     {
     private:
         
@@ -12,8 +12,8 @@ namespace MAPP_NS
         bool sort;
     protected:
     public:
-        WriteCFGDMD(const std::string&,std::string*,size_t,bool);
-        ~WriteCFGDMD();
+        ExportCFGDMD(const std::string&,std::string*,size_t,bool);
+        ~ExportCFGDMD();
         void write_header(FILE*);
         void write_body_sort(FILE*);
         void write_body(FILE*);

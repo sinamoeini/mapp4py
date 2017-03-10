@@ -16,20 +16,20 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ReadCFG::ReadCFG(MPI_Comm& world):
-Read(world)
+ImportCFG::ImportCFG(MPI_Comm& world):
+Import(world)
 {
 }
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ReadCFG::~ReadCFG()
+ImportCFG::~ImportCFG()
 {
 }
 /*--------------------------------------------
  reads the header of the cfg file
  --------------------------------------------*/
-void ReadCFG::read_header(Atoms* atoms,FileReader& freader,char*& line,size_t& line_cpcty)
+void ImportCFG::read_header(Atoms* atoms,FileReader& freader,char*& line,size_t& line_cpcty)
 {
     type0 basic_length=1.0;
     type0 H0[__dim__][__dim__];
@@ -215,7 +215,7 @@ void ReadCFG::read_header(Atoms* atoms,FileReader& freader,char*& line,size_t& l
 /*--------------------------------------------
  reads the atom section of the cfg file
  --------------------------------------------*/
-void ReadCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_t& line_cpcty)
+void ImportCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_t& line_cpcty)
 {
     type0 (&s_lo)[__dim__]=atoms->comm.s_lo;
     type0 (&s_hi)[__dim__]=atoms->comm.s_hi;
@@ -365,7 +365,7 @@ void ReadCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_t&
 /*--------------------------------------------
  reads the atom section of the cfg file
  --------------------------------------------*/
-void ReadCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_t& line_cpcty)
+void ImportCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_t& line_cpcty)
 {
     type0 (&s_lo)[__dim__]=atoms->comm.s_lo;
     type0 (&s_hi)[__dim__]=atoms->comm.s_hi;
@@ -484,20 +484,20 @@ void ReadCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_t&
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ReadCFGMD::ReadCFGMD(MPI_Comm& world):
-ReadCFG(world)
+ImportCFGMD::ImportCFGMD(MPI_Comm& world):
+ImportCFG(world)
 {
 }
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ReadCFGMD::~ReadCFGMD()
+ImportCFGMD::~ImportCFGMD()
 {
 }
 /*--------------------------------------------
  reads the atom section of the cfg file
  --------------------------------------------*/
-AtomsMD* ReadCFGMD::operator()(const char* file)
+AtomsMD* ImportCFGMD::operator()(const char* file)
 {
     FileReader* pfreader;
     try
@@ -599,7 +599,7 @@ AtomsMD* ReadCFGMD::operator()(const char* file)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ReadCFGMD::ml_import(PyMethodDef& tp_methods)
+void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
@@ -616,7 +616,7 @@ void ReadCFGMD::ml_import(PyMethodDef& tp_methods)
         if(f.val<1>().ob)
             world=reinterpret_cast<MAPP_MPI::Object*>(f.val<1>().ob)->world;
         
-        ReadCFGMD read(world);
+        ImportCFGMD read(world);
         AtomsMD* atoms=NULL;
         try
         {
@@ -636,20 +636,20 @@ void ReadCFGMD::ml_import(PyMethodDef& tp_methods)
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ReadCFGDMD::ReadCFGDMD(MPI_Comm& world):
-ReadCFG(world)
+ImportCFGDMD::ImportCFGDMD(MPI_Comm& world):
+ImportCFG(world)
 {
 }
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ReadCFGDMD::~ReadCFGDMD()
+ImportCFGDMD::~ImportCFGDMD()
 {
 }
 /*--------------------------------------------
  reads the atom section of the cfg file
  --------------------------------------------*/
-AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
+AtomsDMD* ImportCFGDMD::operator()(int N,const char* file)
 {
     FileReader* pfreader;
     try
@@ -841,7 +841,7 @@ AtomsDMD* ReadCFGDMD::operator()(int N,const char* file)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ReadCFGDMD::ml_import(PyMethodDef& tp_methods)
+void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
@@ -859,7 +859,7 @@ void ReadCFGDMD::ml_import(PyMethodDef& tp_methods)
         if(f.val<2>().ob)
             world=reinterpret_cast<MAPP_MPI::Object*>(f.val<2>().ob)->world;
         
-        ReadCFGDMD read(world);
+        ImportCFGDMD read(world);
         AtomsDMD* atoms=NULL;
         try
         {

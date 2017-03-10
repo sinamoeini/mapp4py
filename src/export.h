@@ -1,9 +1,9 @@
-#ifndef __MAPP__write__
-#define __MAPP__write__
+#ifndef __MAPP__export__
+#define __MAPP__export__
 #include <iostream>
 namespace MAPP_NS
 {
-    class Write
+    class Export
     {
     private:
         
@@ -15,10 +15,9 @@ namespace MAPP_NS
         int nusr_vecs;
         int ndims;
     public:
-        Write(class Atoms*);
-        Write(std::initializer_list<const char*>,std::string*,size_t);
+        Export(std::initializer_list<const char*>,std::string*,size_t);
         void add_to_default(const char*);
-        ~Write();
+        ~Export();
         class Atoms* atoms;
         void init();
         void fin();

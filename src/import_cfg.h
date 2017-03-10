@@ -1,5 +1,5 @@
-#ifndef __MAPP__read_cfg__
-#define __MAPP__read_cfg__
+#ifndef __MAPP__import_cfg__
+#define __MAPP__import_cfg__
 #include "import.h"
 #include "global.h"
 #include <stdio.h>
@@ -7,7 +7,7 @@
 typedef struct PyMethodDef PyMethodDef;
 namespace MAPP_NS
 {
-    class ReadCFG : public Read
+    class ImportCFG : public Import
     {
     private:
     protected:
@@ -25,20 +25,20 @@ namespace MAPP_NS
         void read_body_ext(class Atoms*,FileReader&,char*&,size_t&);
         void read_body_std(class Atoms*,FileReader&,char*&,size_t&);
     public:
-        ReadCFG(MPI_Comm&);
-        ~ReadCFG();
+        ImportCFG(MPI_Comm&);
+        ~ImportCFG();
     };
 }
 
 namespace MAPP_NS
 {
-    class ReadCFGMD : public ReadCFG
+    class ImportCFGMD : public ImportCFG
     {
     private:
     protected:
     public:
-        ReadCFGMD(MPI_Comm&);
-        ~ReadCFGMD();
+        ImportCFGMD(MPI_Comm&);
+        ~ImportCFGMD();
         class AtomsMD* operator()(const char*);
         static void ml_import(PyMethodDef&);
     };
@@ -46,13 +46,13 @@ namespace MAPP_NS
 
 namespace MAPP_NS
 {
-    class ReadCFGDMD : public ReadCFG
+    class ImportCFGDMD : public ImportCFG
     {
     private:
     protected:
     public:
-        ReadCFGDMD(MPI_Comm&);
-        ~ReadCFGDMD();
+        ImportCFGDMD(MPI_Comm&);
+        ~ImportCFGDMD();
         class AtomsDMD* operator()(int,const char*);
         static void ml_import(PyMethodDef&);
     };

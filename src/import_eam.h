@@ -1,7 +1,7 @@
 #ifndef __MAPP__read_eam__
 #define __MAPP__read_eam__
 #include "global.h"
-#include "read.h"
+#include "import.h"
 namespace MAPP_NS
 {
     class ReadEAM

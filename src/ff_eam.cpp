@@ -4,7 +4,7 @@
 #include "elements.h"
 #include "memory.h"
 #include "api.h"
-#include "read_eam.h"
+#include "import_eam.h"
 #include "dynamic_md.h"
 #include "gcmc.h"
 using namespace MAPP_NS;

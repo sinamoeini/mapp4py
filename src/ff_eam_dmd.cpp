@@ -7,7 +7,7 @@
 #include "atoms_dmd.h"
 #include "MAPP.h"
 #include "dynamic_dmd.h"
-#include "read_eam.h"
+#include "import_eam.h"
 #include <limits>
 #define PI_IN_SQ 0.564189583547756286948079451561
 using namespace MAPP_NS;

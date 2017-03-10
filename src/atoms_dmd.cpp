@@ -79,7 +79,7 @@ AtomsDMD& AtomsDMD::operator=(const Atoms& r)
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
 #include "ff_styles.h"
-#include "read_styles.h"
+#include "import_styles.h"
 PyObject* AtomsDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));

@@ -4,7 +4,7 @@
  --------------------------------------------*/
 #include "elements.h"
 #include <stdlib.h>
-#include "read_cfg.h"
+#include "import_cfg.h"
 #include "xmath.h"
 #include "memory.h"
 #include "atoms_md.h"

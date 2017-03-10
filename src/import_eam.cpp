@@ -1,4 +1,4 @@
-#include "read_eam.h"
+#include "import_eam.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  

@@ -1,6 +1,6 @@
 #ifndef __MAPP__read_cfg__
 #define __MAPP__read_cfg__
-#include "read.h"
+#include "import.h"
 #include "global.h"
 #include <stdio.h>
 

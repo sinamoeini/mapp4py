@@ -5,9 +5,9 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-ExportCFGDMD::ExportCFGDMD(int __nevery,const std::string& __pattern,
+ExportCFGDMD::ExportCFGDMD(const std::string& __pattern,int __nevery,
 std::string* user_vec_names,size_t nuservecs,bool __sort):
-Export({"x","alpha","c"},user_vec_names,nuservecs),
+Export(__nevery,{"x","alpha","c"},user_vec_names,nuservecs),
 pattern(__pattern+".%09d.cfg"),
 sort(__sort)
 {
@@ -262,10 +262,12 @@ PyObject* ExportCFGDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds
  --------------------------------------------*/
 int ExportCFGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<int,std::string,std::string*,bool> f("__init__",{"nevery","file_pattern","vector_names","sort"});
-    f.noptionals=2;
+    FuncAPI<std::string,int,std::string*,bool> f("__init__",{"file_pattern","nevery","extra_vecs","sort"});
+    f.noptionals=3;
+    f.logics<1>()[0]=VLogics("gt",0);
+    
     f.val<3>()=false;
-    f.logics<0>()[0]=VLogics("gt",0);
+    f.val<1>()=10000;
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);

@@ -6,29 +6,22 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-Export::Export(std::initializer_list<const char*> __def_vec_names,std::string* __user_vec_names,size_t __nuser_vecs):
+Export::Export(int __nevery,
+std::initializer_list<const char*> __def_vec_names,
+std::string* __user_vec_names,size_t __nuser_vecs):
+nevery(__nevery),
 atoms(NULL),
 nvecs(0),
 vecs(NULL),
 vec_names(NULL)
 {
 
-    
-    size_t tot_len=0;
     const char* const* ___def_vec_names=__def_vec_names.begin();
-    for(size_t i=0;i<__def_vec_names.size();i++)
-        tot_len+=std::strlen(___def_vec_names[i])+1;
     
     bool* valid_user_vecs=NULL;
     Memory::alloc(valid_user_vecs,__nuser_vecs);
     for(size_t i=0;i<__nuser_vecs;i++) valid_user_vecs[i]=true;
-    
-    
-    
     nusr_vecs=0;
-    
-    
-    
     for(size_t i=0;i<__nuser_vecs;i++)
     {
         
@@ -42,36 +35,22 @@ vec_names(NULL)
         
         
         if(valid_user_vecs[i])
-        {
-            tot_len+=std::strlen(__user_vec_names[i].c_str())+1;
             nusr_vecs++;
-        }
     }
+    
     ndef_vecs=static_cast<int>(__def_vec_names.size());
     nvecs=nusr_vecs+ndef_vecs;
     vecs=new vec*[nvecs];
-    vec_names=new char*[nvecs];
-    char* buff=new char[tot_len];
+    vec_names=new std::string[nvecs];
     nvecs=0;
-    
     for(size_t i=0;i<__def_vec_names.size();i++)
-    {
-        tot_len=std::strlen(___def_vec_names[i])+1;
-        memcpy(buff,___def_vec_names[i],tot_len*sizeof(char));
-        vec_names[nvecs++]=buff;
-        buff+=tot_len;
-    }
+        vec_names[nvecs++]=___def_vec_names[i];
     
     for(size_t i=0;i<__nuser_vecs;i++)
     {
         if(!valid_user_vecs[i]) continue;
-        
-        tot_len=__user_vec_names[i].size()+1;
-        memcpy(buff,__user_vec_names[i].c_str(),tot_len*sizeof(char));
-        vec_names[nvecs++]=buff;
-        buff+=tot_len;
+        vec_names[nvecs++]=__user_vec_names[i];
     }
-    
     Memory::dealloc(valid_user_vecs);
 }
 /*--------------------------------------------
@@ -79,7 +58,6 @@ vec_names(NULL)
  --------------------------------------------*/
 Export::~Export()
 {
-    delete [] *vec_names;
     delete [] vec_names;
     delete [] vecs;
 }
@@ -88,23 +66,13 @@ Export::~Export()
  --------------------------------------------*/
 void Export::add_to_default(const char* def_name)
 {
-    ptrdiff_t tot_len=(strchr(vec_names[nvecs-1],'\0')-vec_names[0])+1;
-    size_t def_name_len=std::strlen(def_name)+1;
-    char* buff=new char[tot_len+def_name_len];
-    memcpy(buff,def_name,def_name_len*sizeof(char));
-    memcpy(buff+def_name_len,*vec_names,tot_len*sizeof(char));
-    char ** __vec_names=new char*[nvecs+1];
-    *__vec_names=buff;
-    buff+=def_name_len;
-    for(int i=0;i<nvecs;i++)
-    {
-        __vec_names[i+1]=buff;
-        buff+=std::strlen(buff)+1;
-    }
     
+    std::string* __vec_names=new std::string[nvecs+1];
+    __vec_names[0]=def_name;
+    for(int i=0;i<nvecs;i++)
+        __vec_names[i+1]=std::move(vec_names[i]);
     nvecs++;
     ndef_vecs++;
-    delete [] *vec_names;
     delete [] vec_names;
     delete [] vecs;
     vec_names=__vec_names;
@@ -115,10 +83,10 @@ void Export::add_to_default(const char* def_name)
  --------------------------------------------*/
 void Export::find_vecs()
 {
-    auto find_vec=[](const char* name,vec** vs,int nvs)->vec*
+    auto find_vec=[](const std::string& name,vec** vs,int nvs)->vec*
     {
         for(int i=0;i<nvs;i++)
-            if(vs[i]->name && std::strcmp(name,vs[i]->name)==0)
+            if(vs[i]->name && std::strcmp(name.c_str(),vs[i]->name)==0)
                 return vs[i];
         return NULL;
     };
@@ -199,4 +167,91 @@ void Export::release(vec** vecs,int nvecs)
     for(int i=0;i<nvecs;i++)
         vecs[i]->fin_dump();
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Export::getset_deafult_vecs(PyGetSetDef& getset)
+{
+    getset.name=(char*)"default_vecs";
+    getset.doc=(char*)"default vectors included in this export object";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        size_t sz=reinterpret_cast<Object*>(self)->xprt->ndef_vecs;
+        std::string* vec_names=reinterpret_cast<Object*>(self)->xprt->vec_names;
+        size_t* sz_ptr=&sz;
+        return var<std::string*>::build(vec_names,&sz_ptr);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Export::getset_extra_vecs(PyGetSetDef& getset)
+{
+    getset.name=(char*)"extra_vecs";
+    getset.doc=(char*)"extra vectors included in this export object";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        size_t sz=reinterpret_cast<Object*>(self)->xprt->nusr_vecs;
+        std::string* vec_names=reinterpret_cast<Object*>(self)->xprt->vec_names+
+        reinterpret_cast<Object*>(self)->xprt->ndef_vecs;
+        size_t* sz_ptr=&sz;
+        return var<std::string*>::build(vec_names,&sz_ptr);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<std::string*> extra_vecs("extra_vecs");
+        int ichk=extra_vecs.set(op);
+        if(ichk==-1) return -1;
+        int nusr_vecs=static_cast<int> (extra_vecs.__var__.size);
+        int ndef_vecs=reinterpret_cast<Object*>(self)->xprt->ndef_vecs;
+        int nvecs=nusr_vecs+ndef_vecs;
+        
+        std::string* vec_names=reinterpret_cast<Object*>(self)->xprt->vec_names;
+        std::string* __vec_names=new std::string[nvecs];
+        for(int i=0;i<ndef_vecs;i++)
+            __vec_names[i]=std::move(vec_names[i]);
+        
+        for(int i=0;i<nusr_vecs;i++)
+            __vec_names[i+ndef_vecs]=std::move(extra_vecs.val[i]);
+        
+        
+        delete [] reinterpret_cast<Object*>(self)->xprt->vecs;
+        delete [] vec_names;
+        reinterpret_cast<Object*>(self)->xprt->vecs=new vec*[nvecs];
+        reinterpret_cast<Object*>(self)->xprt->vec_names=__vec_names;
+        reinterpret_cast<Object*>(self)->xprt->nvecs=nvecs;
+        reinterpret_cast<Object*>(self)->xprt->nusr_vecs=nusr_vecs;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Export::getset_nevery(PyGetSetDef& getset)
+{
+    getset.name=(char*)"nevery";
+    getset.doc=(char*)"export nevery step";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        
+        return var<int>::build(reinterpret_cast<Object*>(self)->xprt->nevery,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<int> nevery("nevery");
+        nevery.logics[0]=VLogics("gt",0);
+        int ichk=nevery.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->xprt->nevery=nevery.val;
+        return 0;
+    };
+}
+
+
+
 

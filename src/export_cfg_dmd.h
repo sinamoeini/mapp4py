@@ -1,6 +1,5 @@
 #ifndef __MAPP__export_cfg_dmd__
 #define __MAPP__export_cfg_dmd__
-#include "api.h"
 #include "export.h"
 
 namespace MAPP_NS
@@ -13,7 +12,7 @@ namespace MAPP_NS
         bool sort;
     protected:
     public:
-        ExportCFGDMD(int,const std::string&,std::string*,size_t,bool);
+        ExportCFGDMD(const std::string&,int,std::string*,size_t,bool);
         ~ExportCFGDMD();
         void write_header(FILE*);
         void write_body_sort(FILE*);

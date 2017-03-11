@@ -6,9 +6,9 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-ExportCFGMD::ExportCFGMD(int __nevery,const std::string& __pattern,
+ExportCFGMD::ExportCFGMD(const std::string& __pattern,int __nevery,
 std::string* user_vec_names,size_t nuservecs,bool __sort):
-Export({"elem","x"},user_vec_names,nuservecs),
+Export(__nevery,{"elem","x"},user_vec_names,nuservecs),
 pattern(__pattern+".%09d.cfg"),
 sort(__sort)
 {
@@ -172,7 +172,7 @@ void ExportCFGMD::init()
     
     x_d_inc=false;
     for(int i=0;i<nvecs && !x_d_inc;i++)
-        if(std::strcmp(vec_names[i],"x_d")==0)
+        if(std::strcmp(vec_names[i].c_str(),"x_d")==0)
             x_d_inc=true;
 }
 /*--------------------------------------------
@@ -196,10 +196,11 @@ PyObject* ExportCFGMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int ExportCFGMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<int,std::string,std::string*,bool> f("__init__",{"nevery","file_pattern","vector_names","sort"});
-    f.noptionals=2;
+    FuncAPI<std::string,int,std::string*,bool> f("__init__",{"file_pattern","nevery","extra_vecs","sort"});
+    f.noptionals=3;
+    f.logics<1>()[0]=VLogics("gt",0);
     f.val<3>()=false;
-    f.logics<0>()[0]=VLogics("gt",0);
+    f.val<1>()=10000;
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
@@ -248,10 +249,12 @@ void ExportCFGMD::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef ExportCFGMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef ExportCFGMD::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void ExportCFGMD::setup_tp_getset()
 {
+    getset_deafult_vecs(getset[0]);
+    getset_extra_vecs(getset[1]);
 }
 /*--------------------------------------------*/
 PyMethodDef ExportCFGMD::methods[]={[0 ... 0]={NULL}};

@@ -181,6 +181,17 @@ val(type_attr<std::string>::zero)
 /*--------------------------------------------
  
  --------------------------------------------*/
+template<>
+inline py_var<std::string>::py_var(size_t* sz,void*& data):
+val(type_attr<std::string>::zero)
+{
+    char* d=static_cast<char*>(data);
+    val=std::string(d,*sz);
+    data=d+*sz;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<class T>
 py_var<T>::py_var(int depth,long* sz,PyObject**& objs)
 {
@@ -204,20 +215,6 @@ val(type_attr<T>::zero)
 {
     T* d=(T*)data;
     val=*d;
-    data=d+1;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<>
-inline py_var<bool>::py_var(size_t*,void*& data):
-val(type_attr<bool>::zero)
-{
-    unsigned char* d=static_cast<unsigned char*>(data);
-    if(*d==NPY_TRUE)
-        val=true;
-    else
-        val=false;
     data=d+1;
 }
 /*--------------------------------------------
@@ -351,41 +348,26 @@ py_var<T*>::py_var(PyObject* op):
 size(0),
 vars(NULL)
 {
+    
     int type_num=cpp_type2type_num<T_BASE>::type_num();
     int rank=get_rank();
     PyObject* __arr__;
     PyArray_Descr* descr;
-    
-    if(std::is_same<T_BASE,char>::value)
-    {
-        descr=PyArray_DescrFromType(NPY_STRING);
-        __arr__=PyArray_FromAny(op,descr,rank-1,rank-1,0,NULL);
-        if(__arr__)
-        {
-            PyArrayObject* arr=(PyArrayObject*)__arr__;
-            size_t sz[rank];
-            npy_intp* dims=PyArray_DIMS(arr);
-            for(int i=0;i<rank-1;i++)
-                sz[i]=dims[i];
-            sz[rank-1]=PyArray_DESCR(arr)->elsize;
-            void* data=PyArray_DATA(arr);
-            this->~py_var<T*>();
-            new (this) py_var<T*>(sz,data);
-            Py_DECREF(__arr__);
-            return;
-        }
-        PyErr_Clear();
-    }
+
     
     descr=PyArray_DescrFromType(type_num);
     __arr__=PyArray_FromAny(op,descr,rank,rank,NPY_ARRAY_CARRAY_RO,NULL);
     if(__arr__)
     {
         PyArrayObject* arr=(PyArrayObject*)__arr__;
-        size_t sz[rank];
         npy_intp* dims=PyArray_DIMS(arr);
+        size_t sz[rank+1];
         for(int i=0;i<rank;i++)
             sz[i]=dims[i];
+        sz[rank]=0;
+        
+        if(std::is_same<T_BASE,std::string>::value) sz[rank]=PyArray_DESCR(arr)->elsize;
+        
         void* data=PyArray_DATA(arr);
         this->~py_var<T*>();
         new (this) py_var<T*>(sz,data);

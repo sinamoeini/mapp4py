@@ -196,16 +196,14 @@ PyObject* ExportCFGMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int ExportCFGMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    //FuncAPI<int,std::string,std::string*,bool> f("__init__",{"nevery","file_pattern","vector_names","sort"});
-    
-    FuncAPI<std::string*>f("__init__",{"names"});
-    //f.noptionals=2;
-    //f.val<3>()=false;
-    //f.logics<0>()[0]=VLogics("gt",0);
+    FuncAPI<int,std::string,std::string*,bool> f("__init__",{"nevery","file_pattern","vector_names","sort"});
+    f.noptionals=2;
+    f.val<3>()=false;
+    f.logics<0>()[0]=VLogics("gt",0);
     
     if(f(args,kwds)==-1) return -1;
-    //Object* __self=reinterpret_cast<Object*>(self);
-    //__self->xprt=new ExportCFGMD(f.val<0>(),f.val<1>(),f.val<2>(),f.v<2>().size,f.val<3>());
+    Object* __self=reinterpret_cast<Object*>(self);
+    __self->xprt=new ExportCFGMD(f.val<0>(),f.val<1>(),f.val<2>(),f.v<2>().size,f.val<3>());
     return 0;
 }
 /*--------------------------------------------

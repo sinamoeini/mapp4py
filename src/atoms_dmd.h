@@ -5,8 +5,7 @@
 
 namespace MAPP_NS
 {
-    template<class>
-    class DMDVec;
+    template<class> class DMDVec;
     class AtomsDMD: public Atoms
     {
     private:
@@ -19,13 +18,12 @@ namespace MAPP_NS
         DMDVec<bool>* alpha_dof;
         Vec<elem_type>* elem;
 
-        AtomsDMD(MPI_Comm&,int,int,int);
+        AtomsDMD(MPI_Comm&,int,int);
         ~AtomsDMD();
         AtomsDMD& operator=(const Atoms&);
         
         type0 max_alpha;
         const int c_dim;
-        const int nelems;
         
         const int N;
         type0* xi;
@@ -68,27 +66,15 @@ namespace MAPP_NS
     {
     private:
         class AtomsDMD* atoms_dmd;
+        int dump_dim;
     protected:
     public:
         const T def_val;
-        const int c_dim;
-        const int real_dim;
-        DMDVec(class AtomsDMD* __atoms,T __def_val,const char* __name):
-        Vec<T>(__atoms,__atoms->c_dim,__name),
-        def_val(__def_val),
-        atoms_dmd(__atoms),
-        c_dim(__atoms->c_dim),
-        real_dim(__atoms->nelems)
-        {}
-        DMDVec(class AtomsDMD* __atoms,T __def_val):
-        Vec<T>(__atoms,__atoms->c_dim),
-        def_val(__def_val),
-        atoms_dmd(__atoms),
-        c_dim(__atoms->c_dim),
-        real_dim(__atoms->nelems)
-        {}
+        DMDVec(class AtomsDMD*,T,const char*);
+    
+        DMDVec(class AtomsDMD*,T);
         ~DMDVec(){}
-        int ndim_dump()const{return real_dim;};
+        int ndim_dump()const{return static_cast<int>(atoms_dmd->elements.nelems);};
         void init_dump();
         void fin_dump();
         void print(FILE*,int);
@@ -98,9 +84,30 @@ namespace MAPP_NS
  
  --------------------------------------------*/
 template<typename T>
+inline DMDVec<T>::DMDVec(class AtomsDMD* __atoms,T __def_val,const char* __name):
+Vec<T>(__atoms,__atoms->c_dim,__name),
+def_val(__def_val),
+atoms_dmd(__atoms)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline DMDVec<T>::DMDVec(class AtomsDMD* __atoms,T __def_val):
+Vec<T>(__atoms,__atoms->c_dim),
+def_val(__def_val),
+atoms_dmd(__atoms)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
 inline void DMDVec<T>::init_dump()
 {
-    if(c_dim==real_dim)
+    dump_dim=static_cast<int>(atoms_dmd->elements.nelems);
+    if(vec::dim==dump_dim)
         return vec::init_dump();
     
     
@@ -108,9 +115,9 @@ inline void DMDVec<T>::init_dump()
     int natms_lcl=atoms_dmd->natms_lcl;
     size_t sz;
     if(rank)
-        sz=real_dim*sizeof(T)*natms_lcl;
+        sz=dump_dim*sizeof(T)*natms_lcl;
     else
-        sz=real_dim*sizeof(T)*atoms_dmd->natms;
+        sz=dump_dim*sizeof(T)*atoms_dmd->natms;
     
     if(sz) vec::data_dump=new byte[sz];
     
@@ -121,30 +128,17 @@ inline void DMDVec<T>::init_dump()
     
     for(int i=0;i<natms_lcl;i++)
     {
-        for(int j=0;j<real_dim;j++)
+        for(int j=0;j<dump_dim;j++)
             __data_dump[j]=def_val;
         
-        for(int j=0;j<c_dim;j++)
+        for(int j=0;j<vec::dim;j++)
             __data_dump[elem[j]]=__data[j];
         
-        __data_dump+=real_dim;
+        __data_dump+=dump_dim;
         __data+=vec::dim;
         elem+=vec::dim;
     }
-    vec::byte_sz=(vec::byte_sz*real_dim)/c_dim;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<typename T>
-inline void DMDVec<T>::fin_dump()
-{
-    if(c_dim==real_dim)
-        return vec::fin_dump();
-    
-    vec::byte_sz=(vec::byte_sz*c_dim)/real_dim;
-    delete [] vec::data_dump;
-    vec::data_dump=NULL;
+    vec::byte_sz=(vec::byte_sz*dump_dim)/vec::dim;
 }
 /*--------------------------------------------
  
@@ -152,8 +146,21 @@ inline void DMDVec<T>::fin_dump()
 template<typename T>
 inline void DMDVec<T>::print(FILE* fp,int i)
 {
-    T* __data_dump=Vec<T>::begin_dump()+real_dim*i;
-    for(int j=0;j<real_dim;j++)
+    T* __data_dump=Vec<T>::begin_dump()+dump_dim*i;
+    for(int j=0;j<dump_dim;j++)
         fprintf(fp,Vec<T>::print_format,__data_dump[j]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline void DMDVec<T>::fin_dump()
+{
+    if(vec::dim==dump_dim)
+        return vec::fin_dump();
+    
+    vec::byte_sz=(vec::byte_sz*vec::dim)/dump_dim;
+    delete [] vec::data_dump;
+    vec::data_dump=NULL;
 }
 #endif

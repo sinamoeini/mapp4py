@@ -6,11 +6,37 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-Export::Export(int __nevery,
-std::initializer_list<const char*> __def_vec_names,
-std::string* __user_vec_names,size_t __nuser_vecs):
+ExportMD::ExportMD(std::initializer_list<const char*> __def_vec_names,
+int __nevery,std::string* __user_vec_names,size_t __nuser_vecs):
+Export(__def_vec_names,__nevery,__user_vec_names,__nuser_vecs)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+ExportMD::~ExportMD()
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+ExportDMD::ExportDMD(std::initializer_list<const char*> __def_vec_names,
+int __nevery,std::string* __user_vec_names,size_t __nuser_vecs):
+Export(__def_vec_names,__nevery,__user_vec_names,__nuser_vecs)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+ExportDMD::~ExportDMD()
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+Export::Export(std::initializer_list<const char*> __def_vec_names,
+int __nevery,std::string* __user_vec_names,size_t __nuser_vecs):
 nevery(__nevery),
-atoms(NULL),
 nvecs(0),
 vecs(NULL),
 vec_names(NULL)
@@ -81,7 +107,7 @@ void Export::add_to_default(const char* def_name)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Export::find_vecs()
+void Export::find_vecs(Atoms* atoms)
 {
     auto find_vec=[](const std::string& name,vec** vs,int nvs)->vec*
     {
@@ -251,7 +277,162 @@ void Export::getset_nevery(PyGetSetDef& getset)
         return 0;
     };
 }
-
-
-
+/*------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------------------------------------------*/
+PyObject* ExportMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+{
+    Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
+    PyObject* self=reinterpret_cast<PyObject*>(__self);
+    return self;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int ExportMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+{
+    FuncAPI<int,std::string*> f("__init__",{"nevery","extra_vecs"});
+    f.noptionals=2;
+    f.val<0>()=10000;
+    f.logics<0>()[0]=VLogics("gt",0);
+    
+    
+    
+    if(f(args,kwds)==-1) return -1;
+    Object* __self=reinterpret_cast<Object*>(self);
+    __self->xprt=new ExportMD({"elem","x"},f.val<0>(),f.val<1>(),f.v<1>().size);
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* ExportMD::__alloc__(PyTypeObject* type,Py_ssize_t)
+{
+    Object* __self=new Object;
+    __self->ob_type=type;
+    __self->ob_refcnt=1;
+    __self->xprt=NULL;
+    return reinterpret_cast<PyObject*>(__self);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExportMD::__dealloc__(PyObject* self)
+{
+    Object* __self=reinterpret_cast<Object*>(self);
+    delete __self->xprt;
+    __self->xprt=NULL;
+    delete __self;
+}
+/*--------------------------------------------*/
+PyTypeObject ExportMD::TypeObject={PyObject_HEAD_INIT(NULL)};
+/*--------------------------------------------*/
+void ExportMD::setup_tp()
+{
+    TypeObject.tp_name="mapp.md.export";
+    TypeObject.tp_doc="export";
+    
+    TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
+    TypeObject.tp_basicsize=sizeof(Object);
+    
+    TypeObject.tp_new=__new__;
+    TypeObject.tp_init=__init__;
+    TypeObject.tp_alloc=__alloc__;
+    TypeObject.tp_dealloc=__dealloc__;
+    setup_tp_methods();
+    TypeObject.tp_methods=methods;
+    setup_tp_getset();
+    TypeObject.tp_getset=getset;
+}
+/*--------------------------------------------*/
+PyGetSetDef ExportMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+/*--------------------------------------------*/
+void ExportMD::setup_tp_getset()
+{
+}
+/*--------------------------------------------*/
+PyMethodDef ExportMD::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void ExportMD::setup_tp_methods()
+{
+}
+/*------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------------------------------------------*/
+PyObject* ExportDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+{
+    Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
+    PyObject* self=reinterpret_cast<PyObject*>(__self);
+    return self;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int ExportDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+{
+    FuncAPI<int,std::string*> f("__init__",{"nevery","extra_vecs"});
+    f.noptionals=2;
+    f.val<0>()=10000;
+    f.logics<0>()[0]=VLogics("gt",0);
+    
+    
+    
+    if(f(args,kwds)==-1) return -1;
+    Object* __self=reinterpret_cast<Object*>(self);
+    __self->xprt=new ExportDMD({"x","alpha","c"},f.val<0>(),f.val<1>(),f.v<1>().size);
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* ExportDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
+{
+    Object* __self=new Object;
+    __self->ob_type=type;
+    __self->ob_refcnt=1;
+    __self->xprt=NULL;
+    return reinterpret_cast<PyObject*>(__self);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExportDMD::__dealloc__(PyObject* self)
+{
+    Object* __self=reinterpret_cast<Object*>(self);
+    delete __self->xprt;
+    __self->xprt=NULL;
+    delete __self;
+}
+/*--------------------------------------------*/
+PyTypeObject ExportDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
+/*--------------------------------------------*/
+void ExportDMD::setup_tp()
+{
+    TypeObject.tp_name="mapp.dmd.export";
+    TypeObject.tp_doc="export";
+    
+    TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
+    TypeObject.tp_basicsize=sizeof(Object);
+    
+    TypeObject.tp_new=__new__;
+    TypeObject.tp_init=__init__;
+    TypeObject.tp_alloc=__alloc__;
+    TypeObject.tp_dealloc=__dealloc__;
+    setup_tp_methods();
+    TypeObject.tp_methods=methods;
+    setup_tp_getset();
+    TypeObject.tp_getset=getset;
+}
+/*--------------------------------------------*/
+PyGetSetDef ExportDMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+/*--------------------------------------------*/
+void ExportDMD::setup_tp_getset()
+{
+}
+/*--------------------------------------------*/
+PyMethodDef ExportDMD::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void ExportDMD::setup_tp_methods()
+{
+}
 

@@ -2,9 +2,9 @@
 #define __MAPP__min__
 #include "api.h"
 #include "ls.h"
-
 #include "global.h"
 #include "atoms_styles.h"
+#include "export_styles.h"
 namespace MAPP_NS
 {
     class Min
@@ -31,6 +31,7 @@ namespace MAPP_NS
             PyObject_HEAD
             Min* min;
             LineSearch::Object* ls;
+            Export::Object* xprt;
         }Object;
         
         static PyTypeObject TypeObject;

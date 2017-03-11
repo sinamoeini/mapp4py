@@ -4,7 +4,7 @@
 
 namespace MAPP_NS
 {
-    class ExportCFGMD:public Export
+    class ExportCFGMD:public ExportMD
     {
     private:
         
@@ -21,7 +21,6 @@ namespace MAPP_NS
         void write(int);
         void init();
         void fin();
-        class AtomsMD* atoms;
         
         typedef struct
         {

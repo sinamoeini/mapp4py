@@ -7,7 +7,7 @@
  --------------------------------------------*/
 ExportCFGDMD::ExportCFGDMD(const std::string& __pattern,int __nevery,
 std::string* user_vec_names,size_t nuservecs,bool __sort):
-Export(__nevery,{"x","alpha","c"},user_vec_names,nuservecs),
+ExportDMD({"x","alpha","c"},__nevery,user_vec_names,nuservecs),
 pattern(__pattern+".%09d.cfg"),
 sort(__sort)
 {
@@ -234,7 +234,7 @@ void ExportCFGDMD::init()
 {
     try
     {
-        find_vecs();
+        find_vecs(atoms);
     }
     catch(std::string& err_msg)
     {
@@ -300,7 +300,7 @@ PyTypeObject ExportCFGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void ExportCFGDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.export_cfg";
+    TypeObject.tp_name="mapp.dmd.export_cfg";
     TypeObject.tp_doc="export atomeye";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

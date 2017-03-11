@@ -682,7 +682,7 @@ AtomsDMD* ImportCFGDMD::operator()(int N,const char* file)
     {
         delete pfreader;
         delete [] line;
-        AtomsDMD* atoms_dmd=new AtomsDMD(world,0,0,N);
+        AtomsDMD* atoms_dmd=new AtomsDMD(world,0,N);
         *atoms_dmd=*atoms;
         delete atoms;
         return atoms_dmd;
@@ -797,7 +797,7 @@ AtomsDMD* ImportCFGDMD::operator()(int N,const char* file)
     int c_dim;
     MPI_Allreduce(&max_ncmp_lcl,&c_dim,1,MPI_INT,MPI_MAX,world);
     
-    AtomsDMD* atoms_dmd=new AtomsDMD(world,c_dim,static_cast<int>(__nelems),N);
+    AtomsDMD* atoms_dmd=new AtomsDMD(world,c_dim,N);
     *atoms_dmd=*atoms;
     
     alpha=dynamic_cast<Vec<type0>*>(vec_list[3])->begin();

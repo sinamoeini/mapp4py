@@ -89,6 +89,7 @@ int Min::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Object* __self=reinterpret_cast<Object*>(self);
     __self->min=new Min();
     __self->ls=NULL;
+    __self->xprt=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -101,6 +102,7 @@ PyObject* Min::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_refcnt=1;
     __self->min=NULL;
     __self->ls=NULL;
+    __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -113,6 +115,8 @@ void Min::__dealloc__(PyObject* self)
     __self->min=NULL;
     if(__self->ls) Py_DECREF(__self->ls);
     __self->ls=NULL;
+    if(__self->xprt) Py_DECREF(__self->xprt);
+    __self->xprt=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

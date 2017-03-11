@@ -3,18 +3,17 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __nelems,int __N):
+AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __N):
 c_dim(__c_dim),
-nelems(__nelems),
 N(__N),
 Atoms(world),
 xi(new type0[__N]),
 wi(new type0[__N])
 {
     XMath::quadrature_hg(N,xi,wi);
+    elem=new Vec<elem_type>(this,c_dim,"elem");
     alpha=new DMDVec<type0>(this,0.0,"alpha");
     c=new DMDVec<type0>(this,-1.0,"c");
-    elem=new Vec<elem_type>(this,c_dim,"elem");
     alpha_dof=new DMDVec<bool>(this,true,"alpha_dof");
     c_dof=new DMDVec<bool>(this,true,"c_dof");
     c_d=new DMDVec<type0>(this,true,"c_d");
@@ -31,9 +30,9 @@ AtomsDMD::~AtomsDMD()
     delete alpha_dof;
     delete c_dof;
     delete c_d;
-    delete elem;
     delete c;
     delete alpha;
+    delete elem;
     
     delete [] wi;
     delete [] xi;

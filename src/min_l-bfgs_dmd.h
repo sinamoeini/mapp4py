@@ -27,6 +27,7 @@ namespace MAPP_NS
             PyObject_HEAD
             MinLBFGSDMD* min;
             LineSearch::Object* ls;
+            ExportDMD::Object* xprt;
         }Object;
         
         static PyTypeObject TypeObject;

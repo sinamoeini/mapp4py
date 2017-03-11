@@ -8,7 +8,7 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 ExportCFGMD::ExportCFGMD(const std::string& __pattern,int __nevery,
 std::string* user_vec_names,size_t nuservecs,bool __sort):
-Export(__nevery,{"elem","x"},user_vec_names,nuservecs),
+ExportMD({"elem","x"},__nevery,user_vec_names,nuservecs),
 pattern(__pattern+".%09d.cfg"),
 sort(__sort)
 {
@@ -163,7 +163,7 @@ void ExportCFGMD::init()
 {
     try
     {
-        find_vecs();
+        find_vecs(atoms);
     }
     catch(std::string& err_msg)
     {

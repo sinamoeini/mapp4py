@@ -237,13 +237,6 @@ void MinCG::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef MinCG::methods[]={[0 ... 1]={NULL}};
-/*--------------------------------------------*/
-void MinCG::setup_tp_methods()
-{
-    ml_run(methods[0]);
-}
-/*--------------------------------------------*/
 PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MinCG::setup_tp()
@@ -274,6 +267,13 @@ void MinCG::setup_tp_getset()
     getset_H_dof(getset[3]);
     getset_ntally(getset[4]);
     getset_ls(getset[5]);
+}
+/*--------------------------------------------*/
+PyMethodDef MinCG::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void MinCG::setup_tp_methods()
+{
+    ml_run(methods[0]);
 }
 /*--------------------------------------------
  

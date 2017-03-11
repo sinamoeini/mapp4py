@@ -295,12 +295,6 @@ void DAEImplicit::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef DAEImplicit::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void DAEImplicit::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyTypeObject DAEImplicit::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void DAEImplicit::setup_tp()
@@ -327,6 +321,12 @@ void DAEImplicit::setup_tp_getset()
 {
     getset_max_ngmres_iters(getset[0]);
     getset_max_nnewton_iters(getset[1]);
+}
+/*--------------------------------------------*/
+PyMethodDef DAEImplicit::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void DAEImplicit::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  

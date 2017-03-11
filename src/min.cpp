@@ -116,12 +116,6 @@ void Min::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef Min::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void Min::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyTypeObject Min::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void Min::setup_tp()
@@ -151,6 +145,12 @@ void Min::setup_tp_getset()
     getset_affine(getset[2]);
     getset_H_dof(getset[3]);
     getset_ntally(getset[4]);
+}
+/*--------------------------------------------*/
+PyMethodDef Min::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void Min::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  

@@ -46,23 +46,6 @@ void MAPP_MPI::__dealloc__(PyObject* self)
         MPI_Comm_free(&(__self->world));
 }
 /*--------------------------------------------*/
-PyMemberDef MAPP_MPI::tp_members[]={[0 ... 2]={NULL,0,0,0,NULL}};
-/*--------------------------------------------*/
-void MAPP_MPI::setup_tp_members()
-{
-    tp_members[0].type=T_INT;
-    tp_members[0].flags=READONLY;
-    tp_members[0].name=(char*)"rank";
-    tp_members[0].doc=(char*)"rank of the mpi communicator";
-    tp_members[0].offset=offsetof(MAPP_MPI::Object,rank);
-    
-    tp_members[1].type=T_INT;
-    tp_members[1].flags=READONLY;
-    tp_members[1].name=(char*)"size";
-    tp_members[1].doc=(char*)"size of the mpi communicator";
-    tp_members[1].offset=offsetof(MAPP_MPI::Object,size);
-}
-/*--------------------------------------------*/
 PyTypeObject MAPP_MPI::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MAPP_MPI::setup_tp()
@@ -79,6 +62,23 @@ void MAPP_MPI::setup_tp()
     TypeObject.tp_dealloc=__dealloc__;
     setup_tp_members();
     TypeObject.tp_members=tp_members;
+}
+/*--------------------------------------------*/
+PyMemberDef MAPP_MPI::tp_members[]={[0 ... 2]={NULL,0,0,0,NULL}};
+/*--------------------------------------------*/
+void MAPP_MPI::setup_tp_members()
+{
+    tp_members[0].type=T_INT;
+    tp_members[0].flags=READONLY;
+    tp_members[0].name=(char*)"rank";
+    tp_members[0].doc=(char*)"rank of the mpi communicator";
+    tp_members[0].offset=offsetof(MAPP_MPI::Object,rank);
+    
+    tp_members[1].type=T_INT;
+    tp_members[1].flags=READONLY;
+    tp_members[1].name=(char*)"size";
+    tp_members[1].doc=(char*)"size of the mpi communicator";
+    tp_members[1].offset=offsetof(MAPP_MPI::Object,size);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

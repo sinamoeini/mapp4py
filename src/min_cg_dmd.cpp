@@ -271,13 +271,6 @@ void MinCGDMD::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef MinCGDMD::methods[]={[0 ... 1]={NULL}};
-/*--------------------------------------------*/
-void MinCGDMD::setup_tp_methods()
-{
-    ml_run(methods[0]);
-}
-/*--------------------------------------------*/
 PyTypeObject MinCGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp()
@@ -309,6 +302,13 @@ void MinCGDMD::setup_tp_getset()
     getset_ntally(getset[4]);
     getset_ls(getset[5]);
     getset_max_dalpha(getset[6]);
+}
+/*--------------------------------------------*/
+PyMethodDef MinCGDMD::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void MinCGDMD::setup_tp_methods()
+{
+    ml_run(methods[0]);
 }
 /*--------------------------------------------
  

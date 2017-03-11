@@ -73,15 +73,15 @@ void LineSearch::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearch::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void LineSearch::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyGetSetDef LineSearch::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void LineSearch::setup_tp_getset()
+{
+}
+/*--------------------------------------------*/
+PyMethodDef LineSearch::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void LineSearch::setup_tp_methods()
 {
 }
 /*--------------------------------------------
@@ -158,12 +158,6 @@ void LineSearchGoldenSection::setup_tp()
     TypeObject.tp_base=&LineSearch::TypeObject;
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearchGoldenSection::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void LineSearchGoldenSection::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyGetSetDef LineSearchGoldenSection::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void LineSearchGoldenSection::setup_tp_getset()
@@ -171,6 +165,12 @@ void LineSearchGoldenSection::setup_tp_getset()
     getset_bracket(getset[0]);
     getset_max_iter(getset[1]);
     getset_tol(getset[2]);
+}
+/*--------------------------------------------*/
+PyMethodDef LineSearchGoldenSection::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void LineSearchGoldenSection::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  
@@ -308,12 +308,6 @@ void LineSearchBrent::setup_tp()
     TypeObject.tp_base=&LineSearch::TypeObject;
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearchBrent::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void LineSearchBrent::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyGetSetDef LineSearchBrent::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void LineSearchBrent::setup_tp_getset()
@@ -322,6 +316,12 @@ void LineSearchBrent::setup_tp_getset()
     getset_max_iter(getset[1]);
     getset_tol(getset[2]);
     getset_zeps(getset[3]);
+}
+/*--------------------------------------------*/
+PyMethodDef LineSearchBrent::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void LineSearchBrent::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  
@@ -480,12 +480,6 @@ void LineSearchBackTrack::setup_tp()
     TypeObject.tp_base=&LineSearch::TypeObject;
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearchBackTrack::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void LineSearchBackTrack::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyGetSetDef LineSearchBackTrack::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void LineSearchBackTrack::setup_tp_getset()
@@ -493,6 +487,12 @@ void LineSearchBackTrack::setup_tp_getset()
     getset_c(getset[0]);
     getset_rho(getset[1]);
     getset_min_alpha(getset[2]);
+}
+/*--------------------------------------------*/
+PyMethodDef LineSearchBackTrack::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void LineSearchBackTrack::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  

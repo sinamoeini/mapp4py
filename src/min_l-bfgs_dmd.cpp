@@ -189,17 +189,17 @@ void MinLBFGSDMD::setup_tp()
     TypeObject.tp_base=&MinCGDMD::TypeObject;
 }
 /*--------------------------------------------*/
-PyMethodDef MinLBFGSDMD::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void MinLBFGSDMD::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyGetSetDef MinLBFGSDMD::getset[]={[0 ... 1]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinLBFGSDMD::setup_tp_getset()
 {
     getset_m(getset[0]);
+}
+/*--------------------------------------------*/
+PyMethodDef MinLBFGSDMD::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void MinLBFGSDMD::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  

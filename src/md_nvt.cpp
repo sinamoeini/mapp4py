@@ -395,13 +395,6 @@ void MDNVT::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef MDNVT::methods[]={[0 ... 1]={NULL}};
-/*--------------------------------------------*/
-void MDNVT::setup_tp_methods()
-{
-    ml_run(methods[0]);
-}
-/*--------------------------------------------*/
 PyTypeObject MDNVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void MDNVT::setup_tp()
@@ -432,6 +425,13 @@ void MDNVT::setup_tp_getset()
     getset_dt(getset[3]);
     getset_t_relax(getset[4]);
     getset_ntally(getset[5]);
+}
+/*--------------------------------------------*/
+PyMethodDef MDNVT::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void MDNVT::setup_tp_methods()
+{
+    ml_run(methods[0]);
 }
 /*--------------------------------------------
  

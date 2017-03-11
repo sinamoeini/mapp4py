@@ -11,6 +11,7 @@
 #include "md_styles.h"
 #include "min_styles.h"
 #include "dae_styles.h"
+#include "export_styles.h"
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
@@ -185,14 +186,21 @@ PyObject* MAPP::MD::init_module(void)
     Py_INCREF(&MinLBFGS::TypeObject);
     PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
     
+    
+    ExportCFGMD::setup_tp();
+    if(PyType_Ready(&ExportCFGMD::TypeObject)<0) return NULL;
+    Py_INCREF(&ExportCFGMD::TypeObject);
+    PyModule_AddObject(module,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGMD::TypeObject));
+    
+    
     return module;
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::DMD::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MAPP::DMD::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
 void MAPP::DMD::setup_methods()
 {
-    ExamplePython::ml_test(methods[0]);
+    //ExamplePython::ml_test(methods[0]);
 }
 /*--------------------------------------------
  
@@ -250,6 +258,13 @@ PyObject* MAPP::DMD::init_module(void)
     if(PyType_Ready(&DAEBDF::TypeObject)<0) return NULL;
     Py_INCREF(&DAEBDF::TypeObject);
     PyModule_AddObject(module,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
+    
+    
+    ExportCFGDMD::setup_tp();
+    if(PyType_Ready(&ExportCFGDMD::TypeObject)<0) return NULL;
+    Py_INCREF(&ExportCFGDMD::TypeObject);
+    PyModule_AddObject(module,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGDMD::TypeObject));
+    
     
     return module;
 }

@@ -118,12 +118,6 @@ void DAE::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
-/*--------------------------------------------*/
-void DAE::setup_tp_methods()
-{
-}
-/*--------------------------------------------*/
 PyTypeObject DAE::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void DAE::setup_tp()
@@ -152,6 +146,12 @@ void DAE::setup_tp_getset()
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
     getset_ntally(getset[3]);
+}
+/*--------------------------------------------*/
+PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
+/*--------------------------------------------*/
+void DAE::setup_tp_methods()
+{
 }
 /*--------------------------------------------
  

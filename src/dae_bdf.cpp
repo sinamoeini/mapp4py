@@ -632,13 +632,6 @@ void DAEBDF::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};
-/*--------------------------------------------*/
-void DAEBDF::setup_tp_methods()
-{
-    ml_run(methods[0]);
-}
-/*--------------------------------------------*/
 PyTypeObject DAEBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp()
@@ -670,6 +663,13 @@ void DAEBDF::setup_tp_getset()
     getset_max_nnewton_iters(getset[4]);
     getset_ntally(getset[5]);
 }
+/*--------------------------------------------*/
+PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void DAEBDF::setup_tp_methods()
+{
+    ml_run(methods[0]);
+}    
 /*--------------------------------------------
  
  --------------------------------------------*/

@@ -340,13 +340,6 @@ void Atoms::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyMethodDef Atoms::methods[]={[0 ... 1]={NULL}};
-/*--------------------------------------------*/
-void Atoms::setup_tp_methods()
-{
-    ml_strain(methods[0]);
-}
-/*--------------------------------------------*/
 PyTypeObject Atoms::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 void Atoms::setup_tp()
@@ -383,6 +376,13 @@ void Atoms::setup_tp_getset()
     getset_comm_size(getset[9]);
     getset_comm_coords(getset[10]);
     getset_comm_dims(getset[11]);
+}
+/*--------------------------------------------*/
+PyMethodDef Atoms::methods[]={[0 ... 1]={NULL}};
+/*--------------------------------------------*/
+void Atoms::setup_tp_methods()
+{
+    ml_strain(methods[0]);
 }
 /*--------------------------------------------
  

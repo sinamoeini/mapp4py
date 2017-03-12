@@ -34,42 +34,25 @@ void ExportCFGMD::write_header(FILE* fp)
         for(int j=0;j<__dim__;j++)
             fprintf(fp,"H0(%d,%d) = %lf A\n",i+1,j+1,atoms->H[i][j]);
     
+    
     if(x_d_inc)
-    {
         fprintf(fp,"R = 1.0");
-        if(sort)
-            fprintf(fp,"entry_count = %d\n",ndims-1);
-        else
-            fprintf(fp,"entry_count = %d\n",ndims-2);
-        
-        vec** usr_vecs=vecs+ndef_vecs;
-        int icmp=0;
-        for(int i=0;i<nusr_vecs;i++)
-        {
-            if(usr_vecs[i]==atoms->x_d) continue;
-            int d=usr_vecs[i]->ndim_dump();
-            for(int j=0;j<d;j++)
-                fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,usr_vecs[i]->name,j);
-        }
-        
-    }
     else
-    {
         fprintf(fp,".NO_VELOCITY.\n");
-        if(sort)
-            fprintf(fp,"entry_count = %d\n",ndims-2);
-        else
-            fprintf(fp,"entry_count = %d\n",ndims-1);
-        
-        vec** usr_vecs=vecs+ndef_vecs;
-        int icmp=0;
-        for(int i=0;i<nusr_vecs;i++)
-        {
-            int d=usr_vecs[i]->ndim_dump();
-            for(int j=0;j<d;j++)
-                fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,usr_vecs[i]->name,j);
-        }
-        
+    
+    if(sort)
+        fprintf(fp,"entry_count = %d\n",ndims-1);
+    else
+        fprintf(fp,"entry_count = %d\n",ndims-2);
+    
+    vec** usr_vecs=vecs+ndef_vecs;
+    int icmp=0;
+    for(int i=0;i<nusr_vecs;i++)
+    {
+        if(usr_vecs[i]==atoms->x_d) continue;
+        int d=usr_vecs[i]->ndim_dump();
+        for(int j=0;j<d;j++)
+            fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,usr_vecs[i]->name,j);
     }
 }
 /*--------------------------------------------
@@ -199,8 +182,8 @@ void ExportCFGMD::write(int stps)
      user defined ones
      
      
-     some vectors will just send their regular
-     others will need preparing
+     some vectors will just send its regular content
+     while others will need some preparing
      
      
      */

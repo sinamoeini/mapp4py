@@ -10,15 +10,17 @@ namespace MAPP_NS
         
         std::string pattern;
         bool sort;
+        
+        void write_header(FILE*);
+        void write_body_sort(FILE*);
+        void write_body(FILE*);
     protected:
     public:
         ExportCFGDMD(const std::string&,int,std::string*,size_t,bool);
         ~ExportCFGDMD();
-        void write_header(FILE*);
-        void write_body_sort(FILE*);
-        void write_body(FILE*);
-        void write(int);
+
         void init();
+        void write(int);
         void fin();
         
         typedef struct
@@ -42,5 +44,4 @@ namespace MAPP_NS
         static void setup_tp();
     };
 }
-
 #endif 

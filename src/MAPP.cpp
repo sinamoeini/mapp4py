@@ -187,6 +187,12 @@ PyObject* MAPP::MD::init_module(void)
     PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
     
     
+    ExportMD::setup_tp();
+    if(PyType_Ready(&ExportMD::TypeObject)<0) return NULL;
+    Py_INCREF(&ExportMD::TypeObject);
+    PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportMD::TypeObject));
+    
+    
     ExportCFGMD::setup_tp();
     if(PyType_Ready(&ExportCFGMD::TypeObject)<0) return NULL;
     Py_INCREF(&ExportCFGMD::TypeObject);
@@ -259,6 +265,11 @@ PyObject* MAPP::DMD::init_module(void)
     Py_INCREF(&DAEBDF::TypeObject);
     PyModule_AddObject(module,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
     
+    
+    ExportDMD::setup_tp();
+    if(PyType_Ready(&ExportDMD::TypeObject)<0) return NULL;
+    Py_INCREF(&ExportDMD::TypeObject);
+    PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportDMD::TypeObject));
     
     ExportCFGDMD::setup_tp();
     if(PyType_Ready(&ExportCFGDMD::TypeObject)<0) return NULL;

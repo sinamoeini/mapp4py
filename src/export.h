@@ -15,11 +15,11 @@ namespace MAPP_NS
         int ndef_vecs;
         int nusr_vecs;
         int ndims;
-        int nevery;
     public:
+        int nevery;
         Export(std::initializer_list<const char*>,int,std::string*,size_t);
         void add_to_default(const char*);
-        ~Export();
+        virtual ~Export();
         static void gather(class vec**,int);
         static void release(class vec**,int);
         void find_vecs(class Atoms*);
@@ -46,9 +46,13 @@ namespace MAPP_NS
         
     protected:
     public:
-        ExportMD(std::initializer_list<const char*>,int,std::string*,size_t);
-        ~ExportMD();
         class AtomsMD* atoms;
+        
+        ExportMD(std::initializer_list<const char*>,int,std::string*,size_t);
+        virtual ~ExportMD();
+        virtual void init(){};
+        virtual void write(int){};
+        virtual void fin(){};
         
         typedef struct
         {
@@ -79,9 +83,13 @@ namespace MAPP_NS
         
     protected:
     public:
-        ExportDMD(std::initializer_list<const char*>,int,std::string*,size_t);
-        ~ExportDMD();
         class AtomsDMD* atoms;
+        
+        ExportDMD(std::initializer_list<const char*>,int,std::string*,size_t);
+        virtual ~ExportDMD();
+        virtual void init(){};
+        virtual void write(int){};
+        virtual void fin(){};
         
         typedef struct
         {

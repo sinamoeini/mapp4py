@@ -7,6 +7,7 @@ using namespace MAPP_NS;
 MinCG::MinCG():
 atoms(NULL),
 ff(NULL),
+xprt(NULL),
 Min()
 {
 }
@@ -73,12 +74,31 @@ void MinCG::init()
     
     dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
     dynamic->init();
+    
+    if(xprt)
+    {
+        xprt->atoms=atoms;
+        try
+        {
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            throw err_msg;
+        }
+    }
 }
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
 void MinCG::fin()
 {
+    if(xprt)
+    {
+        //xprt->fin();
+        xprt->atoms=NULL;
+    }
+    
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
@@ -261,7 +281,7 @@ void MinCG::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCG::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinCG::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinCG::setup_tp_getset()
 {
@@ -271,6 +291,7 @@ void MinCG::setup_tp_getset()
     getset_H_dof(getset[3]);
     getset_ntally(getset[4]);
     getset_ls(getset[5]);
+    getset_export(getset[6]);
 }
 /*--------------------------------------------*/
 PyMethodDef MinCG::methods[]={[0 ... 1]={NULL}};
@@ -278,6 +299,33 @@ PyMethodDef MinCG::methods[]={[0 ... 1]={NULL}};
 void MinCG::setup_tp_methods()
 {
     ml_run(methods[0]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCG::getset_export(PyGetSetDef& getset)
+{
+    getset.name=(char*)"export";
+    getset.doc=(char*)"export";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        ExportMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
+        if(!xprt) Py_RETURN_NONE;
+        Py_INCREF(xprt);
+        return reinterpret_cast<PyObject*>(xprt);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<OP<ExportMD>> xprt("export");
+        int ichk=xprt.set(op);
+        if(ichk==-1) return -1;
+        ExportMD* __xprt=reinterpret_cast<ExportMD::Object*>(xprt.val.ob)->xprt;
+        if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
+        Py_INCREF(xprt.val.ob);
+        reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportMD::Object*>(xprt.val.ob);
+        reinterpret_cast<Object*>(self)->min->xprt=__xprt;
+        return 0;
+    };
 }
 /*--------------------------------------------
  

@@ -27,6 +27,7 @@ namespace MAPP_NS
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
         class DynamicMD* dynamic;
+        class ExportMD* xprt;
     public:
         MinCG();
         ~MinCG();
@@ -64,7 +65,7 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
-
+        static void getset_export(PyGetSetDef&);
         
         static void setup_tp();
         
@@ -90,6 +91,12 @@ void MinCG::run(C* ls,int nsteps)
     "S[1][2]",S[2][1],
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
+    
+    
+    
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    
+    if(nevery_xprt) xprt->write(0);
     
     thermo.init();
     Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
@@ -142,6 +149,10 @@ void MinCG::run(C* ls,int nsteps)
             thermo.print(istep+1);
         }
         
+        if(nevery_xprt && (istep+1)%nevery_xprt==0)
+            xprt->write(istep+1);
+        
+        
         if(err) continue;
         
         f_f=f*f;
@@ -158,6 +169,11 @@ void MinCG::run(C* ls,int nsteps)
         Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
         thermo.print(istep);
     }
+    
+    
+    if(nevery_xprt && istep%nevery_xprt)
+        xprt->write(istep);
+    
 
     thermo.fin();    
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);    

@@ -37,7 +37,10 @@ void ExportCFGMD::write_header(FILE* fp)
     if(x_d_inc)
     {
         fprintf(fp,"R = 1.0");
-        fprintf(fp,"entry_count = %d\n",ndims-__dim__);
+        if(sort)
+            fprintf(fp,"entry_count = %d\n",ndims-1);
+        else
+            fprintf(fp,"entry_count = %d\n",ndims-2);
         
         vec** usr_vecs=vecs+ndef_vecs;
         int icmp=0;
@@ -53,7 +56,10 @@ void ExportCFGMD::write_header(FILE* fp)
     else
     {
         fprintf(fp,".NO_VELOCITY.\n");
-        fprintf(fp,"entry_count = %d\n",ndims);
+        if(sort)
+            fprintf(fp,"entry_count = %d\n",ndims-2);
+        else
+            fprintf(fp,"entry_count = %d\n",ndims-1);
         
         vec** usr_vecs=vecs+ndef_vecs;
         int icmp=0;
@@ -182,6 +188,38 @@ void ExportCFGMD::fin()
 {
     
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExportCFGMD::write(int stps)
+{
+    /*
+     we have a list of vectors
+     defaults
+     user defined ones
+     
+     
+     some vectors will just send their regular
+     others will need preparing
+     
+     
+     */
+    
+    
+    char* file_name=Print::vprintf(pattern.c_str(),stps);
+    
+    FILE* fp=NULL;
+    if(atoms->comm_rank==0) fp=fopen(file_name,"w");
+    delete [] file_name;
+    
+    write_header(fp);
+    if(sort) write_body_sort(fp);
+    else write_body(fp);
+    
+    
+    if(atoms->comm_rank==0)
+        fclose(fp);
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -247,6 +285,7 @@ void ExportCFGMD::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    TypeObject.tp_base=&ExportMD::TypeObject;
 }
 /*--------------------------------------------*/
 PyGetSetDef ExportCFGMD::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};

@@ -314,6 +314,7 @@ void ExportCFGDMD::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    TypeObject.tp_base=&ExportDMD::TypeObject;
 }
 /*--------------------------------------------*/
 PyGetSetDef ExportCFGDMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};

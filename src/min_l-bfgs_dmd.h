@@ -14,7 +14,6 @@ namespace MAPP_NS
         VecTens<type0,2>* s;
         VecTens<type0,2>* y;
     public:
-        MinLBFGSDMD(int);
         MinLBFGSDMD(int,type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
         ~MinLBFGSDMD();
         void run(int);
@@ -54,10 +53,12 @@ using namespace MAPP_NS;
 template<class C>
 void MinLBFGSDMD::run(C* ls,int nsteps)
 {
+    int step=atoms->step;
+    
     force_calc();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
-    if(nevery_xprt) xprt->write(0);
+    if(nevery_xprt) xprt->write(step);
     
     type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
@@ -70,9 +71,9 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
     "S[0][1]",S[1][0]);
     
     
-    thermo.init();
+    if(ntally) thermo.init();
     Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-    thermo.print(0);
+    if(ntally) thermo.print(step);
     
     
     type0 e_prev,e_curr=ff->nrgy_strss[0];
@@ -118,24 +119,26 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
         err=ls->min(this,e_curr,alpha_m,0);
         
         if(err!=LS_S)
+        {
+            // this was a bullshit step so we have to decrease the setup once to compensate
+            // the last step was the previous one
+            istep--;
             continue;
+        }
         
         force_calc();
         
-        if(e_prev-e_curr<e_tol)
-            err=MIN_S_TOLERANCE;
-        
-        if(istep+1==nsteps)
-            err=MIN_F_MAX_ITER;
-        
-        if((istep+1)%ntally==0)
+        if(ntally && (istep+1)%ntally==0)
         {
             Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-            thermo.print(istep+1);
+            thermo.print(step+istep+1);
         }
         
-        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(istep+1);
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         
+        //this was a successfull step but the last one
+        if(e_prev-e_curr<e_tol) err=MIN_S_TOLERANCE;
+        if(istep+1==nsteps) err=MIN_F_MAX_ITER;
         if(err) continue;
         
         if(m)
@@ -161,15 +164,18 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
             gamma=(x*f0-x*f-x0*f0+x0*f)/(f*f+f0*f0-2.0*(f*f0));
     }
     
-    if(istep%ntally)
+    if(ntally && istep%ntally)
     {
         Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-        thermo.print(istep);
+        thermo.print(step+istep);
     }
 
-    if(nevery_xprt && istep%nevery_xprt) xprt->write(istep);
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
     
-    thermo.fin();
+    if(ntally) thermo.fin();
+    
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
+    
+    atoms->step+=istep;
 }
 #endif 

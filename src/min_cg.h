@@ -29,14 +29,13 @@ namespace MAPP_NS
         class DynamicMD* dynamic;
         class ExportMD* xprt;
     public:
-        MinCG();
         MinCG(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
         ~MinCG();
         virtual void run(int);
         template<class C>
         void run(C*,int);
-        void init();
-        void fin();
+        virtual void init();
+        virtual void fin();
         
         void force_calc();
         
@@ -81,10 +80,12 @@ using namespace MAPP_NS;
 template<class C>
 void MinCG::run(C* ls,int nsteps)
 {
+    int step=atoms->step;
+    
     force_calc();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
-    if(nevery_xprt) xprt->write(0);
+    if(nevery_xprt) xprt->write(step);
     
     type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
@@ -96,9 +97,9 @@ void MinCG::run(C* ls,int nsteps)
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
     
-    thermo.init();
+    if(ntally) thermo.init();
     Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-    thermo.print(0);
+    if(ntally) thermo.print(step);
     
     type0 e_prev,e_curr=ff->nrgy_strss[0];
     type0 f0_f0,f_f,f_f0;
@@ -107,7 +108,7 @@ void MinCG::run(C* ls,int nsteps)
     h=f;
     f0_f0=f*f;
     int istep=0;
-    for(;istep<nsteps && err==LS_S;istep++)
+    for(;err==LS_S;istep++)
     {
         if(f0_f0==0.0)
         {
@@ -131,25 +132,26 @@ void MinCG::run(C* ls,int nsteps)
         err=ls->min(this,e_curr,alpha,1);
         
         if(err!=LS_S)
+        {
+            // this was a bullshit step so we have to decrease the setup once to compensate
+            // the last step was the previous one
+            istep--;
             continue;
+        }
         
         force_calc();
         
-        if(e_prev-e_curr<e_tol)
-            err=MIN_S_TOLERANCE;
-        
-        if(istep+1==nsteps)
-            err=MIN_F_MAX_ITER;
-        
-        if((istep+1)%ntally==0)
+        if(ntally && (istep+1)%ntally==0)
         {
             Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-            thermo.print(istep+1);
+            thermo.print(step+istep+1);
         }
         
-        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(istep+1);
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         
-        
+        //this was a successfull step but the last one
+        if(e_prev-e_curr<e_tol) err=MIN_S_TOLERANCE;
+        if(istep+1==nsteps) err=MIN_F_MAX_ITER;
         if(err) continue;
         
         f_f=f*f;
@@ -161,17 +163,20 @@ void MinCG::run(C* ls,int nsteps)
         f0_f0=f_f;
     }
     
-    if(istep%ntally)
+    if(ntally && istep%ntally)
     {
         Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
-        thermo.print(istep);
+        thermo.print(step+istep);
     }
     
     
-    if(nevery_xprt && istep%nevery_xprt) xprt->write(istep);
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
     
 
-    thermo.fin();    
-    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);    
+    if(ntally) thermo.fin();
+    
+    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
+    
+    atoms->step+=istep;
 }
 #endif

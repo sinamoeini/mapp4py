@@ -4,16 +4,6 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCGDMD::MinCGDMD():
-atoms(NULL),
-ff(NULL),
-max_dalpha(0.01),
-Min()
-{
-}
-/*--------------------------------------------
- constructor
- --------------------------------------------*/
 MinCGDMD::MinCGDMD(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
@@ -290,8 +280,8 @@ int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<5>().ob);
-    __self->min=new MinCGDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
+    __self->min=new MinCGDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;
@@ -435,7 +425,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         {
             __self->min->pre_run_chk(__atoms,__ff);
         }
-        catch(std::string err_msg)
+        catch(std::string& err_msg)
         {
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
             return NULL;
@@ -449,7 +439,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         {
             __self->min->init();
         }
-        catch(std::string err_msg)
+        catch(std::string& err_msg)
         {
             __self->min->xprt=NULL;
             __self->min->ff=NULL;

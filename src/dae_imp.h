@@ -45,6 +45,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             DAEImplicit* dae;
+            ExportDMD::Object* xprt;
         }Object;
         
         

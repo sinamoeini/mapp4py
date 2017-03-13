@@ -15,11 +15,11 @@ wi(new type0[__N])
     alpha=new DMDVec<type0>(this,0.0,"alpha");
     c=new DMDVec<type0>(this,-1.0,"c");
     dof_alpha=new DMDVec<bool>(this,true,"dof_alpha");
-    c_dof=new DMDVec<bool>(this,true,"c_dof");
+    dof_c=new DMDVec<bool>(this,true,"c_dof");
     c_d=new DMDVec<type0>(this,true,"c_d");
     
     dof_alpha->empty(true);
-    c_dof->empty(true);
+    dof_c->empty(true);
     c_d->empty(0.0);
 }
 /*--------------------------------------------
@@ -28,7 +28,7 @@ wi(new type0[__N])
 AtomsDMD::~AtomsDMD()
 {
     delete dof_alpha;
-    delete c_dof;
+    delete dof_c;
     delete c_d;
     delete c;
     delete alpha;

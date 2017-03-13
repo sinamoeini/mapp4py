@@ -271,6 +271,7 @@ int DAEImplicit::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->dae=new DAEImplicit();
+    __self->xprt=NULL;
     return 0;
 }
 /*--------------------------------------------
@@ -282,6 +283,7 @@ PyObject* DAEImplicit::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->dae=NULL;
+    __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -292,6 +294,8 @@ void DAEImplicit::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->dae;
     __self->dae=NULL;
+    if(__self->xprt) Py_DECREF(__self->xprt);
+    __self->xprt=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

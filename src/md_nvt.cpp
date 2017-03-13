@@ -334,11 +334,13 @@ void MDNVT::fin()
  
  --------------------------------------------*/
 void MDNVT::run(int nsteps)
-{    
+{
+    int step=atoms->step;
+    
     ff->force_calc_timer();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
-    if(nevery_xprt) xprt->write(0);
+    if(nevery_xprt) xprt->write(step);
     
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],
@@ -348,17 +350,17 @@ void MDNVT::run(int nsteps)
     "S[2][0]",S_part[2][0],
     "S[0][1]",S_part[1][0]);
     
-    thermo.init();
+    if(ntally) thermo.init();
     Algebra::DoLT<__dim__>::func([this](const int i,const int j)
     {
         S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
     });
     
     
-    thermo.print(0);
+    if(ntally) thermo.print(step);
     
     type0 fac,fac_x_d=1.0;
-    for(int i=0;i<nsteps;i++)
+    for(int istep=0;istep<nsteps;istep++)
     {
         // particle thermostat
         fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
@@ -382,16 +384,18 @@ void MDNVT::run(int nsteps)
             S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
         });
         
-        if((i+1)%ntally==0) thermo.print(i+1);
-        if(nevery_xprt && (i+1)%nevery_xprt==0) xprt->write(i+1);
+        if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
     }
     
-    if(nsteps%ntally) thermo.print(nsteps);
-    if(nevery_xprt && nsteps%nevery_xprt) xprt->write(nsteps);
+    if(ntally && nsteps%ntally) thermo.print(step+nsteps);
+    if(nevery_xprt && nsteps%nevery_xprt) xprt->write(step+nsteps);
     
     update_x_d_final(fac_x_d);
     
-    thermo.fin();
+    if(ntally) thermo.fin();
+    
+    atoms->step+=nsteps;
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -415,6 +419,8 @@ int MDNVT::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->md=new MDNVT(f.val<0>(),f.val<1>());
+    __self->xprt=NULL;
+    
     return 0;
 }
 /*--------------------------------------------
@@ -426,6 +432,7 @@ PyObject* MDNVT::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->md=NULL;
+    __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -436,6 +443,8 @@ void MDNVT::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->md;
     __self->md=NULL;
+    if(__self->xprt) Py_DECREF(__self->xprt);
+    __self->xprt=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -625,7 +634,7 @@ void MDNVT::getset_ntally(PyGetSetDef& getset)
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
         VarAPI<int> ntally("ntally");
-        ntally.logics[0]=VLogics("gt",0);
+        ntally.logics[0]=VLogics("ge",0);
         int ichk=ntally.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->md->ntally=ntally.val;
@@ -678,6 +687,16 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
         ForceFieldMD* __ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
         ExportMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
         
+        try
+        {
+            __self->md->pre_run_chk(__atoms,__ff);
+        }
+        catch(std::string& err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
         __self->md->atoms=__atoms;
         __self->md->ff=__ff;
         __self->md->xprt=__xprt;
@@ -686,7 +705,7 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
         {
             __self->md->init();
         }
-        catch(std::string err_msg)
+        catch(std::string& err_msg)
         {
             __self->md->xprt=NULL;
             __self->md->ff=NULL;

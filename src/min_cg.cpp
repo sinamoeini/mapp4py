@@ -4,16 +4,6 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCG::MinCG():
-atoms(NULL),
-ff(NULL),
-xprt(NULL),
-Min()
-{
-}
-/*--------------------------------------------
- constructor
- --------------------------------------------*/
 MinCG::MinCG(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
@@ -253,8 +243,8 @@ int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<4>().ob);
+    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<4>().ob);
     __self->min=new MinCG(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),&(__self->ls->ls));
-    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<4>().ob);    
     __self->xprt=NULL;
 
     return 0;
@@ -375,7 +365,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         {
             __self->min->pre_run_chk(__atoms,__ff);
         }
-        catch(std::string err_msg)
+        catch(std::string& err_msg)
         {
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
             return NULL;
@@ -389,7 +379,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         {
             __self->min->init();
         }
-        catch(std::string err_msg)
+        catch(std::string& err_msg)
         {
             __self->min->xprt=NULL;
             __self->min->ff=NULL;

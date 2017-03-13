@@ -41,9 +41,9 @@ void ExportCFGMD::write_header(FILE* fp)
         fprintf(fp,".NO_VELOCITY.\n");
     
     if(sort)
-        fprintf(fp,"entry_count = %d\n",ndims-1);
-    else
         fprintf(fp,"entry_count = %d\n",ndims-2);
+    else
+        fprintf(fp,"entry_count = %d\n",ndims-1);
     
     vec** usr_vecs=vecs+ndef_vecs;
     int icmp=0;

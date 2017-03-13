@@ -53,6 +53,8 @@ void ForceFieldDMD::pre_init()
 {
     dof_empty=atoms->dof->is_empty();
     dof_alpha_empty=atoms->dof_alpha->is_empty();
+    dof_c_empty=atoms->dof_c->is_empty();
+    
     type0 tmp;
     max_cut=0.0;
     for(size_t i=0;i<nelems;i++)
@@ -161,6 +163,7 @@ void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
  --------------------------------------------*/
 void ForceFieldDMD::force_calc_static_timer()
 {
+    reset();
     force_calc_static();
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});

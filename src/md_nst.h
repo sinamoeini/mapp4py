@@ -68,6 +68,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MDNST* md;
+            ExportMD::Object* xprt;
         }Object;
     
         

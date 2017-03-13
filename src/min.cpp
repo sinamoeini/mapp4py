@@ -279,7 +279,7 @@ void Min::getset_ntally(PyGetSetDef& getset)
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
         VarAPI<int> ntally("ntally");
-        ntally.logics[0]=VLogics("gt",0);
+        ntally.logics[0]=VLogics("ge",0);
         int ichk=ntally.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->min->ntally=ntally.val;

@@ -27,18 +27,6 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinLBFGS::MinLBFGS(int __m):
-MinCG(),
-m(__m),
-s(NULL),
-y(NULL),
-alpha(NULL),
-rho(NULL)
-{
-}
-/*--------------------------------------------
- constructor
- --------------------------------------------*/
 MinLBFGS::MinLBFGS(int __m,type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
 MinCG(__e_tol,__H_dof,__affine,__max_dx,__ls),
@@ -196,8 +184,8 @@ int MinLBFGS::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<5>().ob);
-    __self->min=new MinLBFGS(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
+    __self->min=new MinLBFGS(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;

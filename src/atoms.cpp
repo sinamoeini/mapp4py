@@ -34,9 +34,9 @@ template<> const char* Vec<unsigned short>::print_format="%d ";
 template<> const char* Vec<unsigned int>::print_format="%ud ";
 template<> const char* Vec<unsigned long int>::print_format="%uld ";
 template<> const char* Vec<unsigned long long>::print_format="%ulld ";
-template<> const char* Vec<float>::print_format="%f ";
-template<> const char* Vec<double>::print_format="%lf ";
-template<> const char* Vec<long double>::print_format="%Lf ";
+template<> const char* Vec<float>::print_format="%e ";
+template<> const char* Vec<double>::print_format="%le ";
+template<> const char* Vec<long double>::print_format="%Le ";
 
 /*---------------------------------------------------------------------------
       ___   _____   _____       ___  ___   _____

@@ -11,6 +11,7 @@ a_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 min_dt(std::numeric_limits<type0>::epsilon()),
 c(NULL),
 c_d(NULL),
+xprt(NULL),
 ncs(0),
 ntally(1000)
 {
@@ -36,9 +37,9 @@ int DAE::calc_ndofs(AtomsDMD* __atoms)
     int ndof_lcl=__atoms->c_dim*__atoms->natms_lcl;
     int n=ndof_lcl;
     type0* c=__atoms->c->begin();
-    if(!__atoms->c_dof->is_empty())
+    if(!__atoms->dof_c->is_empty())
     {
-        bool* c_dof=__atoms->c_dof->begin();
+        bool* c_dof=__atoms->dof_c->begin();
         for(int i=0;i<n;i++)
             if(!c_dof[i] || c[i]<0.0) ndof_lcl--;
     }
@@ -89,11 +90,12 @@ PyObject* DAE::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 int DAE::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<> f("__init__");
-
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->dae=new DAE();
+    __self->xprt=NULL;
+    
     return 0;
 }
 /*--------------------------------------------
@@ -105,6 +107,7 @@ PyObject* DAE::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->dae=NULL;
+    __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -115,6 +118,8 @@ void DAE::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->dae;
     __self->dae=NULL;
+    if(__self->xprt) Py_DECREF(__self->xprt);
+    __self->xprt=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -138,7 +143,7 @@ void DAE::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAE::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAE::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_getset()
 {
@@ -146,6 +151,7 @@ void DAE::setup_tp_getset()
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
     getset_ntally(getset[3]);
+    getset_export(getset[4]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
@@ -230,10 +236,35 @@ void DAE::getset_ntally(PyGetSetDef& getset)
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
         VarAPI<int> ntally("ntally");
-        ntally.logics[0]=VLogics("gt",0);
+        ntally.logics[0]=VLogics("ge",0);
         int ichk=ntally.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->dae->ntally=ntally.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::getset_export(PyGetSetDef& getset)
+{
+    getset.name=(char*)"export";
+    getset.doc=(char*)"export";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        ExportDMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
+        if(!xprt) Py_RETURN_NONE;
+        Py_INCREF(xprt);
+        return reinterpret_cast<PyObject*>(xprt);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<OP<ExportDMD>> xprt("export");
+        int ichk=xprt.set(op);
+        if(ichk==-1) return -1;
+        if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
+        Py_INCREF(xprt.val.ob);
+        reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportDMD::Object*>(xprt.val.ob);
         return 0;
     };
 }

@@ -126,6 +126,8 @@ void MDMuVT::fin()
  --------------------------------------------*/
 void MDMuVT::run(int nsteps)
 {
+    int step=atoms->step;
+    
     PGCMC gcmc(atoms,ff,dynamic,1,gas_elem,mu,T,seed);
     gcmc.init();
                
@@ -133,7 +135,7 @@ void MDMuVT::run(int nsteps)
     ff->force_calc_timer();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
-    if(nevery_xprt) xprt->write(0);
+    if(nevery_xprt) xprt->write(step);
     
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],
@@ -143,18 +145,18 @@ void MDMuVT::run(int nsteps)
     "S[2][0]",S_part[2][0],
     "S[0][1]",S_part[1][0]);
     
-    thermo.init();
+    if(ntally) thermo.init();
     Algebra::DoLT<__dim__>::func([this](const int i,const int j)
     {
         S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
     });
     
     
-    thermo.print(0);
+    if(ntally) thermo.print(step);
     
     type0 fac,fac_x_d=1.0;
     
-    for(int i=0;i<nsteps;i++)
+    for(int istep=0;istep<nsteps;istep++)
     {
         // particle thermostat
         fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
@@ -164,7 +166,7 @@ void MDMuVT::run(int nsteps)
         
         update_x_d__x(fac_x_d);
         
-        if((i+1)%nevery)
+        if((istep+1)%nevery)
             dynamic->update(atoms->x);
         else
         {
@@ -188,17 +190,19 @@ void MDMuVT::run(int nsteps)
             S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
         });
         
-        if((i+1)%ntally==0) thermo.print(i+1);
-        if(nevery_xprt && (i+1)%nevery_xprt==0) xprt->write(i+1);
+        if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
     }
     
-    if(nsteps%ntally) thermo.print(nsteps);
-    if(nevery_xprt && nsteps%nevery_xprt) xprt->write(nsteps);
+    if(ntally && nsteps%ntally) thermo.print(step+nsteps);
+    if(nevery_xprt && nsteps%nevery_xprt) xprt->write(step+nsteps);
     
     update_x_d_final(fac_x_d);
-    thermo.fin();
+    if(ntally) thermo.fin();
     
     gcmc.fin();
+    
+    atoms->step+=nsteps;
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -223,6 +227,8 @@ int MDMuVT::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     Object* __self=reinterpret_cast<Object*>(self);
     __self->md=new MDMuVT(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>());
+    __self->xprt=NULL;
+    
     return 0;
 }
 /*--------------------------------------------
@@ -234,6 +240,7 @@ PyObject* MDMuVT::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->md=NULL;
+        __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -244,6 +251,8 @@ void MDMuVT::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->md;
     __self->md=NULL;
+    if(__self->xprt) Py_DECREF(__self->xprt);
+    __self->xprt=NULL;
     delete __self;
 }
 /*--------------------------------------------*/

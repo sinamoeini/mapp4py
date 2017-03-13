@@ -131,13 +131,13 @@ void Export::find_vecs(Atoms* atoms)
         {
             vec* __v=find_vec(vec_names[i],__vecs,__nvecs);
             if(!__v)
-                throw "cannot print vector "+std::string(vec_names[i])+", it does not exist";
+                throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it does not exist";
             else
             {
                 if(__v->is_empty())
-                    throw "cannot print vector "+std::string(vec_names[i])+", it is empty";
+                    throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it is empty";
                 else
-                    throw "cannot print vector "+std::string(vec_names[i])+", it is not included in this simulation (it is archived)";
+                    throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it is not included in this simulation (it is archived)";
             }
         }
         ndims+=v->ndim_dump();

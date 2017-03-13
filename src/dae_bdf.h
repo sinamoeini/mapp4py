@@ -70,6 +70,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             DAEBDF* dae;
+            ExportDMD::Object* xprt;
         }Object;
         
         static PyTypeObject TypeObject;

@@ -8,18 +8,6 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinLBFGSDMD::MinLBFGSDMD(int __m):
-MinCGDMD(),
-m(__m),
-s(NULL),
-y(NULL),
-alpha(NULL),
-rho(NULL)
-{
-}
-/*--------------------------------------------
- constructor
- --------------------------------------------*/
 MinLBFGSDMD::MinLBFGSDMD(int __m,type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
 MinCGDMD(__e_tol,__H_dof,__affine,__max_dx,__max_dalpha,__ls),
@@ -187,8 +175,8 @@ int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<6>().ob);
-    __self->min=new MinLBFGSDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),f.val<5>(),&(__self->ls->ls));
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<6>().ob);
+    __self->min=new MinLBFGSDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),f.val<5>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;

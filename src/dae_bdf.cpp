@@ -44,22 +44,51 @@ void DAEBDF::init_static()
     DAEImplicit::init_static();
     Memory::alloc(dy,(max_q+2)*ncs);
     z=dy+ncs;
+    
+    if(xprt)
+    {
+        try
+        {
+            xprt->atoms=atoms;
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            fin_static();
+            throw err_msg;
+        }
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEBDF::fin_static()
+{
+    if(xprt)
+    {
+        xprt->fin();
+        xprt->atoms=NULL;
+    }
+    
+    ff->fin_static();
+    ff->neighbor->fin_static();
+    Memory::dealloc(dy);
+    z=NULL;
+    DAEImplicit::fin_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void DAEBDF::run_static(type0 t_tot)
 {
-    init_static();
+    int step=atoms->step;
+    
     ff->derivative_timer();
     ff->neighbor->init_static();
     ff->neighbor->create_2nd_list();
     ff->init_static();
-    /*
-    type0* alpha=atoms->alpha->begin();
-    for(int i=0;i<ncs;i++)
-        printf("%d\t%e\n",i,alpha[i]);
-    */
+
+    
     
     t_cur=0.0;
     t_fin=t_tot;
@@ -68,9 +97,10 @@ void DAEBDF::run_static(type0 t_tot)
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     reset();
 
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    if(nevery_xprt) xprt->write(step);
     
     type0 S[__dim__][__dim__];
-    
     ThermoDynamics thermo(6,
     "Time",t_cur,
     "FE",ff->nrgy_strss[0],
@@ -80,9 +110,9 @@ void DAEBDF::run_static(type0 t_tot)
     "S[1][2]",S[2][1],
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
-    thermo.init();
+    if(ntally) thermo.init();
     Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
-    thermo.print(0);
+    if(ntally) thermo.print(step);
     
     type0 dt_prev;
     int q_prev;
@@ -96,7 +126,6 @@ void DAEBDF::run_static(type0 t_tot)
         
         while(!integrate())
             integrate_fail();
-        //printf("step %d %e %e %e\n",istep,t_cur+dt,c[0],c_d[0]);
         
         __max_q=MAX(q,__max_q);
         __max_dt=MAX(dt,__max_dt);
@@ -122,29 +151,28 @@ void DAEBDF::run_static(type0 t_tot)
         if(q_prev!=q)
             nconst_q=0;
         
-        if((istep+1)%ntally==0)
+        if(ntally && (istep+1)%ntally==0)
         {
             ff->force_calc_static_timer();
             Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
-            thermo.print(istep+1);
+            thermo.print(step+istep+1);
         }
+        
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         
     }
     
-    if(istep%ntally)
+    if(ntally && istep%ntally)
     {
         ff->force_calc_static_timer();
         Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
-        thermo.print(istep);
+        thermo.print(step+istep);
     }
     
-    thermo.fin();
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
     
-    /*
-    //type0* alpha=atoms->alpha->begin();
-    for(int i=0;i<ncs;i++)
-        printf("%d\t%e\t%e\n",i,c[i],c_d[i]);
-    */
+    if(ntally) thermo.fin();
+    
     
     fprintf(MAPP::mapp_out,"nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
     fprintf(MAPP::mapp_out,"intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
@@ -153,19 +181,7 @@ void DAEBDF::run_static(type0 t_tot)
     fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
     fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
     
-
-    fin_static();
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void DAEBDF::fin_static()
-{
-    ff->fin_static();
-    ff->neighbor->fin_static();
-    Memory::dealloc(dy);
-    z=NULL;
-    DAEImplicit::fin_static();
+    atoms->step+=istep;
 }
 /*--------------------------------------------
  
@@ -605,6 +621,8 @@ int DAEBDF::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->dae=new DAEBDF();
+    __self->xprt=NULL;
+    
     return 0;
 }
 /*--------------------------------------------
@@ -616,6 +634,7 @@ PyObject* DAEBDF::__alloc__(PyTypeObject* type,Py_ssize_t)
     __self->ob_type=type;
     __self->ob_refcnt=1;
     __self->dae=NULL;
+    __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -626,6 +645,8 @@ void DAEBDF::__dealloc__(PyObject* self)
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->dae;
     __self->dae=NULL;
+    if(__self->xprt) Py_DECREF(__self->xprt);
+    __self->xprt=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -649,7 +670,7 @@ void DAEBDF::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
@@ -659,6 +680,7 @@ void DAEBDF::setup_tp_getset()
     getset_max_ngmres_iters(getset[3]);
     getset_max_nnewton_iters(getset[4]);
     getset_ntally(getset[5]);
+    getset_export(getset[6]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};
@@ -686,23 +708,39 @@ void DAEBDF::ml_run(PyMethodDef& tp_methods)
         
         AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
         ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
-
+        ExportDMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
         try
         {
             __self->dae->pre_run_chk(__atoms,__ff);
         }
-        catch(std::string err_msg)
+        catch(std::string& err_msg)
         {
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
             return NULL;
         }
         
-        __self->dae->atoms=
-        __atoms;
+        __self->dae->atoms=__atoms;
         __self->dae->ff=__ff;
+        __self->dae->xprt=__xprt;
+        
+        try
+        {
+            __self->dae->init_static();
+        }
+        catch(std::string& err_msg)
+        {
+            __self->dae->xprt=NULL;
+            __self->dae->ff=NULL;
+            __self->dae->atoms=NULL;
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
         
         __self->dae->run_static(f.val<1>());
         
+        __self->dae->fin_static();
+        
+        __self->dae->xprt=NULL;
         __self->dae->ff=NULL;
         __self->dae->atoms=NULL;
         

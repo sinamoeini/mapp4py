@@ -36,7 +36,10 @@ void ExportCFGDMD::write_header(FILE* fp)
     fprintf(fp,".NO_VELOCITY.\n");
     int nelems=static_cast<int>(atoms->elements.nelems);
     
-    fprintf(fp,"entry_count = %d\n",ndims);
+    if(sort)
+        fprintf(fp,"entry_count = %d\n",ndims-1);
+    else
+        fprintf(fp,"entry_count = %d\n",ndims);
     
     int icmp=0;
     for(int i=0;i<nelems;i++)
@@ -45,8 +48,7 @@ void ExportCFGDMD::write_header(FILE* fp)
         fprintf(fp,"auxiliary[%d] = %s_%d [reduced unit]\n",icmp++,"c",i);
     
     vec** usr_vecs=vecs+ndef_vecs;
-    
-    
+        
     for(int i=0;i<nusr_vecs;i++)
     {
         int d=usr_vecs[i]->ndim_dump();

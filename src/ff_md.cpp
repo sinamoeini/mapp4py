@@ -82,6 +82,7 @@ void ForceFieldMD::post_xchng_energy_timer(GCMC* gcmc)
  --------------------------------------------*/
 void ForceFieldMD::force_calc_timer()
 {
+    reset();
     force_calc();
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     const type0 vol=atoms->vol;

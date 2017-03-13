@@ -16,8 +16,8 @@ namespace MAPP_NS
         void pre_init();
         void post_fin();
     public:
-        bool dof_empty;
-        bool dof_alpha_empty;
+        bool dof_empty,dof_alpha_empty,dof_c_empty;
+        
         type0 max_cut;
         class NeighborDMD* neighbor;
         int c_dim;

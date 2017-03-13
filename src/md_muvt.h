@@ -27,6 +27,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MDMuVT* md;
+            ExportMD::Object* xprt;
         }Object;
         
         static PyTypeObject TypeObject;

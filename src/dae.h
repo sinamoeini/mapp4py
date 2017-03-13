@@ -1,6 +1,7 @@
 #ifndef __MAPP__dea__
 #define __MAPP__dea__
 #include "api.h"
+#include "export_styles.h"
 namespace MAPP_NS
 {
     template<typename> class Vec;
@@ -13,6 +14,11 @@ namespace MAPP_NS
         void pre_run_chk(class AtomsDMD*,class ForceFieldDMD*);
         int c_dim;
         int ncs;
+        
+        class AtomsDMD* atoms;
+        class ForceFieldDMD* ff;
+        class ExportDMD* xprt;
+        class DynamicDMD* dynamic;
     public:
         int ntally;
         int max_nsteps;
@@ -27,10 +33,6 @@ namespace MAPP_NS
         type0* c;
         type0* c_d;
         
-        class AtomsDMD* atoms;
-        class ForceFieldDMD* ff;
-        class DynamicDMD* dynamic;
-        
         
         
         DAE();
@@ -43,6 +45,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             DAE* dae;
+            ExportDMD::Object* xprt;
         }Object;
         
         
@@ -61,6 +64,7 @@ namespace MAPP_NS
         static void getset_max_nsteps(PyGetSetDef&);
         static void getset_min_dt(PyGetSetDef&);
         static void getset_ntally(PyGetSetDef&);
+        static void getset_export(PyGetSetDef&);
         
         static void setup_tp();
     };

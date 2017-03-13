@@ -185,7 +185,7 @@ void ForceFieldFS::force_calc()
     type0* xvec=atoms->x->begin();
     type0* fvec=f->begin();
     type0* rho=rho_ptr->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     
     int iatm,jatm;
     int icomp,jcomp;
@@ -338,7 +338,7 @@ void ForceFieldFS::energy_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* rho=rho_ptr->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     
     int iatm,jatm;
     int icomp,jcomp;

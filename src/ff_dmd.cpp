@@ -18,7 +18,8 @@ r_crd(NULL)
     Memory::alloc(r_crd,nelems);
     neighbor=new NeighborDMD(__atoms,cut_sk,rsq_crd);
     f=new Vec<type0>(atoms,__dim__,"f");
-    f_alpha=new Vec<type0>(atoms,atoms->c_dim,"f_alpha");
+    f_alpha=new DMDVec<type0>(atoms,0.0,"f_alpha");
+    
 }
 /*--------------------------------------------
  
@@ -35,9 +36,23 @@ ForceFieldDMD::~ForceFieldDMD()
 /*--------------------------------------------
  
  --------------------------------------------*/
+void ForceFieldDMD::reset()
+{
+    type0* __f=f->begin();
+    const int n=atoms->natms_lcl*__dim__;
+    for(int i=0;i<n;i++) __f[i]=0.0;
+    __f=f_alpha->begin();
+    const int m=atoms->natms_lcl*c_dim;
+    for(int i=0;i<m;i++) __f[i]=0.0;
+    for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void ForceFieldDMD::pre_init()
 {
     dof_empty=atoms->dof->is_empty();
+    dof_alpha_empty=atoms->dof_alpha->is_empty();
     type0 tmp;
     max_cut=0.0;
     for(size_t i=0;i<nelems;i++)
@@ -79,20 +94,33 @@ type0 ForceFieldDMD::value_timer()
  --------------------------------------------*/
 void ForceFieldDMD::derivative_timer()
 {
+    reset();
     force_calc();
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
-    if(dof_empty) return;
-    type0* fvec=f->begin();
-    bool* dof=atoms->dof->begin();
-    const int n=atoms->natms_lcl*__dim__;
-    for(int i=0;i<n;i++) fvec[i]*=dof[i];
+    
+    if(!dof_empty)
+    {
+        type0* fvec=f->begin();
+        bool* dof=atoms->dof->begin();
+        const int n=atoms->natms_lcl*__dim__;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
+    
+    if(!dof_alpha_empty)
+    {
+        type0* fvec=f_alpha->begin();
+        bool* dof=atoms->dof_alpha->begin();
+        const int n=atoms->natms_lcl*c_dim;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
 }
 /*--------------------------------------------
- 
+ this does not sound right hs to be check later
  --------------------------------------------*/
 void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
 {
+    reset();
     force_calc();
     type0* fvec=f->begin();
     type0* xvec=atoms->x->begin();
@@ -108,7 +136,7 @@ void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
         const int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
         {
-            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]*=dof[i];});
+            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
             Algebra::DyadicV<__dim__>(xvec,fvec,nrgy_strss_lcl+1);
         }
     }
@@ -117,8 +145,16 @@ void ForceFieldDMD::derivative_timer(type0(*&S)[__dim__])
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]*=-1.0;});
     Algebra::NONAME_DyadicV_mul_MLT(nrgy_strss+1,atoms->B,S);
-    Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]*=-1.0/atoms->vol;});
+    const type0 vol=atoms->vol;
+    Algebra::Do<__nvoigt__>::func([this,&vol](int i){nrgy_strss[i+1]/=-vol;});
     
+    if(!dof_alpha_empty)
+    {
+        type0* fvec=f_alpha->begin();
+        bool* dof=atoms->dof_alpha->begin();
+        const int n=atoms->natms_lcl*c_dim;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
 }
 /*--------------------------------------------
  
@@ -129,18 +165,6 @@ void ForceFieldDMD::force_calc_static_timer()
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
 }
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldDMD::reset()
-{
-    type0* __f=f->begin();
-    const int n=atoms->natms_lcl*__dim__;
-    for(int i=0;i<n;i++) __f[i]=0.0;
-    __f=f_alpha->begin();
-    const int m=atoms->natms_lcl*c_dim;
-    for(int i=0;i<m;i++) __f[i]=0.0;
-    for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
-}
+
 
 

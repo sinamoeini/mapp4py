@@ -196,6 +196,32 @@ void Export::release(vec** vecs,int nvecs)
 /*--------------------------------------------
  
  --------------------------------------------*/
+bool Export::open(const int rank,MPI_Comm& world, const char* path,const char* mode,FILE*& fp)
+{
+    int err=0;
+    if(rank==0)
+    {
+        fp=fopen(path,mode);
+        if(!fp)
+            err=1;
+            
+    }
+    else fp=NULL;
+    
+    MPI_Bcast(&err,1,MPI_INT,0,world);
+    if(err) return false;
+    return true;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Export::close(const int rank,MPI_Comm& world,FILE*& fp)
+{
+    if(rank==0) fclose(fp);
+}
+/*------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------------------------------------------*/
 void Export::getset_deafult_vecs(PyGetSetDef& getset)
 {
     getset.name=(char*)"default_vecs";

@@ -281,7 +281,7 @@ void ForceFieldEAM::force_calc()
     
     type0* xvec=atoms->x->begin();
     type0* fvec=f->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     type0* rho=rho_ptr->begin();
     
     int iatm,jatm;
@@ -450,7 +450,7 @@ void ForceFieldEAM::energy_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* rho=rho_ptr->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     
     int iatm,jatm;
     int icomp,jcomp;
@@ -589,7 +589,7 @@ void ForceFieldEAM::pre_xchng_energy(GCMC* gcmc)
         
         type0* F=F_ptr->begin();
         type0* F_xchng=F_xchng_ptr->begin();
-        elem_type* evec=elem->begin();
+        elem_type* evec=atoms->elem->begin();
         
         type0 tmp0;
         en0=0.0;
@@ -720,7 +720,7 @@ void ForceFieldEAM::init_xchng()
     type0* F=F_ptr->begin();
     type0* rho_xchng=rho_xchng_ptr->begin();
     type0* F_xchng=F_xchng_ptr->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     
     int iatm,jatm;
     int icomp,jcomp;

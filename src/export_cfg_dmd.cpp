@@ -200,32 +200,18 @@ void ExportCFGDMD::write_body(FILE* fp)
  --------------------------------------------*/
 void ExportCFGDMD::write(int stps)
 {
-    /*
-     we have a list of vectors
-        defaults 
-        user defined ones 
-     
-     
-     some vectors will just send their regular 
-     others will need preparing 
-     
-     
-     */
-    
-    
+    FILE* fp;
     char* file_name=Print::vprintf(pattern.c_str(),stps);
-    
-    FILE* fp=NULL;
-    if(atoms->comm_rank==0) fp=fopen(file_name,"w");
+    bool file_chk=open(atoms->comm_rank,atoms->world,file_name,"w",fp);
     delete [] file_name;
+    if(!file_chk) return;
+    
     
     write_header(fp);
     if(sort) write_body_sort(fp);
     else write_body(fp);
     
-    
-    if(atoms->comm_rank==0)
-        fclose(fp);
+    close(atoms->comm_rank,atoms->world,fp);
 }
 /*--------------------------------------------
  

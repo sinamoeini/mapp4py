@@ -24,6 +24,10 @@ namespace MAPP_NS
         static void release(class vec**,int);
         void find_vecs(class Atoms*);
         
+        static bool open(const int,MPI_Comm&,const char*,const char*,FILE*&);
+        static void close(const int,MPI_Comm&,FILE*&);
+        
+        
         typedef struct
         {
             PyObject_HEAD

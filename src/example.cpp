@@ -261,7 +261,7 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
             x         [__dim__]
             dof       [__dim__]
             alpha     [];
-            alpha_dof [];
+            dof_alpha [];
             c         [];
             c_dof     [];
             elem      [];

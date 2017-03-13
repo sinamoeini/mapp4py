@@ -24,7 +24,6 @@ MinCGDMD::~MinCGDMD()
  --------------------------------------------*/
 void MinCGDMD::force_calc()
 {
-    ff->reset();
     if(chng_box)
     {
         ff->derivative_timer(f.A);

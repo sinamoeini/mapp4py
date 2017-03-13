@@ -51,7 +51,6 @@ void DAEBDF::init_static()
 void DAEBDF::run_static(type0 t_tot)
 {
     init_static();
-    ff->reset();
     ff->derivative_timer();
     ff->neighbor->init_static();
     ff->neighbor->create_2nd_list();
@@ -125,7 +124,6 @@ void DAEBDF::run_static(type0 t_tot)
         
         if((istep+1)%ntally==0)
         {
-            ff->reset();
             ff->force_calc_static_timer();
             Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
             thermo.print(istep+1);
@@ -135,7 +133,6 @@ void DAEBDF::run_static(type0 t_tot)
     
     if(istep%ntally)
     {
-        ff->reset();
         ff->force_calc_static_timer();
         Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
         thermo.print(istep);

@@ -123,7 +123,6 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     atoms->update_H();
     
     dynamic->update(atoms->x);
-    ff->reset();
     ff->force_calc_timer();
     
     
@@ -308,7 +307,6 @@ void MDNST::fin()
  --------------------------------------------*/
 void MDNST::run(int nsteps)
 {
-    ff->reset();
     ff->force_calc_timer();
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],

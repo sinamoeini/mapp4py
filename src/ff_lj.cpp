@@ -235,7 +235,7 @@ void ForceFieldLJ::force_calc()
 {
     const type0* x=atoms->x->begin();
     type0* fvec=f->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     
     elem_type ielem,jelem;
     type0 rsq;
@@ -292,7 +292,7 @@ void ForceFieldLJ::force_calc()
 void ForceFieldLJ::energy_calc()
 {
     const type0* x=atoms->x->begin();
-    elem_type* evec=elem->begin();
+    elem_type* evec=atoms->elem->begin();
     
     elem_type ielem,jelem;
     

@@ -15,7 +15,7 @@ namespace MAPP_NS
         DMDVec<type0>* c;
         DMDVec<type0>* c_d;
         DMDVec<bool>* c_dof;
-        DMDVec<bool>* alpha_dof;
+        DMDVec<bool>* dof_alpha;
         Vec<elem_type>* elem;
 
         AtomsDMD(MPI_Comm&,int,int);

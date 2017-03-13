@@ -110,7 +110,6 @@ void MDMuVT::run(int nsteps)
     gcmc.init();
                
     
-    ff->reset();
     ff->force_calc_timer();
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],
@@ -149,7 +148,6 @@ void MDMuVT::run(int nsteps)
             ndof_part+=static_cast<type0>(gcmc.dof_diff);
         }
         
-        ff->reset();
         ff->force_calc_timer();
         
         update_x_d();

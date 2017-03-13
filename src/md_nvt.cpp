@@ -186,7 +186,6 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     
     
     dynamic->update(atoms->x);
-    ff->reset();
     ff->force_calc_timer();
     
     f=ff->f->begin();
@@ -260,12 +259,31 @@ void MDNVT::pre_init()
         elem_type* elem=atoms->elem->begin();
         Algebra::zero<__nvoigt__>(__vec_lcl);
         const int natms_lcl=atoms->natms_lcl;
-        for(int i=0;i<natms_lcl;i++)
+        if(dof_empty)
         {
-            m_i=m[*elem];
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            x_d+=__dim__;
-            ++elem;
+            for(int i=0;i<natms_lcl;i++)
+            {
+                m_i=m[*elem];
+                Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+                x_d+=__dim__;
+                ++elem;
+            }
+        }
+        else
+        {
+            bool* dof=atoms->dof->begin();
+            
+            for(int i=0;i<natms_lcl;i++)
+            {
+                
+                Algebra::Do<__dim__>::func([&dof,&x_d](int i){x_d[i]=dof[i] ? x_d[i]:0.0;});
+                m_i=m[*elem];
+                Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+                
+                dof+=__dim__;
+                x_d+=__dim__;
+                ++elem;
+            }
         }
         
         MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
@@ -296,7 +314,6 @@ void MDNVT::fin()
  --------------------------------------------*/
 void MDNVT::run(int nsteps)
 {    
-    ff->reset();
     ff->force_calc_timer();
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],

@@ -9,8 +9,7 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 ForceFieldMD::ForceFieldMD(AtomsMD* __atoms):
 ForceField(__atoms),
-atoms(__atoms),
-elem(__atoms->elem)
+atoms(__atoms)
 {
     neighbor=new NeighborMD(__atoms,cut_sk_sq);
     f=new Vec<type0>(atoms,__dim__,"f");
@@ -22,6 +21,16 @@ ForceFieldMD::~ForceFieldMD()
 {
     delete f;
     delete neighbor;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldMD::reset()
+{
+    type0* __f=f->begin();
+    const int n=f->vec_sz*__dim__;
+    for(int i=0;i<n;i++) __f[i]=0.0;
+    for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
 }
 /*--------------------------------------------
  
@@ -103,20 +112,25 @@ type0 ForceFieldMD::value_timer()
  --------------------------------------------*/
 void ForceFieldMD::derivative_timer()
 {
+    reset();
     force_calc();
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
-    if(dof_empty) return;
-    type0* fvec=f->begin();
-    bool* dof=atoms->dof->begin();
-    const int n=atoms->natms_lcl*__dim__;
-    for(int i=0;i<n;i++) fvec[i]*=dof[i];
+    
+    if(!dof_empty)
+    {
+        type0* fvec=f->begin();
+        bool* dof=atoms->dof->begin();
+        const int n=atoms->natms_lcl*__dim__;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
 }
 /*--------------------------------------------
- 
+ this does not sound right hs to be check later
  --------------------------------------------*/
 void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
 {
+    reset();
     force_calc();
     type0* fvec=f->begin();
     type0* xvec=atoms->x->begin();
@@ -132,7 +146,7 @@ void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
         const int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
         {
-            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]*=dof[i];});
+            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
             Algebra::DyadicV<__dim__>(xvec,fvec,nrgy_strss_lcl+1);
         }
     }
@@ -142,19 +156,10 @@ void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]*=-1.0;});
     Algebra::NONAME_DyadicV_mul_MLT(nrgy_strss+1,atoms->B,S);
     const type0 vol=atoms->vol;
-    Algebra::Do<__nvoigt__>::func([this,&vol](int i){nrgy_strss[i+1]*=-1.0/vol;});
+    Algebra::Do<__nvoigt__>::func([this,&vol](int i){nrgy_strss[i+1]/=-vol;});
 
 }
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldMD::reset()
-{
-    type0* __f=f->begin();
-    const int n=f->vec_sz*__dim__;
-    for(int i=0;i<n;i++) __f[i]=0.0;
-    for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
-}
+
 
 
 

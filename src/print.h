@@ -26,6 +26,20 @@ public:
     template<class>
     inline static constexpr int delta_length();
     
+    template<class T>
+    inline static std::string to_string(T __val)
+    {
+        if(std::is_integral<T>::value)
+        {
+            if(std::is_unsigned<T>::value)
+                return std::to_string(static_cast<unsigned long long>(__val));
+            else
+                return std::to_string(static_cast<long long>(__val));
+        }
+        
+        return std::to_string(static_cast<long double>(__val));
+    };
+    
 };
 /*--------------------------------------------
  
@@ -148,7 +162,7 @@ inline constexpr int Print::max_length<long double>()
 template<class T>
 inline constexpr int Print::max_length()
 {
-    return static_cast<int>(MAX(TOSTRING(std::numeric_limits<T>::max()).length(),TOSTRING(std::numeric_limits<T>::min()).length()));
+    return static_cast<int>(MAX(Print::to_string(std::numeric_limits<T>::max()).length(),Print::to_string(std::numeric_limits<T>::min()).length()));
 }
 /*--------------------------------------------
  
@@ -158,6 +172,7 @@ inline constexpr int Print::delta_length()
 {
     return max_length<T>()-min_length<T>();
 }
+
 #endif
 
 

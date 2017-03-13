@@ -1179,7 +1179,7 @@ ptr(&val),
 Var(get_rank(),base_hash_code())
 {
     size=1;
-    name=TOSTRING(val);
+    name=Print::to_string(val);
 }
 /*--------------------------------------------
  copy constructor:
@@ -1608,7 +1608,7 @@ template <class T,size_t N>
 void var<T[N]>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var<size_t>** sz)
 {
     if(N!=pv.size)
-        throw "expected size "+TOSTRING(N)+" for argument '"+name+"'";
+        throw "expected size "+Print::to_string(N)+" for argument '"+name+"'";
 
     if(sz)  sz+=1;
     
@@ -1621,7 +1621,7 @@ void var<T[N]>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,v
         
         catch(std::string& err_msg)
         {
-            throw err_msg+"["+TOSTRING(i)+"]";
+            throw err_msg+"["+Print::to_string(i)+"]";
         }
     }
 }
@@ -1632,9 +1632,9 @@ template<class T,size_t N>
 std::string var<T[N]>::type_name(var<size_t>** sz)
 {
     if(sz)
-        return std::string("[")+TOSTRING(N)
+        return std::string("[")+Print::to_string(N)
         +std::string("]")+var<T>::type_name(sz+1);
-    return std::string("[")+TOSTRING(N)
+    return std::string("[")+Print::to_string(N)
     +std::string("]")+var<T>::type_name(sz);
 }
 /*--------------------------------------------
@@ -1699,7 +1699,7 @@ Var(get_rank(),base_hash_code(),std::move(name_))
     for(size_t i=0;i<size;i++)
     {
         (vars+i)->~var<T>();
-        new (vars+i) var<T>(v[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>(v[i],name+"["+Print::to_string(i)+"]",pv[i],data_ptr+1);
     }
 }
 /*--------------------------------------------
@@ -1817,7 +1817,7 @@ var<T[N]>& var<T[N]>::operator=(const T (&v)[N])
     for(size_t i=0;i<this->size;i++)
     {
         (this->vars+i)->~var<T>();
-        new (this->vars+i) var<T>(v[i],this->name+"["+TOSTRING(i)+"]");
+        new (this->vars+i) var<T>(v[i],this->name+"["+Print::to_string(i)+"]");
     }
     
     return *this;
@@ -1911,9 +1911,8 @@ void var<T[N]>::set(py_var<T_EQUIV>& pv)
     allocate(data_ptr,*ptr,sz);
     for(size_t i=0;i<size;i++)
     {
-        //vars[i]=std::move(var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1));
         (vars+i)->~var<T>();
-        new (vars+i) var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>((*ptr)[i],name+"["+Print::to_string(i)+"]",pv[i],data_ptr+1);
     }
 }
 /*--------------------------------------------
@@ -2074,7 +2073,7 @@ void var<T*>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var
     {
         if(*sz && **sz!=pv.size)
         {
-            throw "expected size "+TOSTRING(*((*sz)->ptr))+" ("+(*sz)->name+") for argument '"+name+"'";
+            throw "expected size "+Print::to_string(*((*sz)->ptr))+" ("+(*sz)->name+") for argument '"+name+"'";
         }
         sz+=1;
     }
@@ -2088,7 +2087,7 @@ void var<T*>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var
         
         catch(std::string& err_msg)
         {
-            throw err_msg+"["+TOSTRING(i)+"]";
+            throw err_msg+"["+Print::to_string(i)+"]";
         }
     }
 }
@@ -2169,9 +2168,8 @@ ptr(&v)
     vars=new var<T>[size];
     for(size_t i=0;i<size;i++)
     {
-        //vars[i]=std::move(var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1));
         (vars+i)->~var<T>();
-        new (vars+i) var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>((*ptr)[i],name+"["+Print::to_string(i)+"]",pv[i],data_ptr+1);
     }
     *data_ptr=v+size;
 }
@@ -2301,7 +2299,7 @@ var<T*>& var<T*>::operator=(const T (&v_arr)[N])
     for(size_t i=0;i<this->size;i++)
     {
         (this->vars+i)->~var<T>();
-        new (this->vars+i) var<T>(v[i],this->name+"["+TOSTRING(i)+"]");
+        new (this->vars+i) var<T>(v[i],this->name+"["+Print::to_string(i)+"]");
     }
     return *this;
 }
@@ -2404,7 +2402,7 @@ void var<T*>::set(py_var<T_EQUIV>& pv)
     for(size_t i=0;i<size;i++)
     {
         (vars+i)->~var<T>();
-        new (vars+i) var<T>((*ptr)[i],name+"["+TOSTRING(i)+"]",pv[i],data_ptr+1);
+        new (vars+i) var<T>((*ptr)[i],name+"["+Print::to_string(i)+"]",pv[i],data_ptr+1);
     }
     
 }

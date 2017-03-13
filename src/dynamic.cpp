@@ -1,5 +1,5 @@
-#include "dynamic.h"
 #include "atoms_styles.h"
+#include "dynamic.h"
 #include "ff_styles.h"
 #include "xmath.h"
 #include "memory.h"

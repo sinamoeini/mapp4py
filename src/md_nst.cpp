@@ -211,8 +211,8 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
                 if(S_dof[i][j] && __dof[i])
                 {
                     if(!err_msg.empty()) err_msg+="\n";
-                    err_msg+="cannot impose stress component ["+TOSTRING(i)+"]["+TOSTRING(j)
-                    +"] while any of the atoms do not have degree freedom in "+TOSTRING(i)
+                    err_msg+="cannot impose stress component ["+Print::to_string(i)+"]["+Print::to_string(j)
+                    +"] while any of the atoms do not have degree freedom in "+Print::to_string(i)
                     +" direction";
                 }
         

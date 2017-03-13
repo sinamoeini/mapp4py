@@ -8,7 +8,7 @@
 #include "memory.h"
 #include "MAPP.h"
 #include "xmath.h"
-
+#include "cell.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
@@ -54,7 +54,8 @@ void NeighborMD::rename_atoms(int* old_2_new)
  --------------------------------------------*/
 void NeighborMD::init()
 {
-    Neighbor::init();
+    no_neigh_lists=0;
+    cell=new Cell<1>(atoms);
 }
 /*--------------------------------------------
  finalize MD
@@ -72,7 +73,7 @@ void NeighborMD::fin()
     neighbor_list=NULL;
     neighbor_list_size=NULL;
 
-    Neighbor::fin();
+    delete cell;
 }
 /*--------------------------------------------
  create the neighbopr list

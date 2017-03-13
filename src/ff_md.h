@@ -7,6 +7,7 @@ namespace MAPP_NS
     {
     friend class DynamicMD;
     private:
+        void reset();
     protected:
         class DynamicMD* dynamic;
         class AtomsMD* atoms;
@@ -30,7 +31,7 @@ namespace MAPP_NS
         
         ForceFieldMD(class AtomsMD*);
         virtual ~ForceFieldMD();
-        void reset();
+        
         
         void force_calc_timer();
         type0 energy_calc_timer();

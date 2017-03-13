@@ -8,11 +8,15 @@ namespace MAPP_NS
     {
     friend class DynamicDMD;
     private:
+        void reset();
+        void reset_c_d();
     protected:
         class DynamicDMD* dynamic;
         class AtomsDMD* atoms;
         
         virtual void force_calc_static()=0;
+        virtual void c_d_calc()=0;
+        virtual void J(Vec<type0>*,Vec<type0>*)=0;
         void pre_init();
         void post_fin();
     public:
@@ -26,12 +30,11 @@ namespace MAPP_NS
         type0** cut_sk;
         Vec<type0>* f;
         DMDVec<type0>* f_alpha;
+        DMDVec<type0>* c_d;
         
         ForceFieldDMD(class AtomsDMD*);
         virtual ~ForceFieldDMD();
-        void reset();
-
-        
+                
         void force_calc_timer();
         type0 energy_calc_timer();
         
@@ -43,9 +46,9 @@ namespace MAPP_NS
         virtual void init_static()=0;
         virtual void fin_static()=0;
         void force_calc_static_timer();
-        virtual void operator()(Vec<type0>*,Vec<type0>*)=0;
-        virtual type0 update_J(type0,type0*,type0*)=0;
-        virtual type0 ddc_norm()=0;
+        void c_d_calc_timer();
+        type0 c_dd_norm_timer();
+        void J_timer(Vec<type0>*,Vec<type0>*);
     };
 }
 #endif 

@@ -7,8 +7,9 @@ namespace MAPP_NS
     {
     private:
     protected:
-        bool nonlin();
+        bool newton();
         type0 update_c();
+        void J_test();
     public:
         int max_nnewton_iters;
         int max_ngmres_iters;

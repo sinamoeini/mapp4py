@@ -19,13 +19,14 @@ r_crd(NULL)
     neighbor=new NeighborDMD(__atoms,cut_sk,rsq_crd);
     f=new Vec<type0>(atoms,__dim__,"f");
     f_alpha=new DMDVec<type0>(atoms,0.0,"f_alpha");
-    
+    c_d=new DMDVec<type0>(atoms,0.0,"c_d");
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ForceFieldDMD::~ForceFieldDMD()
 {
+    delete c_d;
     delete f_alpha;
     delete f;
     delete neighbor;
@@ -45,6 +46,15 @@ void ForceFieldDMD::reset()
     const int m=atoms->natms_lcl*c_dim;
     for(int i=0;i<m;i++) __f[i]=0.0;
     for(int i=0;i<__nvoigt__+1;i++) nrgy_strss_lcl[i]=0.0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::reset_c_d()
+{
+    type0* __c_d=c_d->begin();
+    const int n=atoms->natms_lcl*c_dim;
+    for(int i=0;i<n;i++) __c_d[i]=0.0;
 }
 /*--------------------------------------------
  
@@ -168,6 +178,39 @@ void ForceFieldDMD::force_calc_static_timer()
     MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::c_d_calc_timer()
+{
+    reset_c_d();
+    c_d_calc();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 ForceFieldDMD::c_dd_norm_timer()
+{
+    reset_c_d();
+    c_d_calc();
+    J(c_d,f_alpha);
+    int n=atoms->natms_lcl*c_dim;
+    type0* __f_alpha=f_alpha->begin();
+    type0 norm_lcl=0.0;
+    for(int i=0;i<n;i++)
+        norm_lcl+=__f_alpha[i]*__f_alpha[i];
+    type0 norm;
+    MPI_Allreduce(&norm_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
+    return sqrt(norm);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::J_timer(Vec<type0>* x,Vec<type0>* Jx)
+{
+    J(x,Jx);
+}
+
 
 
 

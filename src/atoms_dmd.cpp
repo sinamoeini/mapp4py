@@ -8,7 +8,8 @@ c_dim(__c_dim),
 N(__N),
 Atoms(world),
 xi(new type0[__N]),
-wi(new type0[__N])
+wi(new type0[__N]),
+temp(1.0)
 {
     XMath::quadrature_hg(N,xi,wi);
     elem=new Vec<elem_type>(this,c_dim,"elem");
@@ -16,11 +17,9 @@ wi(new type0[__N])
     c=new DMDVec<type0>(this,-1.0,"c");
     dof_alpha=new DMDVec<bool>(this,true,"dof_alpha");
     dof_c=new DMDVec<bool>(this,true,"c_dof");
-    c_d=new DMDVec<type0>(this,true,"c_d");
-    
+
     dof_alpha->empty(true);
     dof_c->empty(true);
-    c_d->empty(0.0);
 }
 /*--------------------------------------------
  
@@ -29,7 +28,6 @@ AtomsDMD::~AtomsDMD()
 {
     delete dof_alpha;
     delete dof_c;
-    delete c_d;
     delete c;
     delete alpha;
     delete elem;
@@ -148,7 +146,7 @@ void AtomsDMD::setup_tp()
     )---";
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsDMD::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsDMD::getset[]={[0 ... 13]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
 {
@@ -164,6 +162,7 @@ void AtomsDMD::setup_tp_getset()
     getset_comm_size(getset[9]);
     getset_comm_coords(getset[10]);
     getset_comm_dims(getset[11]);
+    getset_temp(getset[12]);
 }
 /*--------------------------------------------*/
 PyMethodDef AtomsDMD::methods[]={[0 ... 5]={NULL,NULL,0,NULL}};
@@ -173,5 +172,32 @@ void AtomsDMD::setup_tp_methods()
     ml_strain(methods[0]);
     ForceFieldEAMDMD::ml_new(methods[1],methods[2],methods[3]);
     ImportCFGDMD::ml_import(methods[4]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_temp(PyGetSetDef& getset)
+{
+    getset.name=(char*)"temp";
+    getset.doc=(char*)"temperature";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->temp,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        Object* __self=reinterpret_cast<Object*>(self);
+        if(!__self->atoms)
+        {
+            PyErr_Format(PyExc_TypeError,"cannot set 'h' prior to loading system configuration");
+            return -1;
+        }
+        
+        VarAPI<type0> temp("temp");
+        temp.logics[0]=VLogics("gt",0.0);
+        if(temp.set(val)==-1) return -1;
+        reinterpret_cast<Object*>(self)->atoms->temp=temp.val;
+        return 0;
+    };
 }
 

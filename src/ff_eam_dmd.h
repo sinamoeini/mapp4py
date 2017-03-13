@@ -49,7 +49,7 @@ namespace MAPP_NS
         
         type0 calc_ent(type0);
         void calc_mu();
-        
+        void set_temp();
 
 
         type0* M_IJ;
@@ -63,7 +63,8 @@ namespace MAPP_NS
         void force_calc_static();
         void force_calc();
         void energy_calc();
-        void dc();
+        void c_d_calc();
+        void J(Vec<type0>*,Vec<type0>*);
     public:
         ForceFieldEAMDMD(class AtomsDMD*,
         type0,type0,size_t,size_t,
@@ -73,14 +74,10 @@ namespace MAPP_NS
         ~ForceFieldEAMDMD();
         void init();
         void fin();
-        void set_temp(type0);
         
         void init_static();
         void fin_static();
-        void operator()(Vec<type0>*,Vec<type0>*);
-        type0 update_J(type0,type0*,type0*);
-        
-        type0 ddc_norm();
+
         static void ml_new(PyMethodDef&,PyMethodDef&,PyMethodDef&);
     };
 }

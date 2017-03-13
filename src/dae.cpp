@@ -1,6 +1,7 @@
 #include "dae.h"
 #include "atoms_dmd.h"
 #include "dynamic_dmd.h"
+#include "ff_dmd.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -58,11 +59,11 @@ void DAE::init_static()
     c_dim=atoms->c_dim;
     ncs=atoms->natms_lcl*c_dim;
     a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
-    atoms->c_d->fill();
+    ff->c_d->fill();
     dynamic=new DynamicDMD(atoms,ff,false,{},{},{});
     dynamic->init();
     c=atoms->c->begin();
-    c_d=atoms->c_d->begin();
+    c_d=ff->c_d->begin();
 }
 /*--------------------------------------------
  

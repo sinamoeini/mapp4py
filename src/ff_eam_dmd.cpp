@@ -721,7 +721,7 @@ void ForceFieldEAMDMD::energy_calc()
 void ForceFieldEAMDMD::init()
 {
     pre_init();
-    set_temp(300.0);
+    set_temp();
     
     
     mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
@@ -777,8 +777,9 @@ void ForceFieldEAMDMD::fin_static()
 /*--------------------------------------------
  set the temperature in the simulation
  --------------------------------------------*/
-void ForceFieldEAMDMD::set_temp(type0 T)
+void ForceFieldEAMDMD::set_temp()
 {
+    type0 T=atoms->temp;
     type0 kb=atoms->kB;
     type0 h=atoms->h;
     type0 mass;
@@ -802,120 +803,6 @@ inline type0 ForceFieldEAMDMD::calc_ent(type0 x)
 {
     if(x==0.0) return 0.0;
     return x*log(x);
-}
-/*--------------------------------------------
- external vecs
- atoms->x;
- atoms->alpha;
- atoms->c;
- atoms->elem;
- 
- internal vecs
- mu_ptr;
- cv_ptr;
- --------------------------------------------*/
-void ForceFieldEAMDMD::dc()
-{
-    /*
-    calc_mu();
-    
-    //external vecs
-    const type0* x=atoms->x->begin();
-    const type0* alpha=atoms->alpha->begin();
-    const type0* c=atoms->c->begin();
-    const elem_type* elem_vec=atoms->elem->begin();
-    type0* c_d=atoms->c_d->begin();
-    
-    
-    //internal vecs
-    type0* cv=cv_ptr->begin();
-    type0* mu=mu_ptr->begin();
-    
-    const int n=atoms->natms_lcl*c_dim;
-    for(int i=0;i<n;i++) c_d[i]=0.0;
-    
-    int** neighbor_list=neighbor->neighbor_list_2nd;
-    int* neighbor_list_size=neighbor->neighbor_list_size_2nd;
-    elem_type elem_i;
-    type0 rsq,alpha_i,alpha_j,alpha_i_sq,alpha_j_sq,gamma_i,gamma_j,mu_i,mu_ji;
-    type0 Qi,alpha_Q_sq,d_i,d_j;
-    type0 dc_ij;
-    size_t istart=0;
-    for(int i=0;i<n;i++)
-    {
-        if(c[i]<0.0) continue;
-        elem_i=elem_vec[i];
-        alpha_i=alpha[i];
-        alpha_i_sq=alpha_i*alpha_i;
-        mu_i=mu[i];
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
-        {
-            j=neighbor_list[i][__j];
-            alpha_j=alpha[j];
-            alpha_j_sq=alpha_j*alpha_j;
-            rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
-            gamma_i=rsq/alpha_i_sq;
-            gamma_j=rsq/alpha_j_sq;
-            mu_ji=beta*(mu[j]-mu_i);
-            calc_Q(gamma_i,gamma_j,mu_ji,Qi,alpha_Q_sq);
-            
-            d_i=d_j=-c_1[elem_i]*rsq*alpha_Q_sq;
-            d_i/=alpha_i_sq*alpha_i;
-            d_j/=alpha_j_sq*alpha_j;
-            
-            dc_ij=d_i*exp(-Qi)*c[i]*cv[j/c_dim]-d_j*exp(-Qi+mu_ji)*c[j]*cv[i/c_dim];
-            
-            
-            c_d[i]+=dc_ij;
-            if(j<n)
-                c_d[j]-=dc_ij;
-        }
-    }
-     */
-}
-/*--------------------------------------------
- calculate norm of d^2c/dt^2
- 
- external vecs
- atoms->c_d;
- atoms->c;
- 
- internal vecs
- s_ptr;
- t_ptr;
- --------------------------------------------*/
-type0 ForceFieldEAMDMD::ddc_norm()
-{
-    const int n=atoms->natms_lcl*c_dim;
-    type0* tmp=NULL;
-    Memory::alloc(tmp,n);
-    for(int i=0;i<n;i++) tmp[i]=0;
-    update_J(1.0,tmp,tmp);
-    delete [] tmp;
-    
-    //external vec
-    type0* c_dvec=atoms->c_d->begin();
-    
-    //internal vec
-    type0* s=vec2->begin();
-    
-    memcpy(s,c_dvec,sizeof(type0)*n);
-    
-    operator()(vec2,vec3);
-    
-    //internal vec
-    type0* t=vec3->begin();
-    
-    //external vec
-    type0* c=atoms->c->begin();
-    type0 ans_lcl=0.0,ans;
-    for(int i=0;i<n;i++)
-        if(c[i]>=0.0)
-            ans_lcl+=(t[i]-s[i])*(t[i]-s[i]);
-    
-    MPI_Allreduce(&ans_lcl,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    return sqrt(ans);
 }
 /*--------------------------------------------
  calculate cv
@@ -1133,10 +1020,8 @@ void ForceFieldEAMDMD::force_calc_static()
  
  F=c-scalar*c_d(c)+a
  --------------------------------------------*/
-type0 ForceFieldEAMDMD::update_J(type0 scalar,type0* a,type0* F)
+void ForceFieldEAMDMD::c_d_calc()
 {
-    type0 iota=log(scalar);
-    
     calc_mu();
     
     //external vecs
@@ -1144,24 +1029,21 @@ type0 ForceFieldEAMDMD::update_J(type0 scalar,type0* a,type0* F)
     const type0* alpha=atoms->alpha->begin();
     const type0* c=atoms->c->begin();
     const elem_type* elem_vec=atoms->elem->begin();
-    type0* c_d=atoms->c_d->begin();
+    type0* __c_d=c_d->begin();
     
     
     //internal vecs
     type0* cv=cv_ptr->begin();
     type0* mu=mu_ptr->begin();
     
-    const int n=atoms->natms_lcl*c_dim;
-    for(int i=0;i<n;i++) F[i]=c_d[i]=0.0;
-    
     
     type0 rsq,alpha_i,alpha_j,alpha_sq_i,alpha_sq_j,gamma_i,gamma_j,mu_i,mu_ji;
     type0 Q_i,gamma_ij_inv,theta_i,theta_j,exp_mod_Q_i,exp_mod_Q_j,d_i,d_j;
-    type0 dc_ij,dg_ij,c_1_ielem;
-    type0 ans_lcl=0.0;
+    type0 dc_ij,c_1_ielem;
     size_t istart=0;
     int** neighbor_list=neighbor->neighbor_list_2nd;
     int* neighbor_list_size=neighbor->neighbor_list_size_2nd;
+    const int n=atoms->natms_lcl*c_dim;
     for(int i=0;i<n;i++)
     {
         if(c[i]<0.0) continue;
@@ -1181,37 +1063,28 @@ type0 ForceFieldEAMDMD::update_J(type0 scalar,type0* a,type0* F)
             mu_ji=beta*(mu[j]-mu_i);
             calc_Q(gamma_i,gamma_j,mu_ji,Q_i,gamma_ij_inv,theta_i);
             
-            exp_mod_Q_i=exp(-Q_i+iota);
-            exp_mod_Q_j=exp(-Q_i+mu_ji+iota);
+            exp_mod_Q_i=exp(-Q_i);
+            exp_mod_Q_j=exp(-Q_i+mu_ji);
 
             d_i=d_j=-c_1_ielem*rsq*gamma_ij_inv;
             d_i/=alpha_sq_i*alpha_i;
             d_j/=alpha_sq_j*alpha_j;
+            d_i*=exp(-Q_i);
+            d_j*=exp(-Q_i+mu_ji);;
             theta_j=theta_i+1.0;
             
-            dc_ij=exp(-Q_i)*(d_i*c[i]*cv[j/c_dim]-d_j*exp(mu_ji)*c[j]*cv[i/c_dim]);
-            dg_ij=exp(-Q_i+iota)*(d_j*exp(mu_ji)*c[j]*cv[i/c_dim]-d_i*c[i]*cv[j/c_dim]);
+            dc_ij=c[i]*cv[j/c_dim]*d_i-c[j]*cv[i/c_dim]*d_j;
             
-            M_IJ[istart]=beta*exp(-Q_i+iota)*(d_i*theta_i*c[i]*cv[j/c_dim]-d_j*theta_j*exp(mu_ji)*c[j]*cv[i/c_dim]);
-            M_IJ[istart+1]=d_i*exp_mod_Q_i;
-            M_IJ[istart+2]=d_j*exp_mod_Q_j;
+            M_IJ[istart]=beta*(c[i]*cv[j/c_dim]*d_i*theta_i-c[j]*cv[i/c_dim]*d_j*theta_j);
+            M_IJ[istart+1]=d_i;
+            M_IJ[istart+2]=d_j;
             
-            F[i]+=dg_ij;
-            c_d[i]+=dc_ij;
+            __c_d[i]+=dc_ij;
 
             if(j<n)
-            {
-                F[j]-=dg_ij;
-                c_d[j]-=dc_ij;
-            }
+                __c_d[j]-=dc_ij;
         }
-        F[i]+=c[i]+a[i];
-        ans_lcl+=F[i]*F[i];
     }
-    
-    type0 ans;
-    MPI_Allreduce(&ans_lcl,&ans,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    return sqrt(ans);
 }
 /*--------------------------------------------
  create the sparse matrices
@@ -1234,7 +1107,7 @@ type0 ForceFieldEAMDMD::update_J(type0 scalar,type0* a,type0* F)
  J_ij=d F_i/(d c_j)
  Ax_i=-J_ij*x_j;
  --------------------------------------------*/
-void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
+void ForceFieldEAMDMD::J(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
 {
     dynamic->update(x_ptr);
     
@@ -1300,7 +1173,7 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
     }
 
     for(int i=0;i<n;i++)
-        Ax[i]=x[i];
+        Ax[i]=0.0;
     
     
     neighbor_list=neighbor->neighbor_list_2nd;
@@ -1316,9 +1189,9 @@ void ForceFieldEAMDMD::operator()(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
             tmp0=M_IJ[istart]*(b0[j]-b0[i]);
             tmp0+=M_IJ[istart+1]*(cv[j/c_dim]*x[i]-c[i]*xv[j/c_dim]);
             tmp0-=M_IJ[istart+2]*(cv[i/c_dim]*x[j]-c[j]*xv[i/c_dim]);
-            Ax[i]-=tmp0;
+            Ax[i]+=tmp0;
             
-            if(j<n) Ax[j]+=tmp0;
+            if(j<n) Ax[j]-=tmp0;
         }
     }
     

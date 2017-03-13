@@ -212,7 +212,7 @@ bool DAEBDF::integrate()
          reduce time step
          */
         
-        if(!nonlin())
+        if(!newton())
         {
             nonlin_fail();
             continue;
@@ -527,7 +527,7 @@ void DAEBDF::reset()
     };
     
     // ddc^2
-    type0 norm=ff->ddc_norm()/a_tol_sqrt_nc_dofs;
+    type0 norm=ff->c_dd_norm_timer()/a_tol_sqrt_nc_dofs;
     type0 max_dt_lcl=std::numeric_limits<type0>::infinity();
     type0* __z=z;
     for(int i=0;i<ncs;i++,__z+=max_q+1)

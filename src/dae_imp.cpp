@@ -112,8 +112,33 @@ inline type0 DAEImplicit::update_c()
  nc_dofs
  err_fac
  --------------------------------------------*/
-bool DAEImplicit::nonlin()
-{    
+bool DAEImplicit::newton()
+{
+    auto F_norm=[this]()->type0
+    {
+        ff->c_d_calc_timer();
+        type0 F_norm_lcl=0.0;
+        for(int i=0;i<ncs;i++)
+        {
+            F[i]=c[i]+a[i]-beta*c_d[i];
+            F_norm_lcl+=F[i]*F[i];
+        }
+        type0 F_norm;
+        MPI_Allreduce(&F_norm_lcl,&F_norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+        return sqrt(F_norm)/a_tol_sqrt_nc_dofs;
+    };
+    
+    auto Jacobain_calc=[this](Vec<type0>* x,Vec<type0>* Jx)->void
+    {
+        ff->J_timer(x,Jx);
+        type0* __Jx=Jx->begin();
+        type0* __x=x->begin();
+        for(int i=0;i<ncs;i++)
+            __Jx[i]=-beta*__Jx[i]+__x[i];
+    };
+    
+    
+    
     type0 res_tol=0.005*a_tol_sqrt_nc_dofs/err_fac;
     type0 denom=0.1*a_tol_sqrt_nc_dofs/err_fac;
     type0 norm=1.0,delta=0.0,delta_prev=0.0,ratio=1.0,R=1.0;
@@ -123,15 +148,14 @@ bool DAEImplicit::nonlin()
     memcpy(c_0,c,ncs*sizeof(type0));
     memcpy(c,y_0,ncs*sizeof(type0));
     dynamic->update(atoms->c);
-    type0 cost=ff->update_J(beta,a,F)/a_tol_sqrt_nc_dofs;
-    //printf("------------------------------------------------\n");
-    //printf("THE COST %d %e\n",0,cost);
+    type0 cost=F_norm();
+    
     
     bool converge=false,diverge=false;
     while(iter<max_nnewton_iters && !converge && !diverge)
     {
-        gmres->solve(*ff,F_ptr,res_tol,norm,del_c_ptr);
-
+        gmres->solve(Jacobain_calc,F_ptr,res_tol,norm,del_c_ptr);
+        
         ratio=update_c();
         dynamic->update(atoms->c);
         
@@ -140,7 +164,7 @@ bool DAEImplicit::nonlin()
         if(iter) R=MAX(0.3*R,delta/delta_prev);
         if(iter>1 && R*delta<1.0)
         {
-            ff->update_J(beta,a,F);
+            cost=F_norm();
             converge=true;
             continue;
         }
@@ -150,22 +174,19 @@ bool DAEImplicit::nonlin()
             diverge=true;
             continue;
         }
-
+        
         delta_prev=delta;
         
-        cost=ff->update_J(beta,a,F)/a_tol_sqrt_nc_dofs;
-        //printf("THE COST %d %e | %e\n",iter+1,cost,delta);
+        cost=F_norm();
         iter++;
     }
-
+    
     
     if(converge)
     {
-        //printf("converged %e\n",dt);
         if(iter) nnonlin_acc++;
         return true;
     }
-    //printf("diverged %e\n",dt);
     memcpy(c,c_0,ncs*sizeof(type0));
     dynamic->update(atoms->c);
     nnonlin_rej++;
@@ -221,9 +242,9 @@ void DAEImplicit::J_test()
     ForceFieldEAMDMD* __ff=dynamic_cast<ForceFieldEAMDMD*>(ff);
     
     dynamic->update(atoms->c);
-    __ff->update_J(beta,a,F);
-    __ff->operator()(h,Jh);
-    
+    __ff->prep_J();
+    __ff->J(h,Jh);
+    memcpy(F,c_d,sizeof(type0)*ncs);
     
     memcpy(c_0,c,ncs*sizeof(type0));
     for(int ivec=0;ivec<nvecs;ivec++)
@@ -232,10 +253,9 @@ void DAEImplicit::J_test()
         for(int i=0;i<ncs;i++)
             c[i]=c_0[i]+__delta*__h[i];
         dynamic->update(atoms->c);
-        __ff->update_J(beta,a,dFs[ivec]);
+        __ff->prep_J();
         for(int i=0;i<ncs;i++)
-            dFs[ivec][i]-=F[i];
-        
+            dFs[ivec][i]=c_d[i]-F[i];
     }
     
     type0* __Jh=Jh->begin();

@@ -13,7 +13,6 @@ namespace MAPP_NS
     public:
         DMDVec<type0>* alpha;
         DMDVec<type0>* c;
-        DMDVec<type0>* c_d;
         DMDVec<bool>* dof_c;
         DMDVec<bool>* dof_alpha;
         Vec<elem_type>* elem;
@@ -22,6 +21,7 @@ namespace MAPP_NS
         ~AtomsDMD();
         AtomsDMD& operator=(const Atoms&);
         
+        type0 temp;
         type0 max_alpha;
         const int c_dim;
         
@@ -44,6 +44,7 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
+        static void getset_temp(PyGetSetDef&);
         
         static PyMethodDef methods[];
         static void setup_tp_methods();

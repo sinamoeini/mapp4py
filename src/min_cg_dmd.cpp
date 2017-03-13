@@ -12,6 +12,18 @@ Min()
 {
 }
 /*--------------------------------------------
+ constructor
+ --------------------------------------------*/
+MinCGDMD::MinCGDMD(type0 __e_tol,
+bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
+Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
+atoms(NULL),
+ff(NULL),
+max_dalpha(__max_dalpha),
+xprt(NULL)
+{
+}
+/*--------------------------------------------
  destructor
  --------------------------------------------*/
 MinCGDMD::~MinCGDMD()
@@ -80,12 +92,32 @@ void MinCGDMD::init()
     
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
+    
+    if(xprt)
+    {
+        try
+        {
+            xprt->atoms=atoms;
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            fin();
+            throw err_msg;
+        }
+    }
 }
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
 void MinCGDMD::fin()
 {
+    if(xprt)
+    {
+        xprt->fin();
+        xprt->atoms=NULL;
+    }
+    
     uvecs[1]=NULL;
     uvecs[0]=NULL;
     
@@ -104,20 +136,14 @@ void MinCGDMD::fin()
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
 {
-    if(ls)
-    {
-        if(dynamic_cast<LineSearchGoldenSection*>(ls))
-            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBrent*>(ls))
-            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBackTrack*>(ls))
-            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    }
-    LineSearchBackTrack* __ls=new LineSearchBackTrack();
-    run(__ls,nsteps);
-    delete __ls;
+    if(dynamic_cast<LineSearchGoldenSection*>(ls))
+        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+    
+    if(dynamic_cast<LineSearchBrent*>(ls))
+        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+    
+    if(dynamic_cast<LineSearchBackTrack*>(ls))
+        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
 /*--------------------------------------------
  
@@ -237,13 +263,37 @@ PyObject* MinCGDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<> f("__init__");
+    FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","max_dalpha","ls"});
+    f.noptionals=6;
+    f.logics<0>()[0]=VLogics("ge",0.0);
+    f.logics<3>()[0]=VLogics("gt",0.0);
+    f.logics<4>()[0]=VLogics("gt",0.0);
+    
+    //set the defualts
+    f.val<0>()=sqrt(std::numeric_limits<type0>::epsilon());
+    for(int i=0;i<__dim__;i++) for(int j=0;j<__dim__;j++)f.val<1>()[i][j]=false;
+    f.val<2>()=false;
+    f.val<3>()=1.0;
+    f.val<4>()=0.1;
+    PyObject* empty_tuple=PyTuple_New(0);
+    PyObject* empty_dict=PyDict_New();
+    PyObject* __ls=LineSearchBackTrack::__new__(&LineSearchBackTrack::TypeObject,empty_tuple,empty_dict);
+    LineSearchBackTrack::__init__(__ls,empty_tuple,empty_dict);
+    Py_DECREF(empty_dict);
+    Py_DECREF(empty_tuple);
+    f.val<5>().ob=__ls;
+    
     
     if(f(args,kwds)==-1) return -1;
+    
+    
+    
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->min=new MinCGDMD();
-    __self->ls=NULL;
+    Py_INCREF(f.val<5>().ob);
+    __self->min=new MinCGDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
+    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
     __self->xprt=NULL;
+    
     return 0;
 }
 /*--------------------------------------------
@@ -294,7 +344,7 @@ void MinCGDMD::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCGDMD::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinCGDMD::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp_getset()
 {
@@ -305,6 +355,7 @@ void MinCGDMD::setup_tp_getset()
     getset_ntally(getset[4]);
     getset_ls(getset[5]);
     getset_max_dalpha(getset[6]);
+    getset_export(getset[7]);
 }
 /*--------------------------------------------*/
 PyMethodDef MinCGDMD::methods[]={[0 ... 1]={NULL}};
@@ -337,6 +388,31 @@ void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void MinCGDMD::getset_export(PyGetSetDef& getset)
+{
+    getset.name=(char*)"export";
+    getset.doc=(char*)"export";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        ExportDMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
+        if(!xprt) Py_RETURN_NONE;
+        Py_INCREF(xprt);
+        return reinterpret_cast<PyObject*>(xprt);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<OP<ExportDMD>> xprt("export");
+        int ichk=xprt.set(op);
+        if(ichk==-1) return -1;
+        if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
+        Py_INCREF(xprt.val.ob);
+        reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportDMD::Object*>(xprt.val.ob);
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void MinCGDMD::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
@@ -353,6 +429,8 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         
         AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
         ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
+        ExportDMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
+        
         try
         {
             __self->min->pre_run_chk(__atoms,__ff);
@@ -365,7 +443,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         
         __self->min->atoms=__atoms;
         __self->min->ff=__ff;
-        
+        __self->min->xprt=__xprt;
         
         try
         {
@@ -373,7 +451,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         }
         catch(std::string err_msg)
         {
-            __self->min->fin();
+            __self->min->xprt=NULL;
             __self->min->ff=NULL;
             __self->min->atoms=NULL;
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
@@ -383,6 +461,8 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         __self->min->run(f.val<1>());
         
         __self->min->fin();
+        
+        __self->min->xprt=NULL;
         __self->min->ff=NULL;
         __self->min->atoms=NULL;
         

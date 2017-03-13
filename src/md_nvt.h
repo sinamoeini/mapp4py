@@ -7,7 +7,7 @@
 #include <limits.h>
 #include "atoms_md.h"
 #include "thermostat.h"
-
+#include "export_styles.h"
 namespace MAPP_NS
 {
     class MDNVT
@@ -16,8 +16,9 @@ namespace MAPP_NS
     protected:
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
-        
         class DynamicMD* dynamic;
+        class ExportMD* xprt;
+        
         type0 mvv[__nvoigt__];
         type0 __vec[__nvoigt__];
         type0 __vec_lcl[__nvoigt__];
@@ -55,6 +56,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             MDNVT* md;
+            ExportMD::Object* xprt;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -77,6 +79,7 @@ namespace MAPP_NS
         static void getset_t_relax(PyGetSetDef&);
         static void getset_T(PyGetSetDef&);
         static void getset_ntally(PyGetSetDef&);
+        static void getset_export(PyGetSetDef&);
         
         
         static void setup_tp();

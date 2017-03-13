@@ -28,12 +28,14 @@ namespace MAPP_NS
         class AtomsDMD* atoms;
         class ForceFieldDMD* ff;
         class DynamicDMD* dynamic;
+        class ExportDMD* xprt;
         void print_error();
         
         vec* uvecs[2];
         
     public:
         MinCGDMD();
+        MinCGDMD(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
         ~MinCGDMD();
         virtual void run(int);
         template<class C>
@@ -70,7 +72,7 @@ namespace MAPP_NS
         static PyGetSetDef getset[];
         static void setup_tp_getset();
         static void getset_max_dalpha(PyGetSetDef&);
-        
+        static void getset_export(PyGetSetDef&);
         
         static void setup_tp();
         
@@ -87,8 +89,11 @@ template<class C>
 void MinCGDMD::run(C* ls,int nsteps)
 {
     force_calc();
-    type0 S[__dim__][__dim__];
     
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    if(nevery_xprt) xprt->write(0);
+    
+    type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
     "PE",ff->nrgy_strss[0],
     "S[0][0]",S[0][0],
@@ -150,6 +155,7 @@ void MinCGDMD::run(C* ls,int nsteps)
             thermo.print(istep+1);
         }
         
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(istep+1);
         
         if(err) continue;
         
@@ -167,6 +173,8 @@ void MinCGDMD::run(C* ls,int nsteps)
         Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
         thermo.print(istep);
     }
+    
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(istep);
 
     thermo.fin();
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);

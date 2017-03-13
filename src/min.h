@@ -24,6 +24,7 @@ namespace MAPP_NS
         void pre_run_chk(Atoms*,ForceField*);
     public:
         Min();
+        Min(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
         virtual ~Min();
         
         typedef struct

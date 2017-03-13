@@ -12,6 +12,17 @@ Min()
 {
 }
 /*--------------------------------------------
+ constructor
+ --------------------------------------------*/
+MinCG::MinCG(type0 __e_tol,
+bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
+Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
+atoms(NULL),
+ff(NULL),
+xprt(NULL)
+{
+}
+/*--------------------------------------------
  destructor
  --------------------------------------------*/
 MinCG::~MinCG()
@@ -76,13 +87,14 @@ void MinCG::init()
     
     if(xprt)
     {
-        xprt->atoms=atoms;
         try
         {
+            xprt->atoms=atoms;
             xprt->init();
         }
         catch(std::string& err_msg)
         {
+            fin();
             throw err_msg;
         }
     }
@@ -94,7 +106,7 @@ void MinCG::fin()
 {
     if(xprt)
     {
-        //xprt->fin();
+        xprt->fin();
         xprt->atoms=NULL;
     }
     
@@ -113,22 +125,15 @@ void MinCG::fin()
  --------------------------------------------*/
 void MinCG::run(int nsteps)
 {
-    if(ls)
-    {
-        if(dynamic_cast<LineSearchGoldenSection*>(ls))
-            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBrent*>(ls))
-            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBackTrack*>(ls))
-            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    }
-    LineSearchBackTrack* __ls=new LineSearchBackTrack();
-    run(__ls,nsteps);
-    delete __ls;
+    if(dynamic_cast<LineSearchGoldenSection*>(ls))
+        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+    
+    if(dynamic_cast<LineSearchBrent*>(ls))
+        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+    
+    if(dynamic_cast<LineSearchBackTrack*>(ls))
+        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
-
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -223,13 +228,35 @@ PyObject* MinCG::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<> f("__init__");
+    FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","ls"});
+    f.noptionals=5;
+    f.logics<0>()[0]=VLogics("ge",0.0);
+    f.logics<3>()[0]=VLogics("gt",0.0);
+    
+    //set the defualts
+    f.val<0>()=sqrt(std::numeric_limits<type0>::epsilon());
+    for(int i=0;i<__dim__;i++) for(int j=0;j<__dim__;j++)f.val<1>()[i][j]=false;
+    f.val<2>()=false;
+    f.val<3>()=1.0;
+    PyObject* empty_tuple=PyTuple_New(0);
+    PyObject* empty_dict=PyDict_New();
+    PyObject* __ls=LineSearchBackTrack::__new__(&LineSearchBackTrack::TypeObject,empty_tuple,empty_dict);
+    LineSearchBackTrack::__init__(__ls,empty_tuple,empty_dict);
+    Py_DECREF(empty_dict);
+    Py_DECREF(empty_tuple);
+    f.val<4>().ob=__ls;
+    
     
     if(f(args,kwds)==-1) return -1;
+    
+    
+    
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->min=new MinCG();
-    __self->ls=NULL;
+    Py_INCREF(f.val<4>().ob);
+    __self->min=new MinCG(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),&(__self->ls->ls));
+    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<4>().ob);    
     __self->xprt=NULL;
+
     return 0;
 }
 /*--------------------------------------------
@@ -318,11 +345,9 @@ void MinCG::getset_export(PyGetSetDef& getset)
         VarAPI<OP<ExportMD>> xprt("export");
         int ichk=xprt.set(op);
         if(ichk==-1) return -1;
-        ExportMD* __xprt=reinterpret_cast<ExportMD::Object*>(xprt.val.ob)->xprt;
         if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
         Py_INCREF(xprt.val.ob);
         reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportMD::Object*>(xprt.val.ob);
-        reinterpret_cast<Object*>(self)->min->xprt=__xprt;
         return 0;
     };
 }
@@ -345,6 +370,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         
         AtomsMD* __atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
         ForceFieldMD* __ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
+        ExportMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
         try
         {
             __self->min->pre_run_chk(__atoms,__ff);
@@ -357,7 +383,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         
         __self->min->atoms=__atoms;
         __self->min->ff=__ff;
-        
+        __self->min->xprt=__xprt;
         
         try
         {
@@ -365,7 +391,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         }
         catch(std::string err_msg)
         {
-            __self->min->fin();
+            __self->min->xprt=NULL;
             __self->min->ff=NULL;
             __self->min->atoms=NULL;
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
@@ -375,6 +401,8 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         __self->min->run(f.val<1>());
         
         __self->min->fin();
+        
+        __self->min->xprt=NULL;
         __self->min->ff=NULL;
         __self->min->atoms=NULL;
         

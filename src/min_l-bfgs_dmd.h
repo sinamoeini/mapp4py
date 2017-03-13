@@ -15,6 +15,7 @@ namespace MAPP_NS
         VecTens<type0,2>* y;
     public:
         MinLBFGSDMD(int);
+        MinLBFGSDMD(int,type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
         ~MinLBFGSDMD();
         void run(int);
         template<class C>
@@ -54,8 +55,11 @@ template<class C>
 void MinLBFGSDMD::run(C* ls,int nsteps)
 {
     force_calc();
-    type0 S[__dim__][__dim__];
     
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    if(nevery_xprt) xprt->write(0);
+    
+    type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
     "PE",ff->nrgy_strss[0],
     "S[0][0]",S[0][0],
@@ -130,6 +134,8 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
             thermo.print(istep+1);
         }
         
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(istep+1);
+        
         if(err) continue;
         
         if(m)
@@ -161,6 +167,8 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
         thermo.print(istep);
     }
 
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(istep);
+    
     thermo.fin();
     fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
 }

@@ -312,11 +312,10 @@ int FuncTuple<T>::set()
 template <class T, class... Ts>
 void FuncTuple<T, Ts...>::expected(size_t i)
 {
+    if(i==0) return;
 
     if(op==NULL)
         throw __var_api__.name();
-    if(i==1)
-        return;
     
     return next_func.expected(i-1);
 }
@@ -324,8 +323,10 @@ void FuncTuple<T, Ts...>::expected(size_t i)
  
  --------------------------------------------*/
 template <class T>
-void FuncTuple<T>::expected(size_t)
+void FuncTuple<T>::expected(size_t i)
 {
+    if(i==0) return;
+    
     if(op==NULL)
         throw __var_api__.name();
 }

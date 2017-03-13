@@ -15,6 +15,7 @@ MDNVT::MDNVT(type0 __T,type0 __dt):
 dynamic(NULL),
 atoms(NULL),
 ff(NULL),
+xprt(NULL),
 dt(__dt),
 T(__T),
 dt2(__dt/2.0),
@@ -299,12 +300,32 @@ void MDNVT::init()
     
     dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
     dynamic->init();
+    
+    if(xprt)
+    {
+        try
+        {
+            xprt->atoms=atoms;
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            fin();
+            throw err_msg;
+        }
+    }
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void MDNVT::fin()
 {
+    if(xprt)
+    {
+        xprt->fin();
+        xprt->atoms=NULL;
+    }
+    
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
@@ -315,6 +336,10 @@ void MDNVT::fin()
 void MDNVT::run(int nsteps)
 {    
     ff->force_calc_timer();
+    
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    if(nevery_xprt) xprt->write(0);
+    
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],
     "S[1][1]",S_part[1][1],
@@ -322,7 +347,6 @@ void MDNVT::run(int nsteps)
     "S[1][2]",S_part[2][1],
     "S[2][0]",S_part[2][0],
     "S[0][1]",S_part[1][0]);
-    
     
     thermo.init();
     Algebra::DoLT<__dim__>::func([this](const int i,const int j)
@@ -359,9 +383,12 @@ void MDNVT::run(int nsteps)
         });
         
         if((i+1)%ntally==0) thermo.print(i+1);
+        if(nevery_xprt && (i+1)%nevery_xprt==0) xprt->write(i+1);
     }
     
     if(nsteps%ntally) thermo.print(nsteps);
+    if(nevery_xprt && nsteps%nevery_xprt) xprt->write(nsteps);
+    
     update_x_d_final(fac_x_d);
     
     thermo.fin();
@@ -432,7 +459,7 @@ void MDNVT::setup_tp()
     TypeObject.tp_getset=getset;
 }
 /*--------------------------------------------*/
-PyGetSetDef MDNVT::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MDNVT::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MDNVT::setup_tp_getset()
 {
@@ -442,6 +469,7 @@ void MDNVT::setup_tp_getset()
     getset_dt(getset[3]);
     getset_t_relax(getset[4]);
     getset_ntally(getset[5]);
+    getset_export(getset[6]);
 }
 /*--------------------------------------------*/
 PyMethodDef MDNVT::methods[]={[0 ... 1]={NULL}};
@@ -607,6 +635,31 @@ void MDNVT::getset_ntally(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void MDNVT::getset_export(PyGetSetDef& getset)
+{
+    getset.name=(char*)"export";
+    getset.doc=(char*)"export";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        ExportMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
+        if(!xprt) Py_RETURN_NONE;
+        Py_INCREF(xprt);
+        return reinterpret_cast<PyObject*>(xprt);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<OP<ExportMD>> xprt("export");
+        int ichk=xprt.set(op);
+        if(ichk==-1) return -1;
+        if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
+        Py_INCREF(xprt.val.ob);
+        reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportMD::Object*>(xprt.val.ob);
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void MDNVT::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
@@ -623,19 +676,11 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
         
         AtomsMD* __atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
         ForceFieldMD* __ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
-        try
-        {
-            __self->md->pre_run_chk(__atoms,__ff);
-        }
-        catch(std::string err_msg)
-        {
-            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
-            return NULL;
-        }
+        ExportMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
         
         __self->md->atoms=__atoms;
         __self->md->ff=__ff;
-        
+        __self->md->xprt=__xprt;
         
         try
         {
@@ -643,17 +688,18 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
         }
         catch(std::string err_msg)
         {
-            __self->md->fin();
+            __self->md->xprt=NULL;
             __self->md->ff=NULL;
             __self->md->atoms=NULL;
             PyErr_SetString(PyExc_TypeError,err_msg.c_str());
             return NULL;
         }
         
-        
         __self->md->run(f.val<1>());
         
         __self->md->fin();
+        
+        __self->md->xprt=NULL;
         __self->md->ff=NULL;
         __self->md->atoms=NULL;
         

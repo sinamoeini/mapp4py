@@ -27,6 +27,25 @@ ntally(1000)
 {
 }
 /*--------------------------------------------
+ constructor
+ --------------------------------------------*/
+Min::Min(type0 __e_tol,bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
+H_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
+ls(__ls),
+chng_box(false),
+e_tol(__e_tol),
+affine(__affine),
+max_dx(__max_dx),
+ntally(1000)
+{
+    for(int i=0;i<__dim__;i++)
+        for(int j=0;j<__dim__;j++)
+        {
+            H_dof[i][j]=__H_dof[i][j];
+            if(H_dof[i][j]) chng_box=true;
+        }
+}
+/*--------------------------------------------
  destructor
  --------------------------------------------*/
 Min::~Min()
@@ -277,7 +296,6 @@ void Min::getset_ls(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         LineSearch::Object* ls=reinterpret_cast<Object*>(self)->ls;
-        if(!ls) Py_RETURN_NONE;
         Py_INCREF(ls);
         return reinterpret_cast<PyObject*>(ls);
     };
@@ -287,7 +305,7 @@ void Min::getset_ls(PyGetSetDef& getset)
         int ichk=ls.set(op);
         if(ichk==-1) return -1;
         LineSearch* __ls=&reinterpret_cast<LineSearch::Object*>(ls.val.ob)->ls;
-        if(reinterpret_cast<Object*>(self)->ls) Py_DECREF(reinterpret_cast<Object*>(self)->ls);
+        Py_DECREF(reinterpret_cast<Object*>(self)->ls);
         Py_INCREF(ls.val.ob);
         reinterpret_cast<Object*>(self)->ls=reinterpret_cast<LineSearch::Object*>(ls.val.ob);
         reinterpret_cast<Object*>(self)->min->ls=__ls;

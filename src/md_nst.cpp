@@ -292,12 +292,32 @@ void MDNST::init()
     pre_init();
     dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof},{});
     dynamic->init();
+    
+    if(xprt)
+    {
+        try
+        {
+            xprt->atoms=atoms;
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            fin();
+            throw err_msg;
+        }
+    }
 }
 /*--------------------------------------------
  
 --------------------------------------------*/
 void MDNST::fin()
 {
+    if(xprt)
+    {
+        xprt->fin();
+        xprt->atoms=NULL;
+    }
+    
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
@@ -308,6 +328,10 @@ void MDNST::fin()
 void MDNST::run(int nsteps)
 {
     ff->force_calc_timer();
+    
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    if(nevery_xprt) xprt->write(0);
+    
     ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
     "S[0][0]",S_part[0][0],
     "S[1][1]",S_part[1][1],
@@ -379,9 +403,11 @@ void MDNST::run(int nsteps)
         }
         
         if((i+1)%ntally==0) thermo.print(i+1);
+        if(nevery_xprt && (i+1)%nevery_xprt==0) xprt->write(i+1);
     }
     
     if(nsteps%ntally) thermo.print(nsteps);
+    if(nevery_xprt && nsteps%nevery_xprt) xprt->write(nsteps);
     
     update_x_d_final(fac_x_d);
     

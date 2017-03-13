@@ -18,6 +18,19 @@ rho(NULL)
 {
 }
 /*--------------------------------------------
+ constructor
+ --------------------------------------------*/
+MinLBFGSDMD::MinLBFGSDMD(int __m,type0 __e_tol,
+bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
+MinCGDMD(__e_tol,__H_dof,__affine,__max_dx,__max_dalpha,__ls),
+m(__m),
+s(NULL),
+y(NULL),
+alpha(NULL),
+rho(NULL)
+{
+}
+/*--------------------------------------------
  destructor
  --------------------------------------------*/
 MinLBFGSDMD::~MinLBFGSDMD()
@@ -69,12 +82,33 @@ void MinLBFGSDMD::init()
     Memory::alloc(alpha,m);
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
+    
+    if(xprt)
+    {
+        try
+        {
+            xprt->atoms=atoms;
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            fin();
+            throw err_msg;
+        }
+    }
 }
 /*--------------------------------------------
  fin after a run
  --------------------------------------------*/
 void MinLBFGSDMD::fin()
 {
+    
+    if(xprt)
+    {
+        xprt->fin();
+        xprt->atoms=NULL;
+    }
+    
     uvecs[1]=NULL;
     uvecs[0]=NULL;
     
@@ -101,20 +135,14 @@ void MinLBFGSDMD::fin()
  --------------------------------------------*/
 void MinLBFGSDMD::run(int nsteps)
 {
-    if(ls)
-    {
-        if(dynamic_cast<LineSearchGoldenSection*>(ls))
-            return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBrent*>(ls))
-            return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-        
-        if(dynamic_cast<LineSearchBackTrack*>(ls))
-            return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    }
-    LineSearchBrent* __ls=new LineSearchBrent();
-    run(__ls,nsteps);
-    delete __ls;
+    if(dynamic_cast<LineSearchGoldenSection*>(ls))
+        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
+    
+    if(dynamic_cast<LineSearchBrent*>(ls))
+        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
+    
+    if(dynamic_cast<LineSearchBackTrack*>(ls))
+        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -130,17 +158,39 @@ PyObject* MinLBFGSDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
  --------------------------------------------*/
 int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<int> f("__init__",{"m"});
-    f.noptionals=1;
+    FuncAPI<int,type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,OP<LineSearch>> f("__init__",{"m","e_tol","H_dof","affine","max_dx","max_dalpha","ls"});
+    f.noptionals=7;
     f.logics<0>()[0]=VLogics("ge",0);
+    f.logics<1>()[0]=VLogics("ge",0.0);
+    f.logics<4>()[0]=VLogics("gt",0.0);
+    f.logics<5>()[0]=VLogics("gt",0.0);
+    
+    //set the defualts
     f.val<0>()=2;
+    f.val<1>()=sqrt(std::numeric_limits<type0>::epsilon());
+    for(int i=0;i<__dim__;i++) for(int j=0;j<__dim__;j++)f.val<2>()[i][j]=false;
+    f.val<3>()=false;
+    f.val<4>()=1.0;
+    f.val<5>()=0.1;
+    PyObject* empty_tuple=PyTuple_New(0);
+    PyObject* empty_dict=PyDict_New();
+    PyObject* __ls=LineSearchBackTrack::__new__(&LineSearchBackTrack::TypeObject,empty_tuple,empty_dict);
+    LineSearchBackTrack::__init__(__ls,empty_tuple,empty_dict);
+    Py_DECREF(empty_dict);
+    Py_DECREF(empty_tuple);
+    f.val<6>().ob=__ls;
     
     
     if(f(args,kwds)==-1) return -1;
+    
+    
+    
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->min=new MinLBFGSDMD(f.val<0>());
-    __self->ls=NULL;
+    Py_INCREF(f.val<6>().ob);
+    __self->min=new MinLBFGSDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),f.val<5>(),&(__self->ls->ls));
+    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<6>().ob);
     __self->xprt=NULL;
+    
     return 0;
 }
 /*--------------------------------------------

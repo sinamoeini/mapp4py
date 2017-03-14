@@ -35,15 +35,11 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
     h=r.h;
     
     vol=r.vol;
-    for(int i=0;i<__dim__;i++)
-    {
-        depth_inv[i]=r.depth_inv[i];
-        for(int j=0;j<__dim__;j++)
-        {
-            H[i][j]=r.H[i][j];
-            B[i][j]=r.B[i][j];
-        }
-    }
+    memcpy(depth_inv,r.depth_inv,__dim__*sizeof(type0));
+    memcpy(__h,r.__h,__nvoigt__*sizeof(type0));
+    memcpy(__b,r.__b,__nvoigt__*sizeof(type0));
+    memcpy(&H[0][0],&r.H[0][0],__dim__*__dim__*sizeof(type0));
+    memcpy(&B[0][0],&r.B[0][0],__dim__*__dim__*sizeof(type0));
     
     for(int i=0;i<nvecs;i++)
         if(!vecs[i]->is_empty())
@@ -57,9 +53,7 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
  --------------------------------------------*/
 void AtomsMD::x_d2s_d_dump()
 {
-    type0* x_d_vec=x_d->begin_dump();
-    for(int i=0;i<natms;i++)
-        XMatrixVector::x2s<__dim__>(x_d_vec+i*__dim__,B);
+    Algebra::X2S<__dim__>(__b,natms,x_d->begin_dump());
 }
 /*--------------------------------------------
  

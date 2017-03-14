@@ -204,7 +204,7 @@ void ImportCFG::read_header(Atoms* atoms,FileReader& freader,char*& line,size_t&
             }
     }
     
-    XMatrixVector::M_2_Mlt(H_x,H0);
+    Algebra::MSQ_2_MLT(H_x,H0);
     atoms->comm.grid(H0);
     for(int i=0;i<__dim__;i++)
         for(int j=0;j<__dim__;j++)
@@ -585,7 +585,7 @@ AtomsMD* ImportCFGMD::operator()(const char* file)
         type0* x_d=atoms_md->x_d->begin();
         int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,x_d+=__dim__)
-            XMatrixVector::s2x(x_d,M);
+            Algebra::V_mul_MLT(x_d,M,x_d);
     }
 
     delete vec_list[3];

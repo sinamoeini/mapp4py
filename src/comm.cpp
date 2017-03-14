@@ -254,7 +254,7 @@ void Communication::grid(int(&N)[__dim__],type0(&H)[__dim__][__dim__])
         int icur=0;
         for(int i=0;i<__dim__;i++)
             if(!N[i]) h[icur++]=H[i][i];
-        XMatrixVector::opt_comm_grid(__dim__-ndims_det,h,size/det_size,__dims);
+        Algebra::opt_comm_grid(__dim__-ndims_det,h,size/det_size,__dims);
         
         icur=0;
         for(int i=0;i<__dim__;i++)

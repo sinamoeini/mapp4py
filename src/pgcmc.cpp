@@ -301,7 +301,7 @@ void PGCMC::prep_s_x_buff()
     int n_per_dim[__dim__];
     type0* buff;
     int* cell_coord;
-    type0 (&H)[__dim__][__dim__]=atoms->H;
+    //type0 (&H)[__dim__][__dim__]=atoms->H;
     type0 s;
     int no;
     for(int i=0;i<n_curr_comms;i++)
@@ -344,7 +344,8 @@ void PGCMC::prep_s_x_buff()
             
             find_cell_coord(buff,cell_coord);
             
-            XMatrixVector::s2x<__dim__>(buff,H);
+            //XMatrixVector::s2x<__dim__>(buff,H);
+            Algebra::S2X<__dim__>(atoms->__h,buff);
             
             count[0]++;
             for(int k=0;k<__dim__-1;k++)
@@ -461,7 +462,7 @@ inline void PGCMC::next_jatm_reg()
         
         jx=atoms->x->begin()+__dim__*jatm;
         jelem=atoms->elem->begin()[jatm];
-        rsq=XMatrixVector::rsq<__dim__>(ix,jx);
+        rsq=Algebra::RSQ<__dim__>(ix,jx);
         if(rsq>=cut_sq[ielem][jelem]) continue;
         
         if(tag_vec_p) tag_vec_p->begin()[jatm]=icomm;
@@ -486,7 +487,7 @@ inline void PGCMC::next_jatm_self()
         jatm=natms_lcl+iself;
         jx=s_x_buff[icomm]+iself*__dim__;
         jelem=gas_type;
-        rsq=XMatrixVector::rsq<__dim__>(ix,jx);
+        rsq=Algebra::RSQ<__dim__>(ix,jx);
         
         if(rsq>=cut_sq[ielem][jelem]) continue;
         

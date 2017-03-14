@@ -438,6 +438,8 @@ namespace MAPP_NS
         type0 depth_inv[__dim__];
         type0 H[__dim__][__dim__];
         type0 B[__dim__][__dim__];
+        type0 __h[__nvoigt__];
+        type0 __b[__nvoigt__];
         
         
         void update_H();

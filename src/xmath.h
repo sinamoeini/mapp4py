@@ -1211,8 +1211,6 @@ namespace MAPP_NS
             __opt_comm_grid__::func(dim,dim,h,no,curr_grid,opt_grid,opt_size);
             delete [] curr_grid;
         }
-        
-        
     }
 }
 /*--------------------------------------------
@@ -2134,15 +2132,79 @@ namespace MAPP_NS
         };
         
         
+        template<const int i,const int j,const int dim >
+        class __MLT_T
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT MLT,T* RESTRICT MUT)
+            {
+                *MUT=*MLT;
+                __MLT_T<i-1,j,dim>::func(MLT+dim,MUT+1);
+            }
+        };
         
         
+        template<const int j,const int dim >
+        class __MLT_T<1,j,dim>
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT MLT,T* RESTRICT MUT)
+            {
+                *MUT=*MLT;
+                __MLT_T<j-1,j-1,dim>::func(MLT+(2-j)*dim+1,MUT-j+dim+2);
+            }
+        };
+        
+        template<const int dim >
+        class __MLT_T<1,1,dim>
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT MLT,T* RESTRICT MUT)
+            {
+                *MUT=*MLT;
+            }
+        };
         
         
+         template<const int i,const int j,const int dim >
+        class __MLT_2_V
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT MLT,T* RESTRICT mlt)
+            {
+                *mlt=*MLT;
+                __MLT_2_V<i-1,j,dim>::func(MLT+dim,mlt+1);
+            }
+        };
         
         
+        template<const int j,const int dim >
+        class __MLT_2_V<1,j,dim>
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT MLT,T* RESTRICT mlt)
+            {
+                *mlt=*MLT;
+                __MLT_2_V<j-1,j-1,dim>::func(MLT+(2-j)*dim+1,mlt+1);
+            }
+        };
         
-        
-        
+        template<const int dim >
+        class __MLT_2_V<1,1,dim>
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT MLT,T* RESTRICT mlt)
+            {
+                *mlt=*MLT;
+            }
+        };
+
         
         
         
@@ -2210,6 +2272,7 @@ namespace MAPP_NS
         
         
         
+    
         
         
         
@@ -2862,6 +2925,93 @@ namespace MAPP_NS
             static inline void func(FuncType f)
             {f(0,0);}
         };
+        
+        
+
+        
+        
+        template<const int dim>
+        class __S2X
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT h,T* RESTRICT s)
+            {
+                *s=__V_mul_V<dim>::func(h,s);
+                
+                __S2X<dim-1>::func(h+dim,s+1);
+            }
+        };
+        
+        template<>
+        class __S2X<1>
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT h,T* RESTRICT s)
+            {
+                *s*=*h;
+            }
+        };
+        
+        template<const int dim>
+        class __X2S
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT b,T* RESTRICT x)
+            {
+                *x=__V_mul_V<dim>::func(b,x);
+                while(*x<0.0) ++*x;
+                while(*x>=1.0) --*x;
+                __X2S<dim-1>::func(b+dim,x+1);
+            }
+        };
+        
+        template<>
+        class __X2S<1>
+        {
+            public:
+            template<typename T>
+            static inline void func(T* RESTRICT b,T* RESTRICT x)
+            {
+                *x*=*b;
+                while(*x<0.0) ++*x;
+                while(*x>=1.0) --*x;
+            }
+        };
+        
+        
+        
+        class __opt_comm_grid
+        {
+            public:
+            static void func(const int idim,const int dim,const type0* h,int no,int* curr_grid,int* opt_grid,type0& opt_size)
+            {
+                if(idim==1)
+                {
+                    curr_grid[0]=no;
+                    type0 curr_size=0.0;
+                    for(int i=0;i<dim;i++) curr_size+=static_cast<type0>(curr_grid[i])/h[i];
+                    if(opt_size==0.0 || curr_size<opt_size)
+                    {
+                        opt_size=curr_size;
+                        for(int i=0;i<dim;i++)
+                        opt_grid[i]=curr_grid[i];
+                    }
+                    return;
+                }
+                
+                for(int i=1;i<=no;i++)
+                if(no%i==0)
+                {
+                    curr_grid[idim-1]=i;
+                    __opt_comm_grid::func(idim-1,dim,h,no/i,curr_grid,opt_grid,opt_size);
+                }
+            }
+        };
+        
+        
 
         
         
@@ -2991,6 +3141,18 @@ namespace MAPP_NS
         void MLT_mul_MSQ(T(&MLT)[dim][dim],T(&MSQ)[dim][dim],T(&MLT_MSQ)[dim][dim])
         {
             __MLT_mul_MSQ<dim,dim,dim>::func(&MLT[dim-1][0],&MSQ[0][dim-1],&MLT_MSQ[dim-1][dim-1]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void MLT_T(T(&MLT)[dim][dim],T(&MUT)[dim][dim])
+        {
+            __MLT_T<dim,dim,dim>::func(&MLT[0][0],&MUT[0][0]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void MLT_2_V(T(&MLT)[dim][dim],T* mlt)
+        {
+            __MLT_2_V<dim,dim,dim>::func(&MLT[0][0],mlt);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
@@ -3129,6 +3291,64 @@ namespace MAPP_NS
         {
             return __pow<N,M>::value;
         }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void X2S(T* RESTRICT b,int N,T* RESTRICT x)
+        {
+            for(int i=0;i<N;i++)
+            {
+                __X2S<dim>::func(b,x);
+                x+=dim;
+            }
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void S2X(T* RESTRICT h,int N,T* RESTRICT s)
+        {
+            for(int i=0;i<N;i++)
+            {
+                __S2X<dim>::func(h,s);
+                s+=dim;
+            }
+        }
+        
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void X2S(T* RESTRICT b,T* RESTRICT x)
+        {
+            __X2S<dim>::func(b,x);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void S2X(T* RESTRICT h,T* RESTRICT s)
+        {
+            __S2X<dim>::func(h,s);
+        }
+        /*==========================================================================*/
+        inline void opt_comm_grid(const int dim,const type0* h,int no,int* opt_grid)
+        {
+            if(dim==1)
+            {
+                opt_grid[0]=no;
+                return;
+            }
+            
+            if(no==1)
+            {
+                for(int i=0;i<dim;i++)
+                    opt_grid[i]=1;
+                return;
+            }
+            
+            int* curr_grid =new int[dim];
+            type0 opt_size=0.0;
+            __opt_comm_grid::func(dim,dim,h,no,curr_grid,opt_grid,opt_size);
+            delete [] curr_grid;
+        }
+        
+        
+        
+        
     }
 }
 #endif

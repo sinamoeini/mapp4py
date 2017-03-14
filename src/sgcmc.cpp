@@ -475,14 +475,15 @@ void SGCMC::prep_s_x_buff()
     int count[__dim__];
     type0* buff=s_x_buff;
     int* cell_coord=cell_coord_buff;
-    type0 (&H)[__dim__][__dim__]=atoms->H;
+    //type0 (&H)[__dim__][__dim__]=atoms->H;
     for(int i=0;i<__dim__;i++) count[i]=0;
     for(int i=0;i<ntrial_atms;i++)
     {
         for(int j=0;j<__dim__;j++)
             buff[j]=s_trials[j][count[j]];
         find_cell_coord(buff,cell_coord);
-        XMatrixVector::s2x<__dim__>(buff,H);
+        //XMatrixVector::s2x<__dim__>(buff,H);
+        Algebra::S2X<__dim__>(atoms->__h,buff);
         
         count[0]++;
         for(int j=0;j<__dim__-1;j++)
@@ -602,7 +603,7 @@ inline void SGCMC::next_jatm_reg()
         jx=atoms->x->begin()+__dim__*jatm;
         jelem=atoms->elem->begin()[jatm];
         
-        rsq=XMatrixVector::rsq<__dim__>(ix,jx);
+        rsq=Algebra::RSQ<__dim__>(ix,jx);
         if(rsq>=cut_sq[ielem][jelem]) continue;
         
         if(tag_vec_p) tag_vec_p->begin()[jatm]=icomm;
@@ -628,7 +629,7 @@ inline void SGCMC::next_jatm_self()
         jatm=natms_lcl+iself;
         jx=s_x_buff+iself*__dim__;
         jelem=gas_type;
-        rsq=XMatrixVector::rsq<__dim__>(ix,jx);
+        rsq=Algebra::RSQ<__dim__>(ix,jx);
         if(rsq>=cut_sq[ielem][jelem]) continue;
         
         return;

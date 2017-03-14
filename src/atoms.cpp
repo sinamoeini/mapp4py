@@ -68,6 +68,8 @@ kB(std::numeric_limits<type0>::quiet_NaN()),
 vol(0.0),
 H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+__h{[0 ... __nvoigt__-1]=0},
+__b{[0 ... __nvoigt__-1]=0},
 depth_inv{[0 ... __dim__-1]=0.0},
 step(0)
 {
@@ -95,6 +97,8 @@ void Atoms::update_H()
     Algebra::MLT_inv(H,B);
     vol=Algebra::MLT_det(H);
     Algebra::MLT_depth(B,depth_inv);
+    Algebra::MLT_2_V(H,__h);
+    Algebra::MLT_2_V(B,__b);
 }
 /*--------------------------------------------
  add a new vec
@@ -177,65 +181,49 @@ vec* Atoms::find_vec(const char* name)
  --------------------------------------------*/
 void Atoms::x2s(int no)
 {
-    type0* x_vec=x->begin();
-    for(int i=0;i<no;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
+    Algebra::X2S<__dim__>(__b,no,x->begin());
 }
 /*--------------------------------------------
  s2x
  --------------------------------------------*/
 void Atoms::s2x(int no)
 {
-    type0* x_vec=x->begin();
-    for(int i=0;i<no;i++)
-        XMatrixVector::s2x<__dim__>(x_vec+i*__dim__,H);
+    Algebra::S2X<__dim__>(__h,no,x->begin());
 }
 /*--------------------------------------------
  x2s
  --------------------------------------------*/
 void Atoms::x2s_lcl()
 {
-    type0* x_vec=x->begin();
-    for(int i=0;i<natms_lcl;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
+    Algebra::X2S<__dim__>(__b,natms_lcl,x->begin());
 }
 /*--------------------------------------------
  s2x
  --------------------------------------------*/
 void Atoms::s2x_lcl()
 {
-    type0* x_vec=x->begin();
-    for(int i=0;i<natms_lcl;i++)
-        XMatrixVector::s2x<__dim__>(x_vec+i*__dim__,H);
+    Algebra::S2X<__dim__>(__h,natms_lcl,x->begin());
 }
 /*--------------------------------------------
  x2s
  --------------------------------------------*/
 void Atoms::x2s_all()
 {
-    type0* x_vec=x->begin();
-    int nall=natms_lcl+natms_ph;
-    for(int i=0;i<nall;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
+    Algebra::X2S<__dim__>(__b,natms_lcl+natms_ph,x->begin());
 }
 /*--------------------------------------------
  s2x
  --------------------------------------------*/
 void Atoms::s2x_all()
 {
-    type0* x_vec=x->begin();
-    int nall=natms_lcl+natms_ph;
-    for(int i=0;i<nall;i++)
-        XMatrixVector::s2x<__dim__>(x_vec+i*__dim__,H);
+    Algebra::S2X<__dim__>(__h,natms_lcl+natms_ph,x->begin());
 }
 /*--------------------------------------------
  x2s
  --------------------------------------------*/
 void Atoms::x2s_dump()
 {
-    type0* x_vec=x->begin_dump();
-    for(int i=0;i<natms;i++)
-        XMatrixVector::x2s<__dim__>(x_vec+i*__dim__,B);
+    Algebra::X2S<__dim__>(__b,natms,x->begin_dump());
 }
 /*--------------------------------------------
  insert a number of atoms

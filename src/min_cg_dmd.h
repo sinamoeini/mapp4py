@@ -32,7 +32,7 @@ namespace MAPP_NS
         void print_error();
         
         vec* uvecs[2];
-        
+        void pre_run_chk(AtomsDMD*,ForceFieldDMD*);
     public:
         MinCGDMD(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
         ~MinCGDMD();

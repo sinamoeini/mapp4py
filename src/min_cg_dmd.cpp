@@ -22,6 +22,30 @@ MinCGDMD::~MinCGDMD()
     ff=NULL;
 }
 /*--------------------------------------------
+ pre run check it throw excepctions
+ --------------------------------------------*/
+void MinCGDMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
+{
+    try
+    {
+        Min::pre_run_chk(atoms,ff);
+    }
+    catch (std::string& err_msg)
+    {
+        throw err_msg;
+    }
+    
+    if(std::isnan(atoms->kB))
+        throw std::string("boltzmann constant should be set prior to minimizatiom");
+    
+    if(std::isnan(atoms->h))
+        throw std::string("planck constant should be set prior to minimizatiom");
+
+    
+    if(std::isnan(atoms->temp))
+        throw std::string("temperature should be set prior to minimizatiom");
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
 void MinCGDMD::force_calc()

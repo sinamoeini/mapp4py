@@ -5,11 +5,8 @@ npy_lib = npy_path[0] + '/core/lib'
 npy_include = npy_path[0] + '/core/include'
 
 
-
 cpp_files=[]
 cpp_files += ['src/'+ each for each in os.listdir('src') if each.endswith('.cpp')]
-
-#cpp_files =['src/ff_lj.cpp']
 
 module_mapp = Extension('mapp',
                     libraries = ['npymath','mpi','util'],

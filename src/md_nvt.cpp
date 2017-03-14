@@ -219,6 +219,9 @@ void MDNVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     //check if force field is loaded
     if(!ff)
         throw std::string("cannot start md without governing equations (force field)");
+    
+    if(std::isnan(atoms->kB))
+        throw std::string("boltzmann constant should be set prior to MD");
 }
 /*--------------------------------------------
  

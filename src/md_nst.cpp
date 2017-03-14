@@ -194,6 +194,9 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     if(!ff)
         throw std::string("cannot start md without governing equations (force field)");
     
+    if(std::isnan(atoms->kB))
+        throw std::string("boltzmann constant should be set prior to MD");
+    
     //check to see if the H_dof components are consistent with stoms->dof
     
     if(!atoms->dof->is_empty())

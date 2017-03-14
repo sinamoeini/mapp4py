@@ -64,6 +64,12 @@ void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     if(!ff)
         throw std::string("cannot start md without governing equations (force field)");
     
+    if(std::isnan(atoms->kB))
+        throw std::string("boltzmann constant should be set prior to MD");
+    
+    if(std::isnan(atoms->h))
+        throw std::string("planck constant should be set prior to GCMC");
+    
     elem_type ielem;
     try
     {

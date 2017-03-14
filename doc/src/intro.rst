@@ -1,6 +1,10 @@
-
 **************
  Introduction
 **************
 
-MAPP is a platform written in C++ for atomistic simulation of metals and alloys. It is equipped with most of popular forcefields designed for metals. In addition to being able to perform energy minimization and molecular dynamics (MD), it can also do diffusive molecular dynamics (DMD) simulations[?]. Since in addition to displacive mechanisms DMD is capable of addressing diffusion of atoms, in general it can achieve much longer timescales. For now MAPP is parallelized using message passing interface (MPI). In the “near future” we will release a hybrid version of MAPP using CUDA that will utilize the GPU cores as well as CPU.
+MAPP is a parallel atomistic simulation package written in C++, and is presented as a Python package in order to facilitate usage. In addition to being able to perform energy minimization and Molecular Dynamics (MD), it is equipped with parallel Grand Canonical Monte Carlo (GCMC) and Diffusive Molecular Dynamics (DMD) [1]_. At the moment the paralleization algortihms are done using standard message passing interface (MPI) library [2]_.
+
+References
+----------
+.. [1] https://doi.org/10.1103/PhysRevB.84.054103
+.. [2] https://en.wikipedia.org/wiki/Message_Passing_Interface

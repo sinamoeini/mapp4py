@@ -1,8 +1,44 @@
 
-*****************
- Getting Started
-*****************
+****************
+Getting Started
+****************
 
-In this chapter we will discuss how to obtain, install and execute MAPP. The rest of the manual will focus on explaining the commands available in MAPP and how to use them.
-Before downloading MAPP, you need to make sure that your machine is equipped with a C++ compiler and MPI library (see for example http://www.open-mpi.org). For now MAPP can be downloaded from the git repository http://github.com/sinamoeini/mapp4py. Once the download is completed, you need to reconfigure “Makelfile”. The only variables that might be subjected to change are CC, SHELL, LIBS, INCLUDES, and CFLAGS.
+Download
+=========
+
+MAPP can be downloaded from the git repository [1]_
+
+::
+
+    git clone http://github.com/sinamoeini/mapp4py
+
+
+Installation
+=============
+
+Before installation you need to ensure that your machine is equiped with the following:
+
+Prerequisites
+--------------
+
+   * C++ compiler with at least c++11 standard [2]_
+   * MPI Library [3]_, [4]_
+   * Python 2.7 or a later version [5]_
+   * numpy paython package [6]_
+
+::
+
+    pip install numpy
+
+
+
+References
+-----------
+
+.. [1] http://github.com/sinamoeini/mapp4py
+.. [2] https://en.wikipedia.org/wiki/C%2B%2B11
+.. [3] https://www.open-mpi.org
+.. [4] https://www.mpich.org
+.. [5] https://www.python.org
+.. [6] http://www.numpy.org
 

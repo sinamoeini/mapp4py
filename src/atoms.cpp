@@ -2,6 +2,7 @@
 #include "comm.h"
 #include "elements.h"
 #include "xmath.h"
+#include <limits>
 using namespace MAPP_NS;
 #ifdef MPI_CXX_BOOL
 template<> MPI_Datatype Vec<bool>::MPI_T=MPI_CXX_BOOL;
@@ -62,8 +63,8 @@ comm_size(Communication::get_size(__world)),
 s_hi(comm.s_hi),
 s_lo(comm.s_lo),
 elements(Elements()),
-h(1.0),
-kB(1.0),
+h(std::numeric_limits<type0>::quiet_NaN()),
+kB(std::numeric_limits<type0>::quiet_NaN()),
 vol(0.0),
 H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},

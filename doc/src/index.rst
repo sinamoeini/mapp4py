@@ -10,7 +10,7 @@ MAPP's documentation!
 :Last Reviewed: 2017-02-14
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    intro
    start
@@ -19,7 +19,8 @@ MAPP's documentation!
    dmd
    min
    ff
-   io
+   import
+   export
 
 Indices and tables
 ==================

@@ -3,31 +3,27 @@
  Supported Force Fields
 ************************
 
-.. currentmodule:: mapp.md
 
 MD
 --
 .. autosummary::
    :toctree: generated/
    
-   atoms.ff_lj
-   atoms.ff_fs
-   atoms.ff_eam_funcfl
-   atoms.ff_eam_setfl
-   atoms.ff_eam_fs
+   mapp.md.atoms.ff_lj
+   mapp.md.atoms.ff_fs
+   mapp.md.atoms.ff_eam_funcfl
+   mapp.md.atoms.ff_eam_setfl
+   mapp.md.atoms.ff_eam_fs
 
-
-
-.. currentmodule:: mapp.dmd
 
 DMD
 ---
 .. autosummary::
    :toctree: generated/
    
-   atoms.ff_eam_funcfl
-   atoms.ff_eam_setfl
-   atoms.ff_eam_fs
+   mapp.dmd.atoms.ff_eam_funcfl
+   mapp.dmd.atoms.ff_eam_setfl
+   mapp.dmd.atoms.ff_eam_fs
 
 
 

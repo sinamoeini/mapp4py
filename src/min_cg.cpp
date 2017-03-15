@@ -282,7 +282,6 @@ PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
 void MinCG::setup_tp()
 {
     TypeObject.tp_name="mapp.md.min_cg";
-    TypeObject.tp_doc="conjugate gradient minimization";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -295,6 +294,28 @@ void MinCG::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    TypeObject.tp_doc=R"---(
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.md.ls_bt())
+    
+    conjugate gradient minimization
+        
+    Parameters
+    ----------
+    e_tol : double
+       energy tolerance
+    H_dof : symmetric bool[3][3]
+       unitcell degrees of freedom
+    affine : bool
+       if set true the transformations would be affine
+    max_dx : double
+       maximum displacement in one step of minimization
+    ls : mapp.md.ls
+       line search method
+    
+    )---";
+    
+    //((PyWrapperDescrObject*)PyDict_GetItemString(MinCG::TypeObject.tp_dict,"__init__"))->d_base->doc=(char*)"ooooooooooo";
 }
 /*--------------------------------------------*/
 PyGetSetDef MinCG::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
@@ -322,7 +343,7 @@ void MinCG::setup_tp_methods()
 void MinCG::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
-    getset.doc=(char*)"export";
+    getset.doc=(char*)"export class to snapshot";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         ExportMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
@@ -348,8 +369,6 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";
-    tp_methods.ml_doc="run energy minimization";
-    
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -398,4 +417,24 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         
         Py_RETURN_NONE;
     };
+    
+    tp_methods.ml_doc=(char*)R"---(
+    run(atoms,max_nsteps)
+   
+    Execuition of energy minimization
+    
+    This method starts the energy minimization for a given atoms object.
+    
+    Parameters
+    ----------
+    atoms : mapp.md.atoms
+        the configuration
+    max_nsteps : int
+        maximum number of stepst to achieve energy minimization
+    
+    Returns
+    -------
+    None
+
+    )---";
 }

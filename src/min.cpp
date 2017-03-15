@@ -250,7 +250,7 @@ void Min::getset_e_tol(PyGetSetDef& getset)
 void Min::getset_max_dx(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dx";
-    getset.doc=(char*)"maximum displacement";
+    
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx,NULL);
@@ -264,6 +264,16 @@ void Min::getset_max_dx(PyGetSetDef& getset)
         reinterpret_cast<Object*>(self)->min->max_dx=max_dx.val;
         return 0;
     };
+    getset.doc=(char*)R"---(
+    max_dx
+    
+    maximum displacement in one step of minimization
+    
+    max_dx : double
+        maximum displacement in one step of minimization 
+    
+    
+    )---";
 }
 /*--------------------------------------------
  

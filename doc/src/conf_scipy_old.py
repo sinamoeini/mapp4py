@@ -24,14 +24,14 @@ templates_path = ['__templates']
 
 source_suffix = '.rst'
 
-project = u'MAPP'
-copyright = u'2017, Sina Moeini'
-author = u'Sina Moeini'
+project = 'MAPP'
+copyright = '2008-2009, The Scipy community'
 
-
-version = u'beta'
-release = u'beta'
-
+import numpy
+version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2','0.0.0')
+version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
+release = '0.0.0'
+print("%s %s" % (version, release))
 
 today_fmt = '%B %d, %Y'
 
@@ -44,7 +44,6 @@ add_function_parentheses = False
 
 pygments_style = 'sphinx'
 
-numpydoc_class_members_toctree = False
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -156,7 +155,7 @@ numpydoc_use_plots = True
 # -----------------------------------------------------------------------------
 
 import glob
-autosummary_generate = glob.glob("*.rst")
+autosummary_generate = glob.glob("reference/*.rst")
 
 # -----------------------------------------------------------------------------
 # Coverage checker

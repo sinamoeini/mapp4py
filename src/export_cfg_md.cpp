@@ -238,7 +238,7 @@ void ExportCFGMD::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject ExportCFGMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void ExportCFGMD::setup_tp()
+int ExportCFGMD::setup_tp()
 {
     TypeObject.tp_name="mapp.md.export_cfg";
     TypeObject.tp_doc="export atomeye";
@@ -255,6 +255,11 @@ void ExportCFGMD::setup_tp()
     setup_tp_getset();
     TypeObject.tp_getset=getset;
     TypeObject.tp_base=&ExportMD::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef ExportCFGMD::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};

@@ -1,27 +1,48 @@
+SHELL		=/bin/bash
+CC		=cc 
+MAKEFILE	=Makefile
+CFLAGS		=-std=c++11 -O3 
 
-SHELL 	    = /bin/bash
-SRC         = src/
-PROGRAMS    = main
-CC          = /opt/openmpi-intel/bin/mpic++ 
-OBJ         = obj/
-MAKEFILE    = Makefile
-CFLAGS      = -std=c++11 -O3 
-LIBS        = -L/home/sina/apps/python/lib/python2.7/site-packages/numpy/core/lib -L/home/sina/apps/python/lib  
-INCLUDES    = -I/home/sina/apps/python/include/python2.7/ -I/home/sina/apps/python/lib/python2.7/site-packages/numpy/core/include
-LDFLAGS	    = -lpython2.7 -lnpymath -lpthread -ldl -lutil 
+
+INCLUDE_MPI	=-I/usr/local/include
+LIB_MPI		=-L/usr/local/lib
+INCLUDE_PY	=-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7
+LIB_PY		=-L/System/Library/Frameworks/Python.framework/Versions/2.7
+INCLUDE_NP	=-I/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/numpy/core/include
+LIB_NP		=-L/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/numpy/core/lib
+
+
+INCLUDES	=$(INCLUDE_MPI) $(INCLUDE_PY) $(INCLUDE_NP)
+LIBS		=$(LIB_MPI) $(LIB_PY) $(LIB_NP)
+LDFLAGS		=-lpython2.7 -lnpymath -lpthread -ldl -lutil -lmpi 
         
-CPP_FILES   = $(wildcard $(SRC)*.cpp)
-H_FILES     = $(wildcard $(SRC)*.h)
-OBJ_FILES   = $(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o))) 
+SRC		=src/
+OBJ		=obj/
+CPP_FILES	=$(wildcard $(SRC)*.cpp)
+OBJ_FILES	=$(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o))) 
+OBJ_PY_FILES	=$(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o.py))) 
+SAITE_PACKS	=/Library/Python/2.7/site-packages
 
+
+mapp: prep $(OBJ_FILES) $(MAKEFILE) 
+	$(CC) $(CFLAGS) $(OBJ_FILES) -o $@ $(LIBS) $(LDFLAGS)  
+
+py: prep $(OBJ_PY_FILES) $(MAKEFILE)
+	$(CC)  -bundle -undefined dynamic_lookup $(CFLAGS) $(OBJ_PY_FILES) $(LIBS) $(LDFLAGS) -o mapp.so
+
+install:
+	@sudo mv mapp.so $(SAITE_PACKS)/mapp.so;
 
 $(OBJ)%.o: $(SRC)%.cpp $(MAKEFILE)
-	$(CC) -c $(CFLAGS) -o $@ $(INCLUDES) $<	
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@	
 
-mapp:	prep $(OBJ_FILES) $(MAKEFILE) 
-	$(CC) $(CFLAGS) $(OBJ_FILES) -o $@ $(LIBS) $(LDFLAGS)  
+
+$(OBJ)%.o.py: $(SRC)%.cpp $(MAKEFILE)
+	$(CC) -fPIC $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:  
 	rm -rf $(OBJ)
+
+
 prep:
-	@mkdir -p $(OBJ); 
+	@mkdir -p $(OBJ);

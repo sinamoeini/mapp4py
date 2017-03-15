@@ -652,7 +652,7 @@ void DAEBDF::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject DAEBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void DAEBDF::setup_tp()
+int DAEBDF::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.bdf";
     TypeObject.tp_doc="chemical integration";
@@ -668,6 +668,11 @@ void DAEBDF::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef DAEBDF::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};

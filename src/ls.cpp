@@ -55,7 +55,7 @@ void LineSearch::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject LineSearch::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void LineSearch::setup_tp()
+int LineSearch::setup_tp()
 {
     TypeObject.tp_name="ls";
     TypeObject.tp_doc="line search";
@@ -71,6 +71,11 @@ void LineSearch::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef LineSearch::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
@@ -138,7 +143,7 @@ void LineSearchGoldenSection::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject LineSearchGoldenSection::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void LineSearchGoldenSection::setup_tp()
+int LineSearchGoldenSection::setup_tp()
 {
     TypeObject.tp_name="ls_golden";
     TypeObject.tp_doc="line search golden section";
@@ -156,6 +161,11 @@ void LineSearchGoldenSection::setup_tp()
     TypeObject.tp_getset=getset;
     
     TypeObject.tp_base=&LineSearch::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef LineSearchGoldenSection::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};
@@ -288,7 +298,7 @@ void LineSearchBrent::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject LineSearchBrent::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void LineSearchBrent::setup_tp()
+int LineSearchBrent::setup_tp()
 {
     TypeObject.tp_name="ls_brent";
     TypeObject.tp_doc="line search brent";
@@ -306,6 +316,11 @@ void LineSearchBrent::setup_tp()
     TypeObject.tp_getset=getset;
     
     TypeObject.tp_base=&LineSearch::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef LineSearchBrent::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};
@@ -460,7 +475,7 @@ void LineSearchBackTrack::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject LineSearchBackTrack::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void LineSearchBackTrack::setup_tp()
+int LineSearchBackTrack::setup_tp()
 {
     TypeObject.tp_name="ls_bt";
     TypeObject.tp_doc="line search backtrack";
@@ -478,6 +493,11 @@ void LineSearchBackTrack::setup_tp()
     TypeObject.tp_getset=getset;
     
     TypeObject.tp_base=&LineSearch::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef LineSearchBackTrack::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};

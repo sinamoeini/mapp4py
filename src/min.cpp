@@ -141,7 +141,7 @@ void Min::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject Min::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void Min::setup_tp()
+int Min::setup_tp()
 {
     TypeObject.tp_name="min_cg";
     TypeObject.tp_doc="conjugate gradient minimization";
@@ -157,6 +157,11 @@ void Min::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef Min::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};

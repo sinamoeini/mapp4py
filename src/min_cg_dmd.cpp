@@ -340,10 +340,39 @@ void MinCGDMD::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MinCGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MinCGDMD::setup_tp()
+int MinCGDMD::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.min_cg";
-    TypeObject.tp_doc="conjugate gradient minimization";
+    TypeObject.tp_doc=R"---(
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp.dmd.ls_bt())
+    
+    CG minimization algorithm
+        
+    Parameters
+    ----------
+    e_tol : double
+       energy tolerance
+    H_dof : symmetric bool[dim][dim]
+       unitcell degrees of freedom, here dim is the dimension of simulation
+    affine : bool
+       determines wethere the transformation is affine or not
+    max_dalpha : double
+       maximum change in alpha of any atom in one step of minimization
+    max_dx : double
+       maximum displacement in one step of minimization
+    ls : mapp.dmd.ls
+       line search method
+
+    Notes
+    -----
+    Cojugate Gradient (CG) algorithm for minimization, see :cite:`press_numerical_2007`.
+    
+    References
+    ----------
+    .. bibliography:: ../refs.bib
+       :filter: docname in docnames
+       :style: unsrt
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -356,6 +385,12 @@ void MinCGDMD::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    GET_WRAPPER_DOC(TypeObject,__init__)=(char*)"";
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef MinCGDMD::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
@@ -405,7 +440,7 @@ void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 void MinCGDMD::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
-    getset.doc=(char*)"export";
+    getset.doc=(char*)"export object";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         ExportDMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
@@ -484,17 +519,17 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
     tp_methods.ml_doc=(char*)R"---(
     run(atoms,max_nsteps)
    
-    Execuition of energy minimization
+    Execute minimization
     
-    This method starts the energy minimization for a given atoms object.
+    This method starts the energy minimization for a given atoms object and maximum number of steps.
     
     Parameters
     ----------
-    atoms : mapp.dmd.atoms
-        the configuration
+    atoms : mapp.md.atoms
+        system of interest
     max_nsteps : int
-        maximum number of stepst to achieve energy minimization
-    
+        maximum number of steps to achieve energy minimization
+        
     Returns
     -------
     None

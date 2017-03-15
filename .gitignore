@@ -2,6 +2,8 @@ MAPP.xcodeproj
 DerivedData
 MAPP
 build
+obj
+doc
 doc/src/generated
 doc/build
 doc/scipy-sphinx-theme

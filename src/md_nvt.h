@@ -82,7 +82,7 @@ namespace MAPP_NS
         static void getset_export(PyGetSetDef&);
         
         
-        static void setup_tp();
+        static int setup_tp();
          
     };
 }

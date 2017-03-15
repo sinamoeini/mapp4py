@@ -211,10 +211,42 @@ void MinLBFGSDMD::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MinLBFGSDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MinLBFGSDMD::setup_tp()
+int MinLBFGSDMD::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.min_lbfgs";
-    TypeObject.tp_doc="l-BFGS minimization";
+    TypeObject.tp_doc=R"---(
+    __init__(m=2,e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp.dmd.ls_bt())
+    
+    L-BFGS minimization algorithm
+    
+    Parameters
+    ----------
+    m : int
+       number of vectors to store in memory
+    e_tol : double
+       energy tolerance
+    H_dof : symmetric bool[dim][dim]
+       unitcell degrees of freedom, here dim is the dimension of simulation
+    affine : bool
+       determines wethere the transformation is affine or not
+    max_dx : double
+       maximum displacement in one step of minimization
+    max_dalpha : double
+       maximum change in alpha of any atom in one step of minimization
+    ls : mapp.dmd.ls
+       line search method
+    
+    Notes
+    -----
+    Limited memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) algorithm for minimization, see :cite:`nocedal_numerical_2006`.
+    
+    References
+    ----------
+    .. bibliography:: ../refs.bib
+       :filter: docname in docnames 
+       :style: unsrt
+    
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -229,6 +261,12 @@ void MinLBFGSDMD::setup_tp()
     TypeObject.tp_getset=getset;
     
     TypeObject.tp_base=&MinCGDMD::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    GET_WRAPPER_DOC(TypeObject,__init__)=(char*)"";    
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef MinLBFGSDMD::getset[]={[0 ... 1]={NULL,NULL,NULL,NULL,NULL}};

@@ -41,7 +41,7 @@ namespace MAPP_NS
         static PyGetSetDef getset[];
         static void setup_tp_getset();
         
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 #endif 

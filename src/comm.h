@@ -121,7 +121,7 @@ namespace MAPP_NS
         
         static PyMemberDef tp_members[];
         static void setup_tp_members();
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 #endif

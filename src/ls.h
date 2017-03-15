@@ -60,7 +60,7 @@ namespace MAPP_NS
         static PyGetSetDef getset[];
         static void setup_tp_getset();
         
-        static void setup_tp();
+        static int setup_tp();
     };
     
     struct LineSearch::Object
@@ -104,7 +104,7 @@ namespace MAPP_NS
         static void getset_bracket(PyGetSetDef&);
         static void getset_max_iter(PyGetSetDef&);
         static void getset_tol(PyGetSetDef&);
-        static void setup_tp();
+        static int setup_tp();
     };
     
     struct LineSearchGoldenSection::Object
@@ -149,7 +149,7 @@ namespace MAPP_NS
         static void getset_max_iter(PyGetSetDef&);
         static void getset_tol(PyGetSetDef&);
         static void getset_zeps(PyGetSetDef&);
-        static void setup_tp();
+        static int setup_tp();
     };
     
     struct LineSearchBrent::Object
@@ -192,7 +192,7 @@ namespace MAPP_NS
         static void getset_rho(PyGetSetDef&);
         static void getset_c(PyGetSetDef&);
         static void getset_min_alpha(PyGetSetDef&);
-        static void setup_tp();
+        static int setup_tp();
     };
     
     struct LineSearchBackTrack::Object

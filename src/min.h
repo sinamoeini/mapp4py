@@ -53,7 +53,7 @@ namespace MAPP_NS
         static void getset_ntally(PyGetSetDef&);
         static void getset_ls(PyGetSetDef&);
         
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 #endif

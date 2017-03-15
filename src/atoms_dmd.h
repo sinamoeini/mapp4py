@@ -49,7 +49,7 @@ namespace MAPP_NS
         static PyMethodDef methods[];
         static void setup_tp_methods();
         
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 /*-----------------------

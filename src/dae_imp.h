@@ -64,7 +64,7 @@ namespace MAPP_NS
         static void getset_max_nnewton_iters(PyGetSetDef&);
         static void getset_max_ngmres_iters(PyGetSetDef&);
         
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 

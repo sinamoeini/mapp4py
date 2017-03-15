@@ -128,74 +128,50 @@ PyObject* MAPP::MD::init_module(void)
     if(module==NULL) return NULL;
     
     
-    AtomsMD::setup_tp();
-    if(PyType_Ready(&AtomsMD::TypeObject)<0) return NULL;
-    Py_INCREF(&AtomsMD::TypeObject);
+    if(AtomsMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsMD::TypeObject));
     
-    MDNVT::setup_tp();
-    if(PyType_Ready(&MDNVT::TypeObject)<0) return NULL;
-    Py_INCREF(&MDNVT::TypeObject);
+    if(MDNVT::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"nvt",reinterpret_cast<PyObject*>(&MDNVT::TypeObject));
     
     
-    MDNST::setup_tp();
-    if(PyType_Ready(&MDNST::TypeObject)<0) return NULL;
-    Py_INCREF(&MDNST::TypeObject);
+    if(MDNST::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"nst",reinterpret_cast<PyObject*>(&MDNST::TypeObject));
     
     
-    MDMuVT::setup_tp();
-    if(PyType_Ready(&MDMuVT::TypeObject)<0) return NULL;
-    Py_INCREF(&MDMuVT::TypeObject);
+    if(MDMuVT::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
     
 
-    LineSearch::setup_tp();
-    if(PyType_Ready(&LineSearch::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearch::TypeObject);
+    if(LineSearch::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
     
     
-    LineSearchGoldenSection::setup_tp();
-    if(PyType_Ready(&LineSearchGoldenSection::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearchGoldenSection::TypeObject);
+    if(LineSearchGoldenSection::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
     
     
-    LineSearchBrent::setup_tp();
-    if(PyType_Ready(&LineSearchBrent::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearchBrent::TypeObject);
+    if(LineSearchBrent::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
     
     
-    LineSearchBackTrack::setup_tp();
-    if(PyType_Ready(&LineSearchBackTrack::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearchBackTrack::TypeObject);
+    if(LineSearchBackTrack::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
     
     
-    MinCG::setup_tp();
-    if(PyType_Ready(&MinCG::TypeObject)<0) return NULL;
-    Py_INCREF(&MinCG::TypeObject);
+    if(MinCG::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
     
     
-    MinLBFGS::setup_tp();
-    if(PyType_Ready(&MinLBFGS::TypeObject)<0) return NULL;
-    Py_INCREF(&MinLBFGS::TypeObject);
+    if(MinLBFGS::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
     
     
-    ExportMD::setup_tp();
-    if(PyType_Ready(&ExportMD::TypeObject)<0) return NULL;
-    Py_INCREF(&ExportMD::TypeObject);
+    if(ExportMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportMD::TypeObject));
     
     
-    ExportCFGMD::setup_tp();
-    if(PyType_Ready(&ExportCFGMD::TypeObject)<0) return NULL;
-    Py_INCREF(&ExportCFGMD::TypeObject);
+    if(ExportCFGMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGMD::TypeObject));
     
     
@@ -218,62 +194,42 @@ PyObject* MAPP::DMD::init_module(void)
     if(module==NULL) return NULL;
     
     
-    AtomsDMD::setup_tp();
-    if(PyType_Ready(&AtomsDMD::TypeObject)<0) return NULL;
-    Py_INCREF(&AtomsDMD::TypeObject);
+    if(AtomsDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
     
     
-    LineSearch::setup_tp();
-    if(PyType_Ready(&LineSearch::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearch::TypeObject);
+    if(LineSearch::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
     
     
-    LineSearchGoldenSection::setup_tp();
-    if(PyType_Ready(&LineSearchGoldenSection::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearchGoldenSection::TypeObject);
+    if(LineSearchGoldenSection::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
     
     
-    LineSearchBrent::setup_tp();
-    if(PyType_Ready(&LineSearchBrent::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearchBrent::TypeObject);
+    if(LineSearchBrent::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
     
     
-    LineSearchBackTrack::setup_tp();
-    if(PyType_Ready(&LineSearchBackTrack::TypeObject)<0) return NULL;
-    Py_INCREF(&LineSearchBackTrack::TypeObject);
+    if(LineSearchBackTrack::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
     
     
-    MinCGDMD::setup_tp();
-    if(PyType_Ready(&MinCGDMD::TypeObject)<0) return NULL;
-    Py_INCREF(&MinCGDMD::TypeObject);
+    if(MinCGDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
     
     
-    MinLBFGSDMD::setup_tp();
-    if(PyType_Ready(&MinLBFGSDMD::TypeObject)<0) return NULL;
-    Py_INCREF(&MinLBFGSDMD::TypeObject);
+    if(MinLBFGSDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMD::TypeObject));
     
     
-    DAEBDF::setup_tp();
-    if(PyType_Ready(&DAEBDF::TypeObject)<0) return NULL;
-    Py_INCREF(&DAEBDF::TypeObject);
+    if(DAEBDF::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
     
     
-    ExportDMD::setup_tp();
-    if(PyType_Ready(&ExportDMD::TypeObject)<0) return NULL;
-    Py_INCREF(&ExportDMD::TypeObject);
+    if(ExportDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportDMD::TypeObject));
     
-    ExportCFGDMD::setup_tp();
-    if(PyType_Ready(&ExportCFGDMD::TypeObject)<0) return NULL;
-    Py_INCREF(&ExportCFGDMD::TypeObject);
+    if(ExportCFGDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGDMD::TypeObject));
     
     

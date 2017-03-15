@@ -264,7 +264,7 @@ void MDMuVT::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MDMuVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MDMuVT::setup_tp()
+int MDMuVT::setup_tp()
 {
     TypeObject.tp_name="mapp.md.muvt";
     TypeObject.tp_doc="MD of canonical ensemble";
@@ -280,6 +280,11 @@ void MDMuVT::setup_tp()
     TypeObject.tp_getset=getset;
     
     TypeObject.tp_base=&MDNVT::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef MDMuVT::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};

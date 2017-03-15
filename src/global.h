@@ -5,6 +5,9 @@
 
 #define RESTRICT __restrict__
 
+#define GET_WRAPPER_DOC(type,func) \
+((PyWrapperDescrObject*)PyDict_GetItemString(type.tp_dict, #func ))->d_base->doc
+
 
 #ifndef __MAPP__type_def__
 #define __MAPP__type_def__

@@ -279,9 +279,38 @@ void MinCG::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MinCG::setup_tp()
+int MinCG::setup_tp()
 {
     TypeObject.tp_name="mapp.md.min_cg";
+    TypeObject.tp_doc=R"---(
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.md.ls_bt())
+    
+    CG minimization algorithm
+        
+    Parameters
+    ----------
+    e_tol : double
+       energy tolerance
+    H_dof : symmetric bool[dim][dim]
+       unitcell degrees of freedom, here dim is the dimension of simulation
+    affine : bool
+       determines wethere the transformation is affine or not
+    max_dx : double
+       maximum displacement in one step of minimization
+    ls : mapp.md.ls
+       line search method
+    
+    Notes
+    -----
+    Cojugate Gradient (CG) algorithm for minimization, see :cite:`press_numerical_2007`.
+    
+    References
+    ----------
+    .. bibliography:: ../refs.bib
+       :filter: docname in docnames
+       :style: unsrt
+    
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -295,27 +324,17 @@ void MinCG::setup_tp()
     setup_tp_getset();
     TypeObject.tp_getset=getset;
     
-    TypeObject.tp_doc=R"---(
-    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.md.ls_bt())
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    /*
+     this is a shitty hack since python does not have a slot 
+     for __init__, __new__, __call__, and etc. they use
+     a wrapper_desriptor with a default doc here I change it
+     */
+    GET_WRAPPER_DOC(TypeObject,__init__)=(char*)"";
     
-    conjugate gradient minimization
-        
-    Parameters
-    ----------
-    e_tol : double
-       energy tolerance
-    H_dof : symmetric bool[3][3]
-       unitcell degrees of freedom
-    affine : bool
-       if set true the transformations would be affine
-    max_dx : double
-       maximum displacement in one step of minimization
-    ls : mapp.md.ls
-       line search method
-    
-    )---";
-    
-    //((PyWrapperDescrObject*)PyDict_GetItemString(MinCG::TypeObject.tp_dict,"__init__"))->d_base->doc=(char*)"ooooooooooo";
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef MinCG::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
@@ -417,21 +436,22 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
         
         Py_RETURN_NONE;
     };
-    
+
+
     tp_methods.ml_doc=(char*)R"---(
     run(atoms,max_nsteps)
    
-    Execuition of energy minimization
+    Execute minimization
     
-    This method starts the energy minimization for a given atoms object.
+    This method starts the energy minimization for a given atoms object and maximum number of steps.
     
     Parameters
     ----------
     atoms : mapp.md.atoms
-        the configuration
+        system of interest
     max_nsteps : int
-        maximum number of stepst to achieve energy minimization
-    
+        maximum number of steps to achieve energy minimization
+        
     Returns
     -------
     None

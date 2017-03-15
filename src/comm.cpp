@@ -48,7 +48,7 @@ void MAPP_MPI::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MAPP_MPI::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MAPP_MPI::setup_tp()
+int MAPP_MPI::setup_tp()
 {
     TypeObject.tp_name="mpi";
     TypeObject.tp_doc="just a simple container for MPI_Comm";
@@ -62,6 +62,11 @@ void MAPP_MPI::setup_tp()
     TypeObject.tp_dealloc=__dealloc__;
     setup_tp_members();
     TypeObject.tp_members=tp_members;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyMemberDef MAPP_MPI::tp_members[]={[0 ... 2]={NULL,0,0,0,NULL}};

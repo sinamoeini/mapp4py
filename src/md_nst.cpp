@@ -494,7 +494,7 @@ void MDNST::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MDNST::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MDNST::setup_tp()
+int MDNST::setup_tp()
 {
     TypeObject.tp_name="mapp.md.nst";
     TypeObject.tp_doc="MD of isothermal–isobaric ensemble";
@@ -510,6 +510,11 @@ void MDNST::setup_tp()
     TypeObject.tp_getset=getset;
     
     TypeObject.tp_base=&MDNVT::TypeObject;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef MDNST::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};

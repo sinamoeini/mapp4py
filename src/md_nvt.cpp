@@ -453,7 +453,7 @@ void MDNVT::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject MDNVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void MDNVT::setup_tp()
+int MDNVT::setup_tp()
 {
     TypeObject.tp_name="mapp.md.nvt";
     TypeObject.tp_doc="MD of canonical ensemble";
@@ -469,6 +469,11 @@ void MDNVT::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef MDNVT::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};

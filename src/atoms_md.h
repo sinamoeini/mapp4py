@@ -38,7 +38,7 @@ namespace MAPP_NS
         static void ml_create_temp(PyMethodDef&);
         static void ml_import_cfg(PyMethodDef&);
         
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 #endif

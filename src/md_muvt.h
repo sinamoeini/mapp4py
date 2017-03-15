@@ -50,7 +50,7 @@ namespace MAPP_NS
         static void getset_gas_element(PyGetSetDef&);
         
         
-        static void setup_tp();
+        static int setup_tp();
         
     };
 }

@@ -88,7 +88,7 @@ namespace MAPP_NS
         static void getset_t_relax_S(PyGetSetDef&);
         static void getset_nreset(PyGetSetDef&);
         
-        static void setup_tp();
+        static int setup_tp();
     };
 }
 

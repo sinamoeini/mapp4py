@@ -331,10 +331,10 @@ void Atoms::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject Atoms::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void Atoms::setup_tp()
+int Atoms::setup_tp()
 {
     TypeObject.tp_name="atoms";
-    TypeObject.tp_doc="I will add doc here";
+    TypeObject.tp_doc="container class";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -347,6 +347,12 @@ void Atoms::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef Atoms::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};

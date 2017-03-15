@@ -126,7 +126,7 @@ void DAE::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject DAE::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void DAE::setup_tp()
+int DAE::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.dae";
     TypeObject.tp_doc="chemical integration";
@@ -142,6 +142,12 @@ void DAE::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
+    
 }
 /*--------------------------------------------*/
 PyGetSetDef DAE::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};

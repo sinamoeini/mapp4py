@@ -508,7 +508,7 @@ namespace MAPP_NS
         static void getset_comm_dims(PyGetSetDef&);
         
         
-        static void setup_tp();
+        static int setup_tp();
 
         
     };

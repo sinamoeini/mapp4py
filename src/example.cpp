@@ -101,7 +101,7 @@ PyObject* ExamplePython::test_func(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------*/
 PyTypeObject ExamplePython::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void ExamplePython::setup_tp()
+int ExamplePython::setup_tp()
 {
     TypeObject.tp_name="xmpl.obj";
     TypeObject.tp_doc="I will add doc here";
@@ -119,6 +119,11 @@ void ExamplePython::setup_tp()
     TypeObject.tp_getset=tp_getset;
     setup_tp_methods();
     TypeObject.tp_methods=tp_methods;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 
 

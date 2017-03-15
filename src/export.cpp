@@ -353,7 +353,7 @@ void ExportMD::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject ExportMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void ExportMD::setup_tp()
+int ExportMD::setup_tp()
 {
     TypeObject.tp_name="mapp.md.export";
     TypeObject.tp_doc="export";
@@ -369,6 +369,11 @@ void ExportMD::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef ExportMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
@@ -432,7 +437,7 @@ void ExportDMD::__dealloc__(PyObject* self)
 /*--------------------------------------------*/
 PyTypeObject ExportDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-void ExportDMD::setup_tp()
+int ExportDMD::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.export";
     TypeObject.tp_doc="export";
@@ -448,6 +453,11 @@ void ExportDMD::setup_tp()
     TypeObject.tp_methods=methods;
     setup_tp_getset();
     TypeObject.tp_getset=getset;
+    
+    int ichk=PyType_Ready(&TypeObject);
+    if(ichk<0) return ichk;
+    Py_INCREF(&TypeObject);
+    return ichk;
 }
 /*--------------------------------------------*/
 PyGetSetDef ExportDMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};

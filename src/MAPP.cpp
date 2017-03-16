@@ -104,9 +104,27 @@ void MAPP::init_module(void)
     Py_INCREF(&MAPP_MPI::TypeObject);
     PyModule_AddObject(module,"mpi",reinterpret_cast<PyObject*>(&MAPP_MPI::TypeObject));
     
+    
+    if(LineSearch::setup_tp()<0) return;
+    PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
+    
+    
+    if(LineSearchGoldenSection::setup_tp()<0) return;
+    PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
+    
+    
+    if(LineSearchBrent::setup_tp()<0) return;
+    PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
+    
+    
+    if(LineSearchBackTrack::setup_tp()<0) return;
+    PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
+    
+    
     PyObject* md=MAPP::MD::init_module();
     if(md==NULL) return;
     PyModule_AddObject(module,"md",md);
+    
     
     PyObject* dmd=MAPP::DMD::init_module();
     if(dmd==NULL) return;
@@ -141,22 +159,6 @@ PyObject* MAPP::MD::init_module(void)
     
     if(MDMuVT::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
-    
-
-    if(LineSearch::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
-    
-    
-    if(LineSearchGoldenSection::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
-    
-    
-    if(LineSearchBrent::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
-    
-    
-    if(LineSearchBackTrack::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
     
     
     if(MinCG::setup_tp()<0) return NULL;
@@ -196,22 +198,6 @@ PyObject* MAPP::DMD::init_module(void)
     
     if(AtomsDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
-    
-    
-    if(LineSearch::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
-    
-    
-    if(LineSearchGoldenSection::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
-    
-    
-    if(LineSearchBrent::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
-    
-    
-    if(LineSearchBackTrack::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
     
     
     if(MinCGDMD::setup_tp()<0) return NULL;

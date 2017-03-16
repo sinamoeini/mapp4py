@@ -183,20 +183,25 @@ void Min::setup_tp_methods()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Min::getset_affine(PyGetSetDef& getset)
+void Min::getset_e_tol(PyGetSetDef& getset)
 {
-    getset.name=(char*)"affine";
-    getset.doc=(char*)"set to true if transformation is affine";
+    getset.name=(char*)"e_tol";
+    getset.doc=(char*)R"---(
+    (double) tolerance
+    
+    Energy tolerance criterion for stopping minimization
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->min->affine,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->min->e_tol,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<bool> affine("affine");
-        int ichk=affine.set(op);
+        VarAPI<type0> e_tol("e_tol");
+        e_tol.logics[0]=VLogics("ge",0.0);
+        int ichk=e_tol.set(op);
         if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->affine=affine.val;
+        reinterpret_cast<Object*>(self)->min->e_tol=e_tol.val;
         return 0;
     };
 }
@@ -206,7 +211,11 @@ void Min::getset_affine(PyGetSetDef& getset)
 void Min::getset_H_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"H_dof";
-    getset.doc=(char*)"unitcell degrees of freedom";
+    getset.doc=(char*)R"---(
+    (symm<bool[dim][dim]>) unitcell DOFs
+    
+    Unitcell degrees of freedom during minimization, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<symm<bool[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->min->H_dof,NULL);
@@ -231,21 +240,24 @@ void Min::getset_H_dof(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Min::getset_e_tol(PyGetSetDef& getset)
+void Min::getset_affine(PyGetSetDef& getset)
 {
-    getset.name=(char*)"e_tol";
-    getset.doc=(char*)"energy tolerance criterion for stopping minimization";
+    getset.name=(char*)"affine";
+    getset.doc=(char*)R"---(
+    (bool) affine transformation switch
+    
+    If set to True atomic displacements would be affine
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->e_tol,NULL);
+        return var<bool>::build(reinterpret_cast<Object*>(self)->min->affine,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<type0> e_tol("e_tol");
-        e_tol.logics[0]=VLogics("ge",0.0);
-        int ichk=e_tol.set(op);
+        VarAPI<bool> affine("affine");
+        int ichk=affine.set(op);
         if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->e_tol=e_tol.val;
+        reinterpret_cast<Object*>(self)->min->affine=affine.val;
         return 0;
     };
 }
@@ -255,7 +267,11 @@ void Min::getset_e_tol(PyGetSetDef& getset)
 void Min::getset_max_dx(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dx";
+    getset.doc=(char*)R"---(
+    (double) mximum displacemant
     
+    Maximum displacement of any atom in one step of minimization
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx,NULL);
@@ -269,37 +285,6 @@ void Min::getset_max_dx(PyGetSetDef& getset)
         reinterpret_cast<Object*>(self)->min->max_dx=max_dx.val;
         return 0;
     };
-    getset.doc=(char*)R"---(
-    max_dx
-    
-    maximum displacement in one step of minimization
-    
-    max_dx : double
-        maximum displacement in one step of minimization 
-    
-    
-    )---";
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void Min::getset_ntally(PyGetSetDef& getset)
-{
-    getset.name=(char*)"ntally";
-    getset.doc=(char*)"tally thermodynamic quantities every ntally steps";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<int>::build(reinterpret_cast<Object*>(self)->min->ntally,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<int> ntally("ntally");
-        ntally.logics[0]=VLogics("ge",0);
-        int ichk=ntally.set(op);
-        if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->ntally=ntally.val;
-        return 0;
-    };
 }
 /*--------------------------------------------
  
@@ -307,7 +292,11 @@ void Min::getset_ntally(PyGetSetDef& getset)
 void Min::getset_ls(PyGetSetDef& getset)
 {
     getset.name=(char*)"ls";
-    getset.doc=(char*)"line search";
+    getset.doc=(char*)R"---(
+    (mapp.ls) line search algorithm
+    
+    Line search method to find the energy minimum in one dimension
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         LineSearch::Object* ls=reinterpret_cast<Object*>(self)->ls;
@@ -327,5 +316,31 @@ void Min::getset_ls(PyGetSetDef& getset)
         return 0;
     };
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Min::getset_ntally(PyGetSetDef& getset)
+{
+    getset.name=(char*)"ntally";
+    getset.doc=(char*)R"---(
+    (int) tallying step
+    
+    Number of steps to be taken from one thermodynamics output to next.
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<int>::build(reinterpret_cast<Object*>(self)->min->ntally,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<int> ntally("ntally");
+        ntally.logics[0]=VLogics("ge",0);
+        int ichk=ntally.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->min->ntally=ntally.val;
+        return 0;
+    };
+}
+
 
 

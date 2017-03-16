@@ -222,19 +222,19 @@ int MinLBFGSDMD::setup_tp()
     Parameters
     ----------
     m : int
-       number of vectors to store in memory
+       Maximum number of vectors to be stored in memory
     e_tol : double
-       energy tolerance
-    H_dof : symmetric bool[dim][dim]
-       unitcell degrees of freedom, here dim is the dimension of simulation
+       Energy tolerance criterion for stopping minimization
+    H_dof : symm<bool[dim][dim]>
+       Unitcell degrees of freedom during minimization, here dim is the dimension of simulation
     affine : bool
-       determines wethere the transformation is affine or not
+       If set to True atomic displacements would be affine
     max_dx : double
-       maximum displacement in one step of minimization
+       Maximum displacement of any atom in one step of minimization
     max_dalpha : double
-       maximum change in alpha of any atom in one step of minimization
-    ls : mapp.dmd.ls
-       line search method
+       Maximum change in alpha component of any atom in one step of minimization
+    ls : mapp.ls
+       Line search method
     
     Notes
     -----
@@ -287,7 +287,12 @@ void MinLBFGSDMD::setup_tp_methods()
 void MinLBFGSDMD::getset_m(PyGetSetDef& getset)
 {
     getset.name=(char*)"m";
-    getset.doc=(char*)"number of vectors to store in memory";
+    getset.doc=(char*)R"---(
+    (int) Maximum No. of vectors
+    
+    Maximum number of vectors to be stored in memory
+    )---";
+
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->min->m,NULL);

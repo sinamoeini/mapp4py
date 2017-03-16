@@ -146,7 +146,7 @@ PyTypeObject LineSearchGoldenSection::TypeObject={PyObject_HEAD_INIT(NULL)};
 int LineSearchGoldenSection::setup_tp()
 {
     TypeObject.tp_name="ls_golden";
-    TypeObject.tp_doc="line search golden section";
+    TypeObject.tp_doc=(char*)"Golden section line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -188,7 +188,11 @@ void LineSearchGoldenSection::setup_tp_methods()
 void LineSearchGoldenSection::getset_bracket(PyGetSetDef& getset)
 {
     getset.name=(char*)"bracket";
-    getset.doc=(char*)"set to true if perform bracketing prior to line search";
+    getset.doc=(char*)R"---(
+    (bool) bracketing routine switch
+    
+    set to True if perform bracketing prior to line search
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<bool>::build(reinterpret_cast<Object*>(self)->ls.brack,NULL);
@@ -208,7 +212,11 @@ void LineSearchGoldenSection::getset_bracket(PyGetSetDef& getset)
 void LineSearchGoldenSection::getset_max_iter(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_iter";
-    getset.doc=(char*)"maximum number of iterations";
+    getset.doc=(char*)R"---(
+    (int) maximum iterations
+    
+    maximum number of iterations for each line search attempt
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->ls.max_iter,NULL);
@@ -229,7 +237,11 @@ void LineSearchGoldenSection::getset_max_iter(PyGetSetDef& getset)
 void LineSearchGoldenSection::getset_tol(PyGetSetDef& getset)
 {
     getset.name=(char*)"tol";
-    getset.doc=(char*)"tolerance to stop minimization";
+    getset.doc=(char*)R"---(
+    (double) tolerance
+    
+    tolerance to stop line serach
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->ls.tol,NULL);
@@ -301,7 +313,7 @@ PyTypeObject LineSearchBrent::TypeObject={PyObject_HEAD_INIT(NULL)};
 int LineSearchBrent::setup_tp()
 {
     TypeObject.tp_name="ls_brent";
-    TypeObject.tp_doc="line search brent";
+    TypeObject.tp_doc=(char*)"Brent line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -344,7 +356,11 @@ void LineSearchBrent::setup_tp_methods()
 void LineSearchBrent::getset_bracket(PyGetSetDef& getset)
 {
     getset.name=(char*)"bracket";
-    getset.doc=(char*)"set to true if perform bracketing prior to line search";
+    getset.doc=(char*)R"---(
+    (bool) bracketing routine switch
+    
+    set to True if perform bracketing prior to line search
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<bool>::build(reinterpret_cast<Object*>(self)->ls.brack,NULL);
@@ -364,7 +380,11 @@ void LineSearchBrent::getset_bracket(PyGetSetDef& getset)
 void LineSearchBrent::getset_max_iter(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_iter";
-    getset.doc=(char*)"maximum number of iterations";
+    getset.doc=(char*)R"---(
+    (int) maximum iterations
+    
+    maximum number of iterations for each line search attempt
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->ls.max_iter,NULL);
@@ -385,7 +405,11 @@ void LineSearchBrent::getset_max_iter(PyGetSetDef& getset)
 void LineSearchBrent::getset_tol(PyGetSetDef& getset)
 {
     getset.name=(char*)"tol";
-    getset.doc=(char*)"tolerance to stop minimization";
+    getset.doc=(char*)R"---(
+    (double) tolerance
+    
+    tolerance to stop line serach
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->ls.tol,NULL);
@@ -406,8 +430,12 @@ void LineSearchBrent::getset_tol(PyGetSetDef& getset)
 void LineSearchBrent::getset_zeps(PyGetSetDef& getset)
 {
     getset.name=(char*)"zeps";
-    getset.doc=(char*)
-    R"---(small numnber to protect against trying to achieve fractional accuracy for a minimum that happens to be exactly 0.0)---";
+    getset.doc=(char*)R"---(
+    (double) small number
+    
+    small number to protect against trying to achieve fractional accuracy for a minimum that happens to be exactly 0.0
+    )---";
+        
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->ls.zeps,NULL);
@@ -434,7 +462,9 @@ LineSearchBackTrack::LineSearchBackTrack():LineSearch()
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-//LineSearchBackTrack::~LineSearchBackTrack(){}
+/*LineSearchBackTrack::~LineSearchBackTrack()
+{
+}*/
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -478,7 +508,7 @@ PyTypeObject LineSearchBackTrack::TypeObject={PyObject_HEAD_INIT(NULL)};
 int LineSearchBackTrack::setup_tp()
 {
     TypeObject.tp_name="ls_bt";
-    TypeObject.tp_doc="line search backtrack";
+    TypeObject.tp_doc=(char*)"Back track line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -520,7 +550,11 @@ void LineSearchBackTrack::setup_tp_methods()
 void LineSearchBackTrack::getset_c(PyGetSetDef& getset)
 {
     getset.name=(char*)"c";
-    getset.doc=(char*)"parameter to determine sufficent decrease";
+    getset.doc=(char*)R"---(
+    (double) parameter to determine sufficent decrease
+    
+    Criterion to determine sufficient decrease, this attribute should be between 0.0 and 1.0.
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->ls.c,NULL);
@@ -541,7 +575,11 @@ void LineSearchBackTrack::getset_c(PyGetSetDef& getset)
 void LineSearchBackTrack::getset_rho(PyGetSetDef& getset)
 {
     getset.name=(char*)"rho";
-    getset.doc=(char*)"step reduction in every iterations";
+    getset.doc=(char*)R"---(
+    (double) step reduction
+    
+    Step reduction after an unsuccessful trial, this attribute should be between 0.0 and 1.0.
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->ls.rho,NULL);
@@ -562,7 +600,11 @@ void LineSearchBackTrack::getset_rho(PyGetSetDef& getset)
 void LineSearchBackTrack::getset_min_alpha(PyGetSetDef& getset)
 {
     getset.name=(char*)"min_alpha";
-    getset.doc=(char*)"minimum alpha";
+    getset.doc=(char*)R"---(
+    (double) minimum alpha
+    
+    This attribute should be greater than 0.0.
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->ls.min_alpha,NULL);

@@ -351,17 +351,17 @@ int MinCGDMD::setup_tp()
     Parameters
     ----------
     e_tol : double
-       energy tolerance
-    H_dof : symmetric bool[dim][dim]
-       unitcell degrees of freedom, here dim is the dimension of simulation
+       Energy tolerance criterion for stopping minimization
+    H_dof : symm<bool[dim][dim]>
+       Unitcell degrees of freedom during minimization, here dim is the dimension of simulation
     affine : bool
-       determines wethere the transformation is affine or not
-    max_dalpha : double
-       maximum change in alpha of any atom in one step of minimization
+       If set to True atomic displacements would be affine
     max_dx : double
-       maximum displacement in one step of minimization
-    ls : mapp.dmd.ls
-       line search method
+       Maximum displacement of any atom in one step of minimization
+    max_dalpha : double
+       Maximum change in alpha component of any atom in one step of minimization
+    ls : mapp.ls
+       Line search method
 
     Notes
     -----
@@ -397,13 +397,13 @@ PyGetSetDef MinCGDMD::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp_getset()
 {
-    getset_max_dx(getset[0]);
-    getset_e_tol(getset[1]);
+    getset_e_tol(getset[0]);
+    getset_H_dof(getset[1]);
     getset_affine(getset[2]);
-    getset_H_dof(getset[3]);
-    getset_ntally(getset[4]);
+    getset_max_dx(getset[3]);
+    getset_max_dalpha(getset[4]);
     getset_ls(getset[5]);
-    getset_max_dalpha(getset[6]);
+    getset_ntally(getset[6]);
     getset_export(getset[7]);
 }
 /*--------------------------------------------*/
@@ -419,7 +419,11 @@ void MinCGDMD::setup_tp_methods()
 void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dalpha";
-    getset.doc=(char*)"maximum alpha displacement";
+    getset.doc=(char*)R"---(
+    (double) mximum alpha change
+    
+    Maximum change in alpha component of any atom in one step of minimization
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx,NULL);
@@ -440,7 +444,11 @@ void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 void MinCGDMD::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
-    getset.doc=(char*)"export object";
+    getset.doc=(char*)R"---(
+    (mapp.dmd.export) export object
+    
+    Export object to record the snapshots of the system while minimizing
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         ExportDMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;

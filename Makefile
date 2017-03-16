@@ -1,5 +1,5 @@
 SHELL		=/bin/bash
-CC		=cc 
+CC		=c++ 
 MAKEFILE	=Makefile
 CFLAGS		=-std=c++11 -O3 
 

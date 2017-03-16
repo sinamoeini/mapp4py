@@ -283,22 +283,22 @@ int MinCG::setup_tp()
 {
     TypeObject.tp_name="mapp.md.min_cg";
     TypeObject.tp_doc=R"---(
-    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.md.ls_bt())
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.ls_bt())
     
     CG minimization algorithm
         
     Parameters
     ----------
     e_tol : double
-       energy tolerance
-    H_dof : symmetric bool[dim][dim]
-       unitcell degrees of freedom, here dim is the dimension of simulation
+       Energy tolerance criterion for stopping minimization
+    H_dof : symm<bool[dim][dim]>
+       Unitcell degrees of freedom during minimization, here dim is the dimension of simulation
     affine : bool
-       determines wethere the transformation is affine or not
+       If set to True atomic displacements would be affine
     max_dx : double
-       maximum displacement in one step of minimization
-    ls : mapp.md.ls
-       line search method
+       Maximum displacement of any atom in one step of minimization
+    ls : mapp.ls
+       Line search method
     
     Notes
     -----
@@ -341,12 +341,12 @@ PyGetSetDef MinCG::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MinCG::setup_tp_getset()
 {
-    getset_max_dx(getset[0]);
-    getset_e_tol(getset[1]);
+    getset_e_tol(getset[0]);
+    getset_H_dof(getset[1]);
     getset_affine(getset[2]);
-    getset_H_dof(getset[3]);
-    getset_ntally(getset[4]);
-    getset_ls(getset[5]);
+    getset_max_dx(getset[3]);
+    getset_ls(getset[4]);
+    getset_ntally(getset[5]);
     getset_export(getset[6]);
 }
 /*--------------------------------------------*/
@@ -362,7 +362,11 @@ void MinCG::setup_tp_methods()
 void MinCG::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
-    getset.doc=(char*)"export class to snapshot";
+    getset.doc=(char*)R"---(
+    (mapp.md.export) export object
+    
+    Export object to record the snapshots of the system while minimizing
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         ExportMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;

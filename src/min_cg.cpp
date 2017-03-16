@@ -332,8 +332,7 @@ int MinCG::setup_tp()
      for __init__, __new__, __call__, and etc. they use
      a wrapper_desriptor with a default doc here I change it
      */
-    //GET_WRAPPER_DOC(TypeObject,__init__)=(char*)"";
-    
+    GET_WRAPPER_DOC(TypeObject,__init__)=NULL;
     return ichk;
 }
 /*--------------------------------------------*/
@@ -452,9 +451,9 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
     Parameters
     ----------
     atoms : mapp.md.atoms
-        system of interest
+        System of interest
     max_nsteps : int
-        maximum number of steps to achieve energy minimization
+        Maximum number of steps to achieve energy minimization
         
     Returns
     -------

@@ -497,7 +497,34 @@ PyTypeObject MDNST::TypeObject ={PyObject_HEAD_INIT(NULL)};
 int MDNST::setup_tp()
 {
     TypeObject.tp_name="mapp.md.nst";
-    TypeObject.tp_doc="MD of isothermal–isobaric ensemble";
+    TypeObject.tp_doc=R"---(
+    __init__(S,T,dt)
+    
+    :math:`N\mathbf{S}T` ensemble
+    
+    Molecular dynamics of isothermal-isostress ensemble
+        
+    Parameters
+    ----------
+    S : symm<double[dim][dim]>
+       External stress imposed on system, here dim is the dimension of simulation
+    T : double
+       Temperature of the ensemble
+    dt : double
+       Time step for simulation
+    
+    Notes
+    -----
+       * Thermostat Details
+          Nose-Hoover chain
+    
+    References
+    ----------
+    .. bibliography:: ../refs.bib
+       :filter: docname in docnames
+       :style: unsrt
+    
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -514,6 +541,7 @@ int MDNST::setup_tp()
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
     Py_INCREF(&TypeObject);
+    GET_WRAPPER_DOC(TypeObject,__init__)=NULL;
     return ichk;
 }
 /*--------------------------------------------*/
@@ -521,11 +549,11 @@ PyGetSetDef MDNST::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MDNST::setup_tp_getset()
 {
-    getset_niters_baro(getset[0]);
-    getset_nchains_baro(getset[1]);
-    getset_t_relax_baro(getset[2]);
-    getset_S_dof(getset[3]);
-    getset_S(getset[4]);
+    getset_S(getset[0]);
+    getset_S_dof(getset[1]);
+    getset_niters_baro(getset[2]);
+    getset_nchains_baro(getset[3]);
+    getset_t_relax_baro(getset[4]);
     getset_t_relax_S(getset[5]);
     getset_nreset(getset[6]);
 }
@@ -535,7 +563,11 @@ void MDNST::setup_tp_getset()
 void MDNST::getset_nchains_baro(PyGetSetDef& getset)
 {
     getset.name=(char*)"nchains_baro";
-    getset.doc=(char*)"number of chains in Nose-Hoover chain thermostat";
+    getset.doc=(char*)R"---(
+    (int) NHC length of barostat
+    
+    Number of links in Nose-Hoover chain of barostat
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int nchains=reinterpret_cast<Object*>(self)->md->thermo_baro.nchains;
@@ -565,7 +597,11 @@ void MDNST::getset_nchains_baro(PyGetSetDef& getset)
 void MDNST::getset_niters_baro(PyGetSetDef& getset)
 {
     getset.name=(char*)"niters_baro";
-    getset.doc=(char*)"number of iterations in Nose-Hoover chain thermostat";
+    getset.doc=(char*)R"---(
+    (int) number iterations of NHC barostat
+    
+    Number of iterations in Nose-Hoover chain thermostat per each step of barostat evolution
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int niters=reinterpret_cast<Object*>(self)->md->thermo_baro.niters;
@@ -595,7 +631,11 @@ void MDNST::getset_niters_baro(PyGetSetDef& getset)
 void MDNST::getset_t_relax_baro(PyGetSetDef& getset)
 {
     getset.name=(char*)"t_relax_baro";
-    getset.doc=(char*)"thermostat parameter, relaxation time";
+    getset.doc=(char*)R"---(
+    (double) thermostat relaxation parameter
+    
+    Barostat relaxation parameter (unit of time), roughly equivalent to relaxation time of system with external stress
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         type0 t_relax=reinterpret_cast<Object*>(self)->md->thermo_baro.t_relax;
@@ -625,7 +665,11 @@ void MDNST::getset_t_relax_baro(PyGetSetDef& getset)
 void MDNST::getset_S_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"S_dof";
-    getset.doc=(char*)"S_dof";
+    getset.doc=(char*)R"---(
+    (symm<bool[dim][dim]>) unitcell DOFs
+    
+    Unitcell degrees of freedom during molecular dynamics, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<symm<bool[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->S_dof,NULL);
@@ -654,7 +698,11 @@ void MDNST::getset_S_dof(PyGetSetDef& getset)
 void MDNST::getset_S(PyGetSetDef& getset)
 {
     getset.name=(char*)"S";
-    getset.doc=(char*)"external stress of isothermal–isobaric ensemble";
+    getset.doc=(char*)R"---(
+    (symm<double[dim][dim]>) external stress tensor
+    
+    External stress imposed on system, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->S,NULL);
@@ -686,7 +734,11 @@ void MDNST::getset_S(PyGetSetDef& getset)
 void MDNST::getset_t_relax_S(PyGetSetDef& getset)
 {
     getset.name=(char*)"t_relax_S";
-    getset.doc=(char*)"t_relax of external stress of isothermal–isobaric ensemble";
+    getset.doc=(char*)R"---(
+    (symm<double[dim][dim]>) external stress t_relax
+    
+    t_relax of external stress of isothermal–isobaric ensemble
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->t_relax_S,NULL);
@@ -713,7 +765,11 @@ void MDNST::getset_t_relax_S(PyGetSetDef& getset)
 void MDNST::getset_nreset(PyGetSetDef& getset)
 {
     getset.name=(char*)"nreset";
-    getset.doc=(char*)"number of steps to reset initial conf";
+    getset.doc=(char*)R"---(
+    (int) configuration reset period
+    
+    Number of steps to reset initial configuration. If set to 0 the very inital configuration would be reference
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int niters=reinterpret_cast<Object*>(self)->md->nreset;

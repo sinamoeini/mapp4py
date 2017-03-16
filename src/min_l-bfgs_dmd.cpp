@@ -265,7 +265,7 @@ int MinLBFGSDMD::setup_tp()
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
     Py_INCREF(&TypeObject);
-    //GET_WRAPPER_DOC(TypeObject,__init__)=(char*)"";
+    GET_WRAPPER_DOC(TypeObject,__init__)=NULL;
     return ichk;
 }
 /*--------------------------------------------*/

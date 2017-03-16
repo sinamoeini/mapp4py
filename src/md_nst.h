@@ -37,10 +37,7 @@ namespace MAPP_NS
         
         
         
-        
-        
-        
-        type0 t_ralx_baro;
+                
         bool S_dof[__dim__][__dim__];
         type0 S[__dim__][__dim__];
         type0 t_relax_S[__dim__][__dim__];

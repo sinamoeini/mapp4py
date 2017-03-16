@@ -267,7 +267,38 @@ PyTypeObject MDMuVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 int MDMuVT::setup_tp()
 {
     TypeObject.tp_name="mapp.md.muvt";
-    TypeObject.tp_doc="MD of canonical ensemble";
+    TypeObject.tp_doc=R"---(
+    __init__(mu,T,dt,gas_element,seed)
+    
+    :math:`\mu VT` ensemble
+    
+    Molecular dynamics of grand canonical ensemble
+        
+    Parameters
+    ----------
+    mu : double
+       Chemical potential
+    T : double
+       Temperature of the ensemble
+    dt : double
+       Time step for simulation
+    gas_element : string
+       Gas element
+    seed : int
+       Random seed for Grand Canonical Monte Carlo
+    
+    Notes
+    -----
+       * Thermostat Details
+          Nose-Hoover chain
+    
+    References
+    ----------
+    .. bibliography:: ../refs.bib
+       :filter: docname in docnames
+       :style: unsrt
+    
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -284,6 +315,7 @@ int MDMuVT::setup_tp()
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
     Py_INCREF(&TypeObject);
+    GET_WRAPPER_DOC(TypeObject,__init__)=NULL;
     return ichk;
 }
 /*--------------------------------------------*/
@@ -302,7 +334,11 @@ void MDMuVT::setup_tp_getset()
 void MDMuVT::getset_nevery(PyGetSetDef& getset)
 {
     getset.name=(char*)"nevery";
-    getset.doc=(char*)"perform deletion/insertion attempts every nevery steps";
+    getset.doc=(char*)R"---(
+    (int) gcmc period
+    
+    Perform GCMC every nevery steps.
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->md->nevery,NULL);
@@ -324,7 +360,11 @@ void MDMuVT::getset_nevery(PyGetSetDef& getset)
 void MDMuVT::getset_nattempts(PyGetSetDef& getset)
 {
     getset.name=(char*)"nattempts";
-    getset.doc=(char*)"number of deletion/insertion attempts";
+    getset.doc=(char*)R"---(
+    (int) number of gcmc trials
+    
+    Number of deletion/insertion attempts per GCMC.
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->md->nattempts,NULL);
@@ -346,7 +386,11 @@ void MDMuVT::getset_nattempts(PyGetSetDef& getset)
 void MDMuVT::getset_seed(PyGetSetDef& getset)
 {
     getset.name=(char*)"seed";
-    getset.doc=(char*)"gcmc random seed";
+    getset.doc=(char*)R"---(
+    (int) random seed
+    
+    Random seed for Grand Canonical Monte Carlo
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->md->seed,NULL);
@@ -368,7 +412,11 @@ void MDMuVT::getset_seed(PyGetSetDef& getset)
 void MDMuVT::getset_gas_element(PyGetSetDef& getset)
 {
     getset.name=(char*)"gas_element";
-    getset.doc=(char*)"gcmc element";
+    getset.doc=(char*)R"---(
+    (int) gas element
+    
+    Gas element for gcmc
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         elem_type gas_elem=reinterpret_cast<Object*>(self)->md->gas_elem;

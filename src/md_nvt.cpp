@@ -456,7 +456,32 @@ PyTypeObject MDNVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 int MDNVT::setup_tp()
 {
     TypeObject.tp_name="mapp.md.nvt";
-    TypeObject.tp_doc="MD of canonical ensemble";
+    TypeObject.tp_doc=R"---(
+    __init__(T,dt)
+    
+    :math:`NVT` ensemble
+    
+    Molecular dynamics of canonical ensemble
+        
+    Parameters
+    ----------
+    T : double
+       Temperature of the ensemble
+    dt : double
+       Time step for simulation
+    
+    Notes
+    -----
+       * Thermostat Details
+          Nose-Hoover chain
+    
+    References
+    ----------
+    .. bibliography:: ../refs.bib
+       :filter: docname in docnames
+       :style: unsrt
+    
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -473,6 +498,7 @@ int MDNVT::setup_tp()
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
     Py_INCREF(&TypeObject);
+    GET_WRAPPER_DOC(TypeObject,__init__)=NULL;
     return ichk;
 }
 /*--------------------------------------------*/
@@ -480,13 +506,13 @@ PyGetSetDef MDNVT::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MDNVT::setup_tp_getset()
 {
-    getset_niters(getset[0]);
-    getset_nchains(getset[1]);
-    getset_T(getset[2]);
-    getset_dt(getset[3]);
+    getset_T(getset[0]);
+    getset_dt(getset[1]);
+    getset_niters(getset[2]);
+    getset_nchains(getset[3]);
     getset_t_relax(getset[4]);
-    getset_ntally(getset[5]);
-    getset_export(getset[6]);
+    getset_export(getset[5]);
+    getset_ntally(getset[6]);
 }
 /*--------------------------------------------*/
 PyMethodDef MDNVT::methods[]={[0 ... 1]={NULL}};
@@ -501,7 +527,11 @@ void MDNVT::setup_tp_methods()
 void MDNVT::getset_T(PyGetSetDef& getset)
 {
     getset.name=(char*)"T";
-    getset.doc=(char*)"external temperature of simulation";
+    getset.doc=(char*)R"---(
+    (double) temperature
+    
+    Temperature of the ensemble
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->md->T,NULL);
@@ -519,10 +549,40 @@ void MDNVT::getset_T(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void MDNVT::getset_dt(PyGetSetDef& getset)
+{
+    getset.name=(char*)"dt";
+    getset.doc=(char*)R"---(
+    (double) dt
+    
+    Time step for simulation
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->md->dt,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<type0> dt("dt");
+        dt.logics[0]=VLogics("gt",0.0);
+        int ichk=dt.set(op);
+        if(ichk==-1) return -1;
+        
+        reinterpret_cast<Object*>(self)->md->change_dt(dt.val);
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void MDNVT::getset_nchains(PyGetSetDef& getset)
 {
     getset.name=(char*)"nchains";
-    getset.doc=(char*)"number of chains in Nose-Hoover chain thermostat";
+    getset.doc=(char*)R"---(
+    (int) NHC length of thermostat
+    
+    Number of links in Nose-Hoover chain of thermostat
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int nchains=reinterpret_cast<Object*>(self)->md->thermo_part.nchains;
@@ -552,7 +612,11 @@ void MDNVT::getset_nchains(PyGetSetDef& getset)
 void MDNVT::getset_niters(PyGetSetDef& getset)
 {
     getset.name=(char*)"niters";
-    getset.doc=(char*)"number of iterations in Nose-Hoover chain thermostat";
+    getset.doc=(char*)R"---(
+    (int) number iterations of NHC thermostat
+    
+    Number of iterations in Nose-Hoover chain thermostat per each step of thermostat evolution
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int niters=reinterpret_cast<Object*>(self)->md->thermo_part.niters;
@@ -583,6 +647,11 @@ void MDNVT::getset_t_relax(PyGetSetDef& getset)
 {
     getset.name=(char*)"t_relax";
     getset.doc=(char*)"thermostat parameter, relaxation time";
+    getset.doc=(char*)R"---(
+    (double) thermostat relaxation parameter
+    
+    Thermostat relaxation parameter (unit of time), roughly equivalent to relaxation time of system with thermal bath
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         type0 t_relax=reinterpret_cast<Object*>(self)->md->thermo_part.t_relax;
@@ -609,53 +678,14 @@ void MDNVT::getset_t_relax(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNVT::getset_dt(PyGetSetDef& getset)
-{
-    getset.name=(char*)"dt";
-    getset.doc=(char*)"timestep of MD simulation";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->md->dt,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<type0> dt("dt");
-        dt.logics[0]=VLogics("gt",0.0);
-        int ichk=dt.set(op);
-        if(ichk==-1) return -1;
-        
-        reinterpret_cast<Object*>(self)->md->change_dt(dt.val);
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MDNVT::getset_ntally(PyGetSetDef& getset)
-{
-    getset.name=(char*)"ntally";
-    getset.doc=(char*)"tally thermodynamic quantities every ntally steps";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<int>::build(reinterpret_cast<Object*>(self)->md->ntally,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<int> ntally("ntally");
-        ntally.logics[0]=VLogics("ge",0);
-        int ichk=ntally.set(op);
-        if(ichk==-1) return -1;
-        reinterpret_cast<Object*>(self)->md->ntally=ntally.val;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 void MDNVT::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
-    getset.doc=(char*)"export";
+    getset.doc=(char*)R"---(
+    (mapp.md.export) export object
+    
+    Export object to record the snapshots of the system while running
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         ExportMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
@@ -677,12 +707,35 @@ void MDNVT::getset_export(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void MDNVT::getset_ntally(PyGetSetDef& getset)
+{
+    getset.name=(char*)"ntally";
+    getset.doc=(char*)R"---(
+    (int) tallying step
+    
+    Number of steps to be taken from one thermodynamics output to next.
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<int>::build(reinterpret_cast<Object*>(self)->md->ntally,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<int> ntally("ntally");
+        ntally.logics[0]=VLogics("ge",0);
+        int ichk=ntally.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->md->ntally=ntally.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void MDNVT::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";
-    tp_methods.ml_doc="run simulation for n steps";
-    
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -733,6 +786,26 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
         
         Py_RETURN_NONE;
     };
+    
+    tp_methods.ml_doc=(char*)R"---(
+    run(atoms,nsteps)
+   
+    Execute molecular dynamics
+    
+    This method starts the molecular dynamics for a given atoms object and number of steps.
+    
+    Parameters
+    ----------
+    atoms : mapp.md.atoms
+        System of interest
+    nsteps : int
+        Number of steps to perform molecular dynamics
+        
+    Returns
+    -------
+    None
+
+    )---";
 }
 
 

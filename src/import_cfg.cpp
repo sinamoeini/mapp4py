@@ -603,12 +603,24 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
-    tp_methods.ml_doc="this function reads a cfg file and returns an atoms_md object";
+    tp_methods.ml_doc=R"---(
+    import(cfg_file,mpi=None)
+    
+    Import cfg file.
+        
+    Parameters
+    ----------
+    cfg_file : string
+       path to cfg_file
+    mpi : mapp.mpi
+       mpi communication object
+   
+    )---";
     
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<std::string,OP<MAPP_MPI>> f("cfg",{"file","mpi"});
+        FuncAPI<std::string,OP<MAPP_MPI>> f("cfg",{"cfg_file","mpi"});
         f.noptionals=1;
         if(f(args,kwds)==-1) return NULL;
         
@@ -846,11 +858,25 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
     tp_methods.ml_doc="this function reads a cfg file and returns an atoms_dmd object";
+    tp_methods.ml_doc=R"---(
+    import(N,cfg_file,mpi=None)
     
+    Import cfg file.
+        
+    Parameters
+    ----------
+    N : int
+       number of gaussian quadraure abscissas
+    cfg_file : string
+       path to cfg_file
+    mpi : mapp.mpi
+       mpi communication object
+   
+    )---";
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<int,std::string,OP<MAPP_MPI>> f("cfg",{"N","file","mpi"});
+        FuncAPI<int,std::string,OP<MAPP_MPI>> f("cfg",{"N","cfg_file","mpi"});
         f.noptionals=1;
         f.logics<0>()[0]=VLogics("gt",0);
         if(f(args,kwds)==-1) return NULL;

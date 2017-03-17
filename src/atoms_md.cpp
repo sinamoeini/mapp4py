@@ -250,8 +250,6 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
 {
     tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_method.ml_name="create_temp";
-    tp_method.ml_doc="I will add doc here";
-    
     tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -264,6 +262,19 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
         __self->atoms->create_T(f.val<0>(),f.val<1>());
         Py_RETURN_NONE;
     };
+    tp_method.ml_doc=R"---(
+    create_temp(temp,seed)
+    
+    Create a random velcity field
+        
+    Parameters
+    ----------
+    temp : double
+       Temperature
+    seed : int
+       random seed
+   
+    )---";
 }
 
     

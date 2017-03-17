@@ -385,7 +385,11 @@ void Atoms::setup_tp_methods()
 void Atoms::getset_step(PyGetSetDef& getset)
 {
     getset.name=(char*)"step";
-    getset.doc=(char*)"step number";
+    getset.doc=(char*)R"---(
+    (double) step number
+    
+    Current step number
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->atoms->step,NULL);
@@ -405,7 +409,11 @@ void Atoms::getset_step(PyGetSetDef& getset)
 void Atoms::getset_h(PyGetSetDef& getset)
 {
     getset.name=(char*)"h";
-    getset.doc=(char*)"Planck constant";
+    getset.doc=(char*)R"---(
+    (double) Planck constant
+    
+    Planck constant
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->h,NULL);
@@ -432,7 +440,11 @@ void Atoms::getset_h(PyGetSetDef& getset)
 void Atoms::getset_kB(PyGetSetDef& getset)
 {
     getset.name=(char*)"kB";
-    getset.doc=(char*)"Boltzmann constant";
+    getset.doc=(char*)R"---(
+    (double) Boltzmann constant
+    
+    Boltzmann constant
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->h,NULL);
@@ -459,7 +471,11 @@ void Atoms::getset_kB(PyGetSetDef& getset)
 void Atoms::getset_skin(PyGetSetDef& getset)
 {
     getset.name=(char*)"skin";
-    getset.doc=(char*)"skin size";
+    getset.doc=(char*)R"---(
+    (double) size of skin
+    
+    Thickness of neighbor list skin
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->comm.skin,NULL);
@@ -486,7 +502,11 @@ void Atoms::getset_skin(PyGetSetDef& getset)
 void Atoms::getset_H(PyGetSetDef& getset)
 {
     getset.name=(char*)"H";
-    getset.doc=(char*)"matrix of unitcell vectors";
+    getset.doc=(char*)R"---(
+    (symm<double[dim][dim]>) unitcell matrix
+    
+    Matrix of unitcell vectors, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -510,7 +530,11 @@ void Atoms::getset_H(PyGetSetDef& getset)
 void Atoms::getset_B(PyGetSetDef& getset)
 {
     getset.name=(char*)"B";
-    getset.doc=(char*)"matrix of reciprocal unitcell vectors";
+    getset.doc=(char*)R"---(
+    (symm<double[dim][dim]>) unitcell matrix
+    
+    Inverse of matrix of unitcell vectors, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -534,7 +558,11 @@ void Atoms::getset_B(PyGetSetDef& getset)
 void Atoms::getset_vol(PyGetSetDef& getset)
 {
     getset.name=(char*)"vol";
-    getset.doc=(char*)"volume of unitcell";
+    getset.doc=(char*)R"---(
+    (double) unitcell volume
+    
+    Volume of unitcell
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -558,7 +586,11 @@ void Atoms::getset_vol(PyGetSetDef& getset)
 void Atoms::getset_elems(PyGetSetDef& getset)
 {
     getset.name=(char*)"elems";
-    getset.doc=(char*)"dictionary of elements present in the system";
+    getset.doc=(char*)R"---(
+    (dict{int:string}) elements dictionary
+    
+    Dictionary of elements present in the system
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -581,7 +613,11 @@ void Atoms::getset_elems(PyGetSetDef& getset)
 void Atoms::getset_comm_rank(PyGetSetDef& getset)
 {
     getset.name=(char*)"comm_rank";
-    getset.doc=(char*)"rank of the calling process in the communicator";
+    getset.doc=(char*)R"---(
+    (int) communication rank
+    
+    Rank of the calling process in the communicator
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -605,7 +641,11 @@ void Atoms::getset_comm_rank(PyGetSetDef& getset)
 void Atoms::getset_comm_size(PyGetSetDef& getset)
 {
     getset.name=(char*)"comm_size";
-    getset.doc=(char*)"size of the group associated with the communicator";
+    getset.doc=(char*)R"---(
+    (int) communication size
+    
+    Size of the group associated with the communicator
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -629,7 +669,11 @@ void Atoms::getset_comm_size(PyGetSetDef& getset)
 void Atoms::getset_comm_coords(PyGetSetDef& getset)
 {
     getset.name=(char*)"comm_coords";
-    getset.doc=(char*)"coordinates of calling process in cartesian structure";
+    getset.doc=(char*)R"---(
+    (int[dim]) communication coordinates
+    
+    Communication coordinates of the calling process, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -652,7 +696,11 @@ void Atoms::getset_comm_coords(PyGetSetDef& getset)
 void Atoms::getset_comm_dims(PyGetSetDef& getset)
 {
     getset.name=(char*)"comm_dims";
-    getset.doc=(char*)"number of processes for each cartesian dimension";
+    getset.doc=(char*)R"---(
+    (int[dim]) communication dimensions
+    
+    Number of processes for each cartesian dimension, here dim is the dimension of simulation
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -700,8 +748,6 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="strain";
-    tp_methods.ml_doc="strain the box";
-    
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
@@ -743,4 +789,16 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         
         Py_RETURN_NONE;
     };
+    
+    tp_methods.ml_doc=R"---(
+    strain(E)
+    
+    Strain the system
+        
+    Parameters
+    ----------
+    E : double[dim][dim]
+       Strain tensor, here dim is the dimension of simulation
+   
+    )---";
 }

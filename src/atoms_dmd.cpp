@@ -172,7 +172,11 @@ void AtomsDMD::setup_tp_methods()
 void AtomsDMD::getset_temp(PyGetSetDef& getset)
 {
     getset.name=(char*)"temp";
-    getset.doc=(char*)"temperature";
+    getset.doc=(char*)R"---(
+    (double) temperature
+    
+    Temperature of the system
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->temp,NULL);

@@ -15,7 +15,7 @@ namespace MAPP_NS
     protected:
     public:
         const type0 t_relax;
-        const int nchains;
+        const int nlinks;
         const int niters;
         ThermostatNHC(const type0,const type0,const int,const int);
         ThermostatNHC();

@@ -273,6 +273,10 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
        Temperature
     seed : int
        random seed
+    
+    Returns
+    -------
+    None
    
     )---";
 }

@@ -604,7 +604,7 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
     tp_methods.ml_doc=R"---(
-    import(cfg_file,mpi=None)
+    import(cfg_file)
     
     Import cfg file.
         
@@ -612,8 +612,10 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
     ----------
     cfg_file : string
        path to cfg_file
-    mpi : mapp.mpi
-       mpi communication object
+    
+    Returns
+    -------
+    None
    
     )---";
     
@@ -869,8 +871,10 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
        number of gaussian quadraure abscissas
     cfg_file : string
        path to cfg_file
-    mpi : mapp.mpi
-       mpi communication object
+    
+    Returns
+    -------
+    None
    
     )---";
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)

@@ -531,7 +531,7 @@ void Atoms::getset_B(PyGetSetDef& getset)
 {
     getset.name=(char*)"B";
     getset.doc=(char*)R"---(
-    (symm<double[dim][dim]>) unitcell matrix
+    (symm<double[dim][dim]>) unitcell matrix inverse (:math:`\mathbf{H}^{-1}`)
     
     Inverse of matrix of unitcell vectors, here dim is the dimension of simulation
     )---";
@@ -799,6 +799,10 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
     ----------
     E : double[dim][dim]
        Strain tensor, here dim is the dimension of simulation
+    
+    Returns
+    -------
+    None
    
     )---";
 }

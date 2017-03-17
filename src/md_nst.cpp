@@ -49,20 +49,20 @@ void MDNST::change_dt(type0 __dt)
     dt=__dt;
     dt2=__dt/2;
     
-    int nchains=thermo_part.nchains;
+    int nlinks=thermo_part.nlinks;
     int niters=thermo_part.niters;
     type0 t_relax=thermo_part.t_relax;
     
     thermo_part.~ThermostatNHC();
-    new (&thermo_part) ThermostatNHC(__dt/2.0,t_relax,nchains,niters);
+    new (&thermo_part) ThermostatNHC(__dt/2.0,t_relax,nlinks,niters);
     
     
-    nchains=thermo_baro.nchains;
+    nlinks=thermo_baro.nlinks;
     niters=thermo_baro.niters;
     t_relax=thermo_baro.t_relax;
     
     thermo_baro.~ThermostatNHC();
-    new (&thermo_baro) ThermostatNHC(__dt/2.0,t_relax,nchains,niters);
+    new (&thermo_baro) ThermostatNHC(__dt/2.0,t_relax,nlinks,niters);
 }
 /*--------------------------------------------
  
@@ -552,7 +552,7 @@ void MDNST::setup_tp_getset()
     getset_S(getset[0]);
     getset_S_dof(getset[1]);
     getset_niters_baro(getset[2]);
-    getset_nchains_baro(getset[3]);
+    getset_nlinks_baro(getset[3]);
     getset_t_relax_baro(getset[4]);
     getset_t_relax_S(getset[5]);
     getset_nreset(getset[6]);
@@ -560,9 +560,9 @@ void MDNST::setup_tp_getset()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::getset_nchains_baro(PyGetSetDef& getset)
+void MDNST::getset_nlinks_baro(PyGetSetDef& getset)
 {
-    getset.name=(char*)"nchains_baro";
+    getset.name=(char*)"nlinks_baro";
     getset.doc=(char*)R"---(
     (int) NHC length of barostat
     
@@ -570,16 +570,16 @@ void MDNST::getset_nchains_baro(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        int nchains=reinterpret_cast<Object*>(self)->md->thermo_baro.nchains;
-        return var<int>::build(nchains,NULL);
+        int nlinks=reinterpret_cast<Object*>(self)->md->thermo_baro.nlinks;
+        return var<int>::build(nlinks,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<int> nchains_baro("nchains_baro");
-        nchains_baro.logics[0]=VLogics("gt",0);
-        int ichk=nchains_baro.set(op);
+        VarAPI<int> nlinks_baro("nlinks_baro");
+        nlinks_baro.logics[0]=VLogics("gt",0);
+        int ichk=nlinks_baro.set(op);
         if(ichk==-1) return -1;
-        if(reinterpret_cast<Object*>(self)->md->thermo_baro.nchains==nchains_baro.val)
+        if(reinterpret_cast<Object*>(self)->md->thermo_baro.nlinks==nlinks_baro.val)
             return 0;
         
         ThermostatNHC& thermo_baro=reinterpret_cast<Object*>(self)->md->thermo_baro;
@@ -587,7 +587,7 @@ void MDNST::getset_nchains_baro(PyGetSetDef& getset)
         type0 t_relax=thermo_baro.t_relax;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_baro.~ThermostatNHC();
-        new (&thermo_baro) ThermostatNHC(__dt,t_relax,nchains_baro.val,niters);
+        new (&thermo_baro) ThermostatNHC(__dt,t_relax,nlinks_baro.val,niters);
         return 0;
     };
 }
@@ -617,11 +617,11 @@ void MDNST::getset_niters_baro(PyGetSetDef& getset)
             return 0;
         
         ThermostatNHC& thermo_baro=reinterpret_cast<Object*>(self)->md->thermo_baro;
-        int nchains=thermo_baro.nchains;
+        int nlinks=thermo_baro.nlinks;
         type0 t_relax=thermo_baro.t_relax;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_baro.~ThermostatNHC();
-        new (&thermo_baro) ThermostatNHC(__dt,t_relax,nchains,niters_baro.val);
+        new (&thermo_baro) ThermostatNHC(__dt,t_relax,nlinks,niters_baro.val);
         return 0;
     };
 }
@@ -651,11 +651,11 @@ void MDNST::getset_t_relax_baro(PyGetSetDef& getset)
             return 0;
         
         ThermostatNHC& thermo_baro=reinterpret_cast<Object*>(self)->md->thermo_baro;
-        int nchains=thermo_baro.nchains;
+        int nlinks=thermo_baro.nlinks;
         int niters=thermo_baro.niters;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_baro.~ThermostatNHC();
-        new (&thermo_baro) ThermostatNHC(__dt,t_relax_baro.val,nchains,niters);
+        new (&thermo_baro) ThermostatNHC(__dt,t_relax_baro.val,nlinks,niters);
         return 0;
     };
 }

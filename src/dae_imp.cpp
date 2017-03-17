@@ -363,7 +363,11 @@ void DAEImplicit::setup_tp_methods()
 void DAEImplicit::getset_max_ngmres_iters(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_ngmres_iters";
-    getset.doc=(char*)"maximum number of iterations of linear solver (GMRES)";
+    getset.doc=(char*)R"---(
+    (int) maximim number of gmres iterations
+    
+    Maximum number of iterations of linear solver (GMRES)
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_ngmres_iters,NULL);
@@ -384,7 +388,11 @@ void DAEImplicit::getset_max_ngmres_iters(PyGetSetDef& getset)
 void DAEImplicit::getset_max_nnewton_iters(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_nnewton_iters";
-    getset.doc=(char*)"maximum number of iterations of linear solver (GMRES)";
+    getset.doc=(char*)R"---(
+    (int) maximim number of newton iterations
+    
+    Maximum number of iterations of nonlinear solver (newton)
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nnewton_iters,NULL);

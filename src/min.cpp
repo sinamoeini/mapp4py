@@ -323,9 +323,9 @@ void Min::getset_ntally(PyGetSetDef& getset)
 {
     getset.name=(char*)"ntally";
     getset.doc=(char*)R"---(
-    (int) tallying step
+    (int) thermodynamic tallying period
     
-    Number of steps to be taken from one thermodynamics output to next.
+    Number of steps to be taken from one thermodynamics output to the next.
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {

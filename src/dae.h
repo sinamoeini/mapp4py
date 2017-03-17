@@ -37,8 +37,9 @@ namespace MAPP_NS
         
         DAE();
         virtual ~DAE();
-        void init_static();
-        void fin_static();
+        virtual void init_static();
+        virtual void fin_static();
+        virtual void run_static(type0){};
         
         
         typedef struct
@@ -57,6 +58,7 @@ namespace MAPP_NS
         
         static PyMethodDef methods[];
         static void setup_tp_methods();
+        static void ml_run(PyMethodDef&);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();

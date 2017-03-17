@@ -74,7 +74,6 @@ void DAE::fin_static()
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
-    
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -172,7 +171,11 @@ void DAE::setup_tp_methods()
 void DAE::getset_a_tol(PyGetSetDef& getset)
 {
     getset.name=(char*)"a_tol";
-    getset.doc=(char*)"absolute error tolerence in local trucation error";
+    getset.doc=(char*)R"---(
+    (double) LTE tolerance
+    
+    Absolute error tolerence in local trucation error
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->dae->a_tol,NULL);
@@ -193,7 +196,11 @@ void DAE::getset_a_tol(PyGetSetDef& getset)
 void DAE::getset_max_nsteps(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_nsteps";
-    getset.doc=(char*)"maximum number of steps";
+    getset.doc=(char*)R"---(
+    (int) maximum number of steps
+    
+    Maximum number of steps to achieve energy minimization
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nsteps,NULL);
@@ -214,7 +221,11 @@ void DAE::getset_max_nsteps(PyGetSetDef& getset)
 void DAE::getset_min_dt(PyGetSetDef& getset)
 {
     getset.name=(char*)"min_dt";
-    getset.doc=(char*)"minimum time step";
+    getset.doc=(char*)R"---(
+    (double) minimum time step
+    
+    Minimum time step
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->dae->min_dt,NULL);
@@ -235,7 +246,11 @@ void DAE::getset_min_dt(PyGetSetDef& getset)
 void DAE::getset_ntally(PyGetSetDef& getset)
 {
     getset.name=(char*)"ntally";
-    getset.doc=(char*)"tally thermodynamic quantities every ntally steps";
+    getset.doc=(char*)R"---(
+    (int) thermodynamic tallying period
+    
+    Number of steps to be taken from one thermodynamics output to the next.
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<int>::build(reinterpret_cast<Object*>(self)->dae->ntally,NULL);
@@ -256,7 +271,11 @@ void DAE::getset_ntally(PyGetSetDef& getset)
 void DAE::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
-    getset.doc=(char*)"export";
+    getset.doc=(char*)R"---(
+    (mapp.dmd.export) export object
+    
+    Export object to record the snapshots of the system while minimizing
+    )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         ExportDMD::Object* xprt=reinterpret_cast<Object*>(self)->xprt;
@@ -275,3 +294,81 @@ void DAE::getset_export(PyGetSetDef& getset)
         return 0;
     };
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::ml_run(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="run";    
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsDMD>,type0> f("run",{"atoms","t"});
+        f.logics<1>()[0]=VLogics("ge",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
+        ExportDMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
+        try
+        {
+            __self->dae->pre_run_chk(__atoms,__ff);
+        }
+        catch(std::string& err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
+        __self->dae->atoms=__atoms;
+        __self->dae->ff=__ff;
+        __self->dae->xprt=__xprt;
+        
+        try
+        {
+            __self->dae->init_static();
+        }
+        catch(std::string& err_msg)
+        {
+            __self->dae->xprt=NULL;
+            __self->dae->ff=NULL;
+            __self->dae->atoms=NULL;
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+        
+        __self->dae->run_static(f.val<1>());
+        
+        __self->dae->fin_static();
+        
+        __self->dae->xprt=NULL;
+        __self->dae->ff=NULL;
+        __self->dae->atoms=NULL;
+        
+        Py_RETURN_NONE;
+    };
+    
+    tp_methods.ml_doc=(char*)R"---(
+    run(atoms,t)
+   
+    Execute DEA
+    
+    This method starts differential-algebraic equations for a given atoms object and number of time.
+    
+    Parameters
+    ----------
+    atoms : mapp.dmd.atoms
+        System of interest
+    t : double
+        Desired time
+        
+    Returns
+    -------
+    None
+
+    )---";
+}
+
+

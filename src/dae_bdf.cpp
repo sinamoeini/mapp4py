@@ -655,7 +655,24 @@ PyTypeObject DAEBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
 int DAEBDF::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.bdf";
-    TypeObject.tp_doc="chemical integration";
+    TypeObject.tp_doc=(char*)R"---(
+    __init__(a_tol=1.0e-8,min_dt=1.0e-8,max_ngmres_iters=5,max_nnewton_iters=5,max_nsteps=10000)
+    
+    BDF integrator
+    
+    Parameters
+    ----------
+    a_tol : double
+       Absolute error tolerence in local trucation error
+    min_dt : double
+       Minimum time step
+    max_ngmres_iters : int
+       Maximum number of iterations of linear solver (GMRES)
+    max_nnewton_iters : int
+       Maximum number of iterations of nonlinear solver (newton)
+    max_nsteps : int
+       Maximum number of steps to achieve energy minimization
+    )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
     TypeObject.tp_basicsize=sizeof(Object);
@@ -672,6 +689,7 @@ int DAEBDF::setup_tp()
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
     Py_INCREF(&TypeObject);
+    GET_WRAPPER_DOC(TypeObject,__init__)=NULL;
     return ichk;
 }
 /*--------------------------------------------*/
@@ -694,61 +712,4 @@ void DAEBDF::setup_tp_methods()
 {
     ml_run(methods[0]);
 }    
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void DAEBDF::ml_run(PyMethodDef& tp_methods)
-{
-    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods.ml_name="run";
-    tp_methods.ml_doc="run chemical integration";
-    
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
-    {
-        Object* __self=reinterpret_cast<Object*>(self);
-        FuncAPI<OP<AtomsDMD>,type0> f("run",{"atoms","t"});
-        f.logics<1>()[0]=VLogics("ge",0.0);
-        if(f(args,kwds)) return NULL;
-        
-        AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
-        ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
-        ExportDMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
-        try
-        {
-            __self->dae->pre_run_chk(__atoms,__ff);
-        }
-        catch(std::string& err_msg)
-        {
-            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
-            return NULL;
-        }
-        
-        __self->dae->atoms=__atoms;
-        __self->dae->ff=__ff;
-        __self->dae->xprt=__xprt;
-        
-        try
-        {
-            __self->dae->init_static();
-        }
-        catch(std::string& err_msg)
-        {
-            __self->dae->xprt=NULL;
-            __self->dae->ff=NULL;
-            __self->dae->atoms=NULL;
-            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
-            return NULL;
-        }
-        
-        __self->dae->run_static(f.val<1>());
-        
-        __self->dae->fin_static();
-        
-        __self->dae->xprt=NULL;
-        __self->dae->ff=NULL;
-        __self->dae->atoms=NULL;
-        
-        Py_RETURN_NONE;
-    };
-}
+

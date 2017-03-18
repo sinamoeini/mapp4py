@@ -40,7 +40,7 @@ namespace MAPP_NS
                 
         bool S_dof[__dim__][__dim__];
         type0 S[__dim__][__dim__];
-        type0 t_relax_S[__dim__][__dim__];
+        type0 tau[__dim__][__dim__];
         int nreset;
         
         void update_x();
@@ -77,12 +77,12 @@ namespace MAPP_NS
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
-        static void getset_niters_baro(PyGetSetDef&);
-        static void getset_nlinks_baro(PyGetSetDef&);
-        static void getset_t_relax_baro(PyGetSetDef&);
+        static void getset_niters_s(PyGetSetDef&);
+        static void getset_L_s(PyGetSetDef&);
+        static void getset_t_relax_s(PyGetSetDef&);
         static void getset_S_dof(PyGetSetDef&);
         static void getset_S(PyGetSetDef&);
-        static void getset_t_relax_S(PyGetSetDef&);
+        static void getset_tau(PyGetSetDef&);
         static void getset_nreset(PyGetSetDef&);
         
         static int setup_tp();

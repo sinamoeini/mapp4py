@@ -21,7 +21,7 @@ MLT2{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 S{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 S_dev{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 B_ref{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-t_relax_S{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
+tau{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 V_H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}}
 {
@@ -30,7 +30,7 @@ S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}}
     {
         S_dof[i][j]=S_dof[j][i]=true;
         S[i][j]=S[j][i]=__S[i][j];
-        t_relax_S[i][j]=t_relax_S[j][i]=1000.0*__dt;
+        tau[i][j]=tau[j][i]=1000.0*__dt;
         
     });
 }
@@ -49,20 +49,20 @@ void MDNST::change_dt(type0 __dt)
     dt=__dt;
     dt2=__dt/2;
     
-    int nlinks=thermo_part.nlinks;
+    int L=thermo_part.L;
     int niters=thermo_part.niters;
     type0 t_relax=thermo_part.t_relax;
     
     thermo_part.~ThermostatNHC();
-    new (&thermo_part) ThermostatNHC(__dt/2.0,t_relax,nlinks,niters);
+    new (&thermo_part) ThermostatNHC(__dt/2.0,t_relax,L,niters);
     
     
-    nlinks=thermo_baro.nlinks;
+    L=thermo_baro.L;
     niters=thermo_baro.niters;
     t_relax=thermo_baro.t_relax;
     
     thermo_baro.~ThermostatNHC();
-    new (&thermo_baro) ThermostatNHC(__dt/2.0,t_relax,nlinks,niters);
+    new (&thermo_baro) ThermostatNHC(__dt/2.0,t_relax,L,niters);
 }
 /*--------------------------------------------
  
@@ -234,9 +234,9 @@ void MDNST::pre_init()
     {
         if(S_dof[i][j])
         {
-            V_H_prefac[i][j]=1.0/(t_relax_S[i][j]*t_relax_S[i][j]*ndof_part*kB*T);
+            V_H_prefac[i][j]=1.0/(tau[i][j]*tau[i][j]*ndof_part*kB*T);
             ndof_baro++;
-            T_baro+=V_H[i][j]*V_H[i][j]*t_relax_S[i][j]*t_relax_S[i][j];
+            T_baro+=V_H[i][j]*V_H[i][j]*tau[i][j]*tau[i][j];
             
         }
         else
@@ -279,7 +279,7 @@ void MDNST::update_V_H()
             -atoms->vol*ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]
             +mvv[i+j*__dim__-j*(j+1)/2])*V_H_prefac[i][j]*dt2;
             
-            T_baro+=V_H[i][j]*V_H[i][j]*t_relax_S[i][j]*t_relax_S[i][j];
+            T_baro+=V_H[i][j]*V_H[i][j]*tau[i][j]*tau[i][j];
             
         }
     });
@@ -551,18 +551,18 @@ void MDNST::setup_tp_getset()
 {
     getset_S(getset[0]);
     getset_S_dof(getset[1]);
-    getset_niters_baro(getset[2]);
-    getset_nlinks_baro(getset[3]);
-    getset_t_relax_baro(getset[4]);
-    getset_t_relax_S(getset[5]);
+    getset_niters_s(getset[2]);
+    getset_L_s(getset[3]);
+    getset_t_relax_s(getset[4]);
+    getset_tau(getset[5]);
     getset_nreset(getset[6]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::getset_nlinks_baro(PyGetSetDef& getset)
+void MDNST::getset_L_s(PyGetSetDef& getset)
 {
-    getset.name=(char*)"nlinks_baro";
+    getset.name=(char*)"L_s";
     getset.doc=(char*)R"---(
     (int) NHC length of barostat
     
@@ -570,16 +570,16 @@ void MDNST::getset_nlinks_baro(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        int nlinks=reinterpret_cast<Object*>(self)->md->thermo_baro.nlinks;
-        return var<int>::build(nlinks,NULL);
+        int L=reinterpret_cast<Object*>(self)->md->thermo_baro.L;
+        return var<int>::build(L,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<int> nlinks_baro("nlinks_baro");
-        nlinks_baro.logics[0]=VLogics("gt",0);
-        int ichk=nlinks_baro.set(op);
+        VarAPI<int> L_s("L_s");
+        L_s.logics[0]=VLogics("gt",0);
+        int ichk=L_s.set(op);
         if(ichk==-1) return -1;
-        if(reinterpret_cast<Object*>(self)->md->thermo_baro.nlinks==nlinks_baro.val)
+        if(reinterpret_cast<Object*>(self)->md->thermo_baro.L==L_s.val)
             return 0;
         
         ThermostatNHC& thermo_baro=reinterpret_cast<Object*>(self)->md->thermo_baro;
@@ -587,16 +587,16 @@ void MDNST::getset_nlinks_baro(PyGetSetDef& getset)
         type0 t_relax=thermo_baro.t_relax;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_baro.~ThermostatNHC();
-        new (&thermo_baro) ThermostatNHC(__dt,t_relax,nlinks_baro.val,niters);
+        new (&thermo_baro) ThermostatNHC(__dt,t_relax,L_s.val,niters);
         return 0;
     };
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::getset_niters_baro(PyGetSetDef& getset)
+void MDNST::getset_niters_s(PyGetSetDef& getset)
 {
-    getset.name=(char*)"niters_baro";
+    getset.name=(char*)"niters_s";
     getset.doc=(char*)R"---(
     (int) number iterations of NHC barostat
     
@@ -609,28 +609,28 @@ void MDNST::getset_niters_baro(PyGetSetDef& getset)
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<int> niters_baro("niters_baro");
-        niters_baro.logics[0]=VLogics("gt",0);
-        int ichk=niters_baro.set(op);
+        VarAPI<int> niters_s("niters_s");
+        niters_s.logics[0]=VLogics("gt",0);
+        int ichk=niters_s.set(op);
         if(ichk==-1) return -1;
-        if(reinterpret_cast<Object*>(self)->md->thermo_baro.niters==niters_baro.val)
+        if(reinterpret_cast<Object*>(self)->md->thermo_baro.niters==niters_s.val)
             return 0;
         
         ThermostatNHC& thermo_baro=reinterpret_cast<Object*>(self)->md->thermo_baro;
-        int nlinks=thermo_baro.nlinks;
+        int L=thermo_baro.L;
         type0 t_relax=thermo_baro.t_relax;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_baro.~ThermostatNHC();
-        new (&thermo_baro) ThermostatNHC(__dt,t_relax,nlinks,niters_baro.val);
+        new (&thermo_baro) ThermostatNHC(__dt,t_relax,L,niters_s.val);
         return 0;
     };
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::getset_t_relax_baro(PyGetSetDef& getset)
+void MDNST::getset_t_relax_s(PyGetSetDef& getset)
 {
-    getset.name=(char*)"t_relax_baro";
+    getset.name=(char*)"t_relax_s";
     getset.doc=(char*)R"---(
     (double) thermostat relaxation parameter
     
@@ -643,19 +643,19 @@ void MDNST::getset_t_relax_baro(PyGetSetDef& getset)
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<type0> t_relax_baro("t_relax_baro");
-        t_relax_baro.logics[0]=VLogics("gt",0.0);
-        int ichk=t_relax_baro.set(op);
+        VarAPI<type0> t_relax_s("t_relax_s");
+        t_relax_s.logics[0]=VLogics("gt",0.0);
+        int ichk=t_relax_s.set(op);
         if(ichk==-1) return -1;
-        if(reinterpret_cast<Object*>(self)->md->thermo_baro.t_relax==t_relax_baro.val)
+        if(reinterpret_cast<Object*>(self)->md->thermo_baro.t_relax==t_relax_s.val)
             return 0;
         
         ThermostatNHC& thermo_baro=reinterpret_cast<Object*>(self)->md->thermo_baro;
-        int nlinks=thermo_baro.nlinks;
+        int L=thermo_baro.L;
         int niters=thermo_baro.niters;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_baro.~ThermostatNHC();
-        new (&thermo_baro) ThermostatNHC(__dt,t_relax_baro.val,nlinks,niters);
+        new (&thermo_baro) ThermostatNHC(__dt,t_relax_s.val,L,niters);
         return 0;
     };
 }
@@ -715,14 +715,14 @@ void MDNST::getset_S(PyGetSetDef& getset)
         
         bool (&__S_dof)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->S_dof;
         type0 (&__S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->S;
-        type0 (&__t_relax_S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->t_relax_S;
+        type0 (&__tau)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->tau;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt;
-        Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&S,&__t_relax_S,&__dt](int i,int j)
+        Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&S,&__tau,&__dt](int i,int j)
         {
             __S_dof[i][j]=__S_dof[j][i]=true;
             __S[i][j]=__S[j][i]=S.val[i][j];
-            if(__t_relax_S[i][j]==0.0)
-                __t_relax_S[i][j]=__t_relax_S[j][i]=1000.0*__dt;
+            if(__tau[i][j]==0.0)
+                __tau[i][j]=__tau[j][i]=1000.0*__dt;
         });
         
         return 0;
@@ -731,9 +731,9 @@ void MDNST::getset_S(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::getset_t_relax_S(PyGetSetDef& getset)
+void MDNST::getset_tau(PyGetSetDef& getset)
 {
-    getset.name=(char*)"t_relax_S";
+    getset.name=(char*)"tau";
     getset.doc=(char*)R"---(
     (symm<double[dim][dim]>) external stress t_relax
     
@@ -741,19 +741,19 @@ void MDNST::getset_t_relax_S(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->t_relax_S,NULL);
+        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->tau,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<symm<type0[__dim__][__dim__]>> t_relax_S("t_relax_S");
-        t_relax_S.logics[0]=VLogics("gt",0.0);
-        int ichk=t_relax_S.set(op);
+        VarAPI<symm<type0[__dim__][__dim__]>> tau("tau");
+        tau.logics[0]=VLogics("gt",0.0);
+        int ichk=tau.set(op);
         if(ichk==-1) return -1;
         
-        type0 (&__t_relax_S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->t_relax_S;
-        Algebra::DoLT<__dim__>::func([&__t_relax_S,&t_relax_S](int i,int j)
+        type0 (&__tau)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->tau;
+        Algebra::DoLT<__dim__>::func([&__tau,&tau](int i,int j)
         {
-            __t_relax_S[i][j]=__t_relax_S[j][i]=t_relax_S.val[i][j];
+            __tau[i][j]=__tau[j][i]=tau.val[i][j];
         });
         
         return 0;

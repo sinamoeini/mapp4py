@@ -38,12 +38,12 @@ void MDNVT::change_dt(type0 __dt)
     dt=__dt;
     dt2=__dt/2;
     
-    int nlinks=thermo_part.nlinks;
+    int L=thermo_part.L;
     int niters=thermo_part.niters;
     type0 t_relax=thermo_part.t_relax;
     
     thermo_part.~ThermostatNHC();
-    new (&thermo_part) ThermostatNHC(__dt/2.0,t_relax,nlinks,niters);
+    new (&thermo_part) ThermostatNHC(__dt/2.0,t_relax,L,niters);
 }
 /*--------------------------------------------
  
@@ -509,7 +509,7 @@ void MDNVT::setup_tp_getset()
     getset_T(getset[0]);
     getset_dt(getset[1]);
     getset_niters(getset[2]);
-    getset_nlinks(getset[3]);
+    getset_L(getset[3]);
     getset_t_relax(getset[4]);
     getset_export(getset[5]);
     getset_ntally(getset[6]);
@@ -575,9 +575,9 @@ void MDNVT::getset_dt(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNVT::getset_nlinks(PyGetSetDef& getset)
+void MDNVT::getset_L(PyGetSetDef& getset)
 {
-    getset.name=(char*)"nlinks";
+    getset.name=(char*)"L";
     getset.doc=(char*)R"---(
     (int) NHC length of thermostat
     
@@ -585,16 +585,16 @@ void MDNVT::getset_nlinks(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        int nlinks=reinterpret_cast<Object*>(self)->md->thermo_part.nlinks;
-        return var<int>::build(nlinks,NULL);
+        int L=reinterpret_cast<Object*>(self)->md->thermo_part.L;
+        return var<int>::build(L,NULL);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<int> nlinks("nlinks");
-        nlinks.logics[0]=VLogics("gt",0);
-        int ichk=nlinks.set(op);
+        VarAPI<int> L("L");
+        L.logics[0]=VLogics("gt",0);
+        int ichk=L.set(op);
         if(ichk==-1) return -1;
-        if(reinterpret_cast<Object*>(self)->md->thermo_part.nlinks==nlinks.val)
+        if(reinterpret_cast<Object*>(self)->md->thermo_part.L==L.val)
             return 0;
         
         ThermostatNHC& thermo_part=reinterpret_cast<Object*>(self)->md->thermo_part;
@@ -602,7 +602,7 @@ void MDNVT::getset_nlinks(PyGetSetDef& getset)
         type0 t_relax=thermo_part.t_relax;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_part.~ThermostatNHC();
-        new (&thermo_part) ThermostatNHC(__dt,t_relax,nlinks.val,niters);
+        new (&thermo_part) ThermostatNHC(__dt,t_relax,L.val,niters);
         return 0;
     };
 }
@@ -632,11 +632,11 @@ void MDNVT::getset_niters(PyGetSetDef& getset)
             return 0;
         
         ThermostatNHC& thermo_part=reinterpret_cast<Object*>(self)->md->thermo_part;
-        int nlinks=thermo_part.nlinks;
+        int L=thermo_part.L;
         type0 t_relax=thermo_part.t_relax;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_part.~ThermostatNHC();
-        new (&thermo_part) ThermostatNHC(__dt,t_relax,nlinks,niters.val);
+        new (&thermo_part) ThermostatNHC(__dt,t_relax,L,niters.val);
         return 0;
     };
 }
@@ -667,11 +667,11 @@ void MDNVT::getset_t_relax(PyGetSetDef& getset)
             return 0;
         
         ThermostatNHC& thermo_part=reinterpret_cast<Object*>(self)->md->thermo_part;
-        int nlinks=thermo_part.nlinks;
+        int L=thermo_part.L;
         int niters=thermo_part.niters;
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt2;
         thermo_part.~ThermostatNHC();
-        new (&thermo_part) ThermostatNHC(__dt,t_relax.val,nlinks,niters);
+        new (&thermo_part) ThermostatNHC(__dt,t_relax.val,L,niters);
         return 0;
     };
 }

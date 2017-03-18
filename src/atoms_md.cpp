@@ -32,7 +32,7 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
     
     max_cut=r.max_cut;
     kB=r.kB;
-    h=r.h;
+    hP=r.hP;
     
     vol=r.vol;
     memcpy(depth_inv,r.depth_inv,__dim__*sizeof(type0));
@@ -219,7 +219,7 @@ PyGetSetDef AtomsMD::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
 void AtomsMD::setup_tp_getset()
 {
     getset_step(getset[0]);
-    getset_h(getset[1]);
+    getset_hP(getset[1]);
     getset_kB(getset[2]);
     getset_H(getset[3]);
     getset_B(getset[4]);

@@ -92,7 +92,7 @@ void GCMC::init()
     gas_mass=atoms->elements.masses[gas_type];
     kbT=atoms->kB*T;
     beta=1.0/kbT;
-    lambda=atoms->h/sqrt(2.0*M_PI*kbT*gas_mass);
+    lambda=atoms->hP/sqrt(2.0*M_PI*kbT*gas_mass);
     sigma=sqrt(kbT/gas_mass);
     z_fac=1.0;
     for(int i=0;i<__dim__;i++) z_fac/=lambda;

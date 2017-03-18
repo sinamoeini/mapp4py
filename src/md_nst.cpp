@@ -518,12 +518,7 @@ int MDNST::setup_tp()
        * Thermostat Details
           Nose-Hoover chain
     
-    References
-    ----------
-    .. bibliography:: ../refs.bib
-       :filter: docname in docnames
-       :style: unsrt
-    
+
     )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

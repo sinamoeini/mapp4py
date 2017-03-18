@@ -781,7 +781,7 @@ void ForceFieldEAMDMD::set_temp()
 {
     type0 T=atoms->temp;
     type0 kb=atoms->kB;
-    type0 h=atoms->h;
+    type0 hP=atoms->hP;
     type0 mass;
     type0 deb_l;
     
@@ -789,7 +789,7 @@ void ForceFieldEAMDMD::set_temp()
     {
         mass=atoms->elements.masses[i];
         c_1[i]=sqrt(0.5*kb*T/mass)/M_PI;
-        deb_l=h*h/(2.0*M_PI*M_PI*mass*kb*T);
+        deb_l=hP*hP/(2.0*M_PI*M_PI*mass*kb*T);
         c_0[i]=1.5*kb*T*(log(deb_l)-1.0);
     }
     

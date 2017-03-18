@@ -38,7 +38,7 @@ void MinCGDMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
     if(std::isnan(atoms->kB))
         throw std::string("boltzmann constant should be set prior to minimizatiom");
     
-    if(std::isnan(atoms->h))
+    if(std::isnan(atoms->hP))
         throw std::string("planck constant should be set prior to minimizatiom");
 
     
@@ -365,13 +365,8 @@ int MinCGDMD::setup_tp()
 
     Notes
     -----
-    Cojugate Gradient (CG) algorithm for minimization, see :cite:`press_numerical_2007`.
-    
-    References
-    ----------
-    .. bibliography:: ../refs.bib
-       :filter: docname in docnames
-       :style: unsrt
+    Cojugate Gradient (CG) algorithm for minimization.    
+
     )---";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

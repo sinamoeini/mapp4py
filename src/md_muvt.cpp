@@ -67,7 +67,7 @@ void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     if(std::isnan(atoms->kB))
         throw std::string("boltzmann constant should be set prior to MD");
     
-    if(std::isnan(atoms->h))
+    if(std::isnan(atoms->hP))
         throw std::string("planck constant should be set prior to GCMC");
     
     elem_type ielem;
@@ -291,12 +291,7 @@ int MDMuVT::setup_tp()
     -----
        * Thermostat Details
           Nose-Hoover chain
-    
-    References
-    ----------
-    .. bibliography:: ../refs.bib
-       :filter: docname in docnames
-       :style: unsrt
+
     
     )---";
     

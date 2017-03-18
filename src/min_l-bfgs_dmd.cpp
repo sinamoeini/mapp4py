@@ -238,13 +238,7 @@ int MinLBFGSDMD::setup_tp()
     
     Notes
     -----
-    Limited memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) algorithm for minimization, see :cite:`nocedal_numerical_2006`.
-    
-    References
-    ----------
-    .. bibliography:: ../refs.bib
-       :filter: docname in docnames 
-       :style: unsrt
+    Limited memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) algorithm for minimization.
     
     )---";
     

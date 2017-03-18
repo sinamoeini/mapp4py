@@ -1,6 +1,5 @@
 #ifndef __MAPP__example__
 #define __MAPP__example__
-#include <Python.h>
 namespace MAPP_NS
 {
     

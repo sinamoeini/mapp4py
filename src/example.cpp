@@ -1,3 +1,4 @@
+#include <Python.h>
 #include "example.h"
 #include <structmember.h>
 using namespace MAPP_NS;

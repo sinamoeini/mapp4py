@@ -63,7 +63,7 @@ comm_size(Communication::get_size(__world)),
 s_hi(comm.s_hi),
 s_lo(comm.s_lo),
 elements(Elements()),
-h(std::numeric_limits<type0>::quiet_NaN()),
+hP(std::numeric_limits<type0>::quiet_NaN()),
 kB(std::numeric_limits<type0>::quiet_NaN()),
 vol(0.0),
 H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
@@ -360,7 +360,7 @@ PyGetSetDef Atoms::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
 void Atoms::setup_tp_getset()
 {
     getset_step(getset[0]);
-    getset_h(getset[1]);
+    getset_hP(getset[1]);
     getset_kB(getset[2]);
     getset_H(getset[3]);
     getset_B(getset[4]);
@@ -406,9 +406,9 @@ void Atoms::getset_step(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Atoms::getset_h(PyGetSetDef& getset)
+void Atoms::getset_hP(PyGetSetDef& getset)
 {
-    getset.name=(char*)"h";
+    getset.name=(char*)"hP";
     getset.doc=(char*)R"---(
     (double) Planck constant
     
@@ -416,21 +416,21 @@ void Atoms::getset_h(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->h,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->hP,NULL);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
         Object* __self=reinterpret_cast<Object*>(self);
         if(!__self->atoms)
         {
-            PyErr_Format(PyExc_TypeError,"cannot set 'h' prior to loading system configuration");
+            PyErr_Format(PyExc_TypeError,"cannot set 'hP' prior to loading system configuration");
             return -1;
         }
         
-        VarAPI<type0> h("h");
-        h.logics[0]=VLogics("gt",0.0);
-        if(h.set(val)==-1) return -1;
-        reinterpret_cast<Object*>(self)->atoms->h=h.val;
+        VarAPI<type0> hP("hP");
+        hP.logics[0]=VLogics("gt",0.0);
+        if(hP.set(val)==-1) return -1;
+        reinterpret_cast<Object*>(self)->atoms->hP=hP.val;
         return 0;
     };
 }
@@ -447,7 +447,7 @@ void Atoms::getset_kB(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->h,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->kB,NULL);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {

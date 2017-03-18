@@ -433,7 +433,7 @@ namespace MAPP_NS
         // boltzmann constant
         type0 kB;
         //planck constant
-        type0 h;
+        type0 hP;
         type0 vol;
         type0 depth_inv[__dim__];
         type0 H[__dim__][__dim__];
@@ -495,7 +495,7 @@ namespace MAPP_NS
         static PyGetSetDef getset[];
         static void setup_tp_getset();
         static void getset_step(PyGetSetDef&);
-        static void getset_h(PyGetSetDef&);
+        static void getset_hP(PyGetSetDef&);
         static void getset_kB(PyGetSetDef&);
         static void getset_H(PyGetSetDef&);
         static void getset_B(PyGetSetDef&);

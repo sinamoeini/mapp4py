@@ -559,9 +559,9 @@ void MDNST::getset_L_s(PyGetSetDef& getset)
 {
     getset.name=(char*)"L_s";
     getset.doc=(char*)R"---(
-    (int) NHC length of barostat
+    (int) length of stress NHC
     
-    Number of links in Nose-Hoover chain of barostat
+    Number of links in NHC of stress thermostat, see :ref:`nhc-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
@@ -593,9 +593,9 @@ void MDNST::getset_niters_s(PyGetSetDef& getset)
 {
     getset.name=(char*)"niters_s";
     getset.doc=(char*)R"---(
-    (int) number iterations of NHC barostat
+    (int) number of iterations in NHC for stress
     
-    Number of iterations in Nose-Hoover chain thermostat per each step of barostat evolution
+    Number of iterations in stress thermostat per each step of evolution, see :ref:`nhc-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
@@ -627,9 +627,9 @@ void MDNST::getset_t_relax_s(PyGetSetDef& getset)
 {
     getset.name=(char*)"t_relax_s";
     getset.doc=(char*)R"---(
-    (double) thermostat relaxation parameter
+    (double) NHC relaxation parameter for stress
     
-    Barostat relaxation parameter (unit of time), roughly equivalent to relaxation time of system with external stress
+    NHC relaxation parameter (unit of time) for stress thermostat. Roughly equivalent to relaxation time of stress with thermal bath, see :ref:`nhc-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
@@ -730,9 +730,9 @@ void MDNST::getset_tau(PyGetSetDef& getset)
 {
     getset.name=(char*)"tau";
     getset.doc=(char*)R"---(
-    (symm<double[dim][dim]>) external stress t_relax
+    (symm<double[dim][dim]>) relaxation parameter for stress
     
-    t_relax of external stress of isothermal–isobaric ensemble
+    Relaxation parameter (unit of time) for stress. Roughly equivalent to relaxation time of internal stress with external stress, see :ref:`nst-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {

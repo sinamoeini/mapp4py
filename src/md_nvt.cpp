@@ -573,9 +573,9 @@ void MDNVT::getset_L(PyGetSetDef& getset)
 {
     getset.name=(char*)"L";
     getset.doc=(char*)R"---(
-    (int) NHC length of thermostat
+    (int) length of particle NHC
     
-    Number of links in Nose-Hoover chain of thermostat
+    Number of links in NHC of particle thermostat, see :ref:`nhc-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
@@ -607,9 +607,9 @@ void MDNVT::getset_niters(PyGetSetDef& getset)
 {
     getset.name=(char*)"niters";
     getset.doc=(char*)R"---(
-    (int) number iterations of NHC thermostat
+    (int) number of iterations in NHC for particles
     
-    Number of iterations in Nose-Hoover chain thermostat per each step of thermostat evolution
+    Number of iterations in particle thermostat per each step of evolution, see :ref:`nhc-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
@@ -642,9 +642,9 @@ void MDNVT::getset_t_relax(PyGetSetDef& getset)
     getset.name=(char*)"t_relax";
     getset.doc=(char*)"thermostat parameter, relaxation time";
     getset.doc=(char*)R"---(
-    (double) thermostat relaxation parameter
+    (double) NHC relaxation parameter for particles
     
-    Thermostat relaxation parameter (unit of time), roughly equivalent to relaxation time of system with thermal bath
+    NHC relaxation parameter (unit of time) for partiacle thermostat. Roughly equivalent to relaxation time of particles with thermal bath, see :ref:`nhc-ref`
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {

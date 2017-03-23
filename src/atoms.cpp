@@ -386,7 +386,7 @@ void Atoms::getset_step(PyGetSetDef& getset)
 {
     getset.name=(char*)"step";
     getset.doc=(char*)R"---(
-    (double) step number
+    (int) step number
     
     Current step number
     )---";

@@ -443,7 +443,7 @@ void XMath::quadrature_hg(int n,type0* x,type0* w)
     int m=n/2+1;
     int iter,ord,icurs;
     int max_iter=50;
-    type0 a,u0,inv_u0,f,up,df,tmp0,tol,tmp1;
+    type0 a,u0,f,up,df,tmp0,tol,tmp1;
     type0 ii,del_u0;
 
     

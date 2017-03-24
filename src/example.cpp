@@ -142,6 +142,8 @@ PyMODINIT_FUNC initxmpl(void)
 #include <iostream>
 #include <frameobject.h>
 #include <pyerrors.h>
+#include "xmath.h"
+#include "api.h"
 void ExamplePython::ml_test(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
@@ -152,21 +154,24 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         
-        PyObject* op;
-        if(PyArg_ParseTuple(args, "O:set_callback", &op))
-        {
-         
-            if (!PyFunction_Check(op))
-            {
-                PyErr_SetString(PyExc_TypeError, "parameter must be callable");
-                return NULL;
-            }
-        }
-        else
-            return NULL;
+        
+        FuncAPI<int> f("run",{"N"});
+        f.logics<0>()[0]=VLogics("gt",0);
+        if(f(args,kwds)) return NULL;
+        
+        int n=f.val<0>();
+        
+        type0* xi=new type0[n];
+        type0* wi=new type0[n];
+        
+        XMath::quadrature_hg(n,xi,wi);
         
         
+        for(int i=0;i<n;i++)
+            printf("%d\t\t%e\t\t%e\n",i,xi[i],wi[i]);
         
+        delete [] xi;
+        delete [] wi;
         
         
         

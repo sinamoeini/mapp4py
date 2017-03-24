@@ -549,13 +549,15 @@ void XMath::quadrature_hg(int n,type0* x,type0* w)
         w[icurs]=1.0/(tmp1*tmp1);
         
         
-        inv_u0=1.0/u0;
-        p_coef[0]*=-inv_u0;
-        for(int i=1;i<ord-1;i++)
+        tmp0=p_coef[ord-2];
+        p_coef[ord-2]=1.0;
+        dp_coef[ord-2]=static_cast<type0>(ord-1);
+        for(int i=ord-3;i>-1;i--)
         {
-            p_coef[i]*=-inv_u0;
-            p_coef[i]+=inv_u0*p_coef[i-1];
-            dp_coef[i-1]=p_coef[i]*static_cast<type0>(i);
+            tmp1=p_coef[i];
+            p_coef[i]=tmp0+u0*p_coef[i+1];
+            dp_coef[i]=p_coef[i+1]*static_cast<type0>(i+1);
+            tmp0=tmp1;
         }
         
         ord--;

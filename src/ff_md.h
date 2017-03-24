@@ -39,6 +39,7 @@ namespace MAPP_NS
         type0 value_timer();
         void derivative_timer();
         void derivative_timer(type0(*&)[__dim__]);
+        void derivative_timer(bool,type0(*&)[__dim__]);
         
         
         virtual void init_xchng()=0;

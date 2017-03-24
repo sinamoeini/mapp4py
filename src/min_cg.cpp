@@ -27,7 +27,7 @@ void MinCG::force_calc()
 {
     if(chng_box)
     {
-        ff->derivative_timer(f.A);
+        ff->derivative_timer(affine,f.A);
         Algebra::DoLT<__dim__>::func([this](int i,int j)
         {
             f.A[i][j]*=H_dof[i][j];
@@ -43,7 +43,7 @@ void MinCG::prepare_affine_h()
 {
     const int natms_lcl=atoms->natms_lcl;
     type0 MLT[__dim__][__dim__];
-    Algebra::MLT_mul_MLT(atoms->B,f.A,MLT);
+    Algebra::MLT_mul_MLT(atoms->B,h.A,MLT);
     type0* xvec=x0.vecs[0]->begin();
     type0* hvec=h.vecs[0]->begin();
     for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,hvec+=__dim__)

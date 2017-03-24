@@ -143,7 +143,8 @@ PyMODINIT_FUNC initxmpl(void)
 #include <frameobject.h>
 #include <pyerrors.h>
 #include "xmath.h"
-#include "api.h"
+#include "atoms_styles.h"
+
 void ExamplePython::ml_test(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
@@ -153,8 +154,51 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
+        FuncAPI<OP<AtomsDMD>>f("test",{"atoms"});
+        if(f(args,kwds)) return NULL;
+        AtomsDMD* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        int nelems=static_cast<int>(atoms->elements.nelems);
+        type0* alpha_ave_lcl=new type0[nelems];
+        type0* alpha_ave=new type0[nelems];
+        type0* n_lcl=new type0[nelems];
+        type0* n=new type0[nelems];
+        for(size_t i=0;i<nelems;i++) alpha_ave_lcl[i]=n_lcl[i]=0.0;
+        type0* c=atoms->c->begin();
+        type0* alpha=atoms->alpha->begin();
+        elem_type* elem=atoms->elem->begin();
+        int natms_lcl=atoms->natms_lcl;
+        int c_dim=atoms->c_dim;
+        for(int i=0;i<natms_lcl;i++)
+        {
+            for(int j=0;j<c_dim;j++)
+            {
+                if(c[j]>=0.0)
+                {
+                    alpha_ave_lcl[elem[j]]+=alpha[j];
+                    n_lcl[elem[j]]++;
+                }
+                    
+            }
+            c+=c_dim;
+            alpha+=c_dim;
+        }
         
+        MPI_Allreduce(alpha_ave_lcl,alpha_ave,nelems,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+        MPI_Allreduce(n_lcl,n,nelems,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+
+        for(int i=0;i<nelems;i++)
+            alpha_ave[i]/=n[i];
+    
+        size_t* __nelems=&(atoms->elements.nelems);
+        PyObject* op=var<type0*>::build(alpha_ave,&__nelems);
+        delete [] n;
+        delete [] n_lcl;
+        delete [] alpha_ave;
+        delete [] alpha_ave_lcl;
         
+        return op;
+        
+        /*
         FuncAPI<int> f("run",{"N"});
         f.logics<0>()[0]=VLogics("gt",0);
         if(f(args,kwds)) return NULL;
@@ -173,7 +217,7 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
         delete [] xi;
         delete [] wi;
         
-        
+        */
         
         
         //PyFunctionObject* fp=(PyFunctionObject*) PyTuple_GetItem(args,0);
@@ -256,7 +300,7 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
         
         PyErr_Clear();
         */
-        Py_RETURN_NONE;
+        //Py_RETURN_NONE;
         
         
         /*

@@ -175,7 +175,7 @@ void MinCG::run(C* ls,int nsteps)
 
     if(ntally) thermo.fin();
     
-    fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
+    if(ntally) fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
     
     atoms->step+=istep;
 }

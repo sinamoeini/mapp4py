@@ -109,7 +109,7 @@ void ImportEAM::interpolate(size_t n,type0 delta,type0(*spline)[5])
 /*--------------------------------------------
 
  --------------------------------------------*/
-void ImportEAM::interpolate(size_t n,type0 delta,type0(*spline)[7])
+void ImportEAM::__interpolate(size_t n,type0 delta,type0(*spline)[7])
 {
     spline[0][1]=spline[1][0]-spline[0][0];
     spline[1][1]=0.5*(spline[2][0]-spline[0][0]);

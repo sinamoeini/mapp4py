@@ -882,7 +882,7 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     {
         FuncAPI<int,std::string,OP<MAPP_MPI>> f("cfg",{"N","cfg_file","mpi"});
         f.noptionals=1;
-        f.logics<0>()[0]=VLogics("gt",0);
+        f.logics<0>()[0]=VLogics("gt",1);
         if(f(args,kwds)==-1) return NULL;
         
         MPI_Comm world=MPI_COMM_WORLD;

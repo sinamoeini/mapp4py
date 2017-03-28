@@ -117,277 +117,6 @@ ForceFieldEAMDMD::~ForceFieldEAMDMD()
 
 }
 /*--------------------------------------------
- python constructor
- --------------------------------------------*/
-void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodDef& method_2)
-{
-    method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    method_0.ml_name="ff_eam_funcfl";
-    method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
-    {
-        AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        
-        FuncAPI<std::string*,type0*> f("ff_eam_funcfl",{"funcfl_files","r_crd"});
-        f.v<0>().dynamic_size(nelems);
-        f.v<1>().dynamic_size(nelems);
-        f.logics<1>()[0]=VLogics("gt",0.0);
-        if(f(args,kwds)) return NULL;
-        
-        size_t nr,nrho;
-        type0 dr,drho;
-        type0** r_c;
-        type0(** F)[5]=NULL;
-        type0(*** r_phi)[4]=NULL;
-        type0(*** rho)[4]=NULL;
-        try
-        {
-            ImportEAM::funcfl(nelems,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
-        }
-        catch(char* err_msg)
-        {
-            PyErr_SetString(PyExc_TypeError,err_msg);
-            delete [] err_msg;
-            return NULL;
-        }
-        
-        for(size_t i=0;i<nelems;i++)
-            if(f.v<1>()[i]>r_c[i][i])
-            {
-                Memory::dealloc(r_c);
-                Memory::dealloc(F);
-                Memory::dealloc(r_phi);
-                Memory::dealloc(rho);
-                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
-                return NULL;
-            }
-        
-        delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
-        Py_RETURN_NONE;
-    };
-    method_0.ml_doc=(char*)R"---(
-    ff_eam_funcfl(funcfl_files)
-   
-    Tabulated EAM force field given by FuncFL file/s
-    
-    Assigns EAM force field to system
-    
-    Parameters
-    ----------
-    funcfl_files : string[nelems]
-        list of relative paths to DYNAMO files with FuncFL format
-    
-    Returns
-    -------
-    None
-   
-    Notes
-    -----
-    This is tabulated form of Embedded Atom Method (EAM) potential
-    
-    
-    Examples
-    --------
-    Ni
-    
-    ::
-     
-        >>> from mapp import dmd
-        >>> sim=dmd.cfg("configs/Ni-DMD.cfg")
-        >>> sim.ff_eam_funcfl("potentials/niu3.eam")
-    
-    
-
-    )---";
-    
-    method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    method_1.ml_name="ff_eam_setfl";
-    method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
-    {
-        AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        FuncAPI<std::string,type0*> f("ff_eam_setfl",{"setfl_file","r_crd"});
-        f.v<1>().dynamic_size(nelems);
-        f.logics<1>()[0]=VLogics("gt",0.0);
-        if(f(args,kwds)) return NULL;
-        
-        
-        size_t nr,nrho;
-        type0 dr,drho;
-        type0** r_c;
-        type0(** F)[5]=NULL;
-        type0(*** r_phi)[4]=NULL;
-        type0(*** rho)[4]=NULL;
-        try
-        {
-            ImportEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
-        }
-        catch(char* err_msg)
-        {
-            PyErr_SetString(PyExc_TypeError,err_msg);
-            delete [] err_msg;
-            return NULL;
-        }
-        
-        for(size_t i=0;i<nelems;i++)
-            if(f.v<1>()[i]>r_c[i][i])
-            {
-                Memory::dealloc(r_c);
-                Memory::dealloc(F);
-                Memory::dealloc(r_phi);
-                Memory::dealloc(rho);
-                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
-                return NULL;
-            }
-        
-        delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
-        Py_RETURN_NONE;
-    };
-    method_1.ml_doc=(char*)R"---(
-    ff_eam_setfl(setfl_file)
-   
-    Tabulated EAM force field given by a single SetFL file
-    
-    Assigns EAM force field to system
-    
-    Parameters
-    ----------
-    setfl_file : string
-        relative path to DYNAMO file with SetFL format
-    
-    Returns
-    -------
-    None
-   
-    Notes
-    -----
-    This is tabulated form of Embedded Atom Method (EAM) potential
-    
-    
-    Examples
-    --------
-    Cu
-    
-    ::
-     
-        >>> from mapp import dmd
-        >>> sim=dmd.cfg("configs/Cu-DMD.cfg")
-        >>> sim.ff_eam_setfl("potentials/Cu_mishin.eam.alloy")
-    
-    
-
-    )---";
-    
-    method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    method_2.ml_name="ff_eam_fs";
-    method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
-    {
-        AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        FuncAPI<std::string,type0*> f("ff_eam_fs",{"fs_file","r_crd"});
-        f.v<1>().dynamic_size(nelems);
-        f.logics<1>()[0]=VLogics("gt",0.0);
-        if(f(args,kwds)) return NULL;
-        
-        size_t nr,nrho;
-        type0 dr,drho;
-        type0** r_c;
-        type0(** F)[5]=NULL;
-        type0(*** r_phi)[4]=NULL;
-        type0(*** rho)[4]=NULL;
-        try
-        {
-            ImportEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
-        }
-        catch(char* err_msg)
-        {
-            PyErr_SetString(PyExc_TypeError,err_msg);
-            delete [] err_msg;
-            return NULL;
-        }
-        
-        for(size_t i=0;i<nelems;i++)
-            if(f.v<1>()[i]>r_c[i][i])
-            {
-                Memory::dealloc(r_c);
-                Memory::dealloc(F);
-                Memory::dealloc(r_phi);
-                Memory::dealloc(rho);
-                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
-                return NULL;
-            }
-        
-        delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
-        Py_RETURN_NONE;
-    };
-    method_2.ml_doc=(char*)R"---(
-    ff_eam_fs(fs_file)
-   
-    Tabulated Finnis-Sinclair EAM
-    
-    Assigns Finnis-Sinclair EAM force field to system. For explanation of the parameter see the Notes section.
-    
-    Parameters
-    ----------
-    fs_file : string
-        relative path to DYNAMO file with fs format
-    
-    Returns
-    -------
-    None
-   
-    Notes
-    -----
-    This is tabulated form of Finnis-Sinclair Embedded Atom Method (EAM) potential
-    
-    Consider the general form of EAM potential:
-    
-    
-    .. math:: U=\frac{1}{2}\sum_{i}\sum_{j\neq i}\phi_{\gamma \delta}{(x_{ij}) }+\sum_i E_\gamma \left(\sum_{j\neq i} \rho_{\delta\gamma}(x_{ij}) \right),
-    
-    
-    From here on, greek superscipts/subscripts are used to refer to elements present the system; :math:`\gamma`, and :math:`\delta` denote type of atom :math:`i` and atom :math:`j`, repectively. :math:`E`, :math:`\rho`, and :math:`\phi` are embedding, electron density, and pair functions, respectively. Also :math:`x_{ij}` refers to distance between :math:`i` and `j`. Now the multi component formulation of DMD free energy would be:
-    
-    .. math::
-       F=&\frac{1}{2}\sum_{i,\gamma,j\neq i,\delta}c_i^\gamma c_j^\delta \omega_{\gamma \delta}\left(x_{ij}\right)+\sum_{i,\gamma} c_i^\gamma E_\gamma \left(\sum_{j\neq i,\delta} c_j^{\delta}\psi_{\delta\gamma}\left(x_{ij}\right)\right)-3k_BT\sum_{i,\gamma} c_i^\gamma \log\left(\sqrt{\pi e}\alpha_i^\gamma/\Lambda_\gamma\right)\\
-       &+k_BT\sum_{i,\gamma} c_i^\gamma\log c_i^\gamma+k_BT\sum_{i}c_i^v\log (c_i^v),
-    
-    where
-    
-    .. math:: \Lambda_\gamma=\frac{h}{\sqrt{2\pi m_\gamma k_BT}}, \quad c_i^v=1-\sum_{\gamma}c_i^\gamma,
-    
-    .. math:: \omega_{\gamma\delta}(x_{ij})= \frac{1}{\left(\alpha^{\gamma\delta}_{ij}\sqrt{\pi}\right)^{3}}\int d^3\mathbf{x} \exp{\biggl[-\left(\frac{\mathbf{x}_{ij} -\mathbf{x}}{\alpha^{\gamma\delta}_{ij}}\right)^2\biggr]}\phi_{\gamma\delta}(|\mathbf{x}|)
-    
-    .. math:: \psi_{\gamma\delta}(x_{ij})=\frac{1}{\left(\alpha^{\gamma\delta}_{ij}\sqrt{\pi}\right)^{3}}\int d^3\mathbf{x} \exp{\biggl[-\left(\frac{\mathbf{x}_{ij} -\mathbf{x}}{\alpha^{\gamma\delta}_{ij}}\right)^2\biggr]}\rho_{\gamma\delta}(|\mathbf{x}|)
-    
-    .. math:: \alpha^{\gamma\delta}_{ij}=\sqrt{{\alpha_i^{\gamma}}^2+{\alpha_j^{\delta}}^2},\quad \mathbf{x}_{ji}=\mathbf{x}_j-\mathbf{x}_i
-    
-    The numerical evaluation of these integrals is discussed :ref:`here <integ-ref>`. Recalling that
-    
-    .. math:: \langle U \rangle &= \frac{\partial }{\partial \beta}\left(\beta F \right)
-    
-    the average potential energy is
-    
-    
-    .. math:: \langle U \rangle = \frac{1}{2}\sum_{i,\gamma,j\neq i,\delta}c_i^\gamma c_j^\delta \omega_{\gamma \delta}\left(x_{ij}\right)+\sum_{i,\gamma} c_i^\gamma E_\gamma \left(\sum_{j\neq i,\delta} c_j^{\delta}\psi_{\delta\gamma}\left(x_{ij}\right)\right) -\frac{3}{2} k_B T
-    
-    
-    Examples
-    --------
-    Iron Hydrogrn mixture
-    
-    >>> from mapp import dmd
-    >>> sim=dmd.cfg("configs/FeH-DMD.cfg")
-    >>> sim.ff_eam_fs("potentials/FeH.eam.fs")
-    )---";
-}
-/*--------------------------------------------
  force calculation
  --------------------------------------------*/
 void ForceFieldEAMDMD::force_calc()
@@ -1289,3 +1018,284 @@ calc_Q(type0& gamma_i,type0& gamma_j,type0& mu_ji
     theta=alpha_Q_sq*(gamma_i-gamma_j)*dz0-dQ;
 
 }
+/*--------------------------------------------
+ python constructor
+ --------------------------------------------*/
+void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodDef& method_2)
+{
+    method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    method_0.ml_name="ff_eam_funcfl";
+    method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
+        size_t& nelems=__self->atoms->elements.nelems;
+        
+        FuncAPI<std::string*,type0*> f("ff_eam_funcfl",{"funcfl_files","r_crd"});
+        f.v<0>().dynamic_size(nelems);
+        f.v<1>().dynamic_size(nelems);
+        f.logics<1>()[0]=VLogics("gt",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        size_t nr,nrho;
+        type0 dr,drho;
+        type0** r_c;
+        type0(** F)[5]=NULL;
+        type0(*** r_phi)[4]=NULL;
+        type0(*** rho)[4]=NULL;
+        try
+        {
+            ImportEAM::funcfl(nelems,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+        }
+        catch(char* err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg);
+            delete [] err_msg;
+            return NULL;
+        }
+        
+        for(size_t i=0;i<nelems;i++)
+            if(f.v<1>()[i]>r_c[i][i])
+            {
+                Memory::dealloc(r_c);
+                Memory::dealloc(F);
+                Memory::dealloc(r_phi);
+                Memory::dealloc(rho);
+                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
+                return NULL;
+            }
+        
+        delete __self->ff;
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
+        Py_RETURN_NONE;
+    };
+    method_0.ml_doc=(char*)R"---(
+    ff_eam_funcfl(funcfl_files)
+   
+    Tabulated EAM force field given by FuncFL file/s
+    
+    Assigns EAM force field to system
+    
+    Parameters
+    ----------
+    funcfl_files : string[nelems]
+        list of relative paths to DYNAMO files with FuncFL format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Ni
+    
+    ::
+     
+        >>> from mapp import dmd
+        >>> sim=dmd.cfg("configs/Ni-DMD.cfg")
+        >>> sim.ff_eam_funcfl("potentials/niu3.eam")
+    
+    
+
+    )---";
+    
+    method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    method_1.ml_name="ff_eam_setfl";
+    method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
+        size_t& nelems=__self->atoms->elements.nelems;
+        FuncAPI<std::string,type0*> f("ff_eam_setfl",{"setfl_file","r_crd"});
+        f.v<1>().dynamic_size(nelems);
+        f.logics<1>()[0]=VLogics("gt",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        
+        size_t nr,nrho;
+        type0 dr,drho;
+        type0** r_c;
+        type0(** F)[5]=NULL;
+        type0(*** r_phi)[4]=NULL;
+        type0(*** rho)[4]=NULL;
+        try
+        {
+            ImportEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+        }
+        catch(char* err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg);
+            delete [] err_msg;
+            return NULL;
+        }
+        
+        for(size_t i=0;i<nelems;i++)
+            if(f.v<1>()[i]>r_c[i][i])
+            {
+                Memory::dealloc(r_c);
+                Memory::dealloc(F);
+                Memory::dealloc(r_phi);
+                Memory::dealloc(rho);
+                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
+                return NULL;
+            }
+        
+        delete __self->ff;
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
+        Py_RETURN_NONE;
+    };
+    method_1.ml_doc=(char*)R"---(
+    ff_eam_setfl(setfl_file)
+   
+    Tabulated EAM force field given by a single SetFL file
+    
+    Assigns EAM force field to system
+    
+    Parameters
+    ----------
+    setfl_file : string
+        relative path to DYNAMO file with SetFL format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Cu
+    
+    ::
+     
+        >>> from mapp import dmd
+        >>> sim=dmd.cfg("configs/Cu-DMD.cfg")
+        >>> sim.ff_eam_setfl("potentials/Cu_mishin.eam.alloy")
+    
+    
+
+    )---";
+    
+    method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    method_2.ml_name="ff_eam_fs";
+    method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
+        size_t& nelems=__self->atoms->elements.nelems;
+        FuncAPI<std::string,type0*> f("ff_eam_fs",{"fs_file","r_crd"});
+        f.v<1>().dynamic_size(nelems);
+        f.logics<1>()[0]=VLogics("gt",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        size_t nr,nrho;
+        type0 dr,drho;
+        type0** r_c;
+        type0(** F)[5]=NULL;
+        type0(*** r_phi)[4]=NULL;
+        type0(*** rho)[4]=NULL;
+        try
+        {
+            ImportEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+        }
+        catch(char* err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg);
+            delete [] err_msg;
+            return NULL;
+        }
+        
+        for(size_t i=0;i<nelems;i++)
+            if(f.v<1>()[i]>r_c[i][i])
+            {
+                Memory::dealloc(r_c);
+                Memory::dealloc(F);
+                Memory::dealloc(r_phi);
+                Memory::dealloc(rho);
+                PyErr_Format(PyExc_TypeError,"r_crd[%zu] should be less than r_c[%zu][%zu]",i,i,i);
+                return NULL;
+            }
+        
+        delete __self->ff;
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
+        Py_RETURN_NONE;
+    };
+    method_2.ml_doc=(char*)R"---(
+    ff_eam_fs(fs_file)
+   
+    Tabulated Finnis-Sinclair EAM
+    
+    Assigns Finnis-Sinclair EAM force field to system. For explanation of the parameter see the Notes section.
+    
+    Parameters
+    ----------
+    fs_file : string
+        relative path to DYNAMO file with fs format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Finnis-Sinclair Embedded Atom Method (EAM) potential
+    
+    Consider the general form of EAM potential:
+    
+    
+    .. math:: U=\frac{1}{2}\sum_{i}\sum_{j\neq i}\phi_{\gamma \delta}{(x_{ij}) }+\sum_i E_\gamma \left(\sum_{j\neq i} \rho_{\delta\gamma}(x_{ij}) \right),
+    
+    
+    From here on, greek superscipts/subscripts are used to refer to elements present the system; :math:`\gamma`, and :math:`\delta` denote type of atom :math:`i` and atom :math:`j`, repectively. :math:`E`, :math:`\rho`, and :math:`\phi` are embedding, electron density, and pair functions, respectively. Also :math:`x_{ij}` refers to distance between :math:`i` and `j`. Now the multi component formulation of DMD free energy would be:
+    
+    .. math::
+       F=&\frac{1}{2}\sum_{i,\gamma,j\neq i,\delta}c_i^\gamma c_j^\delta \omega_{\gamma \delta}\left(x_{ij}\right)+\sum_{i,\gamma} c_i^\gamma E_\gamma \left(\sum_{j\neq i,\delta} c_j^{\delta}\psi_{\delta\gamma}\left(x_{ij}\right)\right)-3k_BT\sum_{i,\gamma} c_i^\gamma \log\left(\sqrt{\pi e}\alpha_i^\gamma/\Lambda_\gamma\right)\\
+       &+k_BT\sum_{i,\gamma} c_i^\gamma\log c_i^\gamma+k_BT\sum_{i}c_i^v\log (c_i^v),
+    
+    where
+    
+    .. math:: \Lambda_\gamma=\frac{h}{\sqrt{2\pi m_\gamma k_BT}}, \quad c_i^v=1-\sum_{\gamma}c_i^\gamma,
+    
+    .. math:: \omega_{\gamma\delta}(x_{ij})= \frac{1}{\left(\alpha^{\gamma\delta}_{ij}\sqrt{\pi}\right)^{3}}\int d^3\mathbf{x} \exp{\biggl[-\left(\frac{\mathbf{x}_{ij} -\mathbf{x}}{\alpha^{\gamma\delta}_{ij}}\right)^2\biggr]}\phi_{\gamma\delta}(|\mathbf{x}|)
+    
+    .. math:: \psi_{\gamma\delta}(x_{ij})=\frac{1}{\left(\alpha^{\gamma\delta}_{ij}\sqrt{\pi}\right)^{3}}\int d^3\mathbf{x} \exp{\biggl[-\left(\frac{\mathbf{x}_{ij} -\mathbf{x}}{\alpha^{\gamma\delta}_{ij}}\right)^2\biggr]}\rho_{\gamma\delta}(|\mathbf{x}|)
+    
+    .. math:: \alpha^{\gamma\delta}_{ij}=\sqrt{{\alpha_i^{\gamma}}^2+{\alpha_j^{\delta}}^2},\quad \mathbf{x}_{ji}=\mathbf{x}_j-\mathbf{x}_i
+    
+    The numerical evaluation of these integrals is discussed :ref:`here <integ-ref>`.
+    
+    
+    .. note::
+    
+       Recently, we have come across a relationship that will eliminate the need to perform integrations in order to adjust :math:`\mathbf{x}` and :math:`\mathbf{\alpha}`, this will be implemented soon.
+    
+    
+    Recalling that
+    
+    .. math:: \langle U \rangle &= \frac{\partial }{\partial \beta}\left(\beta F \right)
+    
+    the average potential energy is
+    
+    
+    .. math:: \langle U \rangle = \frac{1}{2}\sum_{i,\gamma,j\neq i,\delta}c_i^\gamma c_j^\delta \omega_{\gamma \delta}\left(x_{ij}\right)+\sum_{i,\gamma} c_i^\gamma E_\gamma \left(\sum_{j\neq i,\delta} c_j^{\delta}\psi_{\delta\gamma}\left(x_{ij}\right)\right) -\frac{3}{2} k_B T
+    
+    
+    Examples
+    --------
+    Iron Hydrogrn mixture
+    
+    >>> from mapp import dmd
+    >>> sim=dmd.cfg("configs/FeH-DMD.cfg")
+    >>> sim.ff_eam_fs("potentials/FeH.eam.fs")
+    )---";
+}
+
+

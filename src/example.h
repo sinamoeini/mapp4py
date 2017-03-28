@@ -34,6 +34,8 @@ namespace MAPP_NS
         static int setup_tp();
 
         static void ml_test(PyMethodDef&);
+        static void ml_phonon(PyMethodDef&);
+        static void ml_alpha(PyMethodDef&);
     };
     
     

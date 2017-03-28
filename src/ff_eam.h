@@ -13,9 +13,9 @@ namespace MAPP_NS
         
         size_t nr,nrho;
         type0 dr,drho,dr_inv,drho_inv,rho_max;
-        type0(** F_arr)[7];
-        type0(*** r_phi_arr)[7];
-        type0(*** rho_arr)[7];
+        type0(** F_arr)[4];
+        type0(*** r_phi_arr)[4];
+        type0(*** rho_arr)[4];
         
         
         /*--------------------------------------------*/
@@ -33,7 +33,7 @@ namespace MAPP_NS
     public:
         ForceFieldEAM(AtomsMD*,
         type0,type0,size_t,size_t,
-        type0(***&&)[7],type0(***&&)[7],type0(**&&)[7],
+        type0(***&&)[4],type0(***&&)[4],type0(**&&)[4],
         type0**&&);
         ~ForceFieldEAM();
         

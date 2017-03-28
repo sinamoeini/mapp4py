@@ -13,7 +13,7 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 ForceFieldEAM::ForceFieldEAM(AtomsMD* atoms,
 type0 __dr,type0 __drho,size_t __nr,size_t __nrho,
-type0(***&& __r_phi_arr)[7],type0(***&& __rho_arr)[7],type0(**&& __F_arr)[7],
+type0(***&& __r_phi_arr)[4],type0(***&& __rho_arr)[4],type0(**&& __F_arr)[4],
 type0**&& __cut):
 ForceFieldMD(atoms),
 max_pairs(0),
@@ -127,13 +127,13 @@ void ForceFieldEAM::force_calc()
             
             coef=rho_arr[jelem][ielem][m];
             rho_i=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
-            drho_i_dr=(coef[6]*p+coef[5])*p+coef[4];
+            drho_i_dr=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*dr_inv;
             coef=rho_arr[ielem][jelem][m];
             rho_j=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
-            drho_j_dr=(coef[6]*p+coef[5])*p+coef[4];
+            drho_j_dr=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*dr_inv;
             
             coef=r_phi_arr[ielem][jelem][m];
-            z2p=(coef[6]*p + coef[5])*p+coef[4];
+            z2p=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*dr_inv;
             z2=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
             
             phi=z2*r_inv;
@@ -181,7 +181,7 @@ void ForceFieldEAM::force_calc()
         p-=m;
         p=MIN(p,1.0);
         coef=F_arr[ielem][m];
-        tmp1=(coef[6]*p+coef[5])*p+coef[4];
+        tmp1=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*drho_inv;
         tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
         if(rho[iatm]>rho_max)
             tmp0+=tmp1*(rho[iatm]-rho_max);
@@ -309,7 +309,7 @@ void ForceFieldEAM::energy_calc()
         coef=F_arr[ielem][m];
         tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
         if(rho[iatm]>rho_max)
-            tmp0+=((coef[6]*p+coef[5])*p+coef[4])*(rho[iatm]-rho_max);
+            tmp0+=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*drho_inv*(rho[iatm]-rho_max);
         nrgy_strss_lcl[0]+=tmp0;
 
     }
@@ -398,7 +398,7 @@ void ForceFieldEAM::pre_xchng_energy(GCMC* gcmc)
                 coef=F_arr[evec[i]][m];
                 F_xchng[i]=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
                 if(tmp0>rho_max)
-                    F_xchng[i]+=((coef[6]*p+coef[5])*p+coef[4])*(tmp0-rho_max);
+                    F_xchng[i]+=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*drho_inv*(tmp0-rho_max);
                 en0+=F_xchng[i]-F[i];
             }
         
@@ -438,7 +438,7 @@ type0 ForceFieldEAM::xchng_energy(GCMC* gcmc)
         coef=F_arr[gcmc->ielem][m];
         type0 F_iatm=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
         if(rho_iatm>rho_max)
-            F_iatm+=((coef[6]*p+coef[5])*p+coef[4])*(rho_iatm-rho_max);
+            F_iatm+=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*drho_inv*(rho_iatm-rho_max);
         
         en+=F_iatm;
         return en;
@@ -476,7 +476,7 @@ void ForceFieldEAM::post_xchng_energy(GCMC* gcmc)
         type0* coef=F_arr[gcmc->ielem][m];
         F[natms_lcl-1]=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
         if(rho[natms_lcl-1]>rho_max)
-            F[natms_lcl-1]+=((coef[6]*p+coef[5])*p+coef[4])*(rho[natms_lcl-1]-rho_max);
+            F[natms_lcl-1]+=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*drho_inv*(rho[natms_lcl-1]-rho_max);
     }
 }
 /*--------------------------------------------
@@ -604,9 +604,9 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         size_t nr,nrho;
         type0 dr,drho;
         type0** r_c;
-        type0(** F)[7]=NULL;
-        type0(*** r_phi)[7]=NULL;
-        type0(*** rho)[7]=NULL;
+        type0(** F)[4]=NULL;
+        type0(*** r_phi)[4]=NULL;
+        type0(*** rho)[4]=NULL;
         try
         {
             ImportEAM::funcfl(nelems,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
@@ -671,9 +671,9 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         size_t nr,nrho;
         type0 dr,drho;
         type0** r_c;
-        type0(** F)[7]=NULL;
-        type0(*** r_phi)[7]=NULL;
-        type0(*** rho)[7]=NULL;
+        type0(** F)[4]=NULL;
+        type0(*** r_phi)[4]=NULL;
+        type0(*** rho)[4]=NULL;
         try
         {
             ImportEAM::setfl(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
@@ -738,9 +738,9 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         size_t nr,nrho;
         type0 dr,drho;
         type0** r_c;
-        type0(** F)[7]=NULL;
-        type0(*** r_phi)[7]=NULL;
-        type0(*** rho)[7]=NULL;
+        type0(** F)[4]=NULL;
+        type0(*** r_phi)[4]=NULL;
+        type0(*** rho)[4]=NULL;
         try
         {
             ImportEAM::fs(nelems,__self->atoms->elements.names,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);

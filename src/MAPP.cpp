@@ -131,10 +131,11 @@ void MAPP::init_module(void)
     PyModule_AddObject(module,"dmd",dmd);
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::MD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef MAPP::MD::methods[]={[0 ... 1]={NULL}};
 /*--------------------------------------------*/
 void MAPP::MD::setup_methods()
 {
+    ExamplePython::ml_phonon(methods[0]);
 }
 /*--------------------------------------------
  
@@ -180,11 +181,12 @@ PyObject* MAPP::MD::init_module(void)
     return module;
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::DMD::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MAPP::DMD::methods[]={[0 ... 2]={NULL}};
 /*--------------------------------------------*/
 void MAPP::DMD::setup_methods()
 {
     ExamplePython::ml_test(methods[0]);
+    ExamplePython::ml_alpha(methods[1]);
 }
 /*--------------------------------------------
  

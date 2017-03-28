@@ -37,7 +37,7 @@ namespace MAPP_NS
         static type0 interpolate(type0*,size_t,type0,size_t);
         static void interpolate(size_t,type0,type0(*)[4]);
         static void interpolate(size_t,type0,type0(*)[5]);
-        static void interpolate(size_t,type0,type0(*)[7]);
+        static void __interpolate(size_t,type0,type0(*)[7]);
     };
 }
 using namespace MAPP_NS;

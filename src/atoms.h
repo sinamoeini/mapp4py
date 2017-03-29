@@ -395,6 +395,37 @@ namespace MAPP_NS
         virtual void print(FILE*,int);
     };
 }
+/*--------------------------------------------*/
+template<> MPI_Datatype Vec<bool>::MPI_T;
+template<> MPI_Datatype Vec<char>::MPI_T;
+template<> MPI_Datatype Vec<short>::MPI_T;
+template<> MPI_Datatype Vec<int>::MPI_T;
+template<> MPI_Datatype Vec<long int>::MPI_T;
+template<> MPI_Datatype Vec<long long>::MPI_T;
+template<> MPI_Datatype Vec<unsigned char>::MPI_T;
+template<> MPI_Datatype Vec<unsigned short>::MPI_T;
+template<> MPI_Datatype Vec<unsigned int>::MPI_T;
+template<> MPI_Datatype Vec<unsigned long int>::MPI_T;
+template<> MPI_Datatype Vec<unsigned long long>::MPI_T;
+template<> MPI_Datatype Vec<float>::MPI_T;
+template<> MPI_Datatype Vec<double>::MPI_T;
+template<> MPI_Datatype Vec<long double>::MPI_T;
+
+template<> const char* Vec<bool>::print_format;
+template<> const char* Vec<char>::print_format;
+template<> const char* Vec<short>::print_format;
+template<> const char* Vec<int>::print_format;
+template<> const char* Vec<long int>::print_format;
+template<> const char* Vec<long long>::print_format;
+template<> const char* Vec<unsigned char>::print_format;
+template<> const char* Vec<unsigned short>::print_format;
+template<> const char* Vec<unsigned int>::print_format;
+template<> const char* Vec<unsigned long int>::print_format;
+template<> const char* Vec<unsigned long long>::print_format;
+template<> const char* Vec<float>::print_format;
+template<> const char* Vec<double>::print_format;
+template<> const char* Vec<long double>::print_format;
+/*--------------------------------------------*/
 /*-------------------------------------------------
       ___   _____   _____       ___  ___   _____
      /   | |_   _| /  _  \     /   |/   | /  ___/
@@ -625,38 +656,9 @@ inline void Vec<T>::fill()
     for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
     __is_empty__=false;
 }
+/*--------------------------------------------
 
-/*--------------------------------------------*/
-template<> MPI_Datatype Vec<bool>::MPI_T;
-template<> MPI_Datatype Vec<char>::MPI_T;
-template<> MPI_Datatype Vec<short>::MPI_T;
-template<> MPI_Datatype Vec<int>::MPI_T;
-template<> MPI_Datatype Vec<long int>::MPI_T;
-template<> MPI_Datatype Vec<long long>::MPI_T;
-template<> MPI_Datatype Vec<unsigned char>::MPI_T;
-template<> MPI_Datatype Vec<unsigned short>::MPI_T;
-template<> MPI_Datatype Vec<unsigned int>::MPI_T;
-template<> MPI_Datatype Vec<unsigned long int>::MPI_T;
-template<> MPI_Datatype Vec<unsigned long long>::MPI_T;
-template<> MPI_Datatype Vec<float>::MPI_T;
-template<> MPI_Datatype Vec<double>::MPI_T;
-template<> MPI_Datatype Vec<long double>::MPI_T;
-
-template<> const char* Vec<bool>::print_format;
-template<> const char* Vec<char>::print_format;
-template<> const char* Vec<short>::print_format;
-template<> const char* Vec<int>::print_format;
-template<> const char* Vec<long int>::print_format;
-template<> const char* Vec<long long>::print_format;
-template<> const char* Vec<unsigned char>::print_format;
-template<> const char* Vec<unsigned short>::print_format;
-template<> const char* Vec<unsigned int>::print_format;
-template<> const char* Vec<unsigned long int>::print_format;
-template<> const char* Vec<unsigned long long>::print_format;
-template<> const char* Vec<float>::print_format;
-template<> const char* Vec<double>::print_format;
-template<> const char* Vec<long double>::print_format;
-/*--------------------------------------------*/
+ --------------------------------------------*/
 template<typename T>
 inline void Vec<T>::print(FILE* fp,int i)
 {

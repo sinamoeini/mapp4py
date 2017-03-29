@@ -71,7 +71,7 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
         unsigned int* id_map=natms==0 ? NULL:new unsigned int[natms];
         for(int i=0;i<natms;i++) id_map[id[i]]=i;
         
-        char** elem_names=atoms->elements.names;
+        std::string* elem_names=atoms->elements.names;
         type0* masses=atoms->elements.masses;
         int nelems=static_cast<int>(atoms->elements.nelems);
         bool* elem_printed=nelems==0 ? NULL:new bool[nelems];
@@ -103,7 +103,7 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
                 curr_elem=__curr_elem;
                 elem_printed[curr_elem]=true;
                 fprintf(fp,"%lf\n",masses[curr_elem]);
-                fprintf(fp,"%s\n",elem_names[curr_elem]);
+                fprintf(fp,"%s\n",elem_names[curr_elem].c_str());
             }
             
             atoms->x->print(fp,iatm);
@@ -120,7 +120,7 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
             if(!elem_printed[i])
             {
                 fprintf(fp,"%lf\n",masses[i]);
-                fprintf(fp,"%s\n",elem_names[i]);
+                fprintf(fp,"%s\n",elem_names[i].c_str());
             }
         
         delete [] elem_printed;
@@ -141,7 +141,7 @@ void ExportCFGDMD::write_body(FILE* fp)
     {
         atoms->x2s_dump();
         int natms=atoms->natms;
-        char** elem_names=atoms->elements.names;
+        std::string* elem_names=atoms->elements.names;
         type0* masses=atoms->elements.masses;
         int nelems=static_cast<int>(atoms->elements.nelems);
         bool* elem_printed=nelems==0 ? NULL:new bool[nelems];
@@ -173,7 +173,7 @@ void ExportCFGDMD::write_body(FILE* fp)
                 curr_elem=__curr_elem;
                 elem_printed[curr_elem]=true;
                 fprintf(fp,"%lf\n",masses[curr_elem]);
-                fprintf(fp,"%s\n",elem_names[curr_elem]);
+                fprintf(fp,"%s\n",elem_names[curr_elem].c_str());
             }
             
             atoms->x->print(fp,i);
@@ -189,7 +189,7 @@ void ExportCFGDMD::write_body(FILE* fp)
             if(!elem_printed[i])
             {
                 fprintf(fp,"%lf\n",masses[i]);
-                fprintf(fp,"%s\n",elem_names[i]);
+                fprintf(fp,"%s\n",elem_names[i].c_str());
             }
         
         delete [] elem_printed;

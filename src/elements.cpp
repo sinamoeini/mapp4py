@@ -28,14 +28,13 @@ masses(NULL),
 __nelems__(nelems,"nelems")
 {
     if(nelems==0) return;
-    ptrdiff_t len=(strchr(r.names[r.nelems-1],'\0')-r.names[0])+1;
+    names=new std::string[nelems];
     masses=new type0[nelems];
-    names=new char*[nelems];
-    *names=new char[len];
-    memcpy(*names,*(r.names),len*sizeof(char));
-    for(size_t i=1;i<nelems;i++)
-        names[i]=names[i-1]+(r.names[i]-r.names[i-1]);
-    memcpy(masses,r.masses,nelems*sizeof(type0));
+    for(size_t i=0;i<nelems;i++)
+    {
+        names[i]=r.names[i];
+        masses[i]=r.masses[i];
+    }
 }
 /*--------------------------------------------
  copy constructor
@@ -55,8 +54,8 @@ __nelems__(std::move(r.__nelems__))
  --------------------------------------------*/
 Elements::~Elements()
 {
-    Memory::dealloc(masses);
-    Memory::dealloc(names);
+    delete [] names;
+    delete [] masses;
 }
 /*--------------------------------------------
  copy assignment
@@ -83,7 +82,7 @@ bool Elements::operator==(const Elements& r)
 {
     if(nelems!=r.nelems) return false;
     for(size_t i=0;i<nelems;i++)
-        if(strcmp(names[i],r.names[i])!=0)
+        if(strcmp(names[i].c_str(),r.names[i].c_str())!=0)
             return false;
 
     return true;
@@ -94,7 +93,7 @@ bool Elements::operator==(const Elements& r)
 elem_type Elements::add_type(const type0 mass,const char* name)
 {
     for(elem_type i=0;i<__nelems;i++)
-        if(!strcmp(name,names[i]))
+        if(!strcmp(name,names[i].c_str()))
             return i;
     if(__nelems==std::numeric_limits<elem_type>::max())
         throw "cannot have more than 256 elements";
@@ -102,22 +101,12 @@ elem_type Elements::add_type(const type0 mass,const char* name)
     
     Memory::grow(masses,nelems,nelems+1);
     masses[nelems]=mass;
+    std::string* __names=new std::string[nelems+1];
+    for(size_t i=0;i<nelems;i++)
+        __names[i]=std::move(names[i]);
     
-    
-    size_t new_len=strlen(name)+1;
-    ptrdiff_t len=0;
-    if(names)
-        len=(strchr(names[nelems-1],'\0')-names[0])+1;
-    
-    char** __names=new char*[nelems+1];
-    *__names=new char[len+new_len];
-    
-    if(names) memcpy(*__names,*names,len*sizeof(char));
-    memcpy(*__names+len,name,new_len*sizeof(char));
-    for(size_t i=1;i<nelems;i++)
-        __names[i]=__names[i-1]+(names[i]-names[i-1]);
-    __names[nelems]=*__names+len;
-    Memory::dealloc(names);
+    __names[nelems]=std::string(name);
+    delete [] names;
     names=__names;
     
     nelems++;
@@ -129,7 +118,7 @@ elem_type Elements::add_type(const type0 mass,const char* name)
 elem_type Elements::find(const char* name)
 {
     for(elem_type i=0;i<__nelems;i++)
-        if(!strcmp(name,names[i]))
+        if(!strcmp(name,names[i].c_str()))
             return i;
     
     throw 0;
@@ -142,7 +131,7 @@ PyObject* Elements::get_dict()
     if(nelems==0) Py_RETURN_NONE;
     PyObject* dict= PyDict_New();
     for(size_t i=0;i<nelems;i++)
-        PyDict_SetItemString(dict,names[i],PyInt_FromSize_t(i));
+        PyDict_SetItemString(dict,names[i].c_str(),PyInt_FromSize_t(i));
     return dict;
 }
 /*--------------------------------------------

@@ -71,7 +71,7 @@ void ExportCFGMD::write_body_sort(FILE* fp)
         unsigned int* id_map=natms==0 ? NULL:new unsigned int[natms];
         for(int i=0;i<natms;i++) id_map[id[i]]=i;
         
-        char** elem_names=atoms->elements.names;
+        std::string* elem_names=atoms->elements.names;
         type0* masses=atoms->elements.masses;
         elem_type* elem=atoms->elem->begin_dump();
         int curr_elem=-1;
@@ -88,7 +88,7 @@ void ExportCFGMD::write_body_sort(FILE* fp)
             {
                 curr_elem=__curr_elem;
                 fprintf(fp,"%lf\n",masses[curr_elem]);
-                fprintf(fp,"%s\n",elem_names[curr_elem]);
+                fprintf(fp,"%s\n",elem_names[curr_elem].c_str());
             }
             
             atoms->x->print(fp,iatm);
@@ -116,7 +116,7 @@ void ExportCFGMD::write_body(FILE* fp)
         if(x_d_inc) atoms->x_d2s_d_dump();
         int natms=atoms->natms;
         
-        char** elem_names=atoms->elements.names;
+        std::string* elem_names=atoms->elements.names;
         type0* masses=atoms->elements.masses;
         elem_type* elem=atoms->elem->begin_dump();
         int curr_elem=-1;
@@ -131,7 +131,7 @@ void ExportCFGMD::write_body(FILE* fp)
             {
                 curr_elem=__curr_elem;
                 fprintf(fp,"%lf\n",masses[curr_elem]);
-                fprintf(fp,"%s\n",elem_names[curr_elem]);
+                fprintf(fp,"%s\n",elem_names[curr_elem].c_str());
             }
             
             atoms->x->print(fp,i);

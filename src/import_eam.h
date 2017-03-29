@@ -23,13 +23,13 @@ namespace MAPP_NS
         type0**&,MPI_Comm=MPI_COMM_WORLD);
         
         template<size_t N0,size_t N1>
-        static void setfl(size_t,char**,std::string,
+        static void setfl(size_t,std::string*,std::string,
         type0&,type0&,size_t&,size_t&,
         type0(***&)[N0],type0(***&)[N0],type0(**&)[N1],
         type0**&,MPI_Comm=MPI_COMM_WORLD);
         
         template<size_t N0,size_t N1>
-        static void fs(size_t,char**,std::string,
+        static void fs(size_t,std::string*,std::string,
         type0&,type0&,size_t&,size_t&,
         type0(***&)[N0],type0(***&)[N0],type0(**&)[N1],
         type0**&,MPI_Comm=MPI_COMM_WORLD);
@@ -342,7 +342,7 @@ type0**& r_c,MPI_Comm world)
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ImportEAM::setfl(size_t nelems,char** elems,std::string file,
+void ImportEAM::setfl(size_t nelems,std::string* elems,std::string file,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)
@@ -421,7 +421,7 @@ type0**& r_c,MPI_Comm world)
     {
         int ielem=-1;
         for(int j=0;j<nelems&& ielem==-1 ;j++)
-            if(!strcmp(args[1+i],elems[j]))
+            if(!strcmp(args[1+i],elems[j].c_str()))
             {
                 found[j]=true;
                 ielem=j;
@@ -435,7 +435,7 @@ type0**& r_c,MPI_Comm world)
         {
             dealloc();
             throw Print::vprintf("%s file does not contain parameters for element %s",
-            fr.file,elems[i]);
+            fr.file,elems[i].c_str());
         }
     }
     
@@ -598,7 +598,7 @@ type0**& r_c,MPI_Comm world)
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ImportEAM::fs(size_t nelems,char** elems,std::string file,
+void ImportEAM::fs(size_t nelems,std::string* elems,std::string file,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)
@@ -677,7 +677,7 @@ type0**& r_c,MPI_Comm world)
     {
         int ielem=-1;
         for(int j=0;j<nelems&& ielem==-1 ;j++)
-            if(!strcmp(args[1+i],elems[j]))
+            if(!strcmp(args[1+i],elems[j].c_str()))
             {
                 found[j]=true;
                 ielem=j;
@@ -691,7 +691,7 @@ type0**& r_c,MPI_Comm world)
         {
             dealloc();
             throw Print::vprintf("%s file does not contain parameters for element %s",
-            fr.file,elems[i]);
+            fr.file,elems[i].c_str());
         }
     }
     

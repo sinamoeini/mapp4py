@@ -19,7 +19,7 @@ namespace MAPP_NS
         var<size_t> __nelems__;
         size_t nelems;
         elem_type __nelems;
-        char** names;
+        std::string* names;
         type0* masses;
         
         Elements();

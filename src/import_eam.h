@@ -84,7 +84,7 @@ type0**& r_c,MPI_Comm world)
     size_t nelems=nfiles;
     size_t tot_nrs=0,tot_nrhos=0;
     size_t max_nr=0,max_nrho=0;
-    size_t line_cpcty=0,args_cpcty=0,nargs=0;
+    size_t line_cpcty=0,args_cpcty=0;
     
     size_t* nrs=new size_t[nelems];
     size_t* nrhos=new size_t[nelems];
@@ -135,10 +135,10 @@ type0**& r_c,MPI_Comm world)
             dealloc();
             throw Print::vprintf("%s file ended immaturely",files[i].c_str());
         }
-        nargs=frs[i].hash_remover(line);
+        //nargs=frs[i].hash_remover(line);
         
-        
-        if(sscanf(line," %zu %lf %zu %lf ",nrhos+i,drhos+i,nrs+i,drs+i)!=4)
+        type0 __r_c;
+        if(sscanf(line," %zu %lf %zu %lf %lf",nrhos+i,drhos+i,nrs+i,drs+i,&__r_c)!=5)
         {
             dealloc();
             throw Print::vprintf("invalid line in %s file: %s",frs[i].file,line);

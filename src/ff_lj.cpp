@@ -66,84 +66,6 @@ ForceFieldLJ::~ForceFieldLJ()
     Memory::dealloc(offset);
 }
 /*--------------------------------------------
- python constructor
- --------------------------------------------*/
-void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
-{
-    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods.ml_name="ff_lj";
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
-    {
-        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        
-        FuncAPI<symm<type0**>,symm<type0**>,symm<type0**>,bool> f("ff_lj",{"eps","sigma","r_c","shift"});
-        f.noptionals=1;
-        f.v<0>().dynamic_size(nelems,nelems);
-        f.logics<0>()[0]=VLogics("gt",0.0);
-        f.v<1>().dynamic_size(nelems,nelems);
-        f.logics<1>()[0]=VLogics("gt",0.0);
-        f.v<2>().dynamic_size(nelems,nelems);
-        f.logics<2>()[0]=VLogics("gt",0.0);
-        f.val<3>()=false;
-        
-        if(f(args,kwds)) return NULL;
-        
-        delete __self->ff;
-        __self->ff=new ForceFieldLJ(__self->atoms,std::move(f.val<0>()),std::move(f.val<1>()),std::move(f.val<2>()),f.val<3>());
-        Py_RETURN_NONE;
-    };
-
-    tp_methods.ml_doc=R"---(
-    ff_lj(eps,sigma,r_c,shift=False)
-   
-    Lennard-Jones potential
-    
-    
-    see Notes section below
-    
-    Parameters
-    ----------
-    eps : symmetric double[nelems][nelems]
-        :math:`\epsilon`
-    sigma : symmetric double[nelems][nelems]
-        :math:`\sigma`
-    r_c : symmetric double[nelems][nelems]
-        :math:`r_c`
-    shift : bool
-        shift the tail if set to True
-    
-    Returns
-    -------
-    None
-   
-    Notes
-    -----
-    This is the famous Lennard Jones potential
-    
-    .. math::
-        U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
-        \left\{\begin{array}{ll}
-        4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<r^{\alpha\beta}_c\\
-        0 &r_{ij}>r^{\alpha\beta}_c
-        \end{array}\right.
-    
-    Examples
-    --------
-    Kob-Anderson potential
-    ::
-     
-        >>> from mapp import md
-        >>> sim=md.cfg("configs/KA.cfg")
-        >>> sim.ff_lj(sigma=[[1.0],[0.8,0.88]],
-                      eps=[[1.0],[1.5,0.5]],
-                      r_c=[[2.5],[2.0,2.2]],
-                      shift=False)
-        
-    )---";
-}
-/*--------------------------------------------
  initiate before a run
  --------------------------------------------*/
 void ForceFieldLJ::init()
@@ -326,4 +248,82 @@ void ForceFieldLJ::energy_calc()
         }
     }
 
+}
+/*--------------------------------------------
+ python constructor
+ --------------------------------------------*/
+void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="ff_lj";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
+        
+        FuncAPI<symm<type0**>,symm<type0**>,symm<type0**>,bool,std::string*> f("ff_lj",{"eps","sigma","r_c","shift","elems"});
+        f.noptionals=2;
+        f.logics<0>()[0]=VLogics("ge",0.0);
+        f.logics<1>()[0]=VLogics("gt",0.0);
+        f.logics<2>()[0]=VLogics("ge",0.0);
+        f.val<3>()=false;
+        
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
+        if(f(args,kwds)) return NULL;
+        if(f.remap<4,0,1,2>("elements present in system",names,nelems))
+            return NULL;
+        
+        delete __self->ff;
+        __self->ff=new ForceFieldLJ(__self->atoms,f.mov<0>(),f.mov<1>(),f.mov<2>(),f.val<3>());
+        Py_RETURN_NONE;
+    };
+
+    tp_methods.ml_doc=R"---(
+    ff_lj(eps,sigma,r_c,shift=False)
+   
+    Lennard-Jones potential
+    
+    
+    see Notes section below
+    
+    Parameters
+    ----------
+    eps : symmetric double[nelems][nelems]
+        :math:`\epsilon`
+    sigma : symmetric double[nelems][nelems]
+        :math:`\sigma`
+    r_c : symmetric double[nelems][nelems]
+        :math:`r_c`
+    shift : bool
+        shift the tail if set to True
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is the famous Lennard Jones potential
+    
+    .. math::
+        U=\frac{1}{2}\sum_{i}\sum_{j\neq i}
+        \left\{\begin{array}{ll}
+        4\epsilon_{\alpha\beta}\biggl[\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^{12}-\left( \frac{\sigma_{\alpha\beta}}{r_{ij}}\right)^6\biggr] &r_{ij}<r^{\alpha\beta}_c\\
+        0 &r_{ij}>r^{\alpha\beta}_c
+        \end{array}\right.
+    
+    Examples
+    --------
+    Kob-Anderson potential
+    ::
+     
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/KA.cfg")
+        >>> sim.ff_lj(sigma=[[1.0],[0.8,0.88]],
+                      eps=[[1.0],[1.5,0.5]],
+                      r_c=[[2.5],[2.0,2.2]],
+                      shift=False)
+        
+    )---";
 }

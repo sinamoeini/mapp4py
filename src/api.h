@@ -9,6 +9,8 @@ using namespace MAPP_NS;
  ------------------------------------------------------------------------------------------------------------------------------------*/
 namespace MAPP_NS
 {
+               
+    
     template<class T>
     class VarAPI
     {
@@ -434,20 +436,22 @@ namespace MAPP_NS
         template <size_t I>
         Logics* logics()
         {return get<I>().logics;}
-
-    };
-    template <>
-    class FuncAPI<>
-    {
-    private:
-    protected:
-    public:
-        std::string name;
-        FuncAPI(const char* __name):
-        name(__name){}
-        int operator()(PyObject*,PyObject*);
-        template<class F>
-        PyObject* operator()(F,PyObject*,PyObject*,PyObject*);
+        
+        /*
+        template<size_t I,size_t I0,size_t ... Is>
+        void remap(const char*,const std::string*,const size_t);
+        */
+        
+        template<size_t I,size_t I0,size_t ... Is>
+        void ___remap(const char* name,const std::string* elems,const size_t nelems)
+        {
+            
+        }
+        
+        template<size_t,size_t,size_t ... Is,class ... TTs>
+        int remap(const char*,const std::string*,const size_t nelems,TTs& ...);
+        template<size_t,class ... TTs>
+        int remap(const char*,const std::string*,const size_t,TTs& ...);
     };
 }
 /*--------------------------------------------
@@ -553,6 +557,40 @@ PyObject* FuncAPI<T,Ts...>::operator()(F f,PyObject* cls,PyObject* args,PyObject
     func.reset();
     return ans;
 }
+/*------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------------------------------------------*/
+namespace MAPP_NS
+{
+    template <>
+    class FuncAPI<>
+    {
+    private:
+        template<class T,class ... Ts>
+        static void same_size(const std::string&,const size_t,T&,Ts&...);
+        template<class T>
+        static void same_size(const std::string&,const size_t,T&);
+        static void same_size(const std::string&,const size_t){}
+        template<class T,class ... Ts>
+        static void reset_n_remap(const size_t*,const size_t,T&,Ts& ...);
+        template<class T>
+        static void reset_n_remap(const size_t*,const size_t,T&);
+        static void reset_n_remap(const size_t*){};
+        static size_t* mapping(const std::string*,const size_t,const VarAPI<std::string*>&);
+    protected:
+    public:
+        std::string name;
+        FuncAPI(const char* __name):
+        name(__name){}
+        int operator()(PyObject*,PyObject*);
+        template<class F>
+        PyObject* operator()(F,PyObject*,PyObject*,PyObject*);
+        
+        template<class ... Ts>
+        static void __remap(const char*,const std::string*,const size_t,const VarAPI<std::string*>&,Ts&...);
+        
+    };
+}
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -582,5 +620,148 @@ PyObject* FuncAPI<>::operator()(F f,PyObject* cls,PyObject* args,PyObject* kwds)
         return NULL;
     return f();
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T,class ... Ts>
+void FuncAPI<>::same_size(const std::string& name,const size_t size,T& v,Ts& ... vs)
+{
+    if(v.__var__.rank>0 && size!=v.__var__.size)
+        throw "'"+v.__var__.name+"' is expected to have the same size as '"+name+"'";
+    
+    same_size(name,size,vs...);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
+void FuncAPI<>::same_size(const std::string& name,const size_t size,T& v)
+{
+    if(v.__var__.rank>0 && size!=v.__var__.size)
+        throw "'"+v.__var__.name+"' is expected to have the same size as '"+name+"'";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T,class ... Ts>
+void FuncAPI<>::reset_n_remap(const size_t* map,const size_t map_sz,T& v,Ts& ... vs)
+{
+    if(v.__var__.rank>0)
+        v.__var__.reset_n_remap(map,map_sz);
+    reset_n_remap(map,map_sz,vs...);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
+void FuncAPI<>::reset_n_remap(const size_t* map,const size_t map_sz,T& v)
+{
+    if(v.__var__.rank>0)
+        v.__var__.reset_n_remap(map,map_sz);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+inline size_t* FuncAPI<>::mapping(const std::string* elems,const size_t nelems,const VarAPI<std::string*>& v)
+{
+    
+    for(size_t i=0;i<v.__var__.size;i++)
+        for(size_t j=i+1;j<v.__var__.size;j++)
+            if(!strcmp(v.val[i].c_str(),v.val[j].c_str()))
+                throw "duplicate element '"+v.val[i]+"' in '"+v.__var__.name+"'";
+    
+    
+    size_t* map=new size_t[nelems];
+    
+    for(size_t i=0;i<nelems;i++)
+    {
+        bool found=false;
+        for(size_t j=0;j<v.__var__.size && !found;j++)
+            if(!strcmp(v.val[j].c_str(),elems[i].c_str()))
+            {
+                map[i]=j;
+                found=true;
+            }
+        
+        if(!found)
+        {
+            delete [] map;
+            throw "unable to find elment '"+elems[i]+"' in '"+v.__var__.name+"'";
+        }
+    }
+    
+    return map;
+    
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class ... Ts>
+void FuncAPI<>::__remap(const char* __elems_name,const std::string* __elems,const size_t __nelems,const VarAPI<std::string*>& __elem_api,Ts&... vs)
+{
+    if(__elem_api.val)
+    {
+        try
+        {
+            same_size(__elem_api.__var__.name,__elem_api.__var__.size,vs...);
+        }
+        catch(std::string& err_msg)
+        {
+            throw err_msg;
+        }
+        
+        size_t* map=NULL;
+        try
+        {
+            map=mapping(__elems,__nelems,__elem_api);
+        }
+        catch(std::string& err_msg)
+        {
+            throw err_msg;
+        }
+        
+        reset_n_remap(map,__nelems,vs ...);
+        delete [] map;
+    }
+    else
+    {
+        try
+        {
+            same_size(std::string(__elems_name),__nelems,vs...);
+        }
+        catch(std::string& err_msg)
+        {
+            throw err_msg;
+        }
+    }
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template <class T,class... Ts> template<size_t M,size_t I,size_t ... Is,class ... TTs>
+int FuncAPI<T,Ts...>::remap(const char* name,const std::string* elems,const size_t nelems,TTs& ... vs)
+{
+    return remap<M,Is...>(name,elems,nelems,vs ...,get<I>());
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template <class T,class... Ts> template<size_t M,class ... TTs>
+int FuncAPI<T,Ts...>::remap(const char* name,const std::string* elems,const size_t nelems,TTs& ... vs)
+{
+    try
+    {
+        FuncAPI<>::__remap(name,elems,nelems,get<M>(),vs ...);
+    }
+    catch(std::string& err_msg)
+    {
+        PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+        return -1;
+    }
+    return 0;
+}
+
 
 #endif

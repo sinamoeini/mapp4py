@@ -77,24 +77,22 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        
-        FuncAPI<type0*,type0**,type0**,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>,symm<type0**>>
-        f("ff_fs",{"A","t1","t2","k1","k2","k3","r_c_phi","r_c_rho"});
 
-        f.v<0>().dynamic_size(nelems);
-        f.logics<0>()[0]=VLogics("gt",0.0);
-        f.v<1>().dynamic_size(nelems,nelems);
-        f.v<2>().dynamic_size(nelems,nelems);
-        f.v<3>().dynamic_size(nelems,nelems);
-        f.v<4>().dynamic_size(nelems,nelems);
-        f.v<5>().dynamic_size(nelems,nelems);
-        f.v<6>().dynamic_size(nelems,nelems);
-        f.logics<6>()[0]=VLogics("gt",0.0);
-        f.v<7>().dynamic_size(nelems,nelems);
-        f.logics<7>()[0]=VLogics("gt",0.0);
         
+        FuncAPI<type0*,sq<type0**>,sq<type0**>,symm<type0**>,symm<type0**>,
+        symm<type0**>,symm<type0**>,symm<type0**>,std::string*>
+        f("ff_fs",{"A","t1","t2","k1","k2","k3","r_c_phi","r_c_rho","elems"});
+        f.noptionals=1;
+        f.logics<0>()[0]=VLogics("gt",0.0);
+        f.logics<6>()[0]=VLogics("ge",0.0);
+        f.logics<7>()[0]=VLogics("ge",0.0);
+        
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
+        if(f.remap<8,0,1,2,3,4,5,6,7>("elements present in system",names,nelems))
+            return NULL;
+        
         
         delete __self->ff;
         __self->ff=new ForceFieldFS(__self->atoms,f.mov<0>(),f.mov<1>(),f.mov<2>(),

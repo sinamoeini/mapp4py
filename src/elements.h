@@ -33,6 +33,7 @@ namespace MAPP_NS
         elem_type find(const char*);
         void assign_color_rad(const char*,type0(&)[4]);
         PyObject* get_dict();
+        size_t* map(const std::string*,const size_t);
     };
 }
 

@@ -50,6 +50,7 @@ namespace MAPP_NS
     
     
     template<class T>class symm{};
+    template<class T>class sq{};
     
     template<class T>class type_attr{};
     template<>class type_attr<bool>    
@@ -86,6 +87,7 @@ namespace MAPP_NS
     
     template<class T> class remove_matrix_attr{public: typedef T type;};
     template<class T> class remove_matrix_attr<symm<T>>{public: typedef T type;};
+    template<class T> class remove_matrix_attr<sq<T>>{public: typedef T type;};
 }
 using namespace MAPP_NS;
 /*------------------------------------------------------------------------------------------------------------------------------------
@@ -97,6 +99,7 @@ namespace MAPP_NS
     class py_var
     {
         friend class py_var<T*>;
+        size_t get_size() const{return 0;}
     private:
         py_var(size_t*,void*&);
         py_var(int,long*,PyObject**&);
@@ -116,6 +119,7 @@ namespace MAPP_NS
         bool operator==(const py_var<T>&);
         static std::string err_msg();
         const static std::string type_name();
+        bool is_sq(){return true;}
     };
 }
 /*--------------------------------------------
@@ -311,6 +315,8 @@ namespace MAPP_NS
         bool operator==(const py_var<T*>&);
         py_var<T>& operator[](const size_t);
         
+        bool is_sq();
+        bool is_sq(size_t);
         bool is_square();
         bool is_square(size_t);
         bool is_triangular();
@@ -328,6 +334,8 @@ namespace MAPP_NS
         
         static std::string err_msg();
         static const std::string type_name();
+    private:
+        size_t get_size() const{return size;}
         
     };
 }
@@ -638,6 +646,29 @@ py_var<T>& py_var<T*>::operator[](const size_t i)
  
  --------------------------------------------*/
 template<class T>
+bool py_var<T*>::is_sq()
+{
+    if(get_rank()==1) return true;
+    for(size_t i=0;i<size;i++)
+    {
+        if(vars[i].get_size()!=size) return false;
+        if(!vars[i].is_sq()) return false;
+    }
+    return true;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
+bool py_var<T*>::is_sq(size_t __size)
+{
+    if(size!=__size) return false;
+    return is_sq();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
 bool py_var<T*>::is_square()
 {
     if(get_rank()<2) return false;
@@ -898,6 +929,7 @@ namespace MAPP_NS
         
         
         Var(int,size_t,const char*);
+        Var(int,size_t,const std::string&);
         Var(int,size_t,std::string&&);
         Var(int,size_t);
         virtual ~Var();
@@ -1006,6 +1038,7 @@ namespace MAPP_NS
         var(T&,const char*);
         
         var(T&,std::string&&,py_var<T_EQUIV>&,void**);
+        var(T&,var<T>&,void**,const size_t*,const size_t);
         var();
         ~var();
         var(T&&);
@@ -1145,6 +1178,20 @@ Var(get_rank(),base_hash_code(),std::move(name_))
 {
     size=1;
     v=pv;
+}
+/*--------------------------------------------
+ constructor:
+ usage: indirect by same template class with
+ one upper rank for remaping purpose
+ --------------------------------------------*/
+template<class T>
+var<T>::var(T& v,var<T>& __var,void**,const size_t*,const size_t):
+val(type_attr<T>::zero),
+ptr(&v),
+Var(get_rank(),base_hash_code(),__var.name)
+{
+    size=1;
+    *ptr=*__var.ptr;
 }
 /*--------------------------------------------
  default constructor:
@@ -1973,6 +2020,7 @@ namespace MAPP_NS
         template<class... Ts>
         var(T*&,const char*,Ts&&...);
         var(T*&,std::string&&,py_var<T_EQUIV>&,void**);
+        var(T*&,var<T*>&,void**,const size_t*,const size_t);
         var();
         virtual ~var();
         var(T*&);
@@ -1988,6 +2036,7 @@ namespace MAPP_NS
         void set(PyObject*);
         bool set_nothrow(PyObject*);
         void set(py_var<T_EQUIV>&);
+        void reset_n_remap(const size_t*,size_t);
         PyObject* get();
         std::string type_name(){return type_attr<T_BASE>::name()+" "+type_name(__dsizes__);}
         template<class ... Ts>
@@ -2137,8 +2186,8 @@ Var(get_rank(),base_hash_code(),name_)
  usage: direct
  --------------------------------------------*/
 template<class T>template<class... Ts>
-var<T*>::var(T*& v,const char* name_,Ts&&...____dsizes__):
-Var(get_rank(),base_hash_code(),name_),
+var<T*>::var(T*& v,const char* __name,Ts&&...____dsizes__):
+Var(get_rank(),base_hash_code(),__name),
 vars(NULL),
 __dsizes__(NULL),
 ptr(&v)
@@ -2170,6 +2219,28 @@ ptr(&v)
     {
         (vars+i)->~var<T>();
         new (vars+i) var<T>((*ptr)[i],name+"["+Print::to_string(i)+"]",pv[i],data_ptr+1);
+    }
+    *data_ptr=v+size;
+}
+/*--------------------------------------------
+ constructor:
+ usage: indirect by same template class with
+ one upper rank for remaping purpose
+ --------------------------------------------*/
+template<class T>
+var<T*>::var(T*& v,var<T*>& __var,void** data_ptr,const size_t* map,const size_t map_sz):
+Var(get_rank(),base_hash_code(),__var.name),
+vars(NULL),
+__dsizes__(NULL),
+ptr(&v)
+{
+    v=static_cast<T*>(*data_ptr);
+    size=map_sz;
+    vars=new var<T>[size];
+    for(size_t i=0;i<size;i++)
+    {
+        (vars+i)->~var<T>();
+        new (vars+i) var<T>((*ptr)[i],__var[map[i]],data_ptr+1,map,map_sz);
     }
     *data_ptr=v+size;
 }
@@ -2410,6 +2481,42 @@ void var<T*>::set(py_var<T_EQUIV>& pv)
  
  --------------------------------------------*/
 template<class T>
+void var<T*>::reset_n_remap(const size_t* map,const size_t map_sz)
+{
+    
+    T* __data=*ptr;
+    *ptr=NULL;
+    var<T>* __vars=vars;
+    vars=NULL;
+    
+    size_t sz[rank];
+    sz[0]=map_sz;
+    for(int i=1;i<rank;i++) sz[i]=map_sz*sz[i-1];
+    void* data_ptr[rank];
+    for(int i=0;i<rank;i++) data_ptr[i]=NULL;
+    allocate(data_ptr,*ptr,sz);
+
+    
+    
+    T* v=*ptr;
+    size=map_sz;
+    vars=new var<T>[size];
+    for(size_t i=0;i<size;i++)
+    {
+        (vars+i)->~var<T>();
+        new (vars+i) var<T>((*ptr)[i],__vars[map[i]],data_ptr+1,map,map_sz);
+    }
+    *data_ptr=v+size;
+    
+    delete [] __vars;
+    deallocate(__data);
+    delete [] __dsizes__;
+    __dsizes__=NULL;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
 PyObject* var<T*>::get()
 {
     if(std::is_same<T,char>::value || std::is_same<T,const char>::value)
@@ -2558,7 +2665,138 @@ std::string var<symm<T>>::type_name()
 {
     return std::string("symmetric ")+var<T>::type_name();
 }
-
-
+/*------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------------------------------------------*/
+namespace MAPP_NS
+{
+    template<class T>
+    class var<sq<T>>:public var<T>
+    {
+    public:
+        typedef typename var<T>::T_BASE T_BASE;
+        typedef typename var<T>::T_EQUIV T_EQUIV;
+        var(T&,const char*);
+        template<class... Ts>
+        var(T&,const char*,Ts&&...);
+        ~var();
+        void set(PyObject*);
+        bool set_nothrow(PyObject*);
+        std::string type_name();
+    };
+    
+}
+/*--------------------------------------------
+ desstructor:
+ --------------------------------------------*/
+template<class T>
+var<sq<T>>::~var()
+{
+}
+/*--------------------------------------------
+ constructor:
+ usage: direct
+ --------------------------------------------*/
+template<class T>
+var<sq<T>>::var(T& v,const char* name_):
+var<T>(v,name_)
+{
+}
+/*--------------------------------------------
+ constructor:
+ usage: direct
+ --------------------------------------------*/
+template<class T>template<class... Ts>
+var<sq<T>>::var(T& v,const char* name_,Ts&&...____dsizes__):
+var<T>(v,name_,____dsizes__...)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
+void var<sq<T>>::set(PyObject* py_obj)
+{
+    py_var<T_EQUIV> pv;
+    try
+    {
+        pv=py_var<T_EQUIV>(py_obj);
+    }
+    catch(int)
+    {
+        try
+        {
+            pv=py_var<T_EQUIV>(&py_obj);
+        }
+        catch(int)
+        {
+            throw "fialure to deduce C++ type <"+py_var<T_EQUIV>::type_name()+"> or <"
+            +py_var<typename std::remove_pointer<T_EQUIV>::type>::type_name()+">";
+        }
+    }
+    
+    if(!pv.is_sq())
+        throw "fialure to deduce type <"+type_name()+">: ";
+    
+    try
+    {
+        var<T>::is_size_compatible(pv,var<T>::name,var<T>::__dsizes__);
+    }
+    catch (std::string& err_msg)
+    {
+        throw "fialure to deduce type <"+type_name()+">: "+err_msg;
+    }
+    
+    var<T>::set(pv);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
+bool var<sq<T>>::set_nothrow(PyObject* py_obj)
+{
+    py_var<T_EQUIV> pv;
+    try
+    {
+        pv=py_var<T_EQUIV>(py_obj);
+    }
+    catch(int)
+    {
+        try
+        {
+            pv=py_var<T_EQUIV>(&py_obj);
+        }
+        catch(int)
+        {
+            return false;
+        }
+    }
+    
+    if(!pv.is_sq())
+        return false;
+    
+    if(!var<T>::is_size_compatible_nothrow(pv,var<T>::__dsizes__))
+        return false;
+    
+    var<T>::set(pv);
+    return true;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class T>
+std::string var<sq<T>>::type_name()
+{
+    if(Var::rank==0)
+        return var<T>::type_name();
+    else if(Var::rank==1)
+        return var<T>::type_name();
+    else if(Var::rank==2)
+        return std::string("square ")+var<T>::type_name();
+    else if(Var::rank==3)
+        return std::string("cube ")+var<T>::type_name();
+    
+    return std::string("hyper_cube ")+var<T>::type_name();
+}
 
 #endif

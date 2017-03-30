@@ -126,6 +126,34 @@ elem_type Elements::find(const char* name)
 /*--------------------------------------------
  find an elemrnt number given its name
  --------------------------------------------*/
+size_t* Elements::map(const std::string* __names,const size_t __n)
+{
+    if(!nelems) return NULL;
+    
+    size_t* map=new size_t[nelems];
+    
+    for(size_t i=0;i<nelems;i++)
+    {
+        bool found=false;
+        for(size_t j=0;j<__n && !found;j++)
+            if(!strcmp(__names[j].c_str(),names[i].c_str()))
+            {
+                map[i]=j;
+                found=true;
+            }
+        
+        if(!found)
+        {
+            delete [] map;
+            throw names[i];
+        }
+    }
+    
+    return map;
+}
+/*--------------------------------------------
+ find an elemrnt number given its name
+ --------------------------------------------*/
 PyObject* Elements::get_dict()
 {
     if(nelems==0) Py_RETURN_NONE;

@@ -595,11 +595,13 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
         
-        FuncAPI<std::string*> f("ff_eam_funcfl",{"funcfl_files"});
-        f.v<0>().dynamic_size(nelems);
+        FuncAPI<std::string*,std::string*> f("ff_eam_funcfl",{"funcfl_files","elems"});
+        f.noptionals=1;
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
+        if(f.remap<1,0>("elements present in system",names,nelems)) return NULL;
         
         size_t nr,nrho;
         type0 dr,drho;

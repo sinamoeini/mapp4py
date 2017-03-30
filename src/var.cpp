@@ -115,6 +115,19 @@ root(false)
 /*--------------------------------------------
  
  --------------------------------------------*/
+Var::Var(int __rank,size_t hash_code_,const std::string& __name):
+rank(__rank),
+hash_code(hash_code_),
+name(__name),
+obj_set(false),
+pushed(true),
+root(false)
+{
+    push(this);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 Var::Var(int rank_,size_t hash_code_):
 rank(rank_),
 hash_code(hash_code_),

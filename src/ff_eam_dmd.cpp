@@ -1029,13 +1029,14 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        
-        FuncAPI<std::string*,type0*> f("ff_eam_funcfl",{"funcfl_files","r_crd"});
-        f.v<0>().dynamic_size(nelems);
-        f.v<1>().dynamic_size(nelems);
+        FuncAPI<std::string*,type0*,std::string*> f("ff_eam_funcfl",{"funcfl_files","r_crd","elems"});
+        f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
+        
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
+        if(f.remap<2,0,1>("elements present in system",names,nelems)) return NULL;
         
         size_t nr,nrho;
         type0 dr,drho;
@@ -1110,11 +1111,14 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        FuncAPI<std::string,type0*> f("ff_eam_setfl",{"setfl_file","r_crd"});
-        f.v<1>().dynamic_size(nelems);
+        FuncAPI<std::string,type0*,std::string*> f("ff_eam_setfl",{"setfl_file","r_crd","elems"});
+        f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
+        
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
+        if(f.remap<2,1>("elements present in system",names,nelems)) return NULL;
         
         
         size_t nr,nrho;
@@ -1190,11 +1194,14 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        size_t& nelems=__self->atoms->elements.nelems;
-        FuncAPI<std::string,type0*> f("ff_eam_fs",{"fs_file","r_crd"});
-        f.v<1>().dynamic_size(nelems);
+        FuncAPI<std::string,type0*,std::string*> f("ff_eam_fs",{"fs_file","r_crd","elems"});
+        f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
+        
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
+        if(f.remap<2,1>("elements present in system",names,nelems)) return NULL;
         
         size_t nr,nrho;
         type0 dr,drho;

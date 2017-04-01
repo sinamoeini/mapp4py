@@ -84,6 +84,10 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
         unsigned int iatm;
         
         vec** usr_vecs=vecs+ndef_vecs;
+        
+        for(int i=0;i<nelems;i++)
+            fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        
         for(int i=0;i<natms;i++)
         {
             iatm=id_map[i];
@@ -152,11 +156,12 @@ void ExportCFGDMD::write_body(FILE* fp)
         type0* __c;
         type0 max_c;
         vec** usr_vecs=vecs+ndef_vecs;
+        
+        for(int i=0;i<nelems;i++)
+            fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        
         for(int i=0;i<natms;i++)
         {
-            
-            
-            
             __c=c+i*nelems;
             max_c=*__c;
             __curr_elem=0;

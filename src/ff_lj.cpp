@@ -280,7 +280,7 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
     };
 
     tp_methods.ml_doc=R"---(
-    ff_lj(eps,sigma,r_c,shift=False)
+    ff_lj(eps,sigma,r_c,shift=False,elems=None)
    
     Lennard-Jones potential
     
@@ -297,6 +297,8 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
         :math:`r_c`
     shift : bool
         shift the tail if set to True
+    elems : string[nelems]
+        mapping elements 
     
     Returns
     -------

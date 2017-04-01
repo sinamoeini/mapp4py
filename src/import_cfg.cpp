@@ -859,11 +859,14 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
-    tp_methods.ml_doc="this function reads a cfg file and returns an atoms_dmd object";
     tp_methods.ml_doc=R"---(
     import(N,cfg_file,mpi=None)
     
-    Import cfg file.
+    Imports cfg file :py:class:`mapp.dmd.atoms`.
+    
+    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format. Please see explanations below.
+    
+    
         
     Parameters
     ----------
@@ -874,8 +877,69 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     
     Returns
     -------
-    None
-   
+    mapp.dmd.atoms
+       object that holds the configuration of the system
+    
+    Notes
+    -----
+    
+    The cfg format for a DMD simulation is different from a regular cfg file structure. This is because in addition to giving the position of every atom one needs to specify the pertinent colors (:math:`c`) and :math:`\alpha` values. Suppose that our simulation is consist of n types of atoms. Therefore, for each site/atom we need to specify :math:`3 + 2n` values (:math:`3` for position, :math:`n` for :math:`\alpha` and :math:`n` for :math:`c`). For the same reason only `extended cfg <http://li.mit.edu/Archive/Graphics/A/#extended_CFG>`_ format file can be used. Ignoring the header part of cfg file each line (except for the lines defining mass and element) should look like this:
+    
+    .. math::
+        \underbrace{s_x\quad s_y \quad s_z}_{\text{fractional coordinates}} \quad \alpha_0 \quad \alpha_1 \quad \cdots \quad \alpha_{n-1} \quad c_0 \quad c_1 \quad \cdots \quad c_{n-1}
+    
+    This will take care of per atom properties. It remains to determine the element to which each of :math:`c` and :math:`\alpha` components refer to. This is the same as the elements' in the file: :math:`\alpha_0` and :math:`c_0` refer to first element appearing in the file, :math:`\alpha_1` and :math:`c_1` to second and so on.
+    
+    Examples
+    --------
+    
+    ::
+    
+       Number of particles = 24
+       A = 1.0 Angstrom (basic length-scale)
+       H0(1,1) =   2.472772 A
+       H0(1,2) =   0.000000 A
+       H0(1,3) =   0.000000 A
+       H0(2,1) =   0.000000 A
+       H0(2,2) =   4.038020 A
+       H0(2,3) =   0.000000 A
+       H0(3,1) =   0.000000 A
+       H0(3,2) =   0.000000 A
+       H0(3,3) =   6.994057 A
+       .NO_VELOCITY.
+       entry_count = 7
+       auxiliary[0] = alpha_0 [reduced unit]
+       auxiliary[1] = alpha_1 [reduced unit]
+       auxiliary[2] = c_0 [reduced unit]
+       auxiliary[3] = c_1 [reduced unit]
+       55.845000 
+       Fe 
+       0.000000 0.50000 0.50000 0.1 0.0 1.0 -1.0
+       0.000000 0.00000 0.00000 0.1 0.0 1.0 -1.0
+       0.666667 0.50000 0.16666 0.1 0.0 1.0 -1.0
+       0.666667 0.00000 0.66666 0.1 0.0 1.0 -1.0
+       0.333333 0.50000 0.83333 0.1 0.0 1.0 -1.0
+       0.333333 0.00000 0.33333 0.1 0.0 1.0 -1.0
+       1.00794 
+       H 
+       0.000000 0.50000 0.00000 0.0 0.1 -1.0 0.00000001
+       0.000000 0.00000 0.50000 0.0 0.1 -1.0 0.00000001
+       0.666666 0.50000 0.66666 0.0 0.1 -1.0 0.00000001
+       0.666666 0.00000 0.16666 0.0 0.1 -1.0 0.00000001
+       0.000000 0.75000 0.25000 0.0 0.1 -1.0 0.00000001
+       0.000000 0.25000 0.75000 0.0 0.1 -1.0 0.00000001
+       0.000000 0.75000 0.75000 0.0 0.1 -1.0 0.00000001
+       0.000000 0.25000 0.25000 0.0 0.1 -1.0 0.00000001
+       0.666666 0.75000 0.41666 0.0 0.1 -1.0 0.00000001
+       0.333333 0.50000 0.33333 0.0 0.1 -1.0 0.00000001
+       0.666666 0.25000 0.91666 0.0 0.1 -1.0 0.00000001
+       0.666666 0.75000 0.91666 0.0 0.1 -1.0 0.00000001
+       0.333333 0.75000 0.08333 0.0 0.1 -1.0 0.00000001
+       0.333333 0.25000 0.58333 0.0 0.1 -1.0 0.00000001
+       0.333333 0.00000 0.83333 0.0 0.1 -1.0 0.00000001
+       0.666666 0.25000 0.41666 0.0 0.1 -1.0 0.00000001
+       0.333333 0.75000 0.58333 0.0 0.1 -1.0 0.00000001
+       0.333333 0.25000 0.08333 0.0 0.1 -1.0 0.00000001
     )---";
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*

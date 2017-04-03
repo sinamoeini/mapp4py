@@ -883,17 +883,19 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     Notes
     -----
     
-    The cfg format for a DMD simulation is different from a regular cfg file structure. This is because in addition to giving the position of every atom one needs to specify the pertinent colors (:math:`c`) and :math:`\alpha` values. Suppose that our simulation is consist of n types of atoms. Therefore, for each site/atom we need to specify :math:`3 + 2n` values (:math:`3` for position, :math:`n` for :math:`\alpha` and :math:`n` for :math:`c`). For the same reason only `extended cfg <http://li.mit.edu/Archive/Graphics/A/#extended_CFG>`_ format file can be used. Ignoring the header part of cfg file each line (except for the lines defining mass and element) should look like this:
+    The cfg format for a DMD simulation is different from a regular cfg file structure. This is because in addition to giving the position of every atom one needs to specify the pertinent colors (:math:`c`) and :math:`\alpha` values. Suppose that our simulation is consist of :math:`n` types of atoms. Therefore, for each site/atom we need to specify :math:`3 + 2n` values (:math:`3` for position, :math:`n` for :math:`\alpha` and :math:`n` for :math:`c`). For the same reason only `extended cfg <http://li.mit.edu/Archive/Graphics/A/#extended_CFG>`_ format file can be used. Ignoring the header part of cfg file each line (except for the lines defining mass and element) should look like this:
     
     .. math::
         \underbrace{s_x\quad s_y \quad s_z}_{\text{fractional coordinates}} \quad \alpha_0 \quad \alpha_1 \quad \cdots \quad \alpha_{n-1} \quad c_0 \quad c_1 \quad \cdots \quad c_{n-1}
     
-    This will take care of per atom properties. It remains to determine the element to which each of :math:`c` and :math:`\alpha` components refer to. This is the same as the elements' in the file: :math:`\alpha_0` and :math:`c_0` refer to first element appearing in the file, :math:`\alpha_1` and :math:`c_1` to second and so on.
+    This will take care of per atom properties. It remains to determine the element to which each of :math:`c` and :math:`\alpha` components refer to. This is the same as the elements' precedence order in the file: :math:`\alpha_0` and :math:`c_0` refer to first element appearing in the file, :math:`\alpha_1` and :math:`c_1` to second and so on. Also note that if you provide the properties of an element more than one time only the first appreance would count.
+    
+    Sometimes user intends to restrict a particular site to one or multiple elements, this is useful for studying interstitial diffusion. In that case user must provide the value :math:`-1.0` for :math:`c` corresponding to excluded sites.
     
     Examples
     --------
     
-    ::
+    Iron Hydrogen mixture, the possibility of exchange between Iron sites and Hydrogen sites has been eleminated. i.e. Iron cannot move to hydrogen sites and vice versa::
     
        Number of particles = 24
        A = 1.0 Angstrom (basic length-scale)
@@ -970,28 +972,6 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
         return op;
     };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

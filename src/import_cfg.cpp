@@ -606,17 +606,25 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
     tp_methods.ml_doc=R"---(
     import(cfg_file)
     
-    Import cfg file.
+    Imports cfg file to :py:class:`mapp.md.atoms`.
+    
+    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format to :py:class:`mapp.md.atoms` object. It should be thought of a specialized constructor for :py:class:`mapp.md.atoms` class.
         
     Parameters
     ----------
     cfg_file : string
-       path to cfg_file
+       path to cfg file
     
     Returns
     -------
-    None
+    mapp.dmd.atoms
+       object that holds the configuration of the system
    
+    
+    Notes
+    -----
+    both cfg formats (`standard <http://li.mit.edu/Archive/Graphics/A/#standard_CFG>`_ and `extended <http://li.mit.edu/Archive/Graphics/A/#extended_CFG>`_) are supported.
+    
     )---";
     
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
@@ -860,20 +868,18 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS | METH_CLASS;
     tp_methods.ml_name="import_cfg";
     tp_methods.ml_doc=R"---(
-    import(N,cfg_file,mpi=None)
+    import(N,cfg_file)
     
-    Imports cfg file :py:class:`mapp.dmd.atoms`.
+    Imports cfg file to :py:class:`mapp.dmd.atoms`.
     
-    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format. Please see explanations below.
+    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format to :py:class:`mapp.dmd.atoms` object. It should be thought of a specialized constructor for :py:class:`mapp.dmd.atoms` class.
     
-    
-        
     Parameters
     ----------
     N : int
        number of gaussian quadraure abscissas
     cfg_file : string
-       path to cfg_file
+       path to cfg file
     
     Returns
     -------

@@ -483,21 +483,13 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
                 min[j]=MIN(min[j],s[j]);
                 max[j]=MAX(max[j],s[j]);
             }
-            //printf("%d \t",i);
             
             printf("Exp[(%.0lf*k[[1]]+%.0lf*k[[2]]+%.0lf*k[[3]])*2*Pi*I]*{{%0.7lf,%0.7lf,%0.7lf},{%0.7lf,%0.7lf,%0.7lf},{%0.7lf,%0.7lf,%0.7lf}}",s[0],s[1],s[2],
                    __v0[0],__v0[1],__v0[2],
                    __v1[0],__v1[1],__v1[2],
                    __v2[0],__v2[1],__v2[2]);
 
-            
-            //printf("%.0lf,%.0lf,%.0lf\n",s[0],s[1],s[2]);
-            
-            /*
-            printf("[%.0lf,%.0lf,%.0lf]\t{{%0.7lf,%0.7lf,%0.7lf},{%0.7lf,%0.7lf,%0.7lf},{%0.7lf,%0.7lf,%0.7lf}}\n",s[0],s[1],s[2],
-                   __v0[0],__v0[1],__v0[2],
-                   __v1[0],__v1[1],__v1[2],
-                   __v2[0],__v2[1],__v2[2]);*/
+
             __v0+=__dim__;
             __v1+=__dim__;
             __v2+=__dim__;
@@ -526,6 +518,120 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
     quick function for calculateing phonon freq
     use with caution
 
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExamplePython::ml_phonon_1d(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="phonon_1d";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<OP<AtomsMD>,type0> f("phonon",{"atoms","max_disp"});
+        f.logics<1>()[0]=VLogics("ge",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        
+        type0 disp=f.v<1>();
+
+        
+        
+        AtomsMD* atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldMD* ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
+        
+        
+        DynamicMD* dynamic=new DynamicMD(atoms,ff,false,{},{},{});
+        dynamic->init();
+        
+        
+        type0 x0;
+        int N=5;
+        
+        x0=atoms->x->begin()[N*3];
+        atoms->x->begin()[N*3]+=disp;
+        dynamic->update(atoms->x);
+        ff->derivative_timer();
+        atoms->x->begin()[1]=x0;
+        
+        for(int i=0;i<N+1;i++)
+            printf("%lf\n",-ff->f->begin()[i*3]/disp);
+
+        dynamic->update(atoms->x);
+        
+        dynamic->fin();
+        delete dynamic;
+        Py_RETURN_NONE;
+    };
+
+
+    tp_methods.ml_doc=(char*)R"---(
+    quick function for calculateing phonon freq
+    use with caution
+
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExamplePython::ml_phonon_1dd(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="phonon_1dd";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<OP<AtomsMD>,type0> f("phonon",{"atoms","max_disp"});
+        f.logics<1>()[0]=VLogics("ge",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        
+        type0 disp=f.v<1>();
+        
+        
+        
+        AtomsMD* atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldMD* ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
+        
+        
+        DynamicMD* dynamic=new DynamicMD(atoms,ff,false,{},{},{});
+        dynamic->init();
+        
+        
+        type0 x0;
+
+        
+        for(int i=0;i<5;i++)
+        {
+            x0=atoms->x->begin()[i*3];
+            atoms->x->begin()[i*3]+=disp;
+            dynamic->update(atoms->x);
+            ff->derivative_timer();
+            atoms->x->begin()[i*3]=x0;
+            
+            for(int j=0;j<10;j++)
+            {
+                printf("J[[%d,%d]]=%.10lf;\n",i+1,j+1,-ff->f->begin()[j*3]/disp);
+                printf("J[[%d,%d]]=%.10lf;\n",11-(i+1),11-(j+1),-ff->f->begin()[j*3]/disp);
+            }
+        }
+        
+        
+        
+        dynamic->update(atoms->x);
+        
+        dynamic->fin();
+        delete dynamic;
+        Py_RETURN_NONE;
+    };
+    
+    
+    tp_methods.ml_doc=(char*)R"---(
+    quick function for calculateing phonon freq
+    use with caution
+    
     )---";
 }
 /*--------------------------------------------

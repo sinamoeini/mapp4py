@@ -131,11 +131,13 @@ void MAPP::init_module(void)
     PyModule_AddObject(module,"dmd",dmd);
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::MD::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MAPP::MD::methods[]={[0 ... 3]={NULL}};
 /*--------------------------------------------*/
 void MAPP::MD::setup_methods()
 {
     ExamplePython::ml_phonon(methods[0]);
+    ExamplePython::ml_phonon_1d(methods[1]);
+    ExamplePython::ml_phonon_1dd(methods[2]);
 }
 /*--------------------------------------------
  

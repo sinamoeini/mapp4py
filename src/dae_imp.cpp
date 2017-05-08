@@ -98,12 +98,24 @@ inline type0 DAEImplicit::update_c()
     
     MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
     volatile type0 c0;
+    type0 dc,curr_max_dc_rel_lcl=0.0;
+    
     for(int i=0;i<ncs;i++)
     {
         c0=c[i]-r*del_c[i];
         --++c0;
+        dc=fabs(c0-c_init[i]);
+        
         c[i]=c0;
+        if(dc>0.0)
+        {
+            if(c[i]==0.0)
+                curr_max_dc_rel_lcl=std::numeric_limits<type0>::infinity();
+            if(c[i]>0.0)
+                curr_max_dc_rel_lcl=MAX(dc/c_init[i],curr_max_dc_rel_lcl);
+        }
     }
+    MPI_Allreduce(&curr_max_dc_rel_lcl,&curr_max_dc_rel,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     return r;
 }
 /*--------------------------------------------
@@ -149,8 +161,7 @@ bool DAEImplicit::newton()
     memcpy(c,y_0,ncs*sizeof(type0));
     dynamic->update(atoms->c);
     type0 cost=F_norm();
-    
-    
+
     bool converge=false,diverge=false;
     while(iter<max_nnewton_iters && !converge && !diverge)
     {

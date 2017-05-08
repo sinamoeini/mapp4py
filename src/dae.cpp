@@ -2,6 +2,7 @@
 #include "atoms_dmd.h"
 #include "dynamic_dmd.h"
 #include "ff_dmd.h"
+#include "memory.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -10,11 +11,13 @@ DAE::DAE():
 max_nsteps(1000),
 a_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 min_dt(std::numeric_limits<type0>::epsilon()),
+c_init(NULL),
 c(NULL),
 c_d(NULL),
 xprt(NULL),
 ncs(0),
-ntally(1000)
+ntally(1000),
+max_dc_rel(std::numeric_limits<type0>::infinity())
 {
 }
 /*--------------------------------------------
@@ -64,12 +67,15 @@ void DAE::init_static()
     dynamic->init();
     c=atoms->c->begin();
     c_d=ff->c_d->begin();
+    Memory::alloc(c_init,ncs);
+    memcpy(c_init,c,ncs*sizeof(type0));
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void DAE::fin_static()
 {
+    Memory::dealloc(c_init);
     c=c_d=NULL;
     dynamic->fin();
     delete dynamic;
@@ -149,15 +155,16 @@ int DAE::setup_tp()
     
 }
 /*--------------------------------------------*/
-PyGetSetDef DAE::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAE::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_ntally(getset[3]);
-    getset_export(getset[4]);
+    getset_max_dc_rel(getset[3]);
+    getset_ntally(getset[4]);
+    getset_export(getset[5]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
@@ -237,6 +244,31 @@ void DAE::getset_min_dt(PyGetSetDef& getset)
         int ichk=min_dt.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->dae->min_dt=min_dt.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::getset_max_dc_rel(PyGetSetDef& getset)
+{
+    getset.name=(char*)"max_dc_rel";
+    getset.doc=(char*)R"---(
+    (double) maximum relative c variation
+    
+    Maximum relative c variation
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->dae->max_dc_rel,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<type0> max_dc_rel("max_dc_rel");
+        max_dc_rel.logics[0]=VLogics("gt",0.0);
+        int ichk=max_dc_rel.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->dae->max_dc_rel=max_dc_rel.val;
         return 0;
     };
 }

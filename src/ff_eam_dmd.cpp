@@ -18,7 +18,7 @@ ForceFieldEAMDMD::
 ForceFieldEAMDMD(AtomsDMD* atoms,
 type0 __dr,type0 __drho,size_t __nr,size_t __nrho,
 type0(***&& __r_phi_arr)[4],type0(***&& __rho_arr)[4],type0(**&& __F_arr)[5],
-type0**&& __cut,type0*&& __r_crd):
+type0**&& __cut,type0*&& __r_crd,type0*&& __zeta):
 ForceFieldDMD(atoms),
 dr(__dr),
 drho(__drho),
@@ -58,6 +58,7 @@ N(atoms->N)
     Memory::alloc(xi,N);
     Memory::alloc(wi_0,N);
     Memory::alloc(wi_1,N);
+    Memory::alloc(zeta,nelems);
     Memory::alloc(c_0,nelems);
     Memory::alloc(c_1,nelems);
     
@@ -70,8 +71,10 @@ N(atoms->N)
     for(elem_type elem_i=0;elem_i<nelems;elem_i++)
     {
         r_crd[elem_i]=__r_crd[elem_i];
+        zeta[elem_i]=__zeta[elem_i];
     }
     Memory::dealloc(__r_crd);
+    Memory::dealloc(__zeta);
     
     for(elem_type elem_i=0;elem_i<nelems;elem_i++)
     {
@@ -109,6 +112,7 @@ ForceFieldEAMDMD::~ForceFieldEAMDMD()
     Memory::dealloc(r_rho_arr);
     Memory::dealloc(r_phi_arr);
 
+    Memory::dealloc(zeta);
     Memory::dealloc(c_1);
     Memory::dealloc(c_0);
     Memory::dealloc(wi_1);
@@ -795,7 +799,7 @@ void ForceFieldEAMDMD::c_d_calc()
     
     type0 rsq,alpha_i,alpha_j,alpha_sq_i,alpha_sq_j,gamma_i,gamma_j,mu_i,mu_ji;
     type0 Q_i,gamma_ij_inv,theta_i,theta_j,exp_mod_Q_i,exp_mod_Q_j,d_i,d_j;
-    type0 dc_ij,c_1_ielem;
+    type0 dc_ij,c_1_ielem,zeta_ielem;
     size_t istart=0;
     int** neighbor_list=neighbor->neighbor_list_2nd;
     int* neighbor_list_size=neighbor->neighbor_list_size_2nd;
@@ -807,6 +811,7 @@ void ForceFieldEAMDMD::c_d_calc()
         alpha_sq_i=alpha_i*alpha_i;
         mu_i=mu[i];
         c_1_ielem=c_1[elem_vec[i]];
+        zeta_ielem=zeta[elem_vec[i]];
         const int neigh_sz=neighbor_list_size[i];
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
         {
@@ -814,8 +819,8 @@ void ForceFieldEAMDMD::c_d_calc()
             alpha_j=alpha[j];
             alpha_sq_j=alpha_j*alpha_j;
             rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
-            gamma_i=rsq/alpha_sq_i;
-            gamma_j=rsq/alpha_sq_j;
+            gamma_i=rsq/(zeta_ielem*alpha_sq_i);
+            gamma_j=rsq/(zeta_ielem*alpha_sq_j);
             mu_ji=beta*(mu[j]-mu_i);
             calc_Q(gamma_i,gamma_j,mu_ji,Q_i,gamma_ij_inv,theta_i);
             
@@ -834,6 +839,7 @@ void ForceFieldEAMDMD::c_d_calc()
             M_IJ[istart]=beta*(c[i]*cv[j/c_dim]*d_i*theta_i-c[j]*cv[i/c_dim]*d_j*theta_j);
             M_IJ[istart+1]=d_i;
             M_IJ[istart+2]=d_j;
+            
             
             __c_d[i]+=dc_ij;
 
@@ -1029,14 +1035,15 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string*,type0*,std::string*> f("ff_eam_funcfl",{"funcfl_files","r_crd","elems"});
+        FuncAPI<std::string*,type0*,type0*,std::string*> f("ff_eam_funcfl",{"funcfl_files","r_crd","zeta","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
+        f.logics<2>()[0]=VLogics("gt",0.0);
         
         const std::string* names=__self->atoms->elements.names;
         const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
-        if(f.remap<2,0,1>("elements present in system",names,nelems)) return NULL;
+        if(f.remap<3,0,1,2>("elements present in system",names,nelems)) return NULL;
         
         size_t nr,nrho;
         type0 dr,drho;
@@ -1067,7 +1074,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
             }
         
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
     };
     method_0.ml_doc=(char*)R"---(
@@ -1111,14 +1118,15 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string,type0*,std::string*> f("ff_eam_setfl",{"setfl_file","r_crd","elems"});
+        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_setfl",{"setfl_file","r_crd","zeta","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
+        f.logics<2>()[0]=VLogics("gt",0.0);
         
         const std::string* names=__self->atoms->elements.names;
         const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
-        if(f.remap<2,1>("elements present in system",names,nelems)) return NULL;
+        if(f.remap<3,2,1>("elements present in system",names,nelems)) return NULL;
         
         
         size_t nr,nrho;
@@ -1150,7 +1158,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
             }
         
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
     };
     method_1.ml_doc=(char*)R"---(
@@ -1194,14 +1202,15 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string,type0*,std::string*> f("ff_eam_fs",{"fs_file","r_crd","elems"});
+        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_fs",{"fs_file","r_crd","zeta","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
+        f.logics<2>()[0]=VLogics("gt",0.0);
         
         const std::string* names=__self->atoms->elements.names;
         const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
-        if(f.remap<2,1>("elements present in system",names,nelems)) return NULL;
+        if(f.remap<3,2,1>("elements present in system",names,nelems)) return NULL;
         
         size_t nr,nrho;
         type0 dr,drho;
@@ -1232,7 +1241,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
             }
         
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),std::move(f.val<1>()));
+        __self->ff=new ForceFieldEAMDMD(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
     };
     method_2.ml_doc=(char*)R"---(

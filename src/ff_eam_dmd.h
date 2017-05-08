@@ -31,6 +31,7 @@ namespace MAPP_NS
         type0 kbT,beta;
         type0* c_0;
         type0* c_1;
+        type0* zeta;
         
         /*--------------------------------------------*/
         type0* rho_phi;
@@ -69,7 +70,7 @@ namespace MAPP_NS
         ForceFieldEAMDMD(class AtomsDMD*,
         type0,type0,size_t,size_t,
         type0(***&&)[4],type0(***&&)[4],type0(**&&)[5],
-        type0**&&,type0*&&);
+        type0**&&,type0*&&,type0*&&);
     
         ~ForceFieldEAMDMD();
         void init();

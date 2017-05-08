@@ -713,3 +713,66 @@ void ExamplePython::ml_alpha(PyMethodDef& tp_methods)
     )---";
 }
 
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExamplePython::ml_delta_c(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="delta_c";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        //Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsDMD>,type0> f("delta_c",{"atoms","dc"});
+        if(f(args,kwds)) return NULL;
+        
+    
+        AtomsDMD* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        type0 disp=f.v<1>();
+        type0* c=atoms->c->begin();
+        c[0]+=disp;
+        
+        Py_RETURN_NONE;
+    };
+
+
+    tp_methods.ml_doc=(char*)R"---(
+    quick function for calculateing phonon freq
+    use with caution
+
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExamplePython::ml_prt(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="prt";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        //Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsDMD>> f("prt",{"atoms"});
+        if(f(args,kwds)) return NULL;
+        
+        
+        AtomsDMD* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        type0* c=atoms->c->begin();
+        type0* alpha=atoms->alpha->begin();
+        printf("%.30lf\t%.18lf\n",c[0],alpha[0]);
+        
+        Py_RETURN_NONE;
+    };
+    
+    
+    tp_methods.ml_doc=(char*)R"---(
+    quick function for calculateing phonon freq
+    use with caution
+    
+    )---";
+}
+
+
+

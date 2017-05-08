@@ -91,6 +91,7 @@ void DAEBDF::run_static(type0 t_tot)
     
     
     t_cur=0.0;
+    curr_max_dc_rel=0.0;
     t_fin=t_tot;
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
     int __max_q=1;
@@ -117,7 +118,7 @@ void DAEBDF::run_static(type0 t_tot)
     type0 dt_prev;
     int q_prev;
     int istep=0;
-    for(;istep<max_nsteps && t_cur<t_fin;istep++)
+    for(;istep<max_nsteps && t_cur<t_fin && curr_max_dc_rel<max_dc_rel;istep++)
     {
         dt_prev=dt;
         q_prev=q;
@@ -137,7 +138,6 @@ void DAEBDF::run_static(type0 t_tot)
         
         if(dt_prev!=dt) nconst_dt=1;
         else nconst_dt++;
-        
         
         
         
@@ -693,17 +693,18 @@ int DAEBDF::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_max_ngmres_iters(getset[3]);
-    getset_max_nnewton_iters(getset[4]);
-    getset_ntally(getset[5]);
-    getset_export(getset[6]);
+    getset_max_dc_rel(getset[3]);
+    getset_max_ngmres_iters(getset[4]);
+    getset_max_nnewton_iters(getset[5]);
+    getset_ntally(getset[6]);
+    getset_export(getset[7]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};

@@ -30,6 +30,9 @@ F_arr(__F_arr),
 rho_phi(NULL),
 drho_phi_dr(NULL),
 drho_phi_dalpha(NULL),
+ddrho_phi_drdr(NULL),
+ddrho_phi_drdalpha(NULL),
+ddrho_phi_dalphadalpha(NULL),
 max_pairs(0),
 M_IJ(NULL),
 vec0(NULL),
@@ -123,6 +126,234 @@ ForceFieldEAMDMD::~ForceFieldEAMDMD()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
+void ForceFieldEAMDMD::force_calc()
+{
+    if(max_pairs<neighbor->no_pairs)
+    {
+        delete [] rho_phi;
+        delete [] drho_phi_dr;
+        delete [] drho_phi_dalpha;
+        
+        max_pairs=neighbor->no_pairs;
+        size_t no_0=max_pairs*3;
+        Memory::alloc(rho_phi,no_0);
+        Memory::alloc(drho_phi_dr,no_0);
+        Memory::alloc(drho_phi_dalpha,no_0);
+    }
+    
+    for(int i=0;i<max_pairs*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
+    
+    
+    
+    
+    
+    type0 r,r_inv;
+    size_t m;
+    type0* coef;
+    type0 tmp0,tmp1;
+    type0 fpair,apair;
+    
+    type0 p,cv_i;
+    
+    type0 dx_ij[__dim__];
+    
+    type0 const* c=atoms->c->begin();
+    
+    
+    
+    type0* dE=dE_ptr->begin();
+    type0* mu=mu_ptr->begin();
+    type0* rho=E_ptr->begin();
+    const int n=atoms->natms_lcl*c_dim;
+    for(int i=0;i<n;i++) rho[i]=0.0;
+    
+    elem_type const* elem_vec=atoms->elem->begin();
+    
+    type0 alpha_ij,rsq;
+    elem_type elem_i,elem_j;
+    
+    
+    
+    const type0* x=atoms->x->begin();
+    const type0* alpha=atoms->alpha->begin();
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    size_t istart=0;
+    for(int i=0;i<n;i++)
+    {
+        type0 c_i=c[i];
+        if(c_i<0.0) continue;
+        elem_i=elem_vec[i];
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            elem_j=elem_vec[j];
+            rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
+            r=sqrt(rsq);
+            alpha_ij=sqrt(alpha[i]*alpha[i]+alpha[j]*alpha[j]);
+            if(r-alpha_ij*xi[N-1]>=cut[elem_i][elem_j]) continue;
+            type0 upper=(r+cut[elem_i][elem_j])/alpha_ij;
+            type0 lower=(r-cut[elem_i][elem_j])/alpha_ij;
+            type0 __r,p,tmp0;
+            type0* coef;
+            
+            
+            r_inv=1.0/r;
+            
+            type0 __rho_phi[3]{[0 ... 2]=0.0};
+            type0 __drho_phi_dr[3]{[0 ... 2]=0.0};
+            type0 __drho_phi_dalpha[3]{[0 ... 2]=0.0};
+            for(int l=0;l<N;l++)
+            {
+                if(xi[l]<=lower && xi[l]>=upper) continue;
+                
+                __r=r-xi[l]*alpha_ij;
+                p=fabs(__r)*dr_inv;
+                m=static_cast<size_t>(p);
+                m=MIN(m,nr-2);
+                p-=m;
+                p=MIN(p,1.0);
+                
+                coef=r_phi_arr[elem_i][elem_j][m];
+                tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+                if(__r<0.0) tmp0*=-1.0;
+                __rho_phi[0]+=wi_0[l]*tmp0;
+                __drho_phi_dr[0]+=wi_0[l]*xi[l]*tmp0;
+                __drho_phi_dalpha[0]+=wi_0[l]*xi[l]*xi[l]*tmp0;
+                
+                coef=r_rho_arr[elem_i][elem_j][m];
+                tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+                if(__r<0.0) tmp0*=-1.0;
+                __rho_phi[1]+=wi_0[l]*tmp0;
+                __drho_phi_dr[1]+=wi_0[l]*xi[l]*tmp0;
+                __drho_phi_dalpha[1]+=wi_0[l]*xi[l]*xi[l]*tmp0;
+                
+                coef=r_rho_arr[elem_j][elem_i][m];
+                tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+                if(__r<0.0) tmp0*=-1.0;
+                __rho_phi[2]+=wi_0[l]*tmp0;
+                __drho_phi_dr[2]+=wi_0[l]*xi[l]*tmp0;
+                __drho_phi_dalpha[2]+=wi_0[l]*xi[l]*xi[l]*tmp0;
+            }
+            
+            tmp0=PI_IN_SQ*r_inv;
+            
+            Algebra::Do<3>::func([&__rho_phi,&__drho_phi_dr,&__drho_phi_dalpha,&tmp0,&r_inv,&alpha_ij,&istart,this]
+            (int i)
+            {
+
+                __rho_phi[i]*=tmp0;
+                rho_phi[istart+i]=__rho_phi[i];
+                drho_phi_dr[istart+i]=-r_inv*r_inv*(rho_phi[istart+i]+__drho_phi_dr[i]*2.0*PI_IN_SQ/alpha_ij);
+                drho_phi_dalpha[istart+i]=-(rho_phi[istart+i]-__drho_phi_dalpha[i]*2.0*r_inv*PI_IN_SQ)/(alpha_ij*alpha_ij);
+            });
+            
+            
+            rho[i]+=c[j]*__rho_phi[2];
+            
+            if(j<n)
+            {
+                rho[j]+=c_i*__rho_phi[1];
+                nrgy_strss_lcl[0]+=c_i*c[j]*__rho_phi[0];
+            }
+            else
+                nrgy_strss_lcl[0]+=0.5*c_i*c[j]*__rho_phi[0];
+        }
+        
+        
+        
+        p=rho[i]*drho_inv;
+        m=static_cast<size_t>(p);
+        m=MIN(m,nrho-2);
+        p-=m;
+        p=MIN(p,1.0);
+        coef=F_arr[elem_i][m];
+        
+        tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
+        tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
+        
+        if(rho[i]>rho_max) tmp0+=tmp1*(rho[i]-rho_max);
+        
+        rho[i]=tmp0;
+        dE[i]=tmp1;
+        mu[i]=tmp0;
+        if(c_i!=0.0)
+            nrgy_strss_lcl[0]+=c_i*(tmp0+c_0[elem_i]-3.0*kbT*log(alpha[i]));
+        
+        nrgy_strss_lcl[0]+=kbT*calc_ent(c_i);
+    }
+    
+    const int __natms=atoms->natms_lcl;
+    
+    for(int i=0;i<__natms;i++)
+    {
+        cv_i=1.0;
+        for(int ic=0;ic<c_dim;ic++)
+            if(c[i*c_dim+ic]>0.0)
+                cv_i-=c[i*c_dim+ic];
+        nrgy_strss_lcl[0]+=kbT*calc_ent(cv_i);
+    }
+    
+    dynamic->update(dE_ptr);
+    
+    type0* fvec=f->begin();
+    type0* f_alphavec=f_alpha->begin();
+    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 x_i[__dim__];
+    istart=0;
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::zero<__dim__>(f_i);
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        }
+        
+        type0 c_i=c[i];
+        type0 alpha_i=alpha[i];
+        type0 dE_i=dE[i];
+        type0 f_alpha_i=0.0;
+        type0 mu_i=0.0;
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            
+            fpair=-(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart])*c_i*c[j];
+            apair=-(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart])*c_i*c[j];
+            mu_i+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
+            if(j<n) mu[j]+=c_i*(rho_phi[istart]+rho_phi[istart+2]*dE_i);
+            
+            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
+            f_alpha_i+=alpha_i*apair;
+            if(j<n)
+            {
+                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+(j/c_dim)*__dim__);
+                f_alphavec[j]+=alpha[j]*apair;
+            }
+            else
+                fpair*=0.5;
+            Algebra::DyadicV(-fpair,dx_ij,&nrgy_strss_lcl[1]);
+        }
+        
+        f_alpha_i+=3.0*kbT*c_i/alpha_i;
+        f_alphavec[i]+=f_alpha_i;
+        mu[i]+=mu_i;
+        
+        if((i+1)%c_dim==0)
+            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
+    }
+    
+    type0 norm_sq_lcl=0.0;
+    for(int i=0;i<n;i++)
+        norm_sq_lcl+=f_alphavec[i]*f_alphavec[i];
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++,fvec+=__dim__)
+        norm_sq_lcl+=Algebra::RSQ<__dim__>(fvec,fvec);
+}
+/*
 void ForceFieldEAMDMD::force_calc()
 {
     if(max_pairs<neighbor->no_pairs)
@@ -352,7 +583,453 @@ void ForceFieldEAMDMD::force_calc()
         
         if((i+1)%c_dim==0)
             Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
-    }    
+    }
+    
+    type0 norm_sq_lcl=0.0;
+    for(int i=0;i<n;i++)
+        norm_sq_lcl+=f_alphavec[i]*f_alphavec[i];
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++,fvec+=__dim__)
+        norm_sq_lcl+=Algebra::RSQ<__dim__>(fvec,fvec);
+    printf("norm %e\n",sqrt(norm_sq_lcl));
+}*/
+/*--------------------------------------------
+ force calculation
+ --------------------------------------------*/
+type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
+{
+    if(max_pairs<neighbor->no_pairs)
+    {
+        delete [] rho_phi;
+        delete [] drho_phi_dr;
+        delete [] drho_phi_dalpha;
+        delete [] ddrho_phi_drdr;
+        delete [] ddrho_phi_dalphadalpha;
+        delete [] ddrho_phi_drdalpha;
+        
+        
+        
+        max_pairs=neighbor->no_pairs;
+        size_t no_0=max_pairs*3;
+        Memory::alloc(rho_phi,no_0);
+        Memory::alloc(drho_phi_dr,no_0);
+        Memory::alloc(drho_phi_dalpha,no_0);
+        Memory::alloc(ddrho_phi_drdr,no_0);
+        Memory::alloc(ddrho_phi_drdalpha,no_0);
+        Memory::alloc(ddrho_phi_dalphadalpha,no_0);
+    }
+    
+    for(int i=0;i<max_pairs*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=ddrho_phi_drdr[i]=ddrho_phi_dalphadalpha[i]=ddrho_phi_drdalpha[i]=0.0;
+    
+    type0 r,r_inv;
+    size_t m;
+    type0* coef;
+    type0 fpair,apair;
+    
+    type0 p;
+    
+    type0 dx_ij[__dim__];
+    
+    type0 const* c=atoms->c->begin();
+    type0* dE=dE_ptr->begin();
+    type0* rho=ddE_ptr->begin();
+    const int n=atoms->natms_lcl*c_dim;
+    for(int i=0;i<n;i++) rho[i]=0.0;
+    
+    elem_type const* elem_vec=atoms->elem->begin();
+    
+    type0 alpha_ij,alpha_ij_sq,rsq;
+    elem_type elem_i,elem_j;
+    
+    
+    
+    const type0* x=atoms->x->begin();
+    const type0* alpha=atoms->alpha->begin();
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    size_t istart=0;
+    for(int i=0;i<n;i++)
+    {
+        type0 c_i=c[i];
+        if(c_i<0.0) continue;
+        elem_i=elem_vec[i];
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            elem_j=elem_vec[j];
+            rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
+            r=sqrt(rsq);
+            alpha_ij_sq=alpha[i]*alpha[i]+alpha[j]*alpha[j];
+            alpha_ij=sqrt(alpha_ij_sq);
+            if(r-alpha_ij*xi[N-1]>=cut[elem_i][elem_j]) continue;
+            type0 upper=(r+cut[elem_i][elem_j])/alpha_ij;
+            type0 lower=(r-cut[elem_i][elem_j])/alpha_ij;
+            type0 __r,p,tmp0,xi2,xi3,xi4;
+            type0* coef;
+            
+            
+            
+            type0 H[3][5]{[0 ... 2]={[0 ... 4]=0.0}};
+            r_inv=1.0/r;
+            for(int l=0;l<N;l++)
+            {
+                if(xi[l]<=lower && xi[l]>=upper) continue;
+                
+                xi2=xi[l]*xi[l];
+                xi3=xi[l]*xi2;
+                xi4=xi2*xi2;
+                
+                __r=r-xi[l]*alpha_ij;
+                p=fabs(__r)*dr_inv;
+                m=static_cast<size_t>(p);
+                m=MIN(m,nr-2);
+                p-=m;
+                p=MIN(p,1.0);
+                
+                coef=r_phi_arr[elem_i][elem_j][m];
+                tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+                if(__r<0.0) tmp0*=-1.0;
+                tmp0*=wi_0[l];
+                H[0][0]+=tmp0;
+                H[0][1]+=tmp0*xi[l];
+                H[0][2]+=tmp0*xi2;
+                H[0][3]+=tmp0*xi3;
+                H[0][4]+=tmp0*xi4;
+                
+                
+                coef=r_rho_arr[elem_i][elem_j][m];
+                tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+                if(__r<0.0) tmp0*=-1.0;
+                tmp0*=wi_0[l];
+                H[1][0]+=tmp0;
+                H[1][1]+=tmp0*xi[l];
+                H[1][2]+=tmp0*xi2;
+                H[1][3]+=tmp0*xi3;
+                H[1][4]+=tmp0*xi4;
+                
+                coef=r_rho_arr[elem_j][elem_i][m];
+                tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
+                if(__r<0.0) tmp0*=-1.0;
+                tmp0*=wi_0[l];
+                H[2][0]+=tmp0;
+                H[2][1]+=tmp0*xi[l];
+                H[2][2]+=tmp0*xi2;
+                H[2][3]+=tmp0*xi3;
+                H[2][4]+=tmp0*xi4;
+                
+
+            }
+            
+            
+            
+            
+            type0 r2_inv=r_inv*r_inv;
+            type0 alpha_inv=1.0/alpha_ij;
+            type0 alpha2_inv=alpha_inv*alpha_inv;
+            type0 alpha3_inv=alpha2_inv*alpha_inv;
+            type0 r2alpha2_inv=r2_inv*alpha2_inv;
+            
+            
+            Algebra::Do<3>::func([&istart,&H,&r_inv,&r2_inv,&alpha2_inv,&r2alpha2_inv,&alpha_ij_sq,&alpha_inv,&rsq,&alpha3_inv,this]
+            (int i)
+            {
+                rho_phi[istart+i]=PI_IN_SQ*r_inv*H[i][0];
+                drho_phi_dr[istart+i]=-r2_inv*(rho_phi[istart+i]+2.0*PI_IN_SQ*alpha_inv*H[i][1]);
+                drho_phi_dalpha[istart+i]=-alpha2_inv*(rho_phi[istart+i]-2.0*PI_IN_SQ*r_inv*H[i][2]);
+                ddrho_phi_drdr[istart+i]=-r_inv*(3.0*drho_phi_dr[istart+i]-2.0*drho_phi_dalpha[istart+i]);
+                ddrho_phi_drdalpha[istart+i]=-r2alpha2_inv*(3.0*rho_phi[istart+i]+3.0*rsq*drho_phi_dr[istart+i]+alpha_ij_sq*drho_phi_dalpha[istart+i]+4.0*PI_IN_SQ*alpha_inv*H[i][3]);
+                ddrho_phi_dalphadalpha[istart+i]=-alpha3_inv*(3.0*rho_phi[istart+i]+6.0*alpha_ij_sq*drho_phi_dalpha[istart+i]-4.0*PI_IN_SQ*r_inv*H[i][4]);
+            });
+            
+            
+            rho[i]+=c[j]*rho_phi[istart+2];
+            
+            if(j<n)
+                rho[j]+=c_i*rho_phi[istart+1];
+        }
+        
+        
+        p=rho[i]*drho_inv;
+        m=static_cast<size_t>(p);
+        m=MIN(m,nrho-2);
+        p-=m;
+        p=MIN(p,1.0);
+        coef=F_arr[elem_i][m];
+
+        
+        dE[i]=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
+        
+        if(rho[i]>rho_max)
+            rho[i]=0.0;
+        else
+            rho[i]=(((12.0*coef[4]*p+6.0*coef[3])*p+2.0*coef[2]))*drho_inv*drho_inv;
+    }
+    
+    
+    
+    
+    dynamic->update(dE_ptr);
+    
+    
+    const int __natms=atoms->natms_lcl;
+    type0* f_coef=vec2->begin();
+    if(c_dim!=1)
+    {
+        type0 c_tot;
+        for(int i=0;i<__natms;i++)
+        {
+            c_tot=0.0;
+            for(int ic=0;ic<c_dim;ic++)
+                if(c[i*c_dim+ic]>0.0)
+                    c_tot+=c[i*c_dim+ic];
+            if(c_tot==0.0)
+            {
+                for(int ic=0;ic<c_dim;ic++)
+                {
+                    if(c[i*c_dim+ic]==0.0)
+                        f_coef[i*c_dim+ic]=1.0;
+                    else
+                        f_coef[i*c_dim+ic]=0.0;
+                }
+            }
+            else
+            {
+                for(int ic=0;ic<c_dim;ic++)
+                {
+                    if(c[i*c_dim+ic]>=0.0)
+                        f_coef[i*c_dim+ic]=c[i*c_dim+ic]/c_tot;
+                    else
+                        f_coef[i*c_dim+ic]=0.0;
+                }
+            }
+        }
+        
+    }
+    else
+    {
+        for(int i=0;i<n;i++)
+            if(c[i]>=0.0)
+                f_coef[i]=1.0;
+    }
+    
+    
+    const int natms_lcl=atoms->natms_lcl;
+    dE=dE_ptr->begin();
+    type0* fvec=f.vecs[0]->begin();
+    type0* f_alphavec=f.vecs[1]->begin();
+    for(int i=0;i<n;i++) f_alphavec[i]=0.0;
+    for(int i=0;i<natms_lcl*__dim__;i++) fvec[i]=0.0;
+    
+    
+    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 x_i[__dim__];
+    type0 norm_sq_lcl=0.0;
+    istart=0;
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::zero<__dim__>(f_i);
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        }
+        
+        type0 c_i=c[i];
+        type0 alpha_i=alpha[i];
+        type0 dE_i=dE[i];
+        type0 f_alpha_i=0.0;
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            
+            fpair=(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart]);
+            apair=(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart]);
+            
+            Algebra::V_add_x_mul_V<__dim__>(fpair*c[j]*f_coef[i],dx_ij,f_i);
+            f_alpha_i+=alpha_i*apair*c[j];
+            
+            if(j<n)
+            {
+                Algebra::V_add_x_mul_V<__dim__>(-fpair*c_i*f_coef[j],dx_ij,fvec+(j/c_dim)*__dim__);
+                f_alphavec[j]+=alpha[j]*apair*c_i;
+            }
+        }
+        
+        f_alpha_i-=3.0*kbT/alpha_i;
+        f_alphavec[i]+=f_alpha_i;
+        norm_sq_lcl+=f_alphavec[i]*f_alphavec[i];
+        
+        if((i+1)%c_dim==0)
+            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
+    }
+    
+    
+    for(int i=0;i<natms_lcl;i++,fvec+=__dim__)
+        norm_sq_lcl+=Algebra::RSQ<__dim__>(fvec,fvec);
+    
+    type0 norm;
+    MPI_Allreduce(&norm_sq_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);    
+    return sqrt(norm);
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
+{
+    type0* deltadE=vec0->begin();
+    const int n=atoms->natms_lcl*c_dim;
+    const int nn=atoms->natms_lcl*__dim__;
+    
+    
+    
+    
+    type0 const* c=atoms->c->begin();
+    const type0* x=atoms->x->begin();
+    const type0* alpha=atoms->alpha->begin();
+    type0* ddE=ddE_ptr->begin();
+    type0* dE=dE_ptr->begin();
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    
+    
+    dynamic->update(Dx.vecs[0]);
+    dynamic->update(Dx.vecs[1]);
+    type0* dx=Dx.vecs[0]->begin();
+    type0* dalpha=Dx.vecs[1]->begin();
+    
+    
+    type0* Adx=ADx.vecs[0]->begin();
+    type0* Adalpha=ADx.vecs[1]->begin();
+    
+    type0* f_coef=vec2->begin();
+    
+    type0 dx_ij[__dim__];
+    type0 ddx_ij[__dim__];
+    type0 x_i[__dim__];
+    type0 dx_i[__dim__];
+    type0 Adx_i[__dim__];
+    
+    type0 pair_alpha_0,pair_alpha_1,pair_x_0,pair_x_1,a,b,alpha_i,dalpha_i,Adalpha_i;
+    for(int i=0;i<n;i++)
+        Adalpha[i]=deltadE[i]=0.0;
+    for(int i=0;i<nn;i++)
+        Adx[i]=0.0;
+    
+    
+    size_t istart=0;
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+            Algebra::V_eq<__dim__>(dx+(i/c_dim)*__dim__,dx_i);
+            Algebra::zero<__dim__>(Adx_i);
+        }
+        
+        alpha_i=alpha[i];
+        dalpha_i=dalpha[i];
+        Adalpha_i=0.0;
+        
+        type0 c_i=c[i];
+        if(c_i<0.0) continue;
+        
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            
+            
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            Algebra::DX<__dim__>(dx_i,dx+(j/c_dim)*__dim__,ddx_ij);
+        
+            a=Algebra::V_mul_V<__dim__>(dx_ij,ddx_ij);
+            b=alpha_i*dalpha_i+alpha[j]*dalpha[j];
+
+            pair_alpha_0=-(
+            (ddrho_phi_drdalpha[istart]+ddrho_phi_drdalpha[istart+2]*dE[i]+ddrho_phi_drdalpha[istart+1]*dE[j])*a
+            +(ddrho_phi_dalphadalpha[istart]+ddrho_phi_dalphadalpha[istart+2]*dE[i]+ddrho_phi_dalphadalpha[istart+1]*dE[j])*b);
+            
+            pair_alpha_1=-(drho_phi_dalpha[istart]+drho_phi_dalpha[istart+2]*dE[i]+drho_phi_dalpha[istart+1]*dE[j]);
+            
+            
+            
+            pair_x_0=-(
+            (ddrho_phi_drdalpha[istart]+ddrho_phi_drdalpha[istart+2]*dE[i]+ddrho_phi_drdalpha[istart+1]*dE[j])*b
+            +(ddrho_phi_drdr[istart]+ddrho_phi_drdr[istart+2]*dE[i]+ddrho_phi_drdr[istart+1]*dE[j])*a);
+            
+            pair_x_1=-(drho_phi_dr[istart]+drho_phi_dr[istart+2]*dE[i]+drho_phi_dr[istart+1]*dE[j]);
+            
+            
+            
+            
+            deltadE[i]+=(a*drho_phi_dr[istart+2]+b*drho_phi_dalpha[istart+2])*ddE[i]*c[j];
+            Algebra::V_add_x_mul_V<__dim__>(pair_x_0*c[j]*f_coef[i],dx_ij,Adx_i);
+            Algebra::V_add_x_mul_V<__dim__>(pair_x_1*c[j]*f_coef[i],ddx_ij,Adx_i);
+            Adalpha_i+=c[j]*(pair_alpha_0*alpha_i+pair_alpha_1*dalpha_i);
+            
+            if(j<n)
+            {
+                deltadE[j]+=(a*drho_phi_dr[istart+1]+b*drho_phi_dalpha[istart+1])*ddE[j]*c[i];
+                Algebra::V_add_x_mul_V<__dim__>(-pair_x_0*c[i]*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
+                Algebra::V_add_x_mul_V<__dim__>(-pair_x_1*c[i]*f_coef[j],ddx_ij,Adx+(j/c_dim)*__dim__);
+                Adalpha[j]+=c[i]*(pair_alpha_0*alpha[j]+pair_alpha_1*dalpha[j]);
+            }
+            
+        }
+        
+        
+        Adalpha[i]+=Adalpha_i;
+        if((i+1)%c_dim==0)
+            Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
+    }
+    
+    dynamic->update(vec0);
+    
+    deltadE=vec0->begin();
+    istart=0;
+    
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::zero<__dim__>(Adx_i);
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        }
+        
+        alpha_i=alpha[i];
+        dalpha_i=dalpha[i];
+        Adalpha_i=0.0;
+        
+        type0 c_i=c[i];
+        if(c_i<0.0) continue;
+        
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            
+            pair_x_0=-(drho_phi_dr[istart+2]*deltadE[i]+drho_phi_dr[istart+1]*deltadE[j]);
+            pair_alpha_0=-(drho_phi_dalpha[istart+2]*deltadE[i]+drho_phi_dalpha[istart+1]*deltadE[j]);
+            
+            Algebra::V_add_x_mul_V<__dim__>(pair_x_0*c[j]*f_coef[i],dx_ij,Adx_i);
+            Adalpha_i+=alpha_i*pair_alpha_0*c[j];
+            
+            if(j<n)
+            {
+                Algebra::V_add_x_mul_V<__dim__>(-pair_x_0*c_i*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
+                Adalpha[j]+=alpha[j]*pair_alpha_0*c_i;
+            }
+        }
+        
+        
+        Adalpha[i]+=Adalpha_i-3.0*kbT*dalpha_i/(alpha_i*alpha_i);
+        if((i+1)%c_dim==0)
+            Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
+    }
 }
 /*--------------------------------------------
  energy calculation
@@ -510,6 +1187,26 @@ void ForceFieldEAMDMD::fin()
     dE_ptr=ddE_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
     mu_ptr=NULL;
     post_fin();
+}
+/*--------------------------------------------
+ create the sparse matrices
+ --------------------------------------------*/
+void ForceFieldEAMDMD::init_refine()
+{
+    vec0=new Vec<type0>(atoms,c_dim);
+    vec2=new Vec<type0>(atoms,c_dim);
+}
+/*--------------------------------------------
+ create the sparse matrices
+ --------------------------------------------*/
+void ForceFieldEAMDMD::fin_refine()
+{
+    
+    Memory::dealloc(ddrho_phi_drdr);
+    Memory::dealloc(ddrho_phi_dalphadalpha);
+    Memory::dealloc(ddrho_phi_drdalpha);
+    delete vec2;
+    delete vec0;
 }
 /*--------------------------------------------
  create the sparse matrices

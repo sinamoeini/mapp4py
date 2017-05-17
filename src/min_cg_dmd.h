@@ -33,6 +33,7 @@ namespace MAPP_NS
         
         vec* uvecs[2];
         void pre_run_chk(AtomsDMD*,ForceFieldDMD*);
+        
     public:
         MinCGDMD(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
         ~MinCGDMD();
@@ -48,8 +49,7 @@ namespace MAPP_NS
         type0 dF(type0,type0&);
         void ls_prep(type0&,type0&,type0&);
         void F_reset();
-
-        
+        void refine(int,int);
         typedef struct
         {
             PyObject_HEAD
@@ -67,6 +67,7 @@ namespace MAPP_NS
         static PyMethodDef methods[];
         static void setup_tp_methods();
         static void ml_run(PyMethodDef&);
+        static void ml_refine(PyMethodDef&);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();

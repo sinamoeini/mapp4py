@@ -1,6 +1,7 @@
 #ifndef __MAPP__ff_dmd__
 #define __MAPP__ff_dmd__
 #include "ff.h"
+#include "min_vec.h"
 namespace MAPP_NS
 {
     template<class> class DMDVec;
@@ -50,6 +51,12 @@ namespace MAPP_NS
         void c_d_calc_timer();
         type0 c_dd_norm_timer();
         void J_timer(Vec<type0>*,Vec<type0>*);
+        
+        
+        virtual type0 prep(VecTens<type0,2>&)=0;
+        virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
+        virtual void init_refine()=0;
+        virtual void fin_refine()=0;
     };
 }
 #endif 

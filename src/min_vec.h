@@ -2,6 +2,7 @@
 #define __MAPP__min_vec__
 #include "atoms.h"
 #include "xmath.h"
+#include "memory.h"
 namespace MAPP_NS
 {
     
@@ -384,7 +385,7 @@ VecTens<T,N>& VecTens<T,N>::operator+=(const VecTens<T,N>& r)
         T* v0=vecs[j]->begin();
         const T* v1=r.vecs[j]->begin();
         for(int i=0;i<natms_lcl*dim;i++)
-            v0[i]+=*v1[i];
+            v0[i]+=v1[i];
     });
     if(box_chng)
         Algebra::DoLT<__dim__>::func([this,&r](int i,int j){this->A[i][j]+=r.A[i][j];});
@@ -414,7 +415,7 @@ VecTens<T,N>& VecTens<T,N>::operator-=(const VecTens<T,N>& r)
         T* v0=vecs[j]->begin();
         const T* v1=r.vecs[j]->begin();
         for(int i=0;i<natms_lcl*dim;i++)
-            v0[i]-=*v1[i];
+            v0[i]-=v1[i];
     });
     if(box_chng)
         Algebra::DoLT<__dim__>::func([this,&r](int i,int j){this->A[i][j]-=r.A[i][j];});
@@ -820,5 +821,185 @@ __VecTens<T>& __VecTens<T>::operator+=(const __VecTensExpr<T,E>&& other)
     {this->A[i][j]+=other(i,j);});
     return *this;
 }
+
+
+
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+namespace MAPP_NS
+{
+    template<class V>
+    class __GMRES__
+    {
+    private:
+        const int m;
+        V* Q;
+        type0** A_hat;
+        type0* Ax_hat;
+        type0(* cos_sin)[2];
+        
+        
+        type0* x_hat;
+        
+        
+        type0 calc(V&,V&);
+        type0 calc(int,V&,V&);
+        type0 solve_y(int,V&);
+        
+    protected:
+    public:
+        template<class ... Cs>
+        __GMRES__(int,Cs ...);
+        ~__GMRES__();
+        template<class KERNEL>
+        bool solve(KERNEL&,V&,type0,type0&,V&);
+        
+    };
+}
+
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class V>template<class ... Cs>
+__GMRES__<V>::__GMRES__(int __m,Cs ... cs):
+m(__m)
+{
+    
+    
+    A_hat=new type0*[m];
+    *A_hat=new type0[m*(m+1)/2];
+    for(int i=1;i<m;i++)
+        A_hat[i]=A_hat[i-1]+i;
+    
+    Memory::alloc(Ax_hat,m+1);
+    Memory::alloc(cos_sin,m+1);
+    Memory::alloc(x_hat,m+1);
+    
+    Q=new V[m+1];
+    for(int i=0;i<m+1;i++)
+    {
+        Q[i].~V();
+        new (Q+i) V(cs...);
+    }
+    
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class V>
+__GMRES__<V>::~__GMRES__()
+{
+    
+    delete [] Q;
+
+    Memory::dealloc(x_hat);
+    Memory::dealloc(cos_sin);
+    Memory::dealloc(Ax_hat);
+    delete [] *A_hat;
+    delete [] A_hat;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class V>
+type0 __GMRES__<V>::calc(V& Ax,V& x)
+{
+    type0 norm=sqrt(Ax*Ax);
+    type0 norm_inv=1.0/norm;
+
+    Q[0]=x=norm_inv*Ax;
+    
+    Ax_hat[0]=norm;
+    return norm;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class V>
+type0 __GMRES__<V>::calc(int iter,V& Ax,V& x)
+{
+    type0* h=A_hat[iter];
+    int ivec=iter+1;
+    
+    
+    for(int i=0;i<ivec;i++)
+        h[i]=Ax*Q[i];
+    
+    Q[ivec]=Ax;
+    
+    for(int i=0;i<ivec;i++)
+        Q[ivec]-=h[i]*Q[i];
+    
+    type0 norm=sqrt(Q[ivec]*Q[ivec]);
+    type0 norm_inv=1.0/norm;
+    
+    Q[ivec]*=norm_inv;
+    x=Q[ivec];
+    
+    
+    type0 tmp;
+    for(int i=0;i<iter;i++)
+    {
+        tmp=cos_sin[i][0]*h[i]-cos_sin[i][1]*h[i+1];
+        h[i+1]=cos_sin[i][1]*h[i]+cos_sin[i][0]*h[i+1];
+        h[i]=tmp;
+    }
+    
+    tmp=sqrt(h[iter]*h[iter]+norm*norm);
+    cos_sin[iter][0]=h[iter]/tmp;
+    cos_sin[iter][1]=-norm/tmp;
+   
+    h[iter]=cos_sin[iter][0]*h[iter]-cos_sin[iter][1]*norm;
+    Ax_hat[iter+1]=cos_sin[iter][1]*Ax_hat[iter];
+    Ax_hat[iter]*=cos_sin[iter][0];
+    return fabs(Ax_hat[iter+1]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class V>
+type0 __GMRES__<V>::solve_y(int nvecs,V& x)
+{
+    for(int i=nvecs-1;i>-1;i--)
+    {
+        x_hat[i]=Ax_hat[i];
+        for(int j=i+1;j<nvecs;j++)
+            x_hat[i]-=A_hat[j][i]*x_hat[j];
+        x_hat[i]/=A_hat[i][i];
+    }
+
+    x=x_hat[0]*Q[0];
+    for(int ivec=1;ivec<nvecs;ivec++)
+        x+=x_hat[ivec]*Q[ivec];
+
+    type0 norm=0.0;
+    for(int ivec=0;ivec<nvecs;ivec++)
+        norm+=x_hat[ivec]*x_hat[ivec];
+    
+    return sqrt(norm);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class V>template<class KERNEL>
+bool __GMRES__<V>::solve(KERNEL& A,V& Ax,type0 tol,type0& norm,V& x)
+{
+    calc(Ax,x);
+    for(int i=0;i<m;i++)
+    {
+        A(x,Ax);
+        if(calc(i,Ax,x)<tol)
+        {
+            norm=solve_y(i+1,x);
+            return true;
+        }
+    }
+    
+    norm=solve_y(m,x);
+    return false;
+}
+
 
 #endif

@@ -37,6 +37,9 @@ namespace MAPP_NS
         type0* rho_phi;
         type0* drho_phi_dr;
         type0* drho_phi_dalpha;
+        type0* ddrho_phi_drdr;
+        type0* ddrho_phi_drdalpha;
+        type0* ddrho_phi_dalphadalpha;
         size_t max_pairs;
         
         /*--------------------------------------------*/
@@ -59,7 +62,8 @@ namespace MAPP_NS
         void calc_Q(type0&,type0&,type0&,type0&,type0&);
         void calc_Q(type0&,type0&,type0&,type0&,type0&,type0&);
         /*--------------------------------------------*/
-                
+        
+        
     protected:
         void force_calc_static();
         void force_calc();
@@ -78,6 +82,12 @@ namespace MAPP_NS
         
         void init_static();
         void fin_static();
+        
+        
+        type0 prep(VecTens<type0,2>&);
+        void J(VecTens<type0,2>&,VecTens<type0,2>&);
+        void init_refine();
+        void fin_refine();
 
         static void ml_new(PyMethodDef&,PyMethodDef&,PyMethodDef&);
     };

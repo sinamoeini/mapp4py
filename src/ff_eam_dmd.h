@@ -86,8 +86,6 @@ namespace MAPP_NS
         
         type0 prep(VecTens<type0,2>&);
         void J(VecTens<type0,2>&,VecTens<type0,2>&);
-        void init_refine();
-        void fin_refine();
 
         static void ml_new(PyMethodDef&,PyMethodDef&,PyMethodDef&);
     };

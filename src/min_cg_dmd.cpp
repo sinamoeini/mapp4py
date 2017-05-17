@@ -177,7 +177,6 @@ void MinCGDMD::refine(int n,int nsteps)
     
     dynamic=new DynamicDMD(atoms,ff,false,{},{},{});
     dynamic->init();
-    ff->init_refine();
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
     type0 norm,res;
@@ -219,7 +218,6 @@ void MinCGDMD::refine(int n,int nsteps)
     uvecs[1]=NULL;
     uvecs[0]=NULL;
     
-    ff->fin_refine();
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;

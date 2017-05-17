@@ -55,8 +55,6 @@ namespace MAPP_NS
         
         virtual type0 prep(VecTens<type0,2>&)=0;
         virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
-        virtual void init_refine()=0;
-        virtual void fin_refine()=0;
     };
 }
 #endif 

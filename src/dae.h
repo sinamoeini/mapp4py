@@ -30,10 +30,6 @@ namespace MAPP_NS
         type0 t_fin;
         type0 err;
         
-        type0 curr_max_dc_rel;
-        type0 max_dc_rel;
-        
-        type0* c_init;
         type0* c;
         type0* c_d;
         
@@ -44,6 +40,11 @@ namespace MAPP_NS
         virtual void init_static();
         virtual void fin_static();
         virtual void run_static(type0){};
+        virtual void run(type0){};
+        
+        
+        virtual void init();
+        virtual void fin();
         
         
         typedef struct
@@ -68,7 +69,6 @@ namespace MAPP_NS
         static void setup_tp_getset();
         static void getset_a_tol(PyGetSetDef&);
         static void getset_max_nsteps(PyGetSetDef&);
-        static void getset_max_dc_rel(PyGetSetDef&);
         static void getset_min_dt(PyGetSetDef&);
         static void getset_ntally(PyGetSetDef&);
         static void getset_export(PyGetSetDef&);

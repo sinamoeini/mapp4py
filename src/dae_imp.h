@@ -40,6 +40,9 @@ namespace MAPP_NS
         virtual ~DAEImplicit();
         void init_static();
         void fin_static();
+        
+        void init();
+        void fin();
 
         
         typedef struct

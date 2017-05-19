@@ -45,6 +45,28 @@ void DAEBDF::init_static()
     Memory::alloc(dy,(max_q+2)*ncs);
     z=dy+ncs;
     
+    ff->derivative_timer();
+    ff->neighbor->init_static();
+    ff->neighbor->create_2nd_list();
+    ff->init_static();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEBDF::fin_static()
+{
+    //static related
+    ff->fin_static();
+    ff->neighbor->fin_static();
+    Memory::dealloc(dy);
+    z=NULL;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEBDF::init()
+{
+    DAEImplicit::init();
     if(xprt)
     {
         try
@@ -58,23 +80,20 @@ void DAEBDF::init_static()
             throw err_msg;
         }
     }
+    
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEBDF::fin_static()
+void DAEBDF::fin()
 {
+ 
     if(xprt)
     {
         xprt->fin();
         xprt->atoms=NULL;
     }
-    
-    ff->fin_static();
-    ff->neighbor->fin_static();
-    Memory::dealloc(dy);
-    z=NULL;
-    DAEImplicit::fin_static();
+    DAEImplicit::fin();
 }
 /*--------------------------------------------
  
@@ -83,15 +102,7 @@ void DAEBDF::run_static(type0 t_tot)
 {
     int step=atoms->step;
     
-    ff->derivative_timer();
-    ff->neighbor->init_static();
-    ff->neighbor->create_2nd_list();
-    ff->init_static();
-
-    
-    
     t_cur=0.0;
-    curr_max_dc_rel=0.0;
     t_fin=t_tot;
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
     int __max_q=1;
@@ -118,7 +129,7 @@ void DAEBDF::run_static(type0 t_tot)
     type0 dt_prev;
     int q_prev;
     int istep=0;
-    for(;istep<max_nsteps && t_cur<t_fin && curr_max_dc_rel<max_dc_rel;istep++)
+    for(;istep<max_nsteps && t_cur<t_fin;istep++)
     {
         dt_prev=dt;
         q_prev=q;
@@ -182,6 +193,178 @@ void DAEBDF::run_static(type0 t_tot)
     fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
     
     atoms->step+=istep;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEBDF::run(type0 t_tot)
+{
+    int step=atoms->step;
+    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
+    if(nevery_xprt) xprt->write(step);
+    
+    t_cur=0.0;
+    t_fin=t_tot;
+    
+    
+    
+    int __max_q=1;
+    type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
+    
+    min_error();
+    init_static();
+    reset();
+    nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
+    
+    
+    type0 S[__dim__][__dim__];
+    ThermoDynamics thermo(6,
+    "Time",t_cur,"ERR",ff->err,
+    "FE",ff->nrgy_strss[0],
+    "S[0][0]",S[0][0],
+    "S[1][1]",S[1][1],
+    "S[2][2]",S[2][2],
+    "S[1][2]",S[2][1],
+    "S[2][0]",S[2][0],
+    "S[0][1]",S[1][0]);
+    if(ntally) thermo.init();
+    Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+    if(ntally) thermo.print(step);
+    
+    type0 dt_prev;
+    int q_prev;
+    int istep=0;
+    for(;istep<max_nsteps && t_cur<t_fin;istep++)
+    {
+        dt_prev=dt;
+        q_prev=q;
+        
+        
+        
+        while(!integrate())
+            integrate_fail();
+        
+        __max_q=MAX(q,__max_q);
+        __max_dt=MAX(dt,__max_dt);
+        __min_dt=MIN(dt,__min_dt);
+        
+        
+        if(q_prev!=q) nconst_q=1;
+        else nconst_q++;
+        
+        if(dt_prev!=dt) nconst_dt=1;
+        else nconst_dt++;
+        
+        
+        
+        dt_prev=dt;
+        q_prev=q;
+        t_cur+=dt_prev;
+        prep_for_next();
+        
+        if(dt_prev!=dt)
+            nconst_dt=0;
+        if(q_prev!=q)
+            nconst_q=0;
+        
+        if(ntally && (istep+1)%ntally==0)
+        {
+            ff->force_calc_static_timer();
+            Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+            thermo.print(step+istep+1);
+        }
+        
+        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+        
+        
+        
+        
+        if((istep+1)%100==0)
+        //if(ff->err>0.1)
+        {
+            fin_static();
+            min_error();
+            init_static();
+            reset();
+            nconst_q=nconst_dt=0;
+        }
+    }
+    
+    
+    
+    
+    if(ntally && istep%ntally)
+    {
+        ff->force_calc_static_timer();
+        Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+        thermo.print(step+istep);
+    }
+    
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
+    
+    if(ntally) thermo.fin();
+    
+    
+    fin_static();
+    
+    
+    
+    fprintf(MAPP::mapp_out,"nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
+    fprintf(MAPP::mapp_out,"intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
+    fprintf(MAPP::mapp_out,"integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+    fprintf(MAPP::mapp_out,"maximum order: %d\n",__max_q);
+    fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
+    fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
+    
+    atoms->step+=istep;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEBDF::min_error()
+{
+    VecTens<type0,2> x(atoms,false,atoms->H,atoms->x,atoms->alpha);
+    VecTens<type0,2> f(atoms,false,ff->f,ff->f_alpha);
+    VecTens<type0,2> h(atoms,false,__dim__,c_dim);
+    
+
+    vec* uvecs[2];
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    type0 norm,res;
+    
+    
+    
+    __GMRES__<VecTens<type0,2>> gmres(5,atoms,false,__dim__,c_dim);
+    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
+    {
+        ff->J(x,Jx);
+    };
+    
+    
+    res=ff->prep(f);
+    for(int istep=0;istep<5 && res>0.0001 ;istep++)
+    {
+        //printf("res %e\n",res);
+        gmres.solve(J,f,1.0e-8,norm,h);
+        
+        
+        //printf("-h.f %e\n",-(h*f));
+        
+        x+=h;
+        
+        type0 max_alpha_lcl=0.0;
+        const int n=atoms->natms_lcl*atoms->alpha->dim;
+        type0* alpha_vec=atoms->alpha->begin();
+        type0* c_vec=atoms->c->begin();
+        for(int i=0;i<n;i++)
+            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+        
+        dynamic->update(uvecs,2);
+        res=ff->prep(f);
+        
+    }
 }
 /*--------------------------------------------
  
@@ -693,18 +876,17 @@ int DAEBDF::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_max_dc_rel(getset[3]);
-    getset_max_ngmres_iters(getset[4]);
-    getset_max_nnewton_iters(getset[5]);
-    getset_ntally(getset[6]);
-    getset_export(getset[7]);
+    getset_max_ngmres_iters(getset[3]);
+    getset_max_nnewton_iters(getset[4]);
+    getset_ntally(getset[5]);
+    getset_export(getset[6]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};

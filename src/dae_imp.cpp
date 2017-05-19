@@ -46,7 +46,6 @@ void DAEImplicit::init_static()
     del_c=del_c_ptr->begin();
     F_ptr=new Vec<type0>(atoms,c_dim);
     F=F_ptr->begin();
-    
     gmres=new GMRES(atoms,max_ngmres_iters,c_dim);
 }
 /*--------------------------------------------
@@ -65,6 +64,27 @@ void DAEImplicit::fin_static()
     Memory::dealloc(y_0);
     y_0=c_0=a=NULL;
     DAE::fin_static();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEImplicit::init()
+{
+    DAE::init();
+    
+    //static related
+
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAEImplicit::fin()
+{
+    //static related 
+
+    
+    
+    DAE::fin();
 }
 /*--------------------------------------------
  
@@ -98,12 +118,13 @@ inline type0 DAEImplicit::update_c()
     
     MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
     volatile type0 c0;
-    type0 dc,curr_max_dc_rel_lcl=0.0;
     
     for(int i=0;i<ncs;i++)
     {
         c0=c[i]-r*del_c[i];
         --++c0;
+        c[i]=c0;
+        /*
         dc=fabs(c0-c_init[i]);
         
         c[i]=c0;
@@ -113,9 +134,9 @@ inline type0 DAEImplicit::update_c()
                 curr_max_dc_rel_lcl=std::numeric_limits<type0>::infinity();
             if(c[i]>0.0)
                 curr_max_dc_rel_lcl=MAX(dc/c_init[i],curr_max_dc_rel_lcl);
-        }
+        }*/
     }
-    MPI_Allreduce(&curr_max_dc_rel_lcl,&curr_max_dc_rel,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+    //MPI_Allreduce(&curr_max_dc_rel_lcl,&curr_max_dc_rel,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     return r;
 }
 /*--------------------------------------------

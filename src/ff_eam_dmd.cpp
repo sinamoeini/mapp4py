@@ -358,7 +358,7 @@ void ForceFieldEAMDMD::force_calc()
  --------------------------------------------*/
 type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
 {
-    if(max_pairs<neighbor->no_pairs)
+    if(max_pairs<neighbor->no_pairs || ddrho_phi_drdr==NULL)
     {
         delete [] rho_phi;
         delete [] drho_phi_dr;
@@ -963,13 +963,57 @@ void ForceFieldEAMDMD::init_static()
     vec1=new Vec<type0>(atoms,1);
     vec2=new Vec<type0>(atoms,c_dim);
     vec3=new Vec<type0>(atoms,c_dim);
+    fcoef_ptr=new Vec<type0>(atoms,1);
+    
+    const int __natms_lcl=atoms->natms_lcl;
+    type0* f_coef=fcoef_ptr->begin();
+    type0* c=atoms->c->begin();
+    if(c_dim!=1)
+    {
+        type0 c_tot;
+        for(int i=0;i<__natms_lcl;i++)
+        {
+            c_tot=0.0;
+            for(int ic=0;ic<c_dim;ic++)
+                if(c[i*c_dim+ic]>0.0)
+                    c_tot+=c[i*c_dim+ic];
+            if(c_tot==0.0)
+            {
+                for(int ic=0;ic<c_dim;ic++)
+                {
+                    if(c[i*c_dim+ic]==0.0)
+                        f_coef[i*c_dim+ic]=1.0;
+                    else
+                        f_coef[i*c_dim+ic]=0.0;
+                }
+            }
+            else
+            {
+                for(int ic=0;ic<c_dim;ic++)
+                {
+                    if(c[i*c_dim+ic]>=0.0)
+                        f_coef[i*c_dim+ic]=c[i*c_dim+ic]/c_tot;
+                    else
+                        f_coef[i*c_dim+ic]=0.0;
+                }
+            }
+        }
+        
+    }
+    else
+    {
+        const int n=__natms_lcl*c_dim;
+        for(int i=0;i<n;i++)
+            if(c[i]>=0.0)
+                f_coef[i]=1.0;
+    }
 }
 /*--------------------------------------------
  create the sparse matrices
  --------------------------------------------*/
 void ForceFieldEAMDMD::fin_static()
 {
-    
+    delete fcoef_ptr;
     delete vec3;
     delete vec2;
     delete vec1;
@@ -1128,6 +1172,13 @@ void ForceFieldEAMDMD::calc_mu()
     
     dynamic->update(dE_ptr);
     
+    type0* fcoef=fcoef_ptr->begin();
+    type0* falpha=f_alpha->begin();
+    type0* fvec=f->begin();
+    memset(falpha,0,sizeof(type0)*n);
+    memset(fvec,0,sizeof(type0)*__dim__*atoms->natms_lcl);
+    /*
+    type0 pair_0,pair_1;
     
     istart=0;
     for(int i=0;i<n;i++)
@@ -1137,8 +1188,10 @@ void ForceFieldEAMDMD::calc_mu()
         {
             j=neighbor_list[i][__j];
             mu[i]+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
-            //pair_0=(drho_phi_dr[istart]+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart+2]*dE[i]);
-            //pair_1=(drho_phi_dalpha[istart]+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart+2]*dE[i]);
+            pair_0=(drho_phi_dr[istart]+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart+2]*dE[i]);
+            pair_1=(drho_phi_dalpha[istart]+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart+2]*dE[i]);
+            
+            
             if(j<n)
             {
                 mu[j]+=c[i]*(rho_phi[istart]+rho_phi[istart+2]*dE[i]);
@@ -1149,6 +1202,72 @@ void ForceFieldEAMDMD::calc_mu()
         }
     }
     dynamic->update(mu_ptr);
+    */
+    
+    
+    
+    
+    
+    type0* x=atoms->x->begin();
+    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 x_i[__dim__];
+    type0 dx_ij[__dim__];
+    type0 norm_sq_lcl=0.0,fpair,apair;
+    istart=0;
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::zero<__dim__>(f_i);
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        }
+        
+        type0 c_i=c[i];
+        type0 alpha_i=alpha[i];
+        type0 dE_i=dE[i];
+        type0 f_alpha_i=0.0;
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            mu[i]+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            
+            fpair=(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart]);
+            apair=(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart]);
+            
+            Algebra::V_add_x_mul_V<__dim__>(fpair*c[j]*fcoef[i],dx_ij,f_i);
+            f_alpha_i+=alpha_i*apair*c[j];
+            
+            if(j<n)
+            {
+                mu[j]+=c[i]*(rho_phi[istart]+rho_phi[istart+2]*dE[i]);
+                Algebra::V_add_x_mul_V<__dim__>(-fpair*c_i*fcoef[j],dx_ij,fvec+(j/c_dim)*__dim__);
+                falpha[j]+=alpha[j]*apair*c_i;
+                nrgy_strss_lcl[0]+=c[i]*c[j]*rho_phi[istart];
+            }
+            else
+                nrgy_strss_lcl[0]+=0.5*c[i]*c[j]*rho_phi[istart];
+        }
+        
+        f_alpha_i-=3.0*kbT/alpha_i;
+        falpha[i]+=f_alpha_i;
+        norm_sq_lcl+=falpha[i]*falpha[i];
+        
+        if((i+1)%c_dim==0)
+        {
+            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
+            norm_sq_lcl+=Algebra::V_mul_V<__dim__>(fvec+__dim__*(i/c_dim),fvec+__dim__*(i/c_dim));
+        }
+        
+    }
+    
+    dynamic->update(mu_ptr);
+    
+    
+    type0 norm;
+    MPI_Allreduce(&norm_sq_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
+    err=sqrt(norm);
 }
 /*--------------------------------------------
  force calculation

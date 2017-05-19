@@ -25,6 +25,7 @@ namespace MAPP_NS
         Vec<type0>* vec1;
         Vec<type0>* vec2;
         Vec<type0>* vec3;
+        Vec<type0>* fcoef_ptr;
         
         
         /*--------------------------------------------*/

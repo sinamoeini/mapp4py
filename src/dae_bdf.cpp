@@ -211,7 +211,7 @@ void DAEBDF::run(type0 t_tot)
     int __max_q=1;
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     
-    min_error();
+    if(nreset) min_error();
     init_static();
     reset();
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
@@ -219,7 +219,7 @@ void DAEBDF::run(type0 t_tot)
     
     type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
-    "Time",t_cur,"ERR",ff->err,
+    "Time",t_cur,
     "FE",ff->nrgy_strss[0],
     "S[0][0]",S[0][0],
     "S[1][1]",S[1][1],
@@ -227,6 +227,9 @@ void DAEBDF::run(type0 t_tot)
     "S[1][2]",S[2][1],
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
+    
+
+    
     if(ntally) thermo.init();
     Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
     if(ntally) thermo.print(step);
@@ -267,6 +270,16 @@ void DAEBDF::run(type0 t_tot)
         if(q_prev!=q)
             nconst_q=0;
         
+        if((istep+1)%nreset==0 && ff->err>100.0*a_tol)
+        {
+            fin_static();
+            min_error();
+            init_static();
+            
+            reset();
+            nconst_q=nconst_dt=0;
+        }
+        
         if(ntally && (istep+1)%ntally==0)
         {
             ff->force_calc_static_timer();
@@ -277,17 +290,6 @@ void DAEBDF::run(type0 t_tot)
         if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         
         
-        
-        
-        if((istep+1)%100==0)
-        //if(ff->err>0.1)
-        {
-            fin_static();
-            min_error();
-            init_static();
-            reset();
-            nconst_q=nconst_dt=0;
-        }
     }
     
     
@@ -298,6 +300,15 @@ void DAEBDF::run(type0 t_tot)
         ff->force_calc_static_timer();
         Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
         thermo.print(step+istep);
+    }
+    
+    if(nreset && istep%nreset)
+    {
+        fin_static();
+        min_error();
+        init_static();
+        reset();
+        nconst_q=nconst_dt=0;
     }
     
     if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
@@ -343,10 +354,11 @@ void DAEBDF::min_error()
     
     
     res=ff->prep(f);
-    for(int istep=0;istep<5 && res>0.0001 ;istep++)
+    int istep=0;
+    for(;istep<100 && res>a_tol;istep++)
     {
-        //printf("res %e\n",res);
-        gmres.solve(J,f,1.0e-8,norm,h);
+        //printf("res %e %e\n",res,ff->err);
+        gmres.solve(J,f,a_tol*100.0,norm,h);
         
         
         //printf("-h.f %e\n",-(h*f));
@@ -365,14 +377,17 @@ void DAEBDF::min_error()
         res=ff->prep(f);
         
     }
+    
+    //printf("%d res %e %e\n",istep,a0,a1);
+    //printf("res %e\n",res);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 bool DAEBDF::integrate()
 {
-    
-    while (true)
+    memcpy(c_0,c,ncs*sizeof(type0));
+    while(true)
     {
         /*
          do interpolation
@@ -397,7 +412,7 @@ bool DAEBDF::integrate()
         
         if(!newton())
         {
-            nonlin_fail();
+            newton_fail();
             continue;
         }
         
@@ -598,7 +613,6 @@ void DAEBDF::prep_for_next()
         }
     }
     
-    
     update_z();
     
     for(int i=max_q;i>0;i--)
@@ -649,7 +663,7 @@ void DAEBDF::update_z()
 /*--------------------------------------------
  run
  --------------------------------------------*/
-void DAEBDF::nonlin_fail()
+void DAEBDF::newton_fail()
 {
     if(t_fin-t_cur<=2.0*min_dt)
     {
@@ -682,6 +696,9 @@ void DAEBDF::nonlin_fail()
                 dt*=r;
         }
     }
+    
+    memcpy(c,c_0,ncs*sizeof(type0));
+    dynamic->update(atoms->c);
 }
 /*--------------------------------------------
  
@@ -876,7 +893,7 @@ int DAEBDF::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
@@ -885,8 +902,9 @@ void DAEBDF::setup_tp_getset()
     getset_min_dt(getset[2]);
     getset_max_ngmres_iters(getset[3]);
     getset_max_nnewton_iters(getset[4]);
-    getset_ntally(getset[5]);
-    getset_export(getset[6]);
+    getset_nreset(getset[5]);
+    getset_ntally(getset[6]);
+    getset_export(getset[7]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};

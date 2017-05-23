@@ -912,6 +912,7 @@ type0 __GMRES__<V>::calc(V& Ax,V& x)
     Q[0]=x=norm_inv*Ax;
     
     Ax_hat[0]=norm;
+    //printf("\t\t %e\n",fabs(Ax_hat[0]));
     return norm;
 }
 /*--------------------------------------------
@@ -954,6 +955,7 @@ type0 __GMRES__<V>::calc(int iter,V& Ax,V& x)
     h[iter]=cos_sin[iter][0]*h[iter]-cos_sin[iter][1]*norm;
     Ax_hat[iter+1]=cos_sin[iter][1]*Ax_hat[iter];
     Ax_hat[iter]*=cos_sin[iter][0];
+    //printf("\t\t %e\n",fabs(Ax_hat[iter+1]));
     return fabs(Ax_hat[iter+1]);
 }
 /*--------------------------------------------

@@ -151,9 +151,11 @@ bool DAEImplicit::newton()
     {
         ff->c_d_calc_timer();
         type0 F_norm_lcl=0.0;
+        type0 beta_inv=1.0/beta;
         for(int i=0;i<ncs;i++)
         {
-            F[i]=c[i]+a[i]-beta*c_d[i];
+            //F[i]=c[i]+a[i]-beta*c_d[i];
+            F[i]=beta_inv*c[i]+a[i]-c_d[i];
             F_norm_lcl+=F[i]*F[i];
         }
         type0 F_norm;
@@ -166,8 +168,9 @@ bool DAEImplicit::newton()
         ff->J_timer(x,Jx);
         type0* __Jx=Jx->begin();
         type0* __x=x->begin();
+        type0 beta_inv=1.0/beta;
         for(int i=0;i<ncs;i++)
-            __Jx[i]=-beta*__Jx[i]+__x[i];
+            __Jx[i]=-__Jx[i]+beta_inv*__x[i];
     };
     
     
@@ -178,9 +181,9 @@ bool DAEImplicit::newton()
     
     int iter=0;
     
-    memcpy(c_0,c,ncs*sizeof(type0));
-    memcpy(c,y_0,ncs*sizeof(type0));
-    dynamic->update(atoms->c);
+    //memcpy(c_0,c,ncs*sizeof(type0));
+    //memcpy(c,y_0,ncs*sizeof(type0));
+    //dynamic->update(atoms->c);
     type0 cost=F_norm();
 
     bool converge=false,diverge=false;

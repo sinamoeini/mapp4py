@@ -15,7 +15,8 @@ c(NULL),
 c_d(NULL),
 xprt(NULL),
 ncs(0),
-ntally(1000)
+ntally(1000),
+nreset(0)
 {
 }
 /*--------------------------------------------
@@ -164,15 +165,16 @@ int DAE::setup_tp()
     
 }
 /*--------------------------------------------*/
-PyGetSetDef DAE::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAE::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_ntally(getset[3]);
-    getset_export(getset[4]);
+    getset_nreset(getset[3]);
+    getset_ntally(getset[4]);
+    getset_export(getset[5]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
@@ -255,6 +257,35 @@ void DAE::getset_min_dt(PyGetSetDef& getset)
         return 0;
     };
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::getset_nreset(PyGetSetDef& getset)
+{
+    getset.name=(char*)"nreset";
+    getset.doc=(char*)R"---(
+    (int) configuration reset period
+    
+    Number of steps to reset initial configuration. If set to 0 the very inital configuration would be reference
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        int niters=reinterpret_cast<Object*>(self)->dae->nreset;
+        return var<int>::build(niters,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<int> nreset("nreset");
+        nreset.logics[0]=VLogics("ge",0);
+        int ichk=nreset.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->dae->nreset=nreset.val;
+        return 0;
+    };
+}
+
+
+
 /*--------------------------------------------
  
  --------------------------------------------*/

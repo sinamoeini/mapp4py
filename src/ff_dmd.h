@@ -57,6 +57,7 @@ namespace MAPP_NS
         virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
         
         type0 err;
+        type0 c_d_norm;
     };
 }
 #endif 

@@ -191,7 +191,7 @@ void MinCGDMD::refine(int n,int nsteps)
     
     
     res=ff->prep(f);
-    for(int istep=0;istep<nsteps;istep++)
+    for(int istep=0;istep<nsteps && res>1.0e-8;istep++)
     {
         printf("res %e\n",res);
         gmres.solve(J,f,e_tol,norm,h);

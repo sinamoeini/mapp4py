@@ -8,7 +8,7 @@ namespace MAPP_NS
     {
     private:
     protected:
-        void nonlin_fail();
+        void newton_fail();
     public:
         
         static constexpr int max_q=5;
@@ -162,6 +162,7 @@ namespace MAPP_NS
         template<const int dim>
         bool interpolate(const int n,const type0 beta,const type0* RESTRICT A0,const type0* RESTRICT A1,const type0* RESTRICT z,type0* RESTRICT y_0,type0* RESTRICT a)
         {
+            /*
             volatile type0 y0;
             for(int i=0;i<n;i++)
             {
@@ -175,6 +176,23 @@ namespace MAPP_NS
             }
             
             return true;
+            */
+            
+            
+            type0 beta_inv=1.0/beta;
+            type0 y0;
+            for(int i=0;i<n;i++)
+            {
+                y0=Algebra::V_mul_V<dim+1>(A0,z);
+                if(y0<0.0 || y0>1.0) return false;
+                
+                y_0[i]=y0;
+                a[i]=Algebra::V_mul_V<dim>(A1,z+1)-y0*beta_inv;
+                z+=DAEBDF::max_q+1;
+            }
+            
+            return true;
+            
         }
         
         

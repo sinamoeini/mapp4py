@@ -270,7 +270,7 @@ void DAEBDF::run(type0 t_tot)
         if(q_prev!=q)
             nconst_q=0;
         
-        if((istep+1)%nreset==0 && ff->err>100.0*a_tol)
+        if((istep+1)%nreset==0 && ff->err/a_tol_sqrt_nc_dofs>100.0)
         {
             fin_static();
             min_error();
@@ -355,10 +355,10 @@ void DAEBDF::min_error()
     
     res=ff->prep(f);
     int istep=0;
-    for(;istep<100 && res>a_tol;istep++)
+    for(;istep<100 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
         //printf("res %e %e\n",res,ff->err);
-        gmres.solve(J,f,a_tol*100.0,norm,h);
+        gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
         
         
         //printf("-h.f %e\n",-(h*f));

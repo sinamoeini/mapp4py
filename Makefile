@@ -21,7 +21,7 @@ OBJ		=obj/
 CPP_FILES	=$(wildcard $(SRC)*.cpp)
 OBJ_FILES	=$(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o))) 
 OBJ_PY_FILES	=$(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o.py))) 
-SAITE_PACKS	=/Library/Python/2.7/site-packages
+SITE_PACKS	=/Library/Python/2.7/site-packages
 
 
 mapp: prep $(OBJ_FILES) $(MAKEFILE) 
@@ -31,7 +31,7 @@ py: prep $(OBJ_PY_FILES) $(MAKEFILE)
 	$(CC)  -bundle -undefined dynamic_lookup $(CFLAGS) $(OBJ_PY_FILES) $(LIBS) $(LDFLAGS) -o mapp.so
 
 install:
-	@sudo mv mapp.so $(SAITE_PACKS)/mapp.so;
+	@sudo mv mapp.so $(SITE_PACKS)/mapp.so;
 
 $(OBJ)%.o: $(SRC)%.cpp $(MAKEFILE)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@	

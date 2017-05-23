@@ -67,13 +67,12 @@ void Communication::seq_analysis(const int my_id,const int* seq,const int seq_sz
     
     int my_rank=0;
     while(seq[my_rank]!=my_id) my_rank++;
-    
     for(int i=dim-1;i>-1;i--)
     {
-        coord[i]=my_rank/dims[i];
-        my_rank-=my_rank*dims[i];
+        coord[i]=my_rank/base[i];
+        my_rank-=coord[i]*base[i];
     }
-    
+        
     for(int i=0;i<dim;i++)
     {
         neigh[i][0]=neigh[i][1]=0;

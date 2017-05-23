@@ -290,11 +290,8 @@ void FuncTuple<T>::reset()
 template <class T, class... Ts>
 int FuncTuple<T, Ts...>::set()
 {
-    if(op==NULL) return 0;
-    
-    if(__var_api__.set(op)==-1)
+    if(op && __var_api__.set(op)==-1)
         return -1;
-    
     return next_func.set();
 }
 /*--------------------------------------------
@@ -303,8 +300,7 @@ int FuncTuple<T, Ts...>::set()
 template <class T>
 int FuncTuple<T>::set()
 {
-    if(op==NULL) return 0;
-    if(__var_api__.set(op)==-1)
+    if(op && __var_api__.set(op)==-1)
         return -1;
     return 0;
 }

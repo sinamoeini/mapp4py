@@ -117,10 +117,12 @@ void DAEBDF::run(type0 t_tot)
     reset();
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
     
+    type0 cv_msd;
     
     type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
     "Time",t_cur,
+    "MSD",cv_msd,
     "FE",ff->nrgy_strss[0],
     "S[0][0]",S[0][0],
     "S[1][1]",S[1][1],
@@ -133,6 +135,7 @@ void DAEBDF::run(type0 t_tot)
     
     if(ntally) thermo.init();
     Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
+    cv_msd=atoms->vac_msd();
     if(ntally) thermo.print(step);
     
     type0 dt_prev;
@@ -183,6 +186,7 @@ void DAEBDF::run(type0 t_tot)
         
         if(ntally && (istep+1)%ntally==0)
         {
+            cv_msd=atoms->vac_msd();
             ff->force_calc_static_timer();
             Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
             thermo.print(step+istep+1);

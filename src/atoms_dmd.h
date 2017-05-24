@@ -21,6 +21,7 @@ namespace MAPP_NS
         ~AtomsDMD();
         AtomsDMD& operator=(const Atoms&);
         
+        type0 vac_msd();
         type0 temp;
         type0 max_alpha;
         const int c_dim;

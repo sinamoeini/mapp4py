@@ -68,6 +68,43 @@ AtomsDMD& AtomsDMD::operator=(const Atoms& r)
     memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
     return* this;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 AtomsDMD::vac_msd()
+{
+    type0* __c=c->begin();
+    type0* __x=x->begin();
+    type0 cv_vals_lcl[__dim__+2]={[0 ... __dim__+1]=0.0};
+    type0 __xi[__dim__];
+    type0 cv;
+    for(int i=0;i<natms_lcl;i++,__c+=c_dim,__x+=__dim__)
+    {
+        cv=1.0;
+        for(int j=0;j<c_dim;j++)
+            if(__c[j]>0.0)
+                cv-=__c[j];
+        
+        Algebra::V_eq<__dim__>(__x,__xi);
+        Algebra::X2S<__dim__>(B[0],__xi);
+        Algebra::S2X<__dim__>(H[0],__xi);
+        cv_vals_lcl[__dim__]+=cv*Algebra::V_mul_V<__dim__>(__xi,__xi);
+        Algebra::V_add_x_mul_V<__dim__>(cv,__xi,cv_vals_lcl);
+        cv_vals_lcl[__dim__+1]+=cv;
+    }
+    
+    type0 cv_vals[__dim__+2]={[0 ... __dim__+1]=0.0};
+    
+    MPI_Allreduce(cv_vals_lcl,cv_vals,__dim__+2,Vec<type0>::MPI_T,MPI_SUM,world);
+    
+    
+    Algebra::Do<__dim__+1>::func([&cv_vals](int i)
+    {
+        cv_vals[i]/=cv_vals[__dim__+1];
+    });
+
+    return cv_vals[__dim__]-Algebra::V_mul_V<__dim__>(cv_vals,cv_vals);
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/

@@ -60,7 +60,7 @@ void DAE::init_static()
 {
     //static related
     ncs=atoms->natms_lcl*c_dim;
-    a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
+    //a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
     c=atoms->c->begin();
     c_d=ff->c_d->begin();
 }
@@ -81,6 +81,7 @@ void DAE::init()
     ff->c_d->fill();
     dynamic=new DynamicDMD(atoms,ff,false,{},{},{});
     dynamic->init();
+    a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
 }
 /*--------------------------------------------
  

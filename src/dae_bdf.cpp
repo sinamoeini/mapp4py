@@ -354,6 +354,8 @@ void DAEBDF::min_error()
     
     
     res=ff->prep(f);
+    //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
+    
     int istep=0;
     for(;istep<100 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {

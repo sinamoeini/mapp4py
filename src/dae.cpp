@@ -92,6 +92,60 @@ void DAE::fin()
     delete dynamic;
     dynamic=NULL;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::min_error()
+{
+    VecTens<type0,2> x(atoms,false,atoms->H,atoms->x,atoms->alpha);
+    VecTens<type0,2> f(atoms,false,ff->f,ff->f_alpha);
+    VecTens<type0,2> h(atoms,false,__dim__,c_dim);
+    
+
+    vec* uvecs[2];
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    type0 norm,res;
+    
+    
+    
+    __GMRES__<VecTens<type0,2>> gmres(5,atoms,false,__dim__,c_dim);
+    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
+    {
+        ff->J(x,Jx);
+    };
+    
+    
+    res=ff->prep(f);
+    //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
+    
+    int istep=0;
+    for(;istep<100 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
+    {
+        //printf("res %e %e\n",res,ff->err);
+        gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
+        
+        
+        //printf("-h.f %e\n",-(h*f));
+        
+        x+=h;
+        
+        type0 max_alpha_lcl=0.0;
+        const int n=atoms->natms_lcl*atoms->alpha->dim;
+        type0* alpha_vec=atoms->alpha->begin();
+        type0* c_vec=atoms->c->begin();
+        for(int i=0;i<n;i++)
+            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+        
+        dynamic->update(uvecs,2);
+        res=ff->prep(f);
+        
+    }
+    
+    //printf("%d res %e %e\n",istep,a0,a1);
+    //printf("res %e\n",res);
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -267,7 +321,7 @@ void DAE::getset_nreset(PyGetSetDef& getset)
     getset.doc=(char*)R"---(
     (int) configuration reset period
     
-    Number of steps to reset initial configuration. If set to 0 the very inital configuration would be reference
+    Number of steps to reset and readjust. If set to 0 no readjustment will occur
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
@@ -284,9 +338,6 @@ void DAE::getset_nreset(PyGetSetDef& getset)
         return 0;
     };
 }
-
-
-
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -376,7 +427,6 @@ void DAE::ml_run(PyMethodDef& tp_methods)
         try
         {
             __self->dae->init();
-            //__self->dae->init_static();
         }
         catch(std::string& err_msg)
         {
@@ -387,16 +437,11 @@ void DAE::ml_run(PyMethodDef& tp_methods)
             return NULL;
         }
         
-        
-        //__self->dae->init_static();
-        //__self->dae->run_static(f.val<1>());
-        //__self->dae->fin_static();
-        
-        
+
         
         __self->dae->run(f.val<1>());
         
-        //__self->dae->fin_static();
+
         __self->dae->fin();
         
         __self->dae->xprt=NULL;

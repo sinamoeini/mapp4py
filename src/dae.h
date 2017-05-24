@@ -40,8 +40,8 @@ namespace MAPP_NS
         virtual ~DAE();
         virtual void init_static();
         virtual void fin_static();
-        virtual void run_static(type0){};
         virtual void run(type0){};
+        void min_error();
         
         
         virtual void init();

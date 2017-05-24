@@ -53,7 +53,6 @@ namespace MAPP_NS
         void init();
         void fin();
         
-        void run_static(type0);
         void run(type0);
         bool integrate();
         void integrate_fail();
@@ -62,7 +61,7 @@ namespace MAPP_NS
         void update_z();
         void prep_for_next();
         void reset();
-        void min_error();
+        
         
         
         

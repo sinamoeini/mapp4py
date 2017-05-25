@@ -232,16 +232,17 @@ void AtomsMD::setup_tp_getset()
     getset_comm_dims(getset[11]);
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsMD::methods[]={[0 ... 8]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsMD::methods[]={[0 ... 9]={NULL,NULL,0,NULL}};
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {
     ml_strain(methods[0]);
     ml_create_temp(methods[1]);
-    ForceFieldLJ::ml_new(methods[2]);
-    ForceFieldEAM::ml_new(methods[3],methods[4],methods[5]);
-    ForceFieldFS::ml_new(methods[6]);
-    ImportCFGMD::ml_import(methods[7]);
+    ml_add_elem(methods[2]);
+    ForceFieldLJ::ml_new(methods[3]);
+    ForceFieldEAM::ml_new(methods[4],methods[5],methods[6]);
+    ForceFieldFS::ml_new(methods[7]);
+    ImportCFGMD::ml_import(methods[8]);
 }
 /*--------------------------------------------
  
@@ -273,6 +274,43 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
        Temperature
     seed : int
        random seed
+    
+    Returns
+    -------
+    None
+   
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsMD::ml_add_elem(PyMethodDef& tp_method)
+{
+    tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_method.ml_name="add_elem";
+    tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<std::string,type0> f("add_elem",{"elem","mass"});
+        f.logics<1>()[0]=VLogics("gt",0.0);
+        if(f(args,kwds)) return NULL;
+        
+        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
+        __self->atoms->elements.add_type(f.val<1>(),f.val<0>().c_str());
+        
+        Py_RETURN_NONE;
+    };
+    tp_method.ml_doc=R"---(
+    add_elem(elem,mass)
+    
+    Add a new element to the system
+        
+    Parameters
+    ----------
+    elem : string
+       New element
+    seed : double
+       Mass of the element
     
     Returns
     -------

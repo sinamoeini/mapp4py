@@ -194,6 +194,7 @@ inline void vec::pst_to(byte*& buff,int iatm)
  --------------------------------------------*/
 inline void vec::add()
 {
+    if(__is_empty__) return;
     resize(vec_sz+1);
 }
 /*--------------------------------------------
@@ -209,6 +210,7 @@ inline void vec::add()
  --------------------------------------------*/
 inline void vec::del(int &del_idx)
 {
+    if(__is_empty__) return;
     vec_sz--;
     if(del_idx==vec_sz) return;
     memcpy(data+del_idx*byte_sz,data+vec_sz*byte_sz,byte_sz);

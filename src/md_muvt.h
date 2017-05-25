@@ -9,7 +9,6 @@ namespace MAPP_NS
         int seed;
         type0 mu;
         std::string gas_elem_name;
-        elem_type gas_elem;
         int nevery;
         int nattempts;
     protected:

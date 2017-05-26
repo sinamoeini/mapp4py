@@ -248,14 +248,23 @@ void PGCMC::xchng(bool box_chng,int nattmpts)
     
     
     next_jatm_p=&PGCMC::next_jatm_reg;
-    dof_diff=0;
+    
     
     int nx=nattmpts/n_prll;
     if(nattmpts%n_prll) nx++;
 
+#ifdef GCMCDEBUG
+    tot_delta_u_lcl=0.0;
+#endif
+    dof_diff=0;
+    Algebra::zero<__nvoigt__>(mvv_lcl);
+    
     for(int i=0;i<nx;i++) attmpt();
 
-    
+    MPI_Allreduce(mvv_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+#ifdef GCMCDEBUG
+    MPI_Allreduce(&tot_delta_u_lcl,&tot_delta_u,1,Vec<type0>::MPI_T,MPI_SUM,world);
+#endif
     
     ff->fin_xchng();
     memcpy(atoms->x->begin(),s_vec_p->begin(),sizeof(type0)*natms_lcl*__dim__);
@@ -668,8 +677,8 @@ void PGCMC::del_succ()
         *p_2_first_aft_del=del_idx;
         
     }
-    
-    
+    type0 __gas_mass=-gas_mass;
+    Algebra::DyadicV<__dim__>(__gas_mass,atoms->x_d->begin()+del_idx*__dim__,mvv_lcl);
     atoms->del(del_idx);
     ngas--;
 }
@@ -691,6 +700,8 @@ void PGCMC::ins_succ()
         for(int i=0;i<__dim__;i++) dof[i]=true;
     }
     
+    
+    Algebra::DyadicV<__dim__>(gas_mass,atoms->x_d->begin()+(natms_lcl-1)*__dim__,mvv_lcl);
     
     memcpy(s_vec_p->begin()+(natms_lcl-1)*__dim__,s_buff[0],__dim__*sizeof(type0));
     
@@ -1159,9 +1170,9 @@ void PGCMC::decide()
         fac=z_fac*vol/((static_cast<type0>(tot_ngas+int_buff[0])+1.0)*exp(beta*delta_u));
         if(lcl_random->uniform()<fac)
         {
-#ifdef MPP_DEBUG
             
-            tot_du_test+=delta_u;
+#ifdef GCMCDEBUG
+            tot_delta_u_lcl+=delta_u;
 #endif
             root_succ=true;
             success[0]=0;
@@ -1193,9 +1204,8 @@ void PGCMC::decide()
         
         if(lcl_random->uniform()<fac)
         {
-#ifdef MPP_DEBUG
-            
-            tot_du_test-=delta_u;
+#ifdef GCMCDEBUG
+            tot_delta_u_lcl-=delta_u;
 #endif
             root_succ=true;
             success[0]=0;

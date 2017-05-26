@@ -108,6 +108,11 @@ namespace MAPP_NS
         /*************************************************************************/
         class AtomsMD*& atoms;
         class ForceFieldMD*& ff;
+        
+        type0 mvv_lcl[__nvoigt__];
+#ifdef GCMCDEBUG
+        type0 tot_delta_u_lcl;
+#endif
     public:
         GCMC(class AtomsMD*&, class ForceFieldMD*&,class DynamicMD*&,elem_type,type0,type0,int);
         virtual ~GCMC();
@@ -146,6 +151,11 @@ namespace MAPP_NS
         MPI_Comm* curr_comm;
         int curr_root;
         bool root_succ;
+        
+        type0 mvv[__nvoigt__];
+#ifdef GCMCDEBUG
+        type0 tot_delta_u;
+#endif
     };
 }
 #endif

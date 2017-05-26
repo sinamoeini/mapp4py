@@ -136,7 +136,16 @@ void MDMuVT::run(int nsteps)
     
     PGCMC gcmc(atoms,ff,dynamic,1,atoms->elements.find(gas_elem_name.c_str()),mu,T,seed);
     gcmc.init();
-               
+
+#ifdef GCMCDEBUG
+    type0 delta_u=0.0;
+    FILE* fp_debug=NULL;
+    if(atoms->comm_rank==0)
+    {
+        fp_debug=fopen("gcmc_debug","w");
+        fprintf(fp_debug,"step\tacc_du\tgcmc_du\trel_error\terror\n");
+    }
+#endif
     
     ff->force_calc_timer();
     
@@ -176,11 +185,26 @@ void MDMuVT::run(int nsteps)
             dynamic->update(atoms->x);
         else
         {
+#ifdef GCMCDEBUG
+            delta_u=ff->nrgy_strss[0];
+#endif
             gcmc.xchng(false,nattempts);
             ndof_part+=static_cast<type0>(gcmc.dof_diff);
+            Algebra::Do<__nvoigt__>::func([this,&gcmc](const int i){mvv[i]+=gcmc.mvv[i];});
+            T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
         }
-        
+
         ff->force_calc_timer();
+        
+#ifdef GCMCDEBUG
+        if((istep+1)%nevery==0)
+        {
+            delta_u-=ff->nrgy_strss[0];
+            if(atoms->comm_rank==0)
+                fprintf(fp_debug,"%d\t%e\t%e\t%e\t%e\n",istep,-delta_u,gcmc.tot_delta_u,fabs((delta_u+gcmc.tot_delta_u)/delta_u),fabs(delta_u+gcmc.tot_delta_u));
+        }
+#endif
+        
         
         update_x_d();
         
@@ -209,6 +233,10 @@ void MDMuVT::run(int nsteps)
     gcmc.fin();
     
     atoms->step+=nsteps;
+    
+#ifdef GCMCDEBUG
+    if(atoms->comm_rank==0) fclose(fp_debug);
+#endif
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

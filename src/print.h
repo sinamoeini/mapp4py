@@ -1,6 +1,8 @@
 #ifndef __MAPP__print__
 #define __MAPP__print__
 #include <string>
+#include <cstring>
+#include <iostream>
 #include <limits>
 class Print
 {

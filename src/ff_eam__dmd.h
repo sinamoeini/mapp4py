@@ -1,10 +1,10 @@
-#ifndef __MAPP__ff_eam__dmd__
-#define __MAPP__ff_eam__dmd__
+#ifndef __MAPP__ff_eam_dmd__
+#define __MAPP__ff_eam_dmd__
 #include "ff_dmd.h"
 namespace MAPP_NS
 {
     template<class> class DMDVec;
-    class ForceFieldEAMDMD : public ForceFieldDMD
+    class ForceFieldEAM_DMD : public ForceFieldDMD
     {
     private:
         size_t nr,nrho;
@@ -72,12 +72,12 @@ namespace MAPP_NS
         void c_d_calc();
         void J(Vec<type0>*,Vec<type0>*);
     public:
-        ForceFieldEAMDMD(class AtomsDMD*,
+        ForceFieldEAM_DMD(class AtomsDMD*,
         type0,type0,size_t,size_t,
         type0(***&&)[4],type0(***&&)[4],type0(**&&)[5],
         type0**&&,type0*&&,type0*&&);
     
-        ~ForceFieldEAMDMD();
+        ~ForceFieldEAM_DMD();
         void init();
         void fin();
         

@@ -1,0 +1,52 @@
+SHELL		=/bin/bash
+CC		=icpc 
+MAKEFILE	=Makefile
+CFLAGS		=-pthread -std=c++11 -O3
+
+
+INCLUDE_MPI	=
+LIB_MPI		=
+
+INCLUDE_MPI	=-I/opt/openmpi-intel/include
+LIB_MPI		=-L/opt/openmpi-intel/lib
+INCLUDE_PY	=-I/home/sina/apps/python/include/python2.7
+LIB_PY		=-L/home/sina/apps/python/lib
+INCLUDE_NP	=-I/home/sina/apps/python/lib/python2.7/site-packages/numpy/core/include
+LIB_NP		=-L/home/sina/apps/python/lib/python2.7/site-packages/numpy/core/lib
+
+
+INCLUDES	=$(INCLUDE_MPI) $(INCLUDE_PY) $(INCLUDE_NP)
+LIBS		=$(LIB_MPI) $(LIB_PY) $(LIB_NP)
+LDFLAGS		=-lnpymath -lmpi -lmpi_cxx -lopen-rte -lopen-pal -ldl -lnsl -lutil 
+#LDFLAGS		=-lnpymath -lpython2.7
+        
+SRC		=src/
+OBJ		=obj/
+CPP_FILES	=$(wildcard $(SRC)*.cpp)
+OBJ_FILES	=$(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o))) 
+OBJ_PY_FILES	=$(addprefix $(OBJ),$(notdir $(CPP_FILES:.cpp=.o.py))) 
+SITE_PACKS	=/home/sina/apps/python/lib/python2.7/site-packages
+
+
+mapp: prep $(OBJ_FILES) $(MAKEFILE) 
+	$(CC) $(CFLAGS) $(OBJ_FILES) -o $@ $(LIBS) $(LDFLAGS)  
+
+py: prep $(OBJ_PY_FILES) $(MAKEFILE)
+	$(CC) -pthread -shared $(CFLAGS) $(OBJ_PY_FILES) $(LIBS) $(LDFLAGS) -o mapp.so
+
+install: py
+	cp mapp.so $(SITE_PACKS)/mapp.so
+
+$(OBJ)%.o: $(SRC)%.cpp $(MAKEFILE)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@	
+
+
+$(OBJ)%.o.py: $(SRC)%.cpp $(MAKEFILE)
+	$(CC) -fPIC $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+clean:  
+	rm -rf $(OBJ)
+
+
+prep:
+	@mkdir -p $(OBJ);

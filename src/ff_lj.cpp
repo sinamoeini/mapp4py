@@ -325,7 +325,8 @@ void ForceFieldLJ::ml_new(PyMethodDef& tp_methods)
         >>> sim.ff_lj(sigma=[[1.0],[0.8,0.88]],
                       eps=[[1.0],[1.5,0.5]],
                       r_c=[[2.5],[2.0,2.2]],
-                      shift=False)
+                      shift=False,
+                      elems=['Ni','P'])
         
     )---";
 }

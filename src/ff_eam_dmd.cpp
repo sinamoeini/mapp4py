@@ -1618,7 +1618,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string*,type0*,type0*,std::string*> f("ff_eam_funcfl",{"funcfl_files","r_crd","zeta","elems"});
+        FuncAPI<std::string*,type0*,type0*,std::string*> f("ff_eam_funcfl",{"funcfl_files","r_crd","C","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
         f.logics<2>()[0]=VLogics("gt",0.0);
@@ -1661,7 +1661,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         Py_RETURN_NONE;
     };
     method_0.ml_doc=(char*)R"---(
-    ff_eam_funcfl(funcfl_files)
+    ff_eam_funcfl(funcfl_files,r_crd,C,elems=None)
    
     Tabulated EAM force field given by FuncFL file/s
     
@@ -1671,6 +1671,12 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     ----------
     funcfl_files : string[nelems]
         list of relative paths to DYNAMO files with FuncFL format
+    r_crd : double[nelems]
+        cutoff radius for mass exchange
+    C : double[nelems]
+        dimensionless factor for each element, see :ref:`here <master>`
+    elems : string[nelems]
+        mapping elements
     
     Returns
     -------
@@ -1688,7 +1694,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     ::
      
         >>> from mapp import dmd
-        >>> sim=dmd.cfg("configs/Ni-DMD.cfg")
+        >>> sim=dmd.cfg(5,"configs/Ni-DMD.cfg")
         >>> sim.ff_eam_funcfl("potentials/niu3.eam")
     
     
@@ -1701,7 +1707,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_setfl",{"setfl_file","r_crd","zeta","elems"});
+        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_setfl",{"setfl_file","r_crd","C","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
         f.logics<2>()[0]=VLogics("gt",0.0);
@@ -1745,7 +1751,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         Py_RETURN_NONE;
     };
     method_1.ml_doc=(char*)R"---(
-    ff_eam_setfl(setfl_file)
+    ff_eam_setfl(setfl_file,r_crd,C,elems=None)
    
     Tabulated EAM force field given by a single SetFL file
     
@@ -1755,6 +1761,12 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     ----------
     setfl_file : string
         relative path to DYNAMO file with SetFL format
+    r_crd : double[nelems]
+        cutoff radius for mass exchange
+    C : double[nelems]
+        dimensionless factor for each element, see :ref:`here <master>`
+    elems : string[nelems]
+        mapping elements
     
     Returns
     -------
@@ -1772,7 +1784,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     ::
      
         >>> from mapp import dmd
-        >>> sim=dmd.cfg("configs/Cu-DMD.cfg")
+        >>> sim=dmd.cfg(5,"configs/Cu-DMD.cfg")
         >>> sim.ff_eam_setfl("potentials/Cu_mishin.eam.alloy")
     
     
@@ -1785,7 +1797,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_fs",{"fs_file","r_crd","zeta","elems"});
+        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_fs",{"fs_file","r_crd","C","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
         f.logics<2>()[0]=VLogics("gt",0.0);
@@ -1828,7 +1840,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         Py_RETURN_NONE;
     };
     method_2.ml_doc=(char*)R"---(
-    ff_eam_fs(fs_file)
+    ff_eam_fs(fs_file,r_crd,C,elems=None)
    
     Tabulated Finnis-Sinclair EAM
     
@@ -1838,6 +1850,12 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     ----------
     fs_file : string
         relative path to DYNAMO file with fs format
+    r_crd : double[nelems]
+        cutoff radius for mass exchange
+    C : double[nelems]
+        dimensionless factor for each element, see :ref:`here <master>`
+    elems : string[nelems]
+        mapping elements
     
     Returns
     -------
@@ -1872,10 +1890,6 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     The numerical evaluation of these integrals is discussed :ref:`here <integ-ref>`.
     
     
-    .. note::
-    
-       Recently, we have come across a relationship that will eliminate the need to perform integrations in order to adjust :math:`\mathbf{x}` and :math:`\mathbf{\alpha}`, this will be implemented soon.
-    
     
     Recalling that
     
@@ -1892,7 +1906,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     Iron Hydrogrn mixture
     
     >>> from mapp import dmd
-    >>> sim=dmd.cfg("configs/FeH-DMD.cfg")
+    >>> sim=dmd.cfg(5,"configs/FeH-DMD.cfg")
     >>> sim.ff_eam_fs("potentials/FeH.eam.fs")
     )---";
 }

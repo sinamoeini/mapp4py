@@ -625,7 +625,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         Py_RETURN_NONE;
     };
     method_0.ml_doc=(char*)R"---(
-    ff_eam_funcfl(funcfl_files)
+    ff_eam_funcfl(funcfl_files,elems=None)
    
     Tabulated EAM force field given by FuncFL file/s
     
@@ -635,6 +635,8 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
     ----------
     funcfl_files : string[nelems]
         list of relative paths to DYNAMO files with FuncFL format
+    elems : string[nelems]
+        mapping elements
     
     Returns
     -------
@@ -653,7 +655,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
      
         >>> from mapp import md
         >>> sim=md.cfg("configs/Ni.cfg")
-        >>> sim.ff_eam_funcfl("potentials/niu3.eam")
+        >>> sim.ff_eam_funcfl("potentials/Ni_u3.eam")
     
     
 

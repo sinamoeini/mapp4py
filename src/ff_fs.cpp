@@ -101,7 +101,7 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
     };
     
     tp_methods.ml_doc=(char*)R"---(
-    ff_fs(A,t1,t2,k1,k2,k3,r_c_phi,r_c_rho)
+    ff_fs(A,t1,t2,k1,k2,k3,r_c_phi,r_c_rho,elems=None)
    
     Finnis-Sinclair EAM
     
@@ -125,7 +125,8 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
         :math:`r_{c,\phi}`
     r_c_rho : symmetric double[nelems][nelems]
         :math:`r_{c,\rho}`
-
+    elems : string[nelems]
+        mapping elements
     
     Returns
     -------
@@ -172,7 +173,8 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
                       k2=[[-0.35921],[-4.086410,-17.468518]],
                       k3=[[-0.038560],[1.483233,4.812639]],
                       r_c_phi=[[3.40],[2.468801,2.875598]],
-                      r_c_rho=[[3.569745],[2.545937,2.892070]])
+                      r_c_rho=[[3.569745],[2.545937,2.892070]],
+                      elems=['Fe','C'])
 
     )---";
 }

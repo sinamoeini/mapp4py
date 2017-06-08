@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -N test
+#PBS -e _err
+#PBS -o _out
+#PBS -V
+#PBS -l walltime=1:00:00:00
+#PBS -l nice=19
+#PBS -q default
+#PBS -l nodes=n001.ru.mit.edu:ppn=16+n002.ru.mit.edu:ppn=16+n003.ru.mit.edu:ppn=16+n004.ru.mit.edu:ppn=16
+cd $PBS_O_WORKDIR
+touch in_Cu_diff.py
+/opt/openmpi/bin/mpiexec  /home/sina/apps/python/bin/python in_Cu_diff.py > output_cu 
+#/opt/openmpi/bin/mpiexec  /home/sina/apps/python/bin/python in_Fe_diff.py > output_fe

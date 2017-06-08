@@ -154,7 +154,6 @@ bool DAEImplicit::newton()
         type0 beta_inv=1.0/beta;
         for(int i=0;i<ncs;i++)
         {
-            //F[i]=c[i]+a[i]-beta*c_d[i];
             F[i]=beta_inv*c[i]+a[i]-c_d[i];
             F_norm_lcl+=F[i]*F[i];
         }

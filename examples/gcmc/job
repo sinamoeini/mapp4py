@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -N test
+#PBS -e _err
+#PBS -o _out
+#PBS -V
+#PBS -l walltime=3:00:00:00
+#PBS -l nice=19
+#PBS -q default
+#PBS -l nodes=n001.ru.mit.edu:ppn=16+n002.ru.mit.edu:ppn=16+n003.ru.mit.edu:ppn=16+n004.ru.mit.edu:ppn=16+n005.ru.mit.edu:ppn=16+n006.ru.mit.edu:ppn=16+n007.ru.mit.edu:ppn=16+n008.ru.mit.edu:ppn=16+n009.ru.mit.edu:ppn=16+n010.ru.mit.edu:ppn=16+n011.ru.mit.edu:ppn=16+n012.ru.mit.edu:ppn=16+n013.ru.mit.edu:ppn=16+n014.ru.mit.edu:ppn=16+n015.ru.mit.edu:ppn=16+n016.ru.mit.edu:ppn=16
+cd $PBS_O_WORKDIR
+touch configs/Fe.cfg
+touch input.py
+/opt/openmpi/bin/mpiexec  /home/sina/apps/python/bin/python input.py > output
+#/opt/openmpi/bin/mpiexec  /home/sina/apps/python/bin/python in_Fe_diff.py > output_fe

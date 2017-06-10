@@ -275,10 +275,17 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f,type0 (&T)[__dim__][__dim__]
     type0 vol=atoms->vol;
     Algebra::DoLT<__dim__>::func([&T,&err_sq,&f,this,&vol](int i,int j)
     {
+        
         int k=j*(__dim__-1)-j*(j-1)/2+i+1;
         nrgy_strss[k]/=vol;
-        f.A[i][j]=nrgy_strss[k]-T[i][j];
-        err_sq+=f.A[i][j]*f.A[i][j];
+        if(!std::isnan(T[i][j]))
+        {
+            f.A[i][j]=nrgy_strss[k]-T[i][j];
+            err_sq+=f.A[i][j]*f.A[i][j];
+        }
+        else
+            f.A[i][j]=0.0;
+        
     });
     return sqrt(err_sq);
 }

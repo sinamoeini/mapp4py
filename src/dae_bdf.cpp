@@ -102,7 +102,7 @@ void DAEBDF::run(type0 t_tot)
 {
     int step=atoms->step;
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
-    if(nevery_xprt) xprt->write(step);
+    
     
     t_cur=0.0;
     t_fin=t_tot;
@@ -131,7 +131,7 @@ void DAEBDF::run(type0 t_tot)
     "S[2][0]",S[2][0],
     "S[0][1]",S[1][0]);
     
-
+    if(nevery_xprt) xprt->write(step);
     
     if(ntally) thermo.init();
     Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
@@ -746,18 +746,19 @@ int DAEBDF::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]={[0 ... 9]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_max_ngmres_iters(getset[3]);
-    getset_max_nnewton_iters(getset[4]);
-    getset_nreset(getset[5]);
-    getset_ntally(getset[6]);
-    getset_export(getset[7]);
+    getset_S(getset[3]);
+    getset_max_ngmres_iters(getset[4]);
+    getset_max_nnewton_iters(getset[5]);
+    getset_nreset(getset[6]);
+    getset_ntally(getset[7]);
+    getset_export(getset[8]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};

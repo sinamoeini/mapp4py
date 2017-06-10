@@ -17,7 +17,9 @@ xprt(NULL),
 ncs(0),
 ntally(1000),
 nreset(0),
-chng_box(false)
+chng_box(false),
+S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
+S{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}}
 {
 }
 /*--------------------------------------------
@@ -107,8 +109,7 @@ void DAE::min_error()
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
     type0 norm,res;
-    type0 S[__dim__][__dim__]={[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
-    S[0][0]=S[1][1]=S[2][2]=0.0;
+
     
     __GMRES__<VecTens<type0,2>> gmres(10,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
@@ -227,7 +228,7 @@ int DAE::setup_tp()
     
 }
 /*--------------------------------------------*/
-PyGetSetDef DAE::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAE::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_getset()
 {
@@ -235,14 +236,59 @@ void DAE::setup_tp_getset()
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
     getset_nreset(getset[3]);
-    getset_ntally(getset[4]);
-    getset_export(getset[5]);
+    getset_S(getset[4]);
+    getset_ntally(getset[5]);
+    getset_export(getset[6]);
 }
 /*--------------------------------------------*/
 PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_methods()
 {
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::getset_S(PyGetSetDef& getset)
+{
+    getset.name=(char*)"S";
+    getset.doc=(char*)R"---(
+    (symm<double[dim][dim]>) external stress tensor
+    
+    External stress imposed on system, here dim is the dimension of simulation
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->dae->S,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<symm<type0[__dim__][__dim__]>> S("S");
+        int ichk=S.set(op);
+        if(ichk==-1) return -1;
+        
+        bool (&__S_dof)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->dae->S_dof;
+        type0 (&__S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->dae->S;
+        bool& __chng_box=reinterpret_cast<Object*>(self)->dae->chng_box;
+        __chng_box=false;
+        Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&__chng_box,&S](int i,int j)
+        {
+            
+            if(std::isnan(S.val[i][j]))
+            {
+                __S[i][j]=__S[j][i]=NAN;
+                __S_dof[i][j]=__S_dof[j][i]=false;
+            }
+            else
+            {
+                __S[i][j]=__S[j][i]=S.val[i][j];
+                __S_dof[i][j]=__S_dof[j][i]=true;
+                __chng_box=true;
+            }
+        });
+        
+        return 0;
+    };
 }
 /*--------------------------------------------
  

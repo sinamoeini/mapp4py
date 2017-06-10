@@ -497,6 +497,51 @@ void Update::update(vec* updt_vec,bool x_xst)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void Update::update(vec* updt_vec,type0 (*dH)[__dim__])
+{
+    
+    type0* vec=static_cast<type0*>(updt_vec->begin());
+    snd_buff_sz=0;
+    reserve_snd_buff(updt_vec->byte_sz*max_snd_atms_lst_sz);
+    updt_vec->vec_sz=natms_lcl;
+    
+    int icurs=0;
+    int icomm=0;
+    for(int idim=0;idim<__dim__;idim++)
+    {
+        for(int idir=0;idir<2;idir++)
+        {
+            while(icomm<ncomms[idim][idir])
+            {
+                comm_manager[idim]->update_sing(icomm
+                ,neigh[idim][idir]
+                ,neigh[idim][1-idir]
+                ,updt_vec);
+                
+                if(pbc_correction[idim][idir])
+                {
+                    if(idir)
+                    {
+                        for(int iatm=updt_vec->vec_sz-1;iatm>updt_vec->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                            for(int jdim=0;jdim<idim+1;jdim++)
+                                vec[iatm*__dim__+jdim]-=dH[idim][jdim];
+                    }
+                    else
+                    {
+                        for(int iatm=updt_vec->vec_sz-1;iatm>updt_vec->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                            for(int jdim=0;jdim<idim+1;jdim++)
+                                vec[iatm*__dim__+jdim]+=dH[idim][jdim];
+                    }
+                }
+                icomm++;
+            }
+            icurs++;
+        }
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void Update::list()
 {
     natms_ph=0;

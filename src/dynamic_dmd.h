@@ -28,6 +28,7 @@ namespace MAPP_NS
         
         void update(vec**,int);
         void update(vec*);
+        void update(vec*,type0 (*)[__dim__]);
         void init();
         void fin();
     };

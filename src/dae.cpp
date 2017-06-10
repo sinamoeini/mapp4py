@@ -16,7 +16,8 @@ c_d(NULL),
 xprt(NULL),
 ncs(0),
 ntally(1000),
-nreset(0)
+nreset(0),
+chng_box(false)
 {
 }
 /*--------------------------------------------
@@ -79,7 +80,7 @@ void DAE::init()
 {
     c_dim=atoms->c_dim;
     ff->c_d->fill();
-    dynamic=new DynamicDMD(atoms,ff,false,{},{},{});
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{},{},{});
     dynamic->init();
     a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
 }
@@ -97,38 +98,40 @@ void DAE::fin()
  --------------------------------------------*/
 void DAE::min_error()
 {
-    VecTens<type0,2> x(atoms,false,atoms->H,atoms->x,atoms->alpha);
-    VecTens<type0,2> f(atoms,false,ff->f,ff->f_alpha);
-    VecTens<type0,2> h(atoms,false,__dim__,c_dim);
+    VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
+    VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
+    VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
     
 
     vec* uvecs[2];
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
     type0 norm,res;
+    type0 S[__dim__][__dim__]={[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+    S[0][0]=S[1][1]=S[2][2]=0.0;
     
-    
-    
-    __GMRES__<VecTens<type0,2>> gmres(5,atoms,false,__dim__,c_dim);
+    __GMRES__<VecTens<type0,2>> gmres(10,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
         ff->J(x,Jx);
     };
     
     
-    res=ff->prep(f);
+    res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
     //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
     
     int istep=0;
     for(;istep<100 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
-        //printf("res %e %e\n",res,ff->err);
+        //printf("%d res %e | %e %e %e %e %e %e\n",istep,res,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
         gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
         
         
         //printf("-h.f %e\n",-(h*f));
         
         x+=h;
+        
+        
         
         type0 max_alpha_lcl=0.0;
         const int n=atoms->natms_lcl*atoms->alpha->dim;
@@ -138,8 +141,12 @@ void DAE::min_error()
             if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
+        if(chng_box)
+            atoms->update_H();
+        
         dynamic->update(uvecs,2);
-        res=ff->prep(f);
+        
+        res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
         
     }
     

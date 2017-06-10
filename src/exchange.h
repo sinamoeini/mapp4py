@@ -134,6 +134,7 @@ namespace MAPP_NS
         ~Update();
         void reset();
         void update(vec*,bool);
+        void update(vec*,type0 (*)[__dim__]);
         void update(vec**,int,bool);
         void list();
         void rm_rdndncy();

@@ -190,7 +190,7 @@ void MinCGDMD::refine(int n,int nsteps)
     };
     
     
-    res=ff->prep(f);
+    res=ff->prep_timer(f);
     for(int istep=0;istep<nsteps && res>1.0e-8;istep++)
     {
         printf("res %e\n",res);
@@ -210,7 +210,7 @@ void MinCGDMD::refine(int n,int nsteps)
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
         dynamic->update(uvecs,2);
-        res=ff->prep(f);
+        res=ff->prep_timer(f);
         
     }
     
@@ -242,7 +242,7 @@ type0 MinCGDMD::F(type0 alpha)
     
     if(chng_box)
         atoms->update_H();
-    
+
     dynamic->update(uvecs,2);
     return ff->value_timer();
 }

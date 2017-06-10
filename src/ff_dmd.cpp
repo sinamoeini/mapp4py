@@ -253,7 +253,35 @@ void ForceFieldDMD::J_timer(Vec<type0>* x,Vec<type0>* Jx)
 {
     J(x,Jx);
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f)
+{
+    Algebra::zero<__nvoigt__+1>(nrgy_strss_lcl);
+    type0 err_sq=prep(f);
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
+    Algebra::Do<__nvoigt__>::func([this](int i){nrgy_strss[i+1]/=atoms->vol;});
+    return sqrt(err_sq);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f,type0 (&T)[__dim__][__dim__])
+{
+    Algebra::zero<__nvoigt__+1>(nrgy_strss_lcl);
+    type0 err_sq=prep(f);
+    MPI_Allreduce(nrgy_strss_lcl,nrgy_strss,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
+    type0 vol=atoms->vol;
+    Algebra::DoLT<__dim__>::func([&T,&err_sq,&f,this,&vol](int i,int j)
+    {
+        int k=j*(__dim__-1)-j*(j-1)/2+i+1;
+        nrgy_strss[k]/=vol;
+        f.A[i][j]=nrgy_strss[k]-T[i][j];
+        err_sq+=f.A[i][j]*f.A[i][j];
+    });
+    return sqrt(err_sq);
+}
 
 
 

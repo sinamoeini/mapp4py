@@ -133,6 +133,13 @@ void DynamicDMD::update(vec* updt_vec)
     update(&updt_vec,1);
 }
 /*--------------------------------------------
+ update one vectors
+ --------------------------------------------*/
+void DynamicDMD::update(vec* dx,type0 (*dH)[__dim__])
+{
+    updt->update(dx,dH);
+}
+/*--------------------------------------------
  update a number of vectors
  --------------------------------------------*/
 void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)

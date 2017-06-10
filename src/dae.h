@@ -14,6 +14,7 @@ namespace MAPP_NS
         void pre_run_chk(class AtomsDMD*,class ForceFieldDMD*);
         int c_dim;
         int ncs;
+        bool chng_box;
         
         class AtomsDMD* atoms;
         class ForceFieldDMD* ff;

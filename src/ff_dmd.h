@@ -17,6 +17,7 @@ namespace MAPP_NS
         
         virtual void force_calc_static()=0;
         virtual void c_d_calc()=0;
+        virtual type0 prep(VecTens<type0,2>&)=0;
         virtual void J(Vec<type0>*,Vec<type0>*)=0;
         void pre_init();
         void post_fin();
@@ -53,7 +54,9 @@ namespace MAPP_NS
         void J_timer(Vec<type0>*,Vec<type0>*);
         
         
-        virtual type0 prep(VecTens<type0,2>&)=0;
+        
+        virtual type0 prep_timer(VecTens<type0,2>&);
+        virtual type0 prep_timer(VecTens<type0,2>&,type0(&)[__dim__][__dim__]);
         virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
         
         type0 err;

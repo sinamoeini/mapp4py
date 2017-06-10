@@ -25,11 +25,21 @@ tau{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 V_H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
 S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}}
 {
+    
     Algebra::DoLT<__dim__>::func([this,&__S,&__dt]
     (int i,int j)
     {
-        S_dof[i][j]=S_dof[j][i]=true;
-        S[i][j]=S[j][i]=__S[i][j];
+        if(std::isnan(__S[i][j]))
+        {
+            S_dof[i][j]=S_dof[j][i]=false;
+            S[i][j]=S[j][i]=NAN;
+        }
+        else
+        {
+            S_dof[i][j]=S_dof[j][i]=true;
+            S[i][j]=S[j][i]=__S[i][j];
+        }
+        
         tau[i][j]=tau[j][i]=1000.0*__dt;
         
     });
@@ -540,17 +550,16 @@ int MDNST::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MDNST::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MDNST::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void MDNST::setup_tp_getset()
 {
     getset_S(getset[0]);
-    getset_S_dof(getset[1]);
-    getset_niters_s(getset[2]);
-    getset_L_s(getset[3]);
-    getset_t_relax_s(getset[4]);
-    getset_tau(getset[5]);
-    getset_nreset(getset[6]);
+    getset_niters_s(getset[1]);
+    getset_L_s(getset[2]);
+    getset_t_relax_s(getset[3]);
+    getset_tau(getset[4]);
+    getset_nreset(getset[5]);
 }
 /*--------------------------------------------
  
@@ -657,39 +666,6 @@ void MDNST::getset_t_relax_s(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::getset_S_dof(PyGetSetDef& getset)
-{
-    getset.name=(char*)"S_dof";
-    getset.doc=(char*)R"---(
-    (symm<bool[dim][dim]>) unitcell DOFs
-    
-    Unitcell degrees of freedom during molecular dynamics, here dim is the dimension of simulation
-    )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<symm<bool[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->S_dof,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<symm<bool[__dim__][__dim__]>> S_dof("S_dof");
-        int ichk=S_dof.set(op);
-        if(ichk==-1) return -1;
-        
-        bool (&__S_dof)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->S_dof;
-        type0 (&__S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->md->S;
-        Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&S_dof](int i,int j)
-        {
-            __S_dof[i][j]=__S_dof[j][i]=S_dof.val[i][j];
-            if(!__S_dof[i][j])
-                __S[i][j]=__S[j][i]=0.0;
-        });
-        
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 void MDNST::getset_S(PyGetSetDef& getset)
 {
     getset.name=(char*)"S";
@@ -704,7 +680,7 @@ void MDNST::getset_S(PyGetSetDef& getset)
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
-        VarAPI<symm<type0[__dim__][__dim__]>> S("S_dof");
+        VarAPI<symm<type0[__dim__][__dim__]>> S("S");
         int ichk=S.set(op);
         if(ichk==-1) return -1;
         
@@ -714,10 +690,19 @@ void MDNST::getset_S(PyGetSetDef& getset)
         type0 __dt=reinterpret_cast<Object*>(self)->md->dt;
         Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&S,&__tau,&__dt](int i,int j)
         {
-            __S_dof[i][j]=__S_dof[j][i]=true;
-            __S[i][j]=__S[j][i]=S.val[i][j];
-            if(__tau[i][j]==0.0)
-                __tau[i][j]=__tau[j][i]=1000.0*__dt;
+            
+            if(std::isnan(S.val[i][j]))
+            {
+                __S[i][j]=__S[j][i]=NAN;
+                __S_dof[i][j]=__S_dof[j][i]=false;
+            }
+            else
+            {
+                __S[i][j]=__S[j][i]=S.val[i][j];
+                __S_dof[i][j]=__S_dof[j][i]=true;
+                if(std::isnan(__tau[i][j]))
+                    __tau[i][j]=__tau[j][i]=1000.0*__dt;
+            }
         });
         
         return 0;

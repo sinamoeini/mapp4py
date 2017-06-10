@@ -80,7 +80,6 @@ namespace MAPP_NS
         static void getset_niters_s(PyGetSetDef&);
         static void getset_L_s(PyGetSetDef&);
         static void getset_t_relax_s(PyGetSetDef&);
-        static void getset_S_dof(PyGetSetDef&);
         static void getset_S(PyGetSetDef&);
         static void getset_tau(PyGetSetDef&);
         static void getset_nreset(PyGetSetDef&);

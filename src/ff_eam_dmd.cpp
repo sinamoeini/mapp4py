@@ -1745,7 +1745,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     r_crd : double[nelems]
         cutoff radius for mass exchange
     C : double[nelems]
-        dimensionless factor for each element, see :ref:`here <master>`
+        dimensionless factor for each element, see :ref:`here <master-ref>`
     elems : string[nelems]
         mapping elements
     
@@ -1835,7 +1835,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     r_crd : double[nelems]
         cutoff radius for mass exchange
     C : double[nelems]
-        dimensionless factor for each element, see :ref:`here <master>`
+        dimensionless factor for each element, see :ref:`here <master-ref>`
     elems : string[nelems]
         mapping elements
     
@@ -1924,7 +1924,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
     r_crd : double[nelems]
         cutoff radius for mass exchange
     C : double[nelems]
-        dimensionless factor for each element, see :ref:`here <master>`
+        dimensionless factor for each element, see :ref:`here <master-ref>`
     elems : string[nelems]
         mapping elements
     

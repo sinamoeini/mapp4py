@@ -675,7 +675,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
     
-    if(Dx.box_chng)
+    if(ADx.box_chng)
     {
         dynamic->update(Dx.vecs[0],Dx.A);
         Algebra::zero<__dim__*__dim__>(&(ADx.A[0][0]));
@@ -776,7 +776,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
                 df_pair*=0.5;
             }
             
-            if(Dx.box_chng)
+            if(ADx.box_chng)
             {
                 type0 a=(dlog_vol*f_pair-df_pair)*c_i*c[j];
                 type0 b=-f_pair*c_i*c[j];
@@ -834,7 +834,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
             else
                 df_pair*=0.5;
             
-            if(Dx.box_chng)
+            if(ADx.box_chng)
             {
                 type0 a=-df_pair*c_i*c[j];
                 Algebra::DoLT<__dim__>::func([&ADx,&dx_ij,&a](int i,int j)
@@ -850,7 +850,218 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
             Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
     }
     
-    if(Dx.box_chng)
+    if(ADx.box_chng)
+    {
+        type0 vol=atoms->vol;
+        Algebra::DoLT<__dim__>::func([&ADx,&vol](int i,int j)
+        {
+            ADx.A[i][j]/=-vol;
+        });
+        
+    }
+    
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldEAMDMD::__J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
+{
+    type0* deltadE=E_ptr->begin();
+    const int n=atoms->natms_lcl*c_dim;
+    const int nn=atoms->natms_lcl*__dim__;
+    
+    
+    
+    type0 dlog_vol=0.0;
+    type0 const* c=atoms->c->begin();
+    const type0* x=atoms->x->begin();
+    const type0* alpha=atoms->alpha->begin();
+    type0* ddE=ddE_ptr->begin();
+    type0* dE=dE_ptr->begin();
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    
+    if(ADx.box_chng)
+    {
+        dynamic->update(Dx.vecs[0]);
+        type0 AA[__dim__][__dim__]={[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        Algebra::MLT_mul_MLT(atoms->B,Dx.A,AA);
+        
+        
+        type0* dx=Dx.vecs[0]->begin();
+        type0* x=atoms->x->begin();
+        const int n=atoms->natms_lcl+atoms->natms_ph;
+        for(int i=0;i<n;i++,dx+=__dim__,x+=__dim__)
+            Algebra::V_mul_MLT_add_in(x,AA,dx);
+        
+        Algebra::zero<__dim__*__dim__>(&(ADx.A[0][0]));
+    }
+    else
+        dynamic->update(Dx.vecs[0]);
+    
+    dynamic->update(Dx.vecs[1]);
+    type0* dx=Dx.vecs[0]->begin();
+    type0* dalpha=Dx.vecs[1]->begin();
+    
+    
+    type0* Adx=ADx.vecs[0]->begin();
+    type0* Adalpha=ADx.vecs[1]->begin();
+    
+    type0* f_coef=mu_ptr->begin();
+    
+    type0 dx_ij[__dim__];
+    type0 ddx_ij[__dim__];
+    type0 x_i[__dim__];
+    type0 dx_i[__dim__];
+    type0 Adx_i[__dim__];
+    
+    type0 pair_alpha_0,pair_alpha_1,df_pair,f_pair,a,b,alpha_i,dalpha_i,Adalpha_i;
+    for(int i=0;i<n;i++)
+        Adalpha[i]=deltadE[i]=0.0;
+    for(int i=0;i<nn;i++)
+        Adx[i]=0.0;
+    
+    
+    size_t istart=0;
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+            Algebra::V_eq<__dim__>(dx+(i/c_dim)*__dim__,dx_i);
+            Algebra::zero<__dim__>(Adx_i);
+        }
+        
+        alpha_i=alpha[i];
+        dalpha_i=dalpha[i];
+        Adalpha_i=0.0;
+        
+        type0 c_i=c[i];
+        if(c_i<0.0) continue;
+        
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            
+            
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            Algebra::DX<__dim__>(dx_i,dx+(j/c_dim)*__dim__,ddx_ij);
+        
+            a=Algebra::V_mul_V<__dim__>(dx_ij,ddx_ij);
+            b=alpha_i*dalpha_i+alpha[j]*dalpha[j];
+
+            pair_alpha_0=-(
+            (ddrho_phi_drdalpha[istart]+ddrho_phi_drdalpha[istart+2]*dE[i]+ddrho_phi_drdalpha[istart+1]*dE[j])*a
+            +(ddrho_phi_dalphadalpha[istart]+ddrho_phi_dalphadalpha[istart+2]*dE[i]+ddrho_phi_dalphadalpha[istart+1]*dE[j])*b);
+            
+            pair_alpha_1=-(drho_phi_dalpha[istart]+drho_phi_dalpha[istart+2]*dE[i]+drho_phi_dalpha[istart+1]*dE[j]);
+            
+            
+            
+            df_pair=-(
+            (ddrho_phi_drdalpha[istart]+ddrho_phi_drdalpha[istart+2]*dE[i]+ddrho_phi_drdalpha[istart+1]*dE[j])*b
+            +(ddrho_phi_drdr[istart]+ddrho_phi_drdr[istart+2]*dE[i]+ddrho_phi_drdr[istart+1]*dE[j])*a);
+            
+            f_pair=-(drho_phi_dr[istart]+drho_phi_dr[istart+2]*dE[i]+drho_phi_dr[istart+1]*dE[j]);
+            
+            
+            
+            
+            deltadE[i]+=(a*drho_phi_dr[istart+2]+b*drho_phi_dalpha[istart+2])*ddE[i]*c[j];
+            Algebra::V_add_x_mul_V<__dim__>(df_pair*c[j]*f_coef[i],dx_ij,Adx_i);
+            Algebra::V_add_x_mul_V<__dim__>(f_pair*c[j]*f_coef[i],ddx_ij,Adx_i);
+            Adalpha_i+=c[j]*(pair_alpha_0*alpha_i+pair_alpha_1*dalpha_i);
+            
+            if(j<n)
+            {
+                deltadE[j]+=(a*drho_phi_dr[istart+1]+b*drho_phi_dalpha[istart+1])*ddE[j]*c[i];
+                Algebra::V_add_x_mul_V<__dim__>(-df_pair*c[i]*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
+                Algebra::V_add_x_mul_V<__dim__>(-f_pair*c[i]*f_coef[j],ddx_ij,Adx+(j/c_dim)*__dim__);
+                Adalpha[j]+=c[i]*(pair_alpha_0*alpha[j]+pair_alpha_1*dalpha[j]);
+            }
+            else
+            {
+                f_pair*=0.5;
+                df_pair*=0.5;
+            }
+            
+            if(ADx.box_chng)
+            {
+                type0 a=(dlog_vol*f_pair-df_pair)*c_i*c[j];
+                type0 b=-f_pair*c_i*c[j];
+                Algebra::DoLT<__dim__>::func([&ADx,&a,&b,&dx_ij,&ddx_ij](int i,int j)
+                {
+                    ADx.A[i][j]+=a*dx_ij[i]*dx_ij[j]+b*(ddx_ij[i]*dx_ij[j]+dx_ij[i]*ddx_ij[j]);
+                });
+            }
+            
+        }
+        
+        
+        Adalpha[i]+=Adalpha_i;
+        if((i+1)%c_dim==0)
+            Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
+    }
+    
+    dynamic->update(E_ptr);
+    
+    deltadE=E_ptr->begin();
+    istart=0;
+    
+    for(int i=0;i<n;i++)
+    {
+        if(i%c_dim==0)
+        {
+            Algebra::zero<__dim__>(Adx_i);
+            Algebra::V_eq<__dim__>(x+(i/c_dim)*__dim__,x_i);
+        }
+        
+        alpha_i=alpha[i];
+        dalpha_i=dalpha[i];
+        Adalpha_i=0.0;
+        
+        type0 c_i=c[i];
+        if(c_i<0.0) continue;
+        
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
+        {
+            j=neighbor_list[i][__j];
+            Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
+            
+            df_pair=-(drho_phi_dr[istart+2]*deltadE[i]+drho_phi_dr[istart+1]*deltadE[j]);
+            pair_alpha_0=-(drho_phi_dalpha[istart+2]*deltadE[i]+drho_phi_dalpha[istart+1]*deltadE[j]);
+            
+            Algebra::V_add_x_mul_V<__dim__>(df_pair*c[j]*f_coef[i],dx_ij,Adx_i);
+            Adalpha_i+=alpha_i*pair_alpha_0*c[j];
+            
+            if(j<n)
+            {
+                Algebra::V_add_x_mul_V<__dim__>(-df_pair*c_i*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
+                Adalpha[j]+=alpha[j]*pair_alpha_0*c_i;
+            }
+            else
+                df_pair*=0.5;
+            
+            if(ADx.box_chng)
+            {
+                type0 a=-df_pair*c_i*c[j];
+                Algebra::DoLT<__dim__>::func([&ADx,&dx_ij,&a](int i,int j)
+                {
+                    ADx.A[i][j]+=a*dx_ij[i]*dx_ij[j];
+                });
+            }
+        }
+        
+        
+        Adalpha[i]+=Adalpha_i-3.0*kbT*dalpha_i/(alpha_i*alpha_i);
+        if((i+1)%c_dim==0)
+            Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
+    }
+    
+    if(ADx.box_chng)
     {
         type0 vol=atoms->vol;
         Algebra::DoLT<__dim__>::func([&ADx,&vol](int i,int j)

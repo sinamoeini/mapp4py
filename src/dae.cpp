@@ -33,7 +33,44 @@ DAE::~DAE()
  --------------------------------------------*/
 void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
 {
+    //check if configuration is loaded
+    if(!__atoms)
+        throw std::string("cannot start dae run without initial conditions");
     
+    //check if force field is loaded
+    if(!__ff)
+        throw std::string("cannot start dae run without governing equations (force field)");
+    
+    if(std::isnan(__atoms->kB))
+        throw std::string("boltzmann constant should be set prior to dae run");
+    
+    if(std::isnan(__atoms->hP))
+        throw std::string("planck constant should be set prior to dae run");
+    
+    //check to see if the H_dof components are consistent with stoms->dof
+    
+    if(!__atoms->dof->is_empty())
+    {
+        bool* dof=__atoms->dof->begin();
+        int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
+        for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
+            Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
+        
+        int __dof[__dim__]{[0 ... __dim__-1]=0};
+        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
+        std::string err_msg=std::string();
+        for(int i=0;i<__dim__;i++)
+            for(int j=i;j<__dim__;j++)
+                if(S_dof[i][j] && __dof[i])
+                {
+                    if(!err_msg.empty()) err_msg+="\n";
+                    err_msg+="cannot impose stress component ["+Print::to_string(i)+"]["+Print::to_string(j)
+                    +"] while any of the atoms do not have degree freedom in "+Print::to_string(i)
+                    +" direction";
+                }
+        
+        if(!err_msg.empty()) throw err_msg;
+    }
 }
 /*--------------------------------------------
  
@@ -122,9 +159,9 @@ void DAE::min_error()
     //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
     
     int istep=0;
-    for(;istep<100 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
+    for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
-        //printf("%d res %e | %e %e %e %e %e %e\n",istep,res,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
+        //printf("%d res %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
         gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
         
         
@@ -150,6 +187,104 @@ void DAE::min_error()
         res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
         
     }
+    
+    //printf("%d res %e %e\n",istep,a0,a1);
+    //printf("res %e\n",res);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::__min_error()
+{
+    VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
+    VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
+    VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
+    
+
+    vec* uvecs[2];
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    type0 norm,res;
+
+    
+    __GMRES__<VecTens<type0,2>> gmres(10,atoms,chng_box,__dim__,c_dim);
+    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
+    {
+        ff->J(x,Jx);
+    };
+    
+    
+    res=ff->prep_timer(f);
+    //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
+    f.box_chng=false;
+    h.box_chng=false;
+    x.box_chng=false;
+    int istep=0;
+    for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
+    {
+        printf("%d res %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
+        gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
+        
+        
+        //printf("-h.f %e\n",-(h*f));
+        
+        x+=h;
+        
+        
+        
+        type0 max_alpha_lcl=0.0;
+        const int n=atoms->natms_lcl*atoms->alpha->dim;
+        type0* alpha_vec=atoms->alpha->begin();
+        type0* c_vec=atoms->c->begin();
+        for(int i=0;i<n;i++)
+            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+        
+        dynamic->update(uvecs,2);
+        
+        res=ff->prep_timer(f);
+        
+    }
+    
+    
+    
+    if(chng_box)
+    {
+        f.box_chng=true;
+        h.box_chng=true;
+        x.box_chng=true;
+        res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
+        istep=0;
+        for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
+        {
+            printf("%d res2 %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
+            gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
+            
+            
+            //printf("-h.f %e\n",-(h*f));
+            
+            x+=h;
+            
+            
+            
+            type0 max_alpha_lcl=0.0;
+            const int n=atoms->natms_lcl*atoms->alpha->dim;
+            type0* alpha_vec=atoms->alpha->begin();
+            type0* c_vec=atoms->c->begin();
+            for(int i=0;i<n;i++)
+            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+            MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+            
+            atoms->update_H();
+            
+            dynamic->update(uvecs,2);
+            
+            res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
+            
+        }
+    }
+    
+    
     
     //printf("%d res %e %e\n",istep,a0,a1);
     //printf("res %e\n",res);
@@ -236,8 +371,8 @@ void DAE::setup_tp_getset()
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
     getset_nreset(getset[3]);
-    getset_S(getset[4]);
-    getset_ntally(getset[5]);
+    getset_ntally(getset[4]);
+    getset_S(getset[5]);
     getset_export(getset[6]);
 }
 /*--------------------------------------------*/
@@ -245,50 +380,6 @@ PyMethodDef DAE::methods[]={[0 ... 0]={NULL}};
 /*--------------------------------------------*/
 void DAE::setup_tp_methods()
 {
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void DAE::getset_S(PyGetSetDef& getset)
-{
-    getset.name=(char*)"S";
-    getset.doc=(char*)R"---(
-    (symm<double[dim][dim]>) external stress tensor
-    
-    External stress imposed on system, here dim is the dimension of simulation
-    )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->dae->S,NULL);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<symm<type0[__dim__][__dim__]>> S("S");
-        int ichk=S.set(op);
-        if(ichk==-1) return -1;
-        
-        bool (&__S_dof)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->dae->S_dof;
-        type0 (&__S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->dae->S;
-        bool& __chng_box=reinterpret_cast<Object*>(self)->dae->chng_box;
-        __chng_box=false;
-        Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&__chng_box,&S](int i,int j)
-        {
-            
-            if(std::isnan(S.val[i][j]))
-            {
-                __S[i][j]=__S[j][i]=NAN;
-                __S_dof[i][j]=__S_dof[j][i]=false;
-            }
-            else
-            {
-                __S[i][j]=__S[j][i]=S.val[i][j];
-                __S_dof[i][j]=__S_dof[j][i]=true;
-                __chng_box=true;
-            }
-        });
-        
-        return 0;
-    };
 }
 /*--------------------------------------------
  
@@ -413,6 +504,50 @@ void DAE::getset_ntally(PyGetSetDef& getset)
         int ichk=ntally.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->dae->ntally=ntally.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::getset_S(PyGetSetDef& getset)
+{
+    getset.name=(char*)"S";
+    getset.doc=(char*)R"---(
+    (symm<double[dim][dim]>) external stress tensor
+    
+    External stress imposed on system, here dim is the dimension of simulation
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->dae->S,NULL);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<symm<type0[__dim__][__dim__]>> S("S");
+        int ichk=S.set(op);
+        if(ichk==-1) return -1;
+        
+        bool (&__S_dof)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->dae->S_dof;
+        type0 (&__S)[__dim__][__dim__]=reinterpret_cast<Object*>(self)->dae->S;
+        bool& __chng_box=reinterpret_cast<Object*>(self)->dae->chng_box;
+        __chng_box=false;
+        Algebra::DoLT<__dim__>::func([&__S_dof,&__S,&__chng_box,&S](int i,int j)
+        {
+            
+            if(std::isnan(S.val[i][j]))
+            {
+                __S[i][j]=__S[j][i]=NAN;
+                __S_dof[i][j]=__S_dof[j][i]=false;
+            }
+            else
+            {
+                __S[i][j]=__S[j][i]=S.val[i][j];
+                __S_dof[i][j]=__S_dof[j][i]=true;
+                __chng_box=true;
+            }
+        });
+        
         return 0;
     };
 }

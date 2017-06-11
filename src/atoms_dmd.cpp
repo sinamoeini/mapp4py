@@ -9,7 +9,7 @@ N(__N),
 Atoms(world),
 xi(new type0[__N]),
 wi(new type0[__N]),
-temp(std::numeric_limits<type0>::quiet_NaN())
+temp(NAN)
 {
     XMath::quadrature_hg(N,xi,wi);
     elem=new Vec<elem_type>(this,c_dim,"elem");

@@ -1767,6 +1767,12 @@ namespace MAPP_NS
                 *VMLT=__V_strd_mul_V<i,dim>::func(MLT,V);
                 __V_mul_MLT<i-1,dim>::func(V+1,MLT+dim+1,VMLT+1);
             }
+            template<typename T>
+            static inline void add_in(T* V,T* MLT,T* VMLT)
+            {
+                *VMLT+=__V_strd_mul_V<i,dim>::func(MLT,V);
+                __V_mul_MLT<i-1,dim>::add_in(V+1,MLT+dim+1,VMLT+1);
+            }
         };
         
         template<const int dim>
@@ -1777,6 +1783,11 @@ namespace MAPP_NS
             static inline void func(T* V,T* MLT,T* VMLT)
             {
                 *VMLT=*V**MLT;
+            }
+            template<typename T>
+            static inline void add_in(T* V,T* MLT,T* VMLT)
+            {
+                *VMLT+=*V**MLT;
             }
         };
         
@@ -3069,6 +3080,17 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<typename T,const int dim>
+        void V_mul_MLT_add_in(T*& V,T(&MLT)[dim][dim],T*& VMLT)
+        {
+            __V_mul_MLT<dim,dim>::add_in(V,&MLT[0][0],VMLT);
+        }
+        template<typename T,const int dim>
+        void V_mul_MLT_add_in(T*& V,T(&MLT)[dim][dim],T(&VMLT)[dim])
+        {
+            __V_mul_MLT<dim,dim>::add_in(V,&MLT[0][0],VMLT);
+        }
+        /*==========================================================================*/
+        template<typename T,const int dim>
         void MLT_depth(T(&MLT)[dim][dim],T(&depth)[dim])
         {
             __MLT_depth<dim,dim>::func(&(MLT[0][0]),depth);
@@ -3103,6 +3125,11 @@ namespace MAPP_NS
         }
         template<const int dim,typename T>
         void MLT_mul_MLT(T(&MLTL)[dim][dim],T(*&MLTR)[dim],T(&MLT)[dim][dim])
+        {
+            __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
+        }
+        template<const int dim,typename T>
+        void MLT_mul_MLT(T(*&MLTL)[dim],T(&MLTR)[dim][dim],T(&MLT)[dim][dim])
         {
             __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
         }

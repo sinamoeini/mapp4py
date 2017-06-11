@@ -753,12 +753,13 @@ void DAEBDF::setup_tp_getset()
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
     getset_min_dt(getset[2]);
-    getset_S(getset[3]);
-    getset_max_ngmres_iters(getset[4]);
-    getset_max_nnewton_iters(getset[5]);
-    getset_nreset(getset[6]);
-    getset_ntally(getset[7]);
-    getset_export(getset[8]);
+    getset_nreset(getset[3]);
+    getset_ntally(getset[4]);
+    getset_S(getset[5]);
+    getset_export(getset[6]);
+    getset_max_ngmres_iters(getset[7]);
+    getset_max_nnewton_iters(getset[8]);
+    
 }
 /*--------------------------------------------*/
 PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};

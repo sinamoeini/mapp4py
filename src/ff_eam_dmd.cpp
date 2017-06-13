@@ -484,19 +484,19 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
             type0 r2_inv=r_inv*r_inv;
             type0 alpha_inv=1.0/alpha_ij;
             type0 alpha2_inv=alpha_inv*alpha_inv;
-            type0 alpha3_inv=alpha2_inv*alpha_inv;
+            type0 alpha4_inv=alpha2_inv*alpha2_inv;
             type0 r2alpha2_inv=r2_inv*alpha2_inv;
             
             
-            Algebra::Do<3>::func([&istart,&H,&r_inv,&r2_inv,&alpha2_inv,&r2alpha2_inv,&alpha_ij_sq,&alpha_inv,&rsq,&alpha3_inv,this]
+            Algebra::Do<3>::func([&istart,&H,&r_inv,&r2_inv,&alpha2_inv,&r2alpha2_inv,&alpha_ij_sq,&alpha_inv,&rsq,&alpha4_inv,this]
             (int i)
             {
                 rho_phi[istart+i]=PI_IN_SQ*r_inv*H[i][0];
                 drho_phi_dr[istart+i]=-r2_inv*(rho_phi[istart+i]+2.0*PI_IN_SQ*alpha_inv*H[i][1]);
                 drho_phi_dalpha[istart+i]=-alpha2_inv*(rho_phi[istart+i]-2.0*PI_IN_SQ*r_inv*H[i][2]);
-                ddrho_phi_drdr[istart+i]=-r_inv*(3.0*drho_phi_dr[istart+i]-2.0*drho_phi_dalpha[istart+i]);
+                ddrho_phi_drdr[istart+i]=-r2_inv*(3.0*drho_phi_dr[istart+i]-2.0*drho_phi_dalpha[istart+i]);
                 ddrho_phi_drdalpha[istart+i]=-r2alpha2_inv*(3.0*rho_phi[istart+i]+3.0*rsq*drho_phi_dr[istart+i]+alpha_ij_sq*drho_phi_dalpha[istart+i]+4.0*PI_IN_SQ*alpha_inv*H[i][3]);
-                ddrho_phi_dalphadalpha[istart+i]=-alpha3_inv*(3.0*rho_phi[istart+i]+6.0*alpha_ij_sq*drho_phi_dalpha[istart+i]-4.0*PI_IN_SQ*r_inv*H[i][4]);
+                ddrho_phi_dalphadalpha[istart+i]=-alpha4_inv*(3.0*rho_phi[istart+i]+6.0*alpha_ij_sq*drho_phi_dalpha[istart+i]-4.0*PI_IN_SQ*r_inv*H[i][4]);
             });
             
             

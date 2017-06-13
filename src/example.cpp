@@ -401,7 +401,7 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
         sum/=no;
         MPI_Bcast(&sum,1,Vec<type0>::MPI_T,0,atoms->world);
         
-        PyObject* op=var<type0>::build(sum,NULL);
+        PyObject* op=var<type0>::build(sum);
         
         return op;*/
         

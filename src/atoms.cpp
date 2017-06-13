@@ -392,7 +392,7 @@ void Atoms::getset_step(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->atoms->step,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->atoms->step);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
@@ -416,7 +416,7 @@ void Atoms::getset_hP(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->hP,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->hP);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
@@ -447,7 +447,7 @@ void Atoms::getset_kB(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->kB,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->kB);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
@@ -478,7 +478,7 @@ void Atoms::getset_skin(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->comm.skin,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->comm.skin);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
@@ -516,7 +516,7 @@ void Atoms::getset_H(PyGetSetDef& getset)
             return NULL;
         }
 
-        return var<type0[__dim__][__dim__]>::build(__self->atoms->H,NULL);
+        return var<type0[__dim__][__dim__]>::build(__self->atoms->H);
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {
@@ -544,7 +544,7 @@ void Atoms::getset_B(PyGetSetDef& getset)
             return NULL;
         }
 
-        return var<type0[__dim__][__dim__]>::build(__self->atoms->B,NULL);
+        return var<type0[__dim__][__dim__]>::build(__self->atoms->B);
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {
@@ -572,7 +572,7 @@ void Atoms::getset_vol(PyGetSetDef& getset)
             return NULL;
         }
 
-        return var<type0>::build(__self->atoms->vol,NULL);
+        return var<type0>::build(__self->atoms->vol);
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {
@@ -627,7 +627,7 @@ void Atoms::getset_comm_rank(PyGetSetDef& getset)
             return NULL;
         }
         int rank=__self->atoms->comm.rank;
-        return var<int>::build(rank,NULL);
+        return var<int>::build(rank);
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {
@@ -655,7 +655,7 @@ void Atoms::getset_comm_size(PyGetSetDef& getset)
             return NULL;
         }
         int size=__self->atoms->comm.size;
-        return var<int>::build(size,NULL);
+        return var<int>::build(size);
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {
@@ -682,7 +682,7 @@ void Atoms::getset_comm_coords(PyGetSetDef& getset)
             PyErr_Format(PyExc_TypeError,"cannot return 'comm_coords' prior to system configuration");
             return NULL;
         }
-        return var<int[__dim__]>::build(__self->atoms->comm.coords,NULL);
+        return var<int[__dim__]>::build(__self->atoms->comm.coords);
     };
     getset.set=[](PyObject*,PyObject*,void*)->int
     {
@@ -709,7 +709,7 @@ void Atoms::getset_comm_dims(PyGetSetDef& getset)
             PyErr_Format(PyExc_TypeError,"cannot return 'comm_dims' prior to system configuration");
             return NULL;
         }
-        return var<int[__dim__]>::build(__self->atoms->comm.dims,NULL);
+        return var<int[__dim__]>::build(__self->atoms->comm.dims);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {

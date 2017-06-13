@@ -195,7 +195,7 @@ void LineSearchGoldenSection::getset_bracket(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->ls.brack,NULL);
+        return var<bool>::build(reinterpret_cast<Object*>(self)->ls.brack);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -219,7 +219,7 @@ void LineSearchGoldenSection::getset_max_iter(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->ls.max_iter,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->ls.max_iter);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -244,7 +244,7 @@ void LineSearchGoldenSection::getset_tol(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.tol,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.tol);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -363,7 +363,7 @@ void LineSearchBrent::getset_bracket(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->ls.brack,NULL);
+        return var<bool>::build(reinterpret_cast<Object*>(self)->ls.brack);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -387,7 +387,7 @@ void LineSearchBrent::getset_max_iter(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->ls.max_iter,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->ls.max_iter);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -412,7 +412,7 @@ void LineSearchBrent::getset_tol(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.tol,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.tol);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -438,7 +438,7 @@ void LineSearchBrent::getset_zeps(PyGetSetDef& getset)
         
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.zeps,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.zeps);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -557,7 +557,7 @@ void LineSearchBackTrack::getset_c(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.c,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.c);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -582,7 +582,7 @@ void LineSearchBackTrack::getset_rho(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.rho,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.rho);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -607,7 +607,7 @@ void LineSearchBackTrack::getset_min_alpha(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.min_alpha,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->ls.min_alpha);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

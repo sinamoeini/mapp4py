@@ -364,7 +364,7 @@ void MDMuVT::getset_nevery(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->md->nevery,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->md->nevery);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -390,7 +390,7 @@ void MDMuVT::getset_nattempts(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->md->nattempts,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->md->nattempts);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -416,7 +416,7 @@ void MDMuVT::getset_seed(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->md->seed,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->md->seed);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -442,7 +442,7 @@ void MDMuVT::getset_gas_element(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<std::string>::build(reinterpret_cast<Object*>(self)->md->gas_elem_name,NULL);
+        return var<std::string>::build(reinterpret_cast<Object*>(self)->md->gas_elem_name);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

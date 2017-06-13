@@ -404,7 +404,7 @@ void DAEImplicit::getset_max_ngmres_iters(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_ngmres_iters,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_ngmres_iters);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -429,7 +429,7 @@ void DAEImplicit::getset_max_nnewton_iters(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nnewton_iters,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nnewton_iters);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

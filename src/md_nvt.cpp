@@ -528,7 +528,7 @@ void MDNVT::getset_T(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->md->T,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->md->T);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -553,7 +553,7 @@ void MDNVT::getset_dt(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->md->dt,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->md->dt);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -580,7 +580,7 @@ void MDNVT::getset_L(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int L=reinterpret_cast<Object*>(self)->md->thermo_part.L;
-        return var<int>::build(L,NULL);
+        return var<int>::build(L);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -614,7 +614,7 @@ void MDNVT::getset_niters(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int niters=reinterpret_cast<Object*>(self)->md->thermo_part.niters;
-        return var<int>::build(niters,NULL);
+        return var<int>::build(niters);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -649,7 +649,7 @@ void MDNVT::getset_t_relax(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         type0 t_relax=reinterpret_cast<Object*>(self)->md->thermo_part.t_relax;
-        return var<type0>::build(t_relax,NULL);
+        return var<type0>::build(t_relax);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -711,7 +711,7 @@ void MDNVT::getset_ntally(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->md->ntally,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->md->ntally);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

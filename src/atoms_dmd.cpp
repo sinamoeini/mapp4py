@@ -9,7 +9,9 @@ N(__N),
 Atoms(world),
 xi(new type0[__N]),
 wi(new type0[__N]),
-temp(NAN)
+temp(NAN),
+S_fe{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}},
+fe(NAN)
 {
     XMath::quadrature_hg(N,xi,wi);
     elem=new Vec<elem_type>(this,c_dim,"elem");
@@ -176,7 +178,7 @@ int AtomsDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsDMD::getset[]={[0 ... 13]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsDMD::getset[]={[0 ... 15]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
 {
@@ -193,6 +195,8 @@ void AtomsDMD::setup_tp_getset()
     getset_comm_coords(getset[10]);
     getset_comm_dims(getset[11]);
     getset_temp(getset[12]);
+    getset_fe(getset[13]);
+    getset_S_fe(getset[14]);
 }
 /*--------------------------------------------*/
 PyMethodDef AtomsDMD::methods[]={[0 ... 8]={NULL,NULL,0,NULL}};
@@ -217,7 +221,7 @@ void AtomsDMD::getset_temp(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->temp,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->temp);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
@@ -235,4 +239,47 @@ void AtomsDMD::getset_temp(PyGetSetDef& getset)
         return 0;
     };
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_S_fe(PyGetSetDef& getset)
+{
+    getset.name=(char*)"S_fe";
+    getset.doc=(char*)R"---(
+    (double) stress
+    
+    Virial stress from free energy
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0[__dim__][__dim__]>::build(reinterpret_cast<Object*>(self)->atoms->S_fe);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_fe(PyGetSetDef& getset)
+{
+    getset.name=(char*)"fe";
+    getset.doc=(char*)R"---(
+    (double) free energy
+    
+    Free energy
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->fe);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+
 

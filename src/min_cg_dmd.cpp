@@ -489,7 +489,7 @@ void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

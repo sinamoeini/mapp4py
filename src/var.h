@@ -1031,7 +1031,7 @@ namespace MAPP_NS
         static bool is_size_compatible_nothrow(py_var<T_EQUIV>&,var<size_t>**);
         static void is_size_compatible(py_var<T_EQUIV>&,const std::string&,var<size_t>**);
         static std::string type_name(var<size_t>**);
-        static PyObject* build(T&,size_t**);
+        static PyObject* build(T&,size_t(**)=NULL);
         
         T* ptr;
         
@@ -1555,7 +1555,7 @@ namespace MAPP_NS
         static bool is_size_compatible_nothrow(py_var<T_EQUIV>&,var<size_t>**);
         static void is_size_compatible(py_var<T_EQUIV>&,const std::string&,var<size_t>**);
         static std::string type_name(var<size_t>**);
-        static PyObject* build(T(&)[N],size_t**);
+        static PyObject* build(T(&)[N],size_t(**)=NULL);
         
         var<T> vars[N];
         T (*ptr)[N];
@@ -2012,7 +2012,7 @@ namespace MAPP_NS
         static bool is_size_compatible_nothrow(py_var<T_EQUIV>&,var<size_t>**);
         static void is_size_compatible(py_var<T_EQUIV>&,const std::string&,var<size_t>**);
         static std::string type_name(var<size_t>**);
-        static PyObject* build(T*&,size_t**);
+        static PyObject* build(T*&,size_t(**)=NULL);
         var<T>* vars;
         T** ptr;
         

@@ -289,7 +289,7 @@ void MinLBFGSDMD::getset_m(PyGetSetDef& getset)
 
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->min->m,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->min->m);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

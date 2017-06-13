@@ -49,6 +49,8 @@ namespace MAPP_NS
         static PyGetSetDef getset[];
         static void setup_tp_getset();
         static void getset_temp(PyGetSetDef&);
+        static void getset_S_fe(PyGetSetDef&);
+        static void getset_fe(PyGetSetDef&);
         
         static PyMethodDef methods[];
         static void setup_tp_methods();

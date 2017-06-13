@@ -216,7 +216,7 @@ int AtomsMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsMD::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsMD::getset[]={[0 ... 14]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_getset()
 {
@@ -232,6 +232,50 @@ void AtomsMD::setup_tp_getset()
     getset_comm_size(getset[9]);
     getset_comm_coords(getset[10]);
     getset_comm_dims(getset[11]);
+    getset_pe(getset[12]);
+    getset_S_pe(getset[13]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsMD::getset_S_pe(PyGetSetDef& getset)
+{
+    getset.name=(char*)"S_pe";
+    getset.doc=(char*)R"---(
+    (double) potential energy stress
+    
+    Potential energy part of virial stress
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0[__dim__][__dim__]>::build(reinterpret_cast<Object*>(self)->atoms->S_pe);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsMD::getset_pe(PyGetSetDef& getset)
+{
+    getset.name=(char*)"pe";
+    getset.doc=(char*)R"---(
+    (double) potential energy
+    
+    Potential energy
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->pe);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
 }
 /*--------------------------------------------*/
 PyMethodDef AtomsMD::methods[]={[0 ... 9]={NULL,NULL,0,NULL}};
@@ -321,8 +365,3 @@ void AtomsMD::ml_add_elem(PyMethodDef& tp_method)
     )---";
 }
 
-    
-    
-    
-    
-    

@@ -575,7 +575,7 @@ void MDNST::getset_L_s(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int L=reinterpret_cast<Object*>(self)->md->thermo_baro.L;
-        return var<int>::build(L,NULL);
+        return var<int>::build(L);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -609,7 +609,7 @@ void MDNST::getset_niters_s(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int niters=reinterpret_cast<Object*>(self)->md->thermo_baro.niters;
-        return var<int>::build(niters,NULL);
+        return var<int>::build(niters);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -643,7 +643,7 @@ void MDNST::getset_t_relax_s(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         type0 t_relax=reinterpret_cast<Object*>(self)->md->thermo_baro.t_relax;
-        return var<type0>::build(t_relax,NULL);
+        return var<type0>::build(t_relax);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -676,7 +676,7 @@ void MDNST::getset_S(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->S,NULL);
+        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->S);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -721,7 +721,7 @@ void MDNST::getset_tau(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->tau,NULL);
+        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->md->tau);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -753,7 +753,7 @@ void MDNST::getset_nreset(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         int niters=reinterpret_cast<Object*>(self)->md->nreset;
-        return var<int>::build(niters,NULL);
+        return var<int>::build(niters);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

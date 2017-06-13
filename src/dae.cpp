@@ -180,7 +180,7 @@ void DAE::min_error()
     for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
         /*
-        printf("%d res %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs
+        printf("%d  %e  %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs
         ,atoms->S_fe[0][0]
         ,atoms->S_fe[1][1]
         ,atoms->S_fe[2][2]
@@ -316,7 +316,7 @@ void DAE::getset_a_tol(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->dae->a_tol,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->dae->a_tol);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -341,7 +341,7 @@ void DAE::getset_max_nsteps(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nsteps,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->max_nsteps);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -366,7 +366,7 @@ void DAE::getset_min_dt(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->dae->min_dt,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->dae->min_dt);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -417,7 +417,7 @@ void DAE::getset_ntally(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->dae->ntally,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->dae->ntally);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -442,7 +442,7 @@ void DAE::getset_S(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->dae->S,NULL);
+        return var<symm<type0[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->dae->S);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

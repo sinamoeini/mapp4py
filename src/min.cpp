@@ -193,7 +193,7 @@ void Min::getset_e_tol(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->e_tol,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->min->e_tol);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -218,7 +218,7 @@ void Min::getset_H_dof(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<symm<bool[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->min->H_dof,NULL);
+        return var<symm<bool[__dim__][__dim__]>>::build(reinterpret_cast<Object*>(self)->min->H_dof);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -250,7 +250,7 @@ void Min::getset_affine(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->min->affine,NULL);
+        return var<bool>::build(reinterpret_cast<Object*>(self)->min->affine);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -274,7 +274,7 @@ void Min::getset_max_dx(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx,NULL);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -329,7 +329,7 @@ void Min::getset_ntally(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<int>::build(reinterpret_cast<Object*>(self)->min->ntally,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->min->ntally);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

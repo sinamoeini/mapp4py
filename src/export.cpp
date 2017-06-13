@@ -291,7 +291,7 @@ void Export::getset_nevery(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         
-        return var<int>::build(reinterpret_cast<Object*>(self)->xprt->nevery,NULL);
+        return var<int>::build(reinterpret_cast<Object*>(self)->xprt->nevery);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {

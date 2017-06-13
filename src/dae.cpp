@@ -174,19 +174,19 @@ void DAE::min_error()
     
     
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
-    //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
     
     int istep=0;
     for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
         /*
-        printf("%d  %e  %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs
-        ,atoms->S_fe[0][0]
-        ,atoms->S_fe[1][1]
-        ,atoms->S_fe[2][2]
-        ,atoms->S_fe[1][2]
-        ,atoms->S_fe[2][0]
-        ,atoms->S_fe[0][1]);*/
+        if(atoms->comm_rank==0)
+            printf("%d  %e  %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs
+                   ,atoms->S_fe[0][0]
+                   ,atoms->S_fe[1][1]
+                   ,atoms->S_fe[2][2]
+                   ,atoms->S_fe[1][2]
+                   ,atoms->S_fe[2][0]
+                   ,atoms->S_fe[0][1]);*/
         
         gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
         x+=h;

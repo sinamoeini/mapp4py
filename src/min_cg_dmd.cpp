@@ -267,7 +267,7 @@ type0 MinCGDMD::dF(type0 alpha,type0& drev)
     force_calc();
     
     drev=-(f*h);
-    return ff->nrgy_strss[0];
+    return atoms->fe;
 }
 /*--------------------------------------------
  find maximum h

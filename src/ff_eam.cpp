@@ -162,13 +162,13 @@ void ForceFieldEAM::force_calc()
                 phi*=0.5;
             }
             
-            nrgy_strss_lcl[0]+=phi;
-            nrgy_strss_lcl[1]-=fpair*dx0*dx0;
-            nrgy_strss_lcl[2]-=fpair*dx0*dx1;
-            nrgy_strss_lcl[3]-=fpair*dx0*dx2;
-            nrgy_strss_lcl[4]-=fpair*dx1*dx1;
-            nrgy_strss_lcl[5]-=fpair*dx1*dx2;
-            nrgy_strss_lcl[6]-=fpair*dx2*dx2;
+            __vec_lcl[0]+=phi;
+            __vec_lcl[1]-=fpair*dx0*dx0;
+            __vec_lcl[2]-=fpair*dx0*dx1;
+            __vec_lcl[3]-=fpair*dx0*dx2;
+            __vec_lcl[4]-=fpair*dx1*dx1;
+            __vec_lcl[5]-=fpair*dx1*dx2;
+            __vec_lcl[6]-=fpair*dx2*dx2;
             
             drhoi_dr[istart]=-drho_i_dr*r_inv;
             drhoj_dr[istart]=-drho_j_dr*r_inv;
@@ -185,7 +185,7 @@ void ForceFieldEAM::force_calc()
         tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
         if(rho[iatm]>rho_max)
             tmp0+=tmp1*(rho[iatm]-rho_max);
-        nrgy_strss_lcl[0]+=tmp0;
+        __vec_lcl[0]+=tmp0;
         rho[iatm]=tmp1;
     }
     
@@ -225,12 +225,12 @@ void ForceFieldEAM::force_calc()
                 if(jatm>=natms_lcl)
                     fpair*=0.5;
                 
-                nrgy_strss_lcl[1]-=fpair*dx0*dx0;
-                nrgy_strss_lcl[2]-=fpair*dx0*dx1;
-                nrgy_strss_lcl[3]-=fpair*dx0*dx2;
-                nrgy_strss_lcl[4]-=fpair*dx1*dx1;
-                nrgy_strss_lcl[5]-=fpair*dx1*dx2;
-                nrgy_strss_lcl[6]-=fpair*dx2*dx2;
+                __vec_lcl[1]-=fpair*dx0*dx0;
+                __vec_lcl[2]-=fpair*dx0*dx1;
+                __vec_lcl[3]-=fpair*dx0*dx2;
+                __vec_lcl[4]-=fpair*dx1*dx1;
+                __vec_lcl[5]-=fpair*dx1*dx2;
+                __vec_lcl[6]-=fpair*dx2*dx2;
             }
             istart++;
         }
@@ -292,10 +292,10 @@ void ForceFieldEAM::energy_calc()
                 {
                     coef=rho_arr[ielem][jelem][m];
                     rho[jatm]+=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
-                    nrgy_strss_lcl[0]+=phi;
+                    __vec_lcl[0]+=phi;
                 }
                 else
-                    nrgy_strss_lcl[0]+=0.5*phi;
+                    __vec_lcl[0]+=0.5*phi;
                 
 
             }
@@ -310,7 +310,7 @@ void ForceFieldEAM::energy_calc()
         tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
         if(rho[iatm]>rho_max)
             tmp0+=((3.0*coef[3]*p+2.0*coef[2])*p+coef[1])*drho_inv*(rho[iatm]-rho_max);
-        nrgy_strss_lcl[0]+=tmp0;
+        __vec_lcl[0]+=tmp0;
 
     }
 }

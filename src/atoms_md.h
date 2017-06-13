@@ -8,6 +8,9 @@ namespace MAPP_NS
     private:
     protected:
     public:
+        type0 S_pe[__dim__][__dim__];
+        type0 pe;
+        
         Vec<type0>* x_d;
         Vec<elem_type>* elem;
         void create_T(type0,int);

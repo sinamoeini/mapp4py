@@ -152,7 +152,7 @@ void MDMuVT::run(int nsteps)
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);
     
-    ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
+    ThermoDynamics thermo(6,"T",T_part,"PE",atoms->pe,
     "S[0][0]",S_part[0][0],
     "S[1][1]",S_part[1][1],
     "S[2][2]",S_part[2][2],
@@ -163,7 +163,7 @@ void MDMuVT::run(int nsteps)
     if(ntally) thermo.init();
     Algebra::DoLT<__dim__>::func([this](const int i,const int j)
     {
-        S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+        S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
     });
     
     
@@ -186,7 +186,7 @@ void MDMuVT::run(int nsteps)
         else
         {
 #ifdef GCMCDEBUG
-            delta_u=ff->nrgy_strss[0];
+            delta_u=atoms->pe;
 #endif
             gcmc.xchng(false,nattempts);
             ndof_part+=static_cast<type0>(gcmc.dof_diff);
@@ -199,7 +199,7 @@ void MDMuVT::run(int nsteps)
 #ifdef GCMCDEBUG
         if((istep+1)%nevery==0)
         {
-            delta_u-=ff->nrgy_strss[0];
+            delta_u-=atoms->pe;
             if(atoms->comm_rank==0)
                 fprintf(fp_debug,"%d\t%e\t%e\t%e\t%e\n",istep,-delta_u,gcmc.tot_delta_u,fabs((delta_u+gcmc.tot_delta_u)/delta_u),fabs(delta_u+gcmc.tot_delta_u));
         }
@@ -217,7 +217,7 @@ void MDMuVT::run(int nsteps)
         
         Algebra::DoLT<__dim__>::func([this](const int i,const int j)
         {
-            S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+            S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
         });
         
         if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);

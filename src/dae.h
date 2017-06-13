@@ -47,7 +47,6 @@ namespace MAPP_NS
         virtual void fin_static();
         virtual void run(type0){};
         void min_error();
-        void __min_error();
         
         
         virtual void init();

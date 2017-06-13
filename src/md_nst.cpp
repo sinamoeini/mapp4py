@@ -286,7 +286,7 @@ void MDNST::update_V_H()
         if(S_dof[i][j])
         {
             V_H[i][j]+=(vol_ref*MLT2[i][j]
-            -atoms->vol*ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]
+            -atoms->vol*atoms->S_pe[i][j]
             +mvv[i+j*__dim__-j*(j+1)/2])*V_H_prefac[i][j]*dt2;
             
             T_baro+=V_H[i][j]*V_H[i][j]*tau[i][j]*tau[i][j];
@@ -348,7 +348,7 @@ void MDNST::run(int nsteps)
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);
     
-    ThermoDynamics thermo(6,"T",T_part,"PE",ff->nrgy_strss[0],
+    ThermoDynamics thermo(6,"T",T_part,"PE",atoms->pe,
     "S[0][0]",S_part[0][0],
     "S[1][1]",S_part[1][1],
     "S[2][2]",S_part[2][2],
@@ -359,7 +359,7 @@ void MDNST::run(int nsteps)
     if(ntally) thermo.init();
     Algebra::DoLT<__dim__>::func([this](const int i,const int j)
     {
-        S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+        S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
     });
     
     
@@ -407,7 +407,7 @@ void MDNST::run(int nsteps)
         
         Algebra::DoLT<__dim__>::func([this](const int i,const int j)
         {
-            S_part[i][j]=ff->nrgy_strss[1+i+j*__dim__-j*(j+1)/2]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+            S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
         });
         
         

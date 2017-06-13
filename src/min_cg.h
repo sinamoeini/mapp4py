@@ -87,21 +87,19 @@ void MinCG::run(C* ls,int nsteps)
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);
     
-    type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
-    "PE",ff->nrgy_strss[0],
-    "S[0][0]",S[0][0],
-    "S[1][1]",S[1][1],
-    "S[2][2]",S[2][2],
-    "S[1][2]",S[2][1],
-    "S[2][0]",S[2][0],
-    "S[0][1]",S[1][0]);
+    "PE",atoms->pe,
+    "S[0][0]",atoms->S_pe[0][0],
+    "S[1][1]",atoms->S_pe[1][1],
+    "S[2][2]",atoms->S_pe[2][2],
+    "S[1][2]",atoms->S_pe[2][1],
+    "S[2][0]",atoms->S_pe[2][0],
+    "S[0][1]",atoms->S_pe[1][0]);
     
     if(ntally) thermo.init();
-    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
     if(ntally) thermo.print(step);
     
-    type0 e_prev,e_curr=ff->nrgy_strss[0];
+    type0 e_prev,e_curr=atoms->pe;
     type0 f0_f0,f_f,f_f0;
     type0 ratio,alpha;
     int err=nsteps==0? MIN_F_MAX_ITER:LS_S;
@@ -142,10 +140,7 @@ void MinCG::run(C* ls,int nsteps)
         force_calc();
         
         if(ntally && (istep+1)%ntally==0)
-        {
-            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
             thermo.print(step+istep+1);
-        }
         
         if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         
@@ -164,10 +159,7 @@ void MinCG::run(C* ls,int nsteps)
     }
     
     if(ntally && istep%ntally)
-    {
-        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
         thermo.print(step+istep);
-    }
     
     
     if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);

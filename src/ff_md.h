@@ -34,7 +34,6 @@ namespace MAPP_NS
         
         
         void force_calc_timer();
-        type0 energy_calc_timer();
 
         type0 value_timer();
         void derivative_timer();

@@ -4,7 +4,9 @@
  
  --------------------------------------------*/
 AtomsMD::AtomsMD(MPI_Comm& world):
-Atoms(world)
+Atoms(world),
+S_pe{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}},
+pe(NAN)
 {
     elem=new Vec<elem_type>(this,1,"elem");
     x_d=new Vec<type0>(this,__dim__,"x_d");

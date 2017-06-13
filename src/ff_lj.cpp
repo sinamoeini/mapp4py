@@ -202,8 +202,8 @@ void ForceFieldLJ::force_calc()
                 fpair*=0.5;
                 en*=0.5;
             }
-            nrgy_strss_lcl[0]+=en;
-            Algebra::DyadicV(-fpair,dx_ij,&nrgy_strss_lcl[1]);
+            __vec_lcl[0]+=en;
+            Algebra::DyadicV(-fpair,dx_ij,&__vec_lcl[1]);
         }
         
         Algebra::V_add<__dim__>(f_i,fvec+iatm*__dim__);
@@ -242,9 +242,9 @@ void ForceFieldLJ::energy_calc()
             type0 sig6=sig2*sig2*sig2;
             
             if(jatm<natms_lcl)
-                nrgy_strss_lcl[0]+=4.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+offset[ielem][jelem];
+                __vec_lcl[0]+=4.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+offset[ielem][jelem];
             else
-                nrgy_strss_lcl[0]+=2.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+0.5*offset[ielem][jelem];
+                __vec_lcl[0]+=2.0*epsilon[ielem][jelem]*sig6*(sig6-1.0)+0.5*offset[ielem][jelem];
         }
     }
 

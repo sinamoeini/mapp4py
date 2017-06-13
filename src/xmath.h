@@ -2520,6 +2520,13 @@ namespace MAPP_NS
                 *dyad+=*x**y;
                 __DyadicV<i-1,dim>::func(x,y+1,dyad+1);
             }
+            
+            template<typename T>
+            static inline void func(T scl,T* x,T* y,T* dyad)
+            {
+                *dyad+=scl*(*x*y[dim-i]+*y*x[dim-i]);
+                __DyadicV<i-1,dim>::func(scl,x,y,dyad+1);
+            }
         };
         
         template<const int dim>
@@ -2538,6 +2545,12 @@ namespace MAPP_NS
                 *dyad+=*x**y;
                 __DyadicV<dim-1,dim-1>::func(x+1,y-dim+2,dyad+1);
             }
+            template<typename T>
+            static inline void func(T scl,T* x,T* y,T* dyad)
+            {
+                *dyad+=scl*(*x*y[dim-1]+*y*x[dim-1]);
+                __DyadicV<dim-1,dim-1>::func(scl,x+1,y+1,dyad+1);
+            }
         };
         
         template<>
@@ -2553,6 +2566,12 @@ namespace MAPP_NS
             static inline void func(T* x,T* y,T* dyad)
             {
                 *dyad+=*x**y;
+            }
+            template<typename T>
+            static inline void func(T scl,T* x,T* y,T* dyad)
+            {
+                *dyad+=2.0*scl**x**y;
+                
             }
         };
         
@@ -3078,6 +3097,12 @@ namespace MAPP_NS
         {
             __V_mul_MLT<dim,dim> ::func(V,&MLT[0][0],VMLT);
         }
+        template<typename T,const int dim>
+        void V_mul_MLT(T (&V)[dim],T(&MLT)[dim][dim],T(&VMLT)[dim])
+        {
+            __V_mul_MLT<dim,dim> ::func(V,&MLT[0][0],VMLT);
+        }
+
         /*==========================================================================*/
         template<typename T,const int dim>
         void V_mul_MLT_add_in(T*& V,T(&MLT)[dim][dim],T*& VMLT)
@@ -3204,9 +3229,26 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<const int dim,typename T>
+        void DyadicV(T scl,T* x,T* y,T* dyad)
+        {
+            __DyadicV<dim,dim>::func(scl,x,y,dyad);
+        }
+        /*==========================================================================*/
+        /*
+        template<const int dim,typename T>
         void DyadicV_2_MLT(T* dyad,T (&MLT)[dim][dim])
         {
             __DyadicV_2_MLT<dim,dim,dim>::func(dyad,&MLT[0][0]);
+        }*/
+        template<const int dim,typename T>
+        void DyadicV_2_MLT(T* dyad,T (*MLT)[dim])
+        {
+            __DyadicV_2_MLT<dim,dim,dim>::func(dyad,MLT[0]);
+        }
+        template<const int dim,typename T>
+        void DyadicV_2_MSY(T* dyad,T (*MLT)[dim])
+        {
+            __DyadicV_2_MSY<dim,dim,dim>::func(dyad,MLT[0]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

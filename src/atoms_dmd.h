@@ -11,6 +11,9 @@ namespace MAPP_NS
     private:
     protected:
     public:
+        type0 S_fe[__dim__][__dim__];
+        type0 fe;
+        
         DMDVec<type0>* alpha;
         DMDVec<type0>* c;
         DMDVec<bool>* dof_c;

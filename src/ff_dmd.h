@@ -38,7 +38,6 @@ namespace MAPP_NS
         virtual ~ForceFieldDMD();
                 
         void force_calc_timer();
-        type0 energy_calc_timer();
         
         type0 value_timer();
         void derivative_timer();
@@ -57,6 +56,7 @@ namespace MAPP_NS
         
         virtual type0 prep_timer(VecTens<type0,2>&);
         virtual type0 prep_timer(VecTens<type0,2>&,type0(&)[__dim__][__dim__]);
+        virtual void J_timer(VecTens<type0,2>&,VecTens<type0,2>&);
         virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
         
         type0 err;

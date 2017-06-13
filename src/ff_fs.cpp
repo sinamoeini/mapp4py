@@ -238,7 +238,7 @@ void ForceFieldFS::force_calc()
         icomp=3*iatm;
         
         if(rho[iatm]>0.0)
-            nrgy_strss_lcl[0]+=-A[ielem]*sqrt(rho[iatm]);
+            __vec_lcl[0]+=-A[ielem]*sqrt(rho[iatm]);
         
         for(int j=0;j<neighbor_list_size[iatm];j++)
         {
@@ -285,12 +285,12 @@ void ForceFieldFS::force_calc()
                     if(jatm>=natms_lcl)
                         rho_coef*=0.5;
                     
-                    nrgy_strss_lcl[1]-=rho_coef*dx0*dx0;
-                    nrgy_strss_lcl[2]-=rho_coef*dx0*dx1;
-                    nrgy_strss_lcl[3]-=rho_coef*dx0*dx2;
-                    nrgy_strss_lcl[4]-=rho_coef*dx1*dx1;
-                    nrgy_strss_lcl[5]-=rho_coef*dx1*dx2;
-                    nrgy_strss_lcl[6]-=rho_coef*dx2*dx2;
+                    __vec_lcl[1]-=rho_coef*dx0*dx0;
+                    __vec_lcl[2]-=rho_coef*dx0*dx1;
+                    __vec_lcl[3]-=rho_coef*dx0*dx2;
+                    __vec_lcl[4]-=rho_coef*dx1*dx1;
+                    __vec_lcl[5]-=rho_coef*dx1*dx2;
+                    __vec_lcl[6]-=rho_coef*dx2*dx2;
                 }
                 
                 if(rsq<cut_sq_phi[ielem][jelem])
@@ -318,13 +318,13 @@ void ForceFieldFS::force_calc()
                         en*=0.5;
                     }
                     
-                    nrgy_strss_lcl[0]+=en;
-                    nrgy_strss_lcl[1]-=phi_coef*dx0*dx0;
-                    nrgy_strss_lcl[2]-=phi_coef*dx0*dx1;
-                    nrgy_strss_lcl[3]-=phi_coef*dx0*dx2;
-                    nrgy_strss_lcl[4]-=phi_coef*dx1*dx1;
-                    nrgy_strss_lcl[5]-=phi_coef*dx1*dx2;
-                    nrgy_strss_lcl[6]-=phi_coef*dx2*dx2;
+                    __vec_lcl[0]+=en;
+                    __vec_lcl[1]-=phi_coef*dx0*dx0;
+                    __vec_lcl[2]-=phi_coef*dx0*dx1;
+                    __vec_lcl[3]-=phi_coef*dx0*dx2;
+                    __vec_lcl[4]-=phi_coef*dx1*dx1;
+                    __vec_lcl[5]-=phi_coef*dx1*dx2;
+                    __vec_lcl[6]-=phi_coef*dx2*dx2;
                 }
             }
         }
@@ -387,15 +387,15 @@ void ForceFieldFS::energy_calc()
                 {
                     dr_phi=r-sqrt(cut_sq_phi[ielem][jelem]);
                     if(jatm<natms_lcl)
-                        nrgy_strss_lcl[0]+=dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
+                        __vec_lcl[0]+=dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
                     else
-                        nrgy_strss_lcl[0]+=0.5*dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
+                        __vec_lcl[0]+=0.5*dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
                 }
             }
         }
         
         if(rho[iatm]>0.0)
-            nrgy_strss_lcl[0]+=-A[ielem]*sqrt(rho[iatm]);
+            __vec_lcl[0]+=-A[ielem]*sqrt(rho[iatm]);
     }
 }
 /*--------------------------------------------

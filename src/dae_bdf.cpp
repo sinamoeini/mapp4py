@@ -119,22 +119,20 @@ void DAEBDF::run(type0 t_tot)
     
     type0 cv_msd;
     
-    type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
     "Time",t_cur,
     "MSD",cv_msd,
-    "FE",ff->nrgy_strss[0],
-    "S[0][0]",S[0][0],
-    "S[1][1]",S[1][1],
-    "S[2][2]",S[2][2],
-    "S[1][2]",S[2][1],
-    "S[2][0]",S[2][0],
-    "S[0][1]",S[1][0]);
+    "FE",atoms->fe,
+    "S[0][0]",atoms->S_fe[0][0],
+    "S[1][1]",atoms->S_fe[1][1],
+    "S[2][2]",atoms->S_fe[2][2],
+    "S[1][2]",atoms->S_fe[2][1],
+    "S[2][0]",atoms->S_fe[2][0],
+    "S[0][1]",atoms->S_fe[1][0]);
     
     if(nevery_xprt) xprt->write(step);
     
     if(ntally) thermo.init();
-    Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
     cv_msd=atoms->vac_msd();
     if(ntally) thermo.print(step);
     
@@ -188,7 +186,6 @@ void DAEBDF::run(type0 t_tot)
         {
             cv_msd=atoms->vac_msd();
             ff->force_calc_static_timer();
-            Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
             thermo.print(step+istep+1);
         }
         
@@ -203,7 +200,6 @@ void DAEBDF::run(type0 t_tot)
     if(ntally && istep%ntally)
     {
         ff->force_calc_static_timer();
-        Algebra::DyadicV_2_MLT(ff->nrgy_strss+1,S);
         thermo.print(step+istep);
     }
     
@@ -224,13 +220,16 @@ void DAEBDF::run(type0 t_tot)
     fin_static();
     
     
+    if(ntally)
+    {
+        fprintf(MAPP::mapp_out,"nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
+        fprintf(MAPP::mapp_out,"intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
+        fprintf(MAPP::mapp_out,"integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+        fprintf(MAPP::mapp_out,"maximum order: %d\n",__max_q);
+        fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
+        fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
+    }
     
-    fprintf(MAPP::mapp_out,"nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
-    fprintf(MAPP::mapp_out,"intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
-    fprintf(MAPP::mapp_out,"integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
-    fprintf(MAPP::mapp_out,"maximum order: %d\n",__max_q);
-    fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
-    fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
     
     atoms->step+=istep;
 }

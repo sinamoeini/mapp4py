@@ -151,7 +151,25 @@ void DAE::min_error()
     __GMRES__<VecTens<type0,2>> gmres(10,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
-        ff->J(x,Jx);
+        ff->J_timer(x,Jx);
+        
+        if(chng_box)
+        {
+            type0 dlog_vol=0.0;
+            type0 (&H)[__dim__][__dim__]=atoms->H;
+        
+            Algebra::Do<__dim__>::func([&H,&x,&dlog_vol](int i)
+            {
+                dlog_vol+=x.A[i][i]/H[i][i];
+            });
+    
+            type0 tmp=dlog_vol*atoms->vol;
+            Algebra::DoLT<__dim__>::func([&Jx,&tmp,this](int i,int j)
+            {
+                if(!S_dof[i][j]) Jx.A[i][j]=0.0;
+                else Jx.A[i][j]-=S[i][j]*tmp;
+            });
+        }
     };
     
     
@@ -161,16 +179,18 @@ void DAE::min_error()
     int istep=0;
     for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
-        //printf("%d res %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
+        /*
+        printf("%d res %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs
+        ,atoms->S_fe[0][0]
+        ,atoms->S_fe[1][1]
+        ,atoms->S_fe[2][2]
+        ,atoms->S_fe[1][2]
+        ,atoms->S_fe[2][0]
+        ,atoms->S_fe[0][1]);*/
+        
         gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
-        
-        
-        //printf("-h.f %e\n",-(h*f));
-        
         x+=h;
-        
-        
-        
+
         type0 max_alpha_lcl=0.0;
         const int n=atoms->natms_lcl*atoms->alpha->dim;
         type0* alpha_vec=atoms->alpha->begin();
@@ -187,104 +207,6 @@ void DAE::min_error()
         res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
         
     }
-    
-    //printf("%d res %e %e\n",istep,a0,a1);
-    //printf("res %e\n",res);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void DAE::__min_error()
-{
-    VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
-    VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
-    VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
-    
-
-    vec* uvecs[2];
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-    type0 norm,res;
-
-    
-    __GMRES__<VecTens<type0,2>> gmres(10,atoms,chng_box,__dim__,c_dim);
-    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
-    {
-        ff->J(x,Jx);
-    };
-    
-    
-    res=ff->prep_timer(f);
-    //printf("res %e %e\n",res,a_tol_sqrt_nc_dofs);
-    f.box_chng=false;
-    h.box_chng=false;
-    x.box_chng=false;
-    int istep=0;
-    for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
-    {
-        printf("%d res %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
-        gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
-        
-        
-        //printf("-h.f %e\n",-(h*f));
-        
-        x+=h;
-        
-        
-        
-        type0 max_alpha_lcl=0.0;
-        const int n=atoms->natms_lcl*atoms->alpha->dim;
-        type0* alpha_vec=atoms->alpha->begin();
-        type0* c_vec=atoms->c->begin();
-        for(int i=0;i<n;i++)
-            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-        
-        dynamic->update(uvecs,2);
-        
-        res=ff->prep_timer(f);
-        
-    }
-    
-    
-    
-    if(chng_box)
-    {
-        f.box_chng=true;
-        h.box_chng=true;
-        x.box_chng=true;
-        res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
-        istep=0;
-        for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
-        {
-            printf("%d res2 %e | %e %e %e %e %e %e\n",istep,res/a_tol_sqrt_nc_dofs,ff->nrgy_strss[1],ff->nrgy_strss[6],ff->nrgy_strss[4],ff->nrgy_strss[2],ff->nrgy_strss[3],ff->nrgy_strss[5]);
-            gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
-            
-            
-            //printf("-h.f %e\n",-(h*f));
-            
-            x+=h;
-            
-            
-            
-            type0 max_alpha_lcl=0.0;
-            const int n=atoms->natms_lcl*atoms->alpha->dim;
-            type0* alpha_vec=atoms->alpha->begin();
-            type0* c_vec=atoms->c->begin();
-            for(int i=0;i<n;i++)
-            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-            MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-            
-            atoms->update_H();
-            
-            dynamic->update(uvecs,2);
-            
-            res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
-            
-        }
-    }
-    
-    
     
     //printf("%d res %e %e\n",istep,a0,a1);
     //printf("res %e\n",res);

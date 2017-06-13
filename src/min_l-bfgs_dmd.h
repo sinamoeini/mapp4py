@@ -60,23 +60,21 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);
     
-    type0 S[__dim__][__dim__];
     ThermoDynamics thermo(6,
-    "PE",ff->nrgy_strss[0],
-    "S[0][0]",S[0][0],
-    "S[1][1]",S[1][1],
-    "S[2][2]",S[2][2],
-    "S[1][2]",S[2][1],
-    "S[2][0]",S[2][0],
-    "S[0][1]",S[1][0]);
+    "PE",atoms->fe,
+    "S[0][0]",atoms->S_fe[0][0],
+    "S[1][1]",atoms->S_fe[1][1],
+    "S[2][2]",atoms->S_fe[2][2],
+    "S[1][2]",atoms->S_fe[2][1],
+    "S[2][0]",atoms->S_fe[2][0],
+    "S[0][1]",atoms->S_fe[1][0]);
     
     
     if(ntally) thermo.init();
-    Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
     if(ntally) thermo.print(step);
     
     
-    type0 e_prev,e_curr=ff->nrgy_strss[0];
+    type0 e_prev,e_curr=atoms->fe;
         
     type0 alpha_m,gamma;
     type0 inner0,inner1;
@@ -129,10 +127,7 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
         force_calc();
         
         if(ntally && (istep+1)%ntally==0)
-        {
-            Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
             thermo.print(step+istep+1);
-        }
         
         if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         
@@ -165,10 +160,7 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
     }
     
     if(ntally && istep%ntally)
-    {
-        Algebra::DyadicV_2_MLT(&ff->nrgy_strss[1],S);
         thermo.print(step+istep);
-    }
 
     if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
     

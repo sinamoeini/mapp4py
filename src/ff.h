@@ -15,9 +15,11 @@ namespace MAPP_NS
     private:
     protected:
         const size_t nelems;
-        type0 nrgy_strss_lcl[1+__dim__*(__dim__+1)/2];
         virtual void force_calc()=0;
         virtual void energy_calc()=0;
+        
+        type0 __vec[__nvoigt__+1];
+        type0 __vec_lcl[__nvoigt__+1];
         
         MPI_Comm& world;        
     public:
@@ -39,7 +41,6 @@ namespace MAPP_NS
         virtual void derivative_timer()=0;
         virtual void derivative_timer(type0(*&)[__dim__])=0;
         
-        type0 nrgy_strss[1+__dim__*(__dim__+1)/2];
     };
 }
 #endif

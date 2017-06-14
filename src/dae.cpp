@@ -174,7 +174,8 @@ void DAE::min_error()
     
     
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
-    
+    type0 f_h=0.0;
+    type0 r;
     int istep=0;
     for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
@@ -186,14 +187,39 @@ void DAE::min_error()
                    ,atoms->S_fe[2][2]
                    ,atoms->S_fe[1][2]
                    ,atoms->S_fe[2][0]
-                   ,atoms->S_fe[0][1]);*/
-        
+                   ,atoms->S_fe[0][1]);
+        */
+        if(atoms->comm_rank==0)
+            printf("%d | %d  %e | %e | f.h %e | %0.13lf\n",istep,gmres.iter,gmres.res/(0.005*a_tol_sqrt_nc_dofs),res/a_tol_sqrt_nc_dofs,f_h,atoms->fe);
         gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
-        x+=h;
-
-        type0 max_alpha_lcl=0.0;
-        const int n=atoms->natms_lcl*atoms->alpha->dim;
+        
+        
+        const int n=atoms->natms_lcl*c_dim;
         type0* alpha_vec=atoms->alpha->begin();
+        type0*  halpha_vec=h.vecs[1]->begin();
+        type0 r_lcl=1.0,tmp;
+        for(int i=0;i<n;i++)
+        {
+            tmp=alpha_vec[i]+r_lcl*halpha_vec[i];
+            if(tmp<0.0)
+            {
+                r_lcl=-alpha_vec[i]/halpha_vec[i];
+                while(alpha_vec[i]+r_lcl*halpha_vec[i]<=0.0)
+                    r_lcl=nextafter(r_lcl,0.0);
+            }            
+        }
+        MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
+
+        if(r==1.0)
+            x+=h;
+        else
+        {
+            r*=0.5;
+            x+=r*h;
+        }
+        type0 max_alpha_lcl=0.0;
+        
+        
         type0* c_vec=atoms->c->begin();
         for(int i=0;i<n;i++)
             if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
@@ -581,5 +607,226 @@ void DAE::ml_run(PyMethodDef& tp_methods)
 
     )---";
 }
+/*--------------------------------------------
+     
+ --------------------------------------------*/
+#include <iostream>
+#include "random.h"
+#include "ff_eam_dmd.h"
+/*--------------------------------------------
+ natms = 250;
+ No = 100;
+ SetDirectory[NotebookDirectory[]];
+ A = Import["data.txt", "Data"];
+ Manipulate[
+  ListLinePlot[
+   {
+    Table[{A[[i*No + j, 1]], A[[i*No + j, 2]]}, {j, 1, No}],
+    Table[{A[[i*No + j, 1]], A[[i*No + j, 3]]}, {j, 1, No}]
+    },
+   PlotRange -> All,
+   Epilog -> Inset[Graphics[Text[Style[ToString[i], Large]]]]
+   ]
+  , {i, 0, natms - 1, 1}]
+ --------------------------------------------*/
+/*
+void DAE::ml_Jtest(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="Jtest";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        
+        FuncAPI<OP<AtomsDMD>> fff("Jtest",{"atoms"});
+        if(fff(args,kwds)) return NULL;
+        
+        AtomsDMD* atoms=reinterpret_cast<AtomsDMD::Object*>(fff.val<0>().ob)->atoms;
+        ForceFieldDMD* ff=reinterpret_cast<AtomsDMD::Object*>(fff.val<0>().ob)->ff;
+        
+        
+        bool chng_box=false;
+        int c_dim=atoms->c_dim;
+        auto J=[&ff](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
+        {
+            ff->J_timer(x,Jx);
+            
+        };
+        
+        Random rand(3541684);
+        constexpr int nvecs=100;
+        type0 delta=1.0e-9;
+        
+        VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
+        VecTens<type0,2> f0(atoms,chng_box,__dim__,c_dim);
+        VecTens<type0,2> f(atoms,chng_box,__dim__,c_dim);
+        VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
+        VecTens<type0,2> Jh(atoms,chng_box,__dim__,c_dim);
+        VecTens<type0,2> x0(atoms,chng_box,__dim__,c_dim);
+        
+        VecTens<type0,2>* dFs=new VecTens<type0,2>[nvecs];
+        for(int i=0;i<nvecs;i++)
+        {
+            dFs[i].~VecTens();
+            new (dFs+i) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+        }
+        
+        DynamicDMD* dynamic=new DynamicDMD(atoms,ff,chng_box,{h.vecs[0],h.vecs[1]},
+        {x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1],Jh.vecs[0],Jh.vecs[1]},{});
+        
+        for(int i=0;i<nvecs;i++)
+        {
+            dynamic->add_xchng(dFs[i].vecs[0]);
+            dynamic->add_xchng(dFs[i].vecs[1]);
+            
+        }
+        
+        
+        dynamic->init();
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        x0=x;
+        
+        vec* uvecs[2];
+        uvecs[0]=atoms->x;
+        uvecs[1]=atoms->alpha;
+        int natms_lcl=atoms->natms_lcl;
+        
+        
+        
+        
+        
+        type0* __h=h.vecs[0]->begin();
+        for(int i=0;i<natms_lcl*__dim__;i++)
+        {
+            
+            if(rand.uniform()>0.5)
+                __h[i]=rand.uniform()*0.01/(delta*nvecs);
+            else
+                __h[i]=-rand.uniform()*0.01/(delta*nvecs);
 
+        }
+        
+        __h=h.vecs[1]->begin();
+        for(int i=0;i<natms_lcl*c_dim;i++)
+        {
+            __h[i]=0.0;
+            
+            if(rand.uniform()>0.5)
+                __h[i]=rand.uniform()*0.01/(delta*nvecs);
+            else
+                __h[i]=-rand.uniform()*0.01/(delta*nvecs);
+            
+        }
+        
+        
+        
+        
+        
+        
+        ff->prep_timer(f0);
+        J(h,Jh);
+        
+        
+        
+        for(int ivec=0;ivec<nvecs;ivec++)
+        {
+            type0 __delta=delta*ivec;
+            x=x0+__delta*h;
+            
+            
+            
+            type0 max_alpha_lcl=0.0;
+            const int n=atoms->natms_lcl*atoms->alpha->dim;
+            type0* alpha_vec=atoms->alpha->begin();
+            type0* c_vec=atoms->c->begin();
+            for(int i=0;i<n;i++)
+                if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+            MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+            
+            if(chng_box)
+                atoms->update_H();
+            
+            dynamic->update(uvecs,2);
+            
+            printf("%d\n",ivec);
+            
+            ff->prep_timer(f);
+            
+            
+            dFs[ivec]=f-f0;
+            
+        }
+        
+        
+        x=x0;
+        type0 max_alpha_lcl=0.0;
+        const int n=atoms->natms_lcl*atoms->alpha->dim;
+        type0* alpha_vec=atoms->alpha->begin();
+        type0* c_vec=atoms->c->begin();
+        for(int i=0;i<n;i++)
+            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+        
+        if(chng_box)
+            atoms->update_H();
+        
+        dynamic->update(uvecs,2);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        natms_lcl=atoms->natms_lcl;
+        
+        FILE* fp;
+        fp=fopen("/Users/sina/Desktop/data_x.txt","w");
+        for(int i=0;i<natms_lcl*__dim__;i++)
+            for(int ivec=0;ivec<nvecs;ivec++)
+                fprintf(fp,"%e\t%e\t%e\n",ivec*delta,dFs[ivec].vecs[0]->begin()[i],-Jh.vecs[0]->begin()[i]*ivec*delta);
+        fclose(fp);
+        
+        
+        fp=fopen("/Users/sina/Desktop/data_alpha.txt","w");
+        for(int i=0;i<natms_lcl*c_dim;i++)
+            for(int ivec=0;ivec<nvecs;ivec++)
+                fprintf(fp,"%e\t%e\t%e\n",ivec*delta,dFs[ivec].vecs[1]->begin()[i],-Jh.vecs[1]->begin()[i]*ivec*delta);
+        fclose(fp);
+        
+        dynamic->fin();
+        delete dynamic;
+        
+        Py_RETURN_NONE;
+    };
+    
+    tp_methods.ml_doc=(char*)R"---(
+
+
+    )---";
+}
+*/
 

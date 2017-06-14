@@ -839,7 +839,6 @@ namespace MAPP_NS
         type0* Ax_hat;
         type0(* cos_sin)[2];
         
-        
         type0* x_hat;
         
         
@@ -854,6 +853,8 @@ namespace MAPP_NS
         ~__GMRES__();
         template<class KERNEL>
         bool solve(KERNEL&,V&,type0,type0&,V&);
+        int iter;
+        type0 res;
         
     };
 }
@@ -863,7 +864,9 @@ namespace MAPP_NS
  --------------------------------------------*/
 template<class V>template<class ... Cs>
 __GMRES__<V>::__GMRES__(int __m,Cs ... cs):
-m(__m)
+m(__m),
+res(0.0),
+iter(0)
 {
     
     
@@ -988,13 +991,14 @@ type0 __GMRES__<V>::solve_y(int nvecs,V& x)
 template<class V>template<class KERNEL>
 bool __GMRES__<V>::solve(KERNEL& A,V& Ax,type0 tol,type0& norm,V& x)
 {
-    calc(Ax,x);
-    for(int i=0;i<m;i++)
+    res=calc(Ax,x);
+    for(iter=0;iter<m;iter++)
     {
         A(x,Ax);
-        if(calc(i,Ax,x)<tol)
+        res=calc(iter,Ax,x);
+        if(res<tol)
         {
-            norm=solve_y(i+1,x);
+            norm=solve_y(iter+1,x);
             return true;
         }
     }

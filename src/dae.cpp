@@ -223,7 +223,7 @@ void DAE::min_error()
         
         type0* c_vec=atoms->c->begin();
         for(int i=0;i<n;i++)
-            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+            if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
         if(chng_box)
@@ -760,7 +760,7 @@ void DAE::ml_Jtest(PyMethodDef& tp_methods)
             type0* alpha_vec=atoms->alpha->begin();
             type0* c_vec=atoms->c->begin();
             for(int i=0;i<n;i++)
-                if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+                if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
             MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
             
             if(chng_box)
@@ -784,7 +784,7 @@ void DAE::ml_Jtest(PyMethodDef& tp_methods)
         type0* alpha_vec=atoms->alpha->begin();
         type0* c_vec=atoms->c->begin();
         for(int i=0;i<n;i++)
-            if(c_vec[i]>0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+            if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
         if(chng_box)

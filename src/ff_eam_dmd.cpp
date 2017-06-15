@@ -191,22 +191,21 @@ void ForceFieldEAMDMD::force_calc()
             elem_j=elem_vec[j];
             rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
             r=sqrt(rsq);
-            alpha_ij=sqrt(alpha[i]*alpha[i]+alpha[j]*alpha[j]);
+            type0 alpha_ij_sq=alpha[i]*alpha[i]+alpha[j]*alpha[j];
+            alpha_ij=sqrt(alpha_ij_sq);
             if(r-alpha_ij*xi[N-1]>=cut[elem_i][elem_j]) continue;
             type0 upper=(r+cut[elem_i][elem_j])/alpha_ij;
             type0 lower=(r-cut[elem_i][elem_j])/alpha_ij;
-            type0 __r,p,tmp0;
+            type0 __r,p,tmp0,xi2;
             type0* coef;
             
             
-            r_inv=1.0/r;
-            
-            type0 __rho_phi[3]{[0 ... 2]=0.0};
-            type0 __drho_phi_dr[3]{[0 ... 2]=0.0};
-            type0 __drho_phi_dalpha[3]{[0 ... 2]=0.0};
+            type0 H[3][5]{[0 ... 2]={[0 ... 4]=0.0}};
             for(int l=0;l<N;l++)
             {
                 if(xi[l]<=lower && xi[l]>=upper) continue;
+                
+                xi2=xi[l]*xi[l];
                 
                 __r=r-xi[l]*alpha_ij;
                 p=fabs(__r)*dr_inv;
@@ -218,47 +217,55 @@ void ForceFieldEAMDMD::force_calc()
                 coef=r_phi_arr[elem_i][elem_j][m];
                 tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
                 if(__r<0.0) tmp0*=-1.0;
-                __rho_phi[0]+=wi_0[l]*tmp0;
-                __drho_phi_dr[0]+=wi_0[l]*xi[l]*tmp0;
-                __drho_phi_dalpha[0]+=wi_0[l]*xi[l]*xi[l]*tmp0;
+                tmp0*=wi_0[l];
+                H[0][0]+=tmp0;
+                H[0][1]+=tmp0*xi[l];
+                H[0][2]+=tmp0*xi2;
+                
                 
                 coef=r_rho_arr[elem_i][elem_j][m];
                 tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
                 if(__r<0.0) tmp0*=-1.0;
-                __rho_phi[1]+=wi_0[l]*tmp0;
-                __drho_phi_dr[1]+=wi_0[l]*xi[l]*tmp0;
-                __drho_phi_dalpha[1]+=wi_0[l]*xi[l]*xi[l]*tmp0;
+                tmp0*=wi_0[l];
+                H[1][0]+=tmp0;
+                H[1][1]+=tmp0*xi[l];
+                H[1][2]+=tmp0*xi2;
                 
                 coef=r_rho_arr[elem_j][elem_i][m];
                 tmp0=((coef[3]*p+coef[2])*p+coef[1])*p+coef[0];
                 if(__r<0.0) tmp0*=-1.0;
-                __rho_phi[2]+=wi_0[l]*tmp0;
-                __drho_phi_dr[2]+=wi_0[l]*xi[l]*tmp0;
-                __drho_phi_dalpha[2]+=wi_0[l]*xi[l]*xi[l]*tmp0;
+                tmp0*=wi_0[l];
+                H[2][0]+=tmp0;
+                H[2][1]+=tmp0*xi[l];
+                H[2][2]+=tmp0*xi2;
             }
             
-            tmp0=PI_IN_SQ*r_inv;
+            r_inv=1.0/r;
+            type0 r2_inv=r_inv*r_inv;
+            type0 alpha_inv=1.0/alpha_ij;
+            type0 alpha2_inv=alpha_inv*alpha_inv;
+            type0 alpha4_inv=alpha2_inv*alpha2_inv;
+            type0 r2alpha2_inv=r2_inv*alpha2_inv;
             
-            Algebra::Do<3>::func([&__rho_phi,&__drho_phi_dr,&__drho_phi_dalpha,&tmp0,&r_inv,&alpha_ij,&istart,this]
+            
+            Algebra::Do<3>::func([&istart,&H,&r_inv,&r2_inv,&alpha2_inv,&r2alpha2_inv,&alpha_ij_sq,&alpha_inv,&rsq,&alpha4_inv,this]
             (int i)
             {
-
-                __rho_phi[i]*=tmp0;
-                rho_phi[istart+i]=__rho_phi[i];
-                drho_phi_dr[istart+i]=-r_inv*r_inv*(rho_phi[istart+i]+__drho_phi_dr[i]*2.0*PI_IN_SQ/alpha_ij);
-                drho_phi_dalpha[istart+i]=-(rho_phi[istart+i]-__drho_phi_dalpha[i]*2.0*r_inv*PI_IN_SQ)/(alpha_ij*alpha_ij);
+                rho_phi[istart+i]=PI_IN_SQ*r_inv*H[i][0];
+                drho_phi_dr[istart+i]=-r2_inv*(rho_phi[istart+i]+2.0*PI_IN_SQ*alpha_inv*H[i][1]);
+                drho_phi_dalpha[istart+i]=-alpha2_inv*(rho_phi[istart+i]-2.0*PI_IN_SQ*r_inv*H[i][2]);
             });
             
             
-            rho[i]+=c[j]*__rho_phi[2];
+            rho[i]+=c[j]*rho_phi[istart+2];
             
             if(j<n)
             {
-                rho[j]+=c_i*__rho_phi[1];
-                __vec_lcl[0]+=c_i*c[j]*__rho_phi[0];
+                rho[j]+=c_i*rho_phi[istart+1];
+                __vec_lcl[0]+=c_i*c[j]*rho_phi[istart];
             }
             else
-                __vec_lcl[0]+=0.5*c_i*c[j]*__rho_phi[0];
+                __vec_lcl[0]+=0.5*c_i*c[j]*rho_phi[istart];
         }
         
         
@@ -278,10 +285,8 @@ void ForceFieldEAMDMD::force_calc()
         rho[i]=tmp0;
         dE[i]=tmp1;
         mu[i]=tmp0;
-        if(c_i!=0.0)
-            __vec_lcl[0]+=c_i*(tmp0+c_0[elem_i]-3.0*kbT*log(alpha[i]));
         
-        __vec_lcl[0]+=kbT*calc_ent(c_i);
+        __vec_lcl[0]+=c_i*(tmp0+c_0[elem_i]-3.0*kbT*log(alpha[i]))+kbT*calc_ent(c_i);
     }
     
     const int __natms=atoms->natms_lcl;
@@ -428,7 +433,6 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
             
             
             type0 H[3][5]{[0 ... 2]={[0 ... 4]=0.0}};
-            r_inv=1.0/r;
             for(int l=0;l<N;l++)
             {
                 if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -474,13 +478,11 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
                 H[2][2]+=tmp0*xi2;
                 H[2][3]+=tmp0*xi3;
                 H[2][4]+=tmp0*xi4;
-                
-
             }
             
             
             
-            
+            r_inv=1.0/r;
             type0 r2_inv=r_inv*r_inv;
             type0 alpha_inv=1.0/alpha_ij;
             type0 alpha2_inv=alpha_inv*alpha_inv;
@@ -537,13 +539,21 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
         __vec_lcl[0]+=c_i*(E[i]+c_0[elem_i]-3.0*kbT*log(alpha[i]))+kbT*calc_ent(c_i);
     }
     
-    
+    const int __natms=atoms->natms_lcl;
+    type0 cv_i;
+    for(int i=0;i<__natms;i++)
+    {
+        cv_i=1.0;
+        for(int ic=0;ic<c_dim;ic++)
+            if(c[i*c_dim+ic]>0.0)
+                cv_i-=c[i*c_dim+ic];
+        __vec_lcl[0]+=kbT*calc_ent(cv_i);
+    }
     
     
     dynamic->update(dE_ptr);
     
     
-    const int __natms=atoms->natms_lcl;
     type0* f_coef=mu_ptr->begin();
     if(c_dim!=1)
     {

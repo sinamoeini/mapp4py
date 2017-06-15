@@ -12,6 +12,7 @@
 #include "min_styles.h"
 #include "dae_styles.h"
 #include "export_styles.h"
+#include "newton_gmres.h"
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
@@ -220,6 +221,8 @@ PyObject* MAPP::DMD::init_module(void)
     if(DAEBDF::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
     
+    if(NewtonGMRES::setup_tp()<0) return NULL;
+    PyModule_AddObject(module,"newton_gmres",reinterpret_cast<PyObject*>(&NewtonGMRES::TypeObject));
     
     if(ExportDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportDMD::TypeObject));

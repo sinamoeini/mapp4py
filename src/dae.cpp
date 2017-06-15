@@ -174,7 +174,6 @@ void DAE::min_error()
     
     
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
-    type0 f_h=0.0;
     type0 r;
     int istep=0;
     for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
@@ -189,8 +188,10 @@ void DAE::min_error()
                    ,atoms->S_fe[2][0]
                    ,atoms->S_fe[0][1]);
         */
+        /*
         if(atoms->comm_rank==0)
-            printf("%d | %d  %e | %e | f.h %e | %0.13lf\n",istep,gmres.iter,gmres.res/(0.005*a_tol_sqrt_nc_dofs),res/a_tol_sqrt_nc_dofs,f_h,atoms->fe);
+            printf("%d | %d  %e | %e | %0.13lf\n",istep,gmres.iter,gmres.res/(0.005*a_tol_sqrt_nc_dofs),res/a_tol_sqrt_nc_dofs,atoms->fe);
+         */
         gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
         
         

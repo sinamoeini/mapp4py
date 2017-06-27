@@ -13,6 +13,7 @@ max_nsteps(1000),
 a_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 xprt(NULL),
 ntally(1000),
+m(0),
 chng_box(false),
 S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
 S{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}}
@@ -142,13 +143,15 @@ void NewtonGMRES::run(int nsteps)
     
     
     
-    __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
+    __GMRES__<VecTens<type0,2>> gmres(m,max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
     VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
     VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
+    
+    
     VecTens<type0,1> f_x(atoms,false,ff->f);
     VecTens<type0,1> f_alpha(atoms,false,ff->f_alpha);
     VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
-    
+
     
     vec* uvecs[2];
     uvecs[0]=atoms->x;
@@ -175,12 +178,24 @@ void NewtonGMRES::run(int nsteps)
     if(ntally) thermo.print(step);
     if(nevery_xprt) xprt->write(step);
     
+    type0 eta_max=0.999,gamma=0.9,err_prev;
+    type0 eta=eta_max,eta_prev,eta_A;
+    
     for(;istep<nsteps && err>1.0;istep++)
     {
-        gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
-        const int n=atoms->natms_lcl*c_dim;
+        
+        gmres.solve_restart(J,f,a_tol_sqrt_nc_dofs,norm,h);
+        
+        //gmres.solve_restart(J,f,eta*a_tol_sqrt_nc_dofs,norm,h);
+        //gmres.solve_restart(J,f,eta*err,norm,h);
+        
+        //printf("%e %d\n",eta,gmres.iter);
+        
         
         x+=h;
+        
+        
+        const int n=atoms->natms_lcl*c_dim;
         type0* alpha_vec=atoms->alpha->begin();
         type0 max_alpha_lcl=0.0;
         type0* c_vec=atoms->c->begin();
@@ -192,11 +207,27 @@ void NewtonGMRES::run(int nsteps)
         
         dynamic->update(uvecs,2);
         
+        err_prev=err;
         err=(chng_box ? ff->prep_timer(f,S):ff->prep_timer(f))/a_tol_sqrt_nc_dofs;
         err_alpha=sqrt(f_alpha*f_alpha)/a_tol_sqrt_nc_dofs;
         err_x=sqrt(err*err-err_alpha*err_alpha);
         if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
         if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+        
+        
+        
+        eta_prev=eta;
+        eta_A=gamma*(err/err_prev)*(err/err_prev);
+        
+        if(gamma*eta_prev*eta_prev<=0.1)
+        {
+            eta=MIN(eta_max,eta_A);
+        }
+        else
+        {
+            eta=MIN(eta_max,MAX(eta_A,gamma*eta_prev*eta_prev));
+        }
+        
         
     }
     
@@ -280,7 +311,7 @@ int NewtonGMRES::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef NewtonGMRES::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef NewtonGMRES::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void NewtonGMRES::setup_tp_getset()
 {
@@ -289,6 +320,7 @@ void NewtonGMRES::setup_tp_getset()
     getset_a_tol(getset[2]);
     getset_ntally(getset[3]);
     getset_export(getset[4]);
+    getset_m(getset[5]);
 }
 /*--------------------------------------------*/
 PyMethodDef NewtonGMRES::methods[]={[0 ... 1]={NULL}};
@@ -439,6 +471,31 @@ void NewtonGMRES::getset_max_ngmres_iters(PyGetSetDef& getset)
     {
         VarAPI<int> max_ngmres_iters("max_ngmres_iters");
         max_ngmres_iters.logics[0]=VLogics("gt",0);
+        int ichk=max_ngmres_iters.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->ngmres->max_ngmres_iters=max_ngmres_iters.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void NewtonGMRES::getset_m(PyGetSetDef& getset)
+{
+    getset.name=(char*)"m";
+    getset.doc=(char*)R"---(
+    (int) maximim number of gmres iterations
+    
+    Maximum number of restart for GMRES
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<int>::build(reinterpret_cast<Object*>(self)->ngmres->m);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<int> max_ngmres_iters("m");
+        max_ngmres_iters.logics[0]=VLogics("ge",0);
         int ichk=max_ngmres_iters.set(op);
         if(ichk==-1) return -1;
         reinterpret_cast<Object*>(self)->ngmres->max_ngmres_iters=max_ngmres_iters.val;

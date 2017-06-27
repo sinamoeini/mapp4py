@@ -21,7 +21,7 @@ namespace MAPP_NS
         class ExportDMD* xprt;
         class DynamicDMD* dynamic;
     public:
-        
+        int m;
         int ntally;
         int max_nsteps;
         type0 a_tol;
@@ -59,6 +59,7 @@ namespace MAPP_NS
         static void getset_S(PyGetSetDef&);
         static void getset_a_tol(PyGetSetDef&);
         static void getset_ntally(PyGetSetDef&);
+        static void getset_m(PyGetSetDef&);
         static void getset_export(PyGetSetDef&);
         
         static int setup_tp();

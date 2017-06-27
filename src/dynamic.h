@@ -23,7 +23,7 @@ namespace MAPP_NS
         void create_dynamic_vecs();
         void destroy_dynamic_vecs();
         
-        const bool box_chng;
+        const bool chng_box;
         
         vec** arch_vecs;
         int narch_vecs;

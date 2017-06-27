@@ -23,17 +23,57 @@ void MAPP::setup_methods()
     methods[0].ml_name="pause_slave_out";
     methods[0].ml_meth=(PyCFunction)pause_out;
     methods[0].ml_flags=METH_NOARGS;
-    methods[0].ml_doc="pauses stdout & stderr of non-root processes";
+    methods[0].ml_doc=(char*)R"---(
+    pause_slave_out()
     
+    Pauses stdout & stderr of non-root processes
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This function stops python's stdout and stderr of all processesors except the root processor
+
+    
+    Examples
+    --------
+    ::
+     
+        >>> pause_slave_out()
+
+    )---";
+
     methods[1].ml_name="resume_slave_out";
     methods[1].ml_meth=(PyCFunction)resume_out;
     methods[1].ml_flags=METH_NOARGS;
-    methods[1].ml_doc="resumes stdout & stderr of non-root processes";
+    methods[1].ml_doc=(char*)R"---(
+    resume_slave_out()
+    
+    Resumes stdout & stderr of non-root processes
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This function resumes python's stdout and stderr of all if they have been paused by :py:function:`mapp.pause_slave_out`
+
+    
+    Examples
+    --------
+    ::
+     
+        >>> resume_slave_out()
+
+    )---";
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MAPP::pause_out(PyObject* self)
+PyObject* MAPP::pause_out(PyObject*)
 {
     MPI_Barrier(MPI_COMM_WORLD);
     if(!glbl_rank) Py_RETURN_NONE;
@@ -130,6 +170,8 @@ void MAPP::init_module(void)
     PyObject* dmd=MAPP::DMD::init_module();
     if(dmd==NULL) return;
     PyModule_AddObject(module,"dmd",dmd);
+    
+    pause_out(NULL);
 }
 /*--------------------------------------------*/
 PyMethodDef MAPP::MD::methods[]={[0 ... 0]={NULL}};

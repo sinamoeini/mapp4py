@@ -10,11 +10,11 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-DynamicMD::DynamicMD(AtomsMD* __atoms,ForceFieldMD* __ff,bool __box_chng,
+DynamicMD::DynamicMD(AtomsMD* __atoms,ForceFieldMD* __ff,bool __chng_box,
 std::initializer_list<vec*> __updt_vecs,
 std::initializer_list<vec*> __xchng_comp_vecs,
 std::initializer_list<vec*> __arch_vecs):
-Dynamic(__atoms,__ff,__box_chng,
+Dynamic(__atoms,__ff,__chng_box,
 {__atoms->x,__atoms->elem},__updt_vecs,
 {__atoms->id},__xchng_comp_vecs,
 {},__arch_vecs),
@@ -83,7 +83,7 @@ void DynamicMD::fin()
 void DynamicMD::store_x0()
 {
     int last_atm=atoms->natms_lcl;
-    if(box_chng) last_atm+=atoms->natms_ph;
+    if(chng_box) last_atm+=atoms->natms_ph;
     memcpy(x0->begin(),atoms->x->begin(),last_atm*__dim__*sizeof(type0));
 }
 /*--------------------------------------------
@@ -96,7 +96,7 @@ inline bool DynamicMD::decide()
     type0* x_vec=atoms->x->begin();
     type0* x0_vec=x0->begin();
     int last_atm=atoms->natms_lcl;
-    if(box_chng) last_atm+=atoms->natms_ph;
+    if(chng_box) last_atm+=atoms->natms_ph;
     for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,x0_vec+=__dim__,x_vec+=__dim__)
         if(Algebra::RSQ<__dim__>(x0_vec,x_vec)>skin_sq)
             succ_lcl=0;
@@ -131,7 +131,7 @@ void DynamicMD::update(vec** updt_vecs,int nupdt_vecs)
     }
     
     
-    if(box_chng)
+    if(chng_box)
     {
         if(nupdt_vecs==1)
             updt->update(atoms->x,true);
@@ -146,7 +146,7 @@ void DynamicMD::update(vec** updt_vecs,int nupdt_vecs)
         
         updt->reset();
         updt->list();
-        ff->neighbor->create_list(box_chng);
+        ff->neighbor->create_list(chng_box);
         store_x0();
     }
     else
@@ -164,7 +164,7 @@ void DynamicMD::update(vec** updt_vecs,int nupdt_vecs)
         xchng->full_xchng();
         
         updt->list();
-        ff->neighbor->create_list(box_chng);
+        ff->neighbor->create_list(chng_box);
         
         store_x0();
     }
@@ -184,6 +184,6 @@ void DynamicMD::init_xchng()
 void DynamicMD::fin_xchng()
 {
     updt->list();
-    ff->neighbor->create_list(box_chng);
+    ff->neighbor->create_list(chng_box);
     store_x0();
 }

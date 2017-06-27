@@ -148,9 +148,9 @@ void Cell<M>::setup()
  construct the cell list
  --------------------------------------------*/
 template<const int M>template<class F0,class F1,class F2>
-void Cell<M>::DO(bool box_chng,F0 pre,F1 mid,F2 post)
+void Cell<M>::DO(bool chng_box,F0 pre,F1 mid,F2 post)
 {
-    if(box_chng) setup();
+    if(chng_box) setup();
     
     for(int i=0;i<ncells;i++)
         head_atm[i]=-1;

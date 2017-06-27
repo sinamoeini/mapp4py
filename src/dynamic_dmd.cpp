@@ -10,11 +10,11 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-DynamicDMD::DynamicDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,bool __box_chng,
+DynamicDMD::DynamicDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,bool __chng_box,
 std::initializer_list<vec*> __updt_vecs,
 std::initializer_list<vec*> __xchng_comp_vecs,
 std::initializer_list<vec*> __arch_vecs):
-Dynamic(__atoms,__ff,__box_chng,
+Dynamic(__atoms,__ff,__chng_box,
 {__atoms->x,__atoms->alpha,__atoms->c,__atoms->elem},__updt_vecs,
 {__atoms->id},__xchng_comp_vecs,
 {},__arch_vecs),
@@ -94,7 +94,7 @@ void DynamicDMD::fin()
 void DynamicDMD::store_x0()
 {
     int last_atm=atoms->natms_lcl;
-    if(box_chng) last_atm+=atoms->natms_ph;
+    if(chng_box) last_atm+=atoms->natms_ph;
     memcpy(x0->begin(),atoms->x->begin(),last_atm*__dim__*sizeof(type0));
     memcpy(alpha0->begin(),atoms->alpha->begin(),last_atm*c_dim*sizeof(type0));
 }
@@ -109,7 +109,7 @@ inline bool DynamicDMD::decide()
     type0* alpha_vec=atoms->alpha->begin();
     type0* alpha0_vec=alpha0->begin();
     int last_atm=atoms->natms_lcl;
-    if(box_chng) last_atm+=atoms->natms_ph;
+    if(chng_box) last_atm+=atoms->natms_ph;
     
     for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,x0_vec+=__dim__,x_vec+=__dim__,alpha_vec+=c_dim,alpha0_vec+=c_dim)
     {
@@ -158,7 +158,7 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
     }
     
     
-    if(box_chng)
+    if(chng_box)
     {
         if(nupdt_vecs==1)
             updt->update(atoms->x,true);

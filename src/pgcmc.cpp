@@ -199,10 +199,10 @@ void PGCMC::box_dismantle()
 /*--------------------------------------------
  construct the bin list
  --------------------------------------------*/
-void PGCMC::xchng(bool box_chng,int nattmpts)
+void PGCMC::xchng(bool chng_box,int nattmpts)
 {
     dynamic->init_xchng();
-    if(box_chng) box_setup();
+    if(chng_box) box_setup();
     
     /*--------------------------------------------------
      here we allocate the memory for cell_vec & next_vec
@@ -234,7 +234,7 @@ void PGCMC::xchng(bool box_chng,int nattmpts)
         head_atm[cell_vec[i]]=i;
     }
     
-    ff->neighbor->create_list(box_chng);
+    ff->neighbor->create_list(chng_box);
     
     ff->init_xchng();
     for(int i=0;i<atoms->ndynamic_vecs;i++)

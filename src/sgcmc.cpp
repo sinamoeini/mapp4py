@@ -149,14 +149,14 @@ void SGCMC::box_dismantle()
 /*--------------------------------------------
  construct the bin list
  --------------------------------------------*/
-void SGCMC::xchng(bool box_chng,int nattmpts)
+void SGCMC::xchng(bool chng_box,int nattmpts)
 {
     curr_comm=&world;
     curr_root=0;
         
     
     dynamic->init_xchng();
-    if(box_chng)
+    if(chng_box)
         box_setup();
     
     /*--------------------------------------------------
@@ -189,7 +189,7 @@ void SGCMC::xchng(bool box_chng,int nattmpts)
         head_atm[cell_vec[i]]=i;
     }
     
-    ff->neighbor->create_list(box_chng);
+    ff->neighbor->create_list(chng_box);
 
     ff->init_xchng();
     for(int i=0;i<atoms->ndynamic_vecs;i++)

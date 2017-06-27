@@ -63,7 +63,7 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-Dynamic::Dynamic(Atoms* __atoms,ForceField* __ff,bool __box_chng,
+Dynamic::Dynamic(Atoms* __atoms,ForceField* __ff,bool __chng_box,
 std::initializer_list<vec*> __updt_vecs_def,std::initializer_list<vec*> __updt_vecs,
 std::initializer_list<vec*> __xchng_comp_vecs_def,std::initializer_list<vec*> __xchng_comp_vecs,
 std::initializer_list<vec*> __arch_vecs_def,std::initializer_list<vec*> __arch_vecs):
@@ -71,7 +71,7 @@ atoms(__atoms),
 world(__atoms->comm.world),
 skin(__atoms->comm.skin),
 ff(__ff),
-box_chng(__box_chng),
+chng_box(__chng_box),
 
 updt_vecs(__updt_vecs_def.size()+__updt_vecs.size()==0 ? NULL: new vec*[__updt_vecs_def.size()+__updt_vecs.size()]),
 nupdt_vecs(static_cast<int>(__updt_vecs.size()+__updt_vecs_def.size())),

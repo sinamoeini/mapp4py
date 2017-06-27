@@ -284,7 +284,7 @@ void ForceFieldDMD::J_timer(VecTens<type0,2>& x,VecTens<type0,2>& Jx)
 {
     Algebra::zero<__nvoigt__>(__vec_lcl);
     J(x,Jx);
-    if(x.box_chng)
+    if(x.chng_box)
     {
         MPI_Allreduce(__vec_lcl,__vec,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
         Algebra::DyadicV_2_MLT(__vec,Jx.A);

@@ -232,7 +232,7 @@ PyMethodDef MAPP::DMD::methods[]={[0 ... 0]={NULL}};
 void MAPP::DMD::setup_methods()
 {
     /*
-    ExamplePython::ml_test(methods[0]);
+    ExamplePython::ml_mv_c(methods[0]);
     ExamplePython::ml_alpha(methods[1]);
     ExamplePython::ml_prt(methods[2]);
     ExamplePython::ml_delta_c(methods[3]);

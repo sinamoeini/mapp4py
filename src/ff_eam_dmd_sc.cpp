@@ -327,25 +327,29 @@ void ForceFieldEAMDMDSC::force_calc()
                     for(int jc=0;jc<c_dim;jc++,istart+=3)
                         A[ic][jc]=exp(-beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart])));
                 
-                type0 u=A[0][0]*A[1][1]/(A[0][1]*A[1][0])-1.0;
-                type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
-                type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
-                if(__a==0.0)
+                type0 u=0.0;
+                if(c[i*c_dim]!=0.0 && c[j*c_dim])
                 {
-                    u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]+1.0)/__b);
-                }
-                else
-                {
-                    type0 delta=sqrt(__b*__b-4.0*__a*(c[j*c_dim]-1.0));
-                    type0 x0=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b-delta)/__a);
-                    type0 x1=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b+delta)/__a);
-                    
-                    if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
-                        u=x0;
+                    type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
+                    type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
+                    if(__a==0.0)
+                    {
+                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]+1.0)/__b);
+                    }
                     else
-                        u=x1;
-                    
+                    {
+                        type0 delta=sqrt(__b*__b-4.0*__a*(c[j*c_dim]-1.0));
+                        type0 x0=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b-delta)/__a);
+                        type0 x1=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b+delta)/__a);
+                        
+                        if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
+                            u=x0;
+                        else
+                            u=x1;
+                        
+                    }
                 }
+                
                 
 
                 
@@ -680,24 +684,27 @@ void ForceFieldEAMDMDSC::energy_calc()
                     for(int jc=0;jc<c_dim;jc++,istart+=3)
                         A[ic][jc]=exp(-beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart])));
                 
-                type0 u=A[0][0]*A[1][1]/(A[0][1]*A[1][0])-1.0;
-                type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
-                type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
-                if(__a==0.0)
+                type0 u=0.0;
+                if(c[i*c_dim]!=0.0 && c[j*c_dim])
                 {
-                    u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]+1.0)/__b);
-                }
-                else
-                {
-                    type0 delta=sqrt(__b*__b-4.0*__a*(c[j*c_dim]-1.0));
-                    type0 x0=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b-delta)/__a);
-                    type0 x1=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b+delta)/__a);
-                    
-                    if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
-                        u=x0;
+                    type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
+                    type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
+                    if(__a==0.0)
+                    {
+                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]+1.0)/__b);
+                    }
                     else
-                        u=x1;
-                    
+                    {
+                        type0 delta=sqrt(__b*__b-4.0*__a*(c[j*c_dim]-1.0));
+                        type0 x0=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b-delta)/__a);
+                        type0 x1=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b+delta)/__a);
+                        
+                        if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
+                            u=x0;
+                        else
+                            u=x1;
+                        
+                    }
                 }
                 
 

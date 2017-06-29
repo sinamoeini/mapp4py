@@ -227,12 +227,12 @@ PyObject* MAPP::MD::init_module(void)
     return module;
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::DMD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef MAPP::DMD::methods[]={[0 ... 1]={NULL}};
 /*--------------------------------------------*/
 void MAPP::DMD::setup_methods()
 {
-    /*
-    ExamplePython::ml_mv_c(methods[0]);
+    
+    ExamplePython::ml_mv_c(methods[0]);/*
     ExamplePython::ml_alpha(methods[1]);
     ExamplePython::ml_prt(methods[2]);
     ExamplePython::ml_delta_c(methods[3]);

@@ -2,4 +2,5 @@
 #include "ff_eam.h"
 #include "ff_fs.h"
 #include "ff_eam_dmd.h"
+#include "ff_eam_dmd_sc.h"
 #include "ff_eam__dmd.h"

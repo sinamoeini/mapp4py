@@ -328,13 +328,13 @@ void ForceFieldEAMDMDSC::force_calc()
                         A[ic][jc]=exp(-beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart])));
                 
                 type0 u=0.0;
-                if(c[i*c_dim]!=0.0 && c[j*c_dim])
+                if(c[i*c_dim]!=0.0 && c[j*c_dim]!=0.0)
                 {
                     type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
                     type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
                     if(__a==0.0)
                     {
-                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]+1.0)/__b);
+                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]-1.0)/__b);
                     }
                     else
                     {
@@ -685,13 +685,13 @@ void ForceFieldEAMDMDSC::energy_calc()
                         A[ic][jc]=exp(-beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart])));
                 
                 type0 u=0.0;
-                if(c[i*c_dim]!=0.0 && c[j*c_dim])
+                if(c[i*c_dim]!=0.0 && c[j*c_dim]!=0.0)
                 {
                     type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
                     type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
                     if(__a==0.0)
                     {
-                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]+1.0)/__b);
+                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]-1.0)/__b);
                     }
                     else
                     {

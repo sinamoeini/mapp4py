@@ -13,6 +13,7 @@ namespace MAPP_NS
     public:
         type0 S_fe[__dim__][__dim__];
         type0 fe;
+        type0 s;
         
         DMDVec<type0>* alpha;
         DMDVec<type0>* c;
@@ -51,6 +52,7 @@ namespace MAPP_NS
         static void getset_temp(PyGetSetDef&);
         static void getset_S_fe(PyGetSetDef&);
         static void getset_fe(PyGetSetDef&);
+        static void getset_s(PyGetSetDef&);
         
         static PyMethodDef methods[];
         static void setup_tp_methods();

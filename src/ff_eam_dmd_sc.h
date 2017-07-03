@@ -61,6 +61,7 @@ namespace MAPP_NS
         void calc_Q(type0&,type0&,type0&,type0&,type0&,type0&);
         /*--------------------------------------------*/
         
+        void sc_loop();
 
         
     protected:

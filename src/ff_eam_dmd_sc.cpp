@@ -302,125 +302,11 @@ void ForceFieldEAMDMDSC::force_calc()
     
     dynamic->update(dE_ptr);
     
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
-    type0 ent_corr_lcl=0.0,prev_en,curr_en;
-    MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 en_diff=1.0;
-    int iter=0;
-    while(en_diff>TOL)
-    {
-        iter++;
-        for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
-        
-        __vec_lcl[0]=0.0;
-        istart=0;
-        iistart=0;
-        ent_corr_lcl=0.0;
-        for(int i=0;i<natms_lcl;i++)
-        {
-            const int neigh_sz=neighbor_list_size[i];
-            for(int j,__j=0;__j<neigh_sz;__j++)
-            {
-                j=neighbor_list[i][__j];
-                
-                for(int ic=0;ic<c_dim;ic++)
-                    for(int jc=0;jc<c_dim;jc++,istart+=3)
-                        A[ic][jc]=exp(-beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart])));
-                
-                type0 u=0.0;
-                if(c[i*c_dim]!=0.0 && c[j*c_dim]!=0.0)
-                {
-                    type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
-                    type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
-                    if(__a==0.0)
-                    {
-                        u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]-1.0)/__b);
-                    }
-                    else
-                    {
-                        type0 delta=sqrt(__b*__b-4.0*__a*(c[j*c_dim]-1.0));
-                        type0 x0=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b-delta)/__a);
-                        type0 x1=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b+delta)/__a);
-                        
-                        if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
-                            u=x0;
-                        else
-                            u=x1;
-                        
-                    }
-                }
-                
-                
-
-                
-                
-                B_pair[iistart]=u;
-                B_pair[iistart+1]=c[i*c_dim]-u;
-                B_pair[iistart+2]=c[j*c_dim]-u;
-                B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
-
-                
-                istart-=3*c_dim*c_dim;
-                
-                if(j<natms_lcl)
-                {
-                    for(int ic=0;ic<c_dim;ic++)
-                        for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                        {
-                            __vec_lcl[0]+=B_pair[iistart]*rho_phi[istart];
-                            if(c[i*c_dim+ic]>0.0)
-                                rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                            if(c[j*c_dim+jc]>0.0)
-                                rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
-                            if(B_pair[iistart]>0.0)
-                                ent_corr_lcl+=B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
-                        }
-                }
-                else{
-                    for(int ic=0;ic<c_dim;ic++)
-                        for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                        {
-                            __vec_lcl[0]+=0.5*B_pair[iistart]*rho_phi[istart];
-                            if(c[i*c_dim+ic]>0.0)
-                                rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                            if(B_pair[iistart]>0.0)
-                                ent_corr_lcl+=0.5*B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
-                        }
-                }
-
-                
-            }
-            
-            for(int ic=0;ic<c_dim;ic++)
-            {
-                
-                p=rho[i*c_dim+ic]*drho_inv;
-                m=static_cast<size_t>(p);
-                m=MIN(m,nrho-2);
-                p-=m;
-                p=MIN(p,1.0);
-                coef=F_arr[ic][m];
-                
-                tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
-                tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
-                
-                if(rho[i*c_dim+ic]>rho_max) tmp0+=tmp1*(rho[i*c_dim+ic]-rho_max);
-                
-                dE[i*c_dim+ic]=tmp1;
-                __vec_lcl[0]+=c[i*c_dim+ic]*tmp0;
-                
-            }
-        }
-            
-        __vec_lcl[0]+=ent_corr_lcl*kbT;
-            
-        MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-        en_diff=fabs(curr_en-prev_en);
-        prev_en=curr_en;
-        dynamic->update(dE_ptr);
-    }
+    sc_loop();
     
-    __vec_lcl[0]+=ent_lcl*kbT+vib_lcl;
+    
+    __vec_lcl[1+__nvoigt__]+=kbT*ent_lcl;
+    __vec_lcl[0]+=kbT*ent_lcl+vib_lcl;
     
     
     type0* fvec=f->begin();
@@ -483,16 +369,6 @@ void ForceFieldEAMDMDSC::force_calc()
      */
 
 }
-/*--------------------------------------------
- force calculation
- --------------------------------------------*/
-type0 ForceFieldEAMDMDSC::prep(VecTens<type0,2>& f)
-{ return 0.0;}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMDSC::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
-{}
 /*--------------------------------------------
  energy calculation
  --------------------------------------------*/
@@ -659,17 +535,35 @@ void ForceFieldEAMDMDSC::energy_calc()
     
     dynamic->update(dE_ptr);
     
+    sc_loop();
+    
+    __vec_lcl[1+__nvoigt__]+=kbT*ent_lcl;
+    __vec_lcl[0]+=kbT*ent_lcl+vib_lcl;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldEAMDMDSC::sc_loop()
+{
+ 
+    type0* dE=dE_ptr->begin();
+    type0* rho=rho_ptr->begin();
+    
+    type0* coef;
     type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
-    size_t iistart=0;
+    size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 en_diff=1.0;
-    
+    type0 p,en_diff=1.0,tmp0,tmp1;
+    int natms_lcl=atoms->natms_lcl;
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    type0 const* c=atoms->c->begin();
     while(en_diff>TOL)
     {
         for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
         
-        __vec_lcl[0]=0.0;
+        __vec_lcl[0]=__vec_lcl[1+__nvoigt__]=0.0;
         istart=0;
         iistart=0;
         ent_corr_lcl=0.0;
@@ -707,14 +601,14 @@ void ForceFieldEAMDMDSC::energy_calc()
                     }
                 }
                 
-
+                
                 
                 
                 B_pair[iistart]=u;
                 B_pair[iistart+1]=c[i*c_dim]-u;
                 B_pair[iistart+2]=c[j*c_dim]-u;
                 B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
-
+                
                 
                 istart-=3*c_dim*c_dim;
                 
@@ -743,7 +637,7 @@ void ForceFieldEAMDMDSC::energy_calc()
                                 ent_corr_lcl+=0.5*B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
                         }
                 }
-
+                
                 
             }
             
@@ -767,17 +661,26 @@ void ForceFieldEAMDMDSC::energy_calc()
                 
             }
         }
-            
+        
+        __vec_lcl[1+__nvoigt__]+=ent_corr_lcl*kbT;
         __vec_lcl[0]+=ent_corr_lcl*kbT;
-            
+        
         MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
         en_diff=fabs(curr_en-prev_en);
         prev_en=curr_en;
         dynamic->update(dE_ptr);
     }
-    
-    __vec_lcl[0]+=ent_lcl*kbT+vib_lcl;
 }
+/*--------------------------------------------
+ force calculation
+ --------------------------------------------*/
+type0 ForceFieldEAMDMDSC::prep(VecTens<type0,2>& f)
+{ return 0.0;}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldEAMDMDSC::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
+{}
 /*--------------------------------------------
  init
  --------------------------------------------*/

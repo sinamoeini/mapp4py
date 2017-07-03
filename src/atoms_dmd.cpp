@@ -11,7 +11,8 @@ xi(new type0[__N]),
 wi(new type0[__N]),
 temp(NAN),
 S_fe{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}},
-fe(NAN)
+fe(NAN),
+s(NAN)
 {
     XMath::quadrature_hg(N,xi,wi);
     elem=new Vec<elem_type>(this,c_dim,"elem");
@@ -178,7 +179,7 @@ int AtomsDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsDMD::getset[]={[0 ... 15]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsDMD::getset[]={[0 ... 16]={NULL,NULL,NULL,NULL,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
 {
@@ -197,9 +198,10 @@ void AtomsDMD::setup_tp_getset()
     getset_temp(getset[12]);
     getset_fe(getset[13]);
     getset_S_fe(getset[14]);
+    getset_s(getset[15]);
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsDMD::methods[]={[0 ... 11]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsDMD::methods[]={[0 ... 8]={NULL,NULL,0,NULL}};
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
@@ -207,8 +209,7 @@ void AtomsDMD::setup_tp_methods()
     ImportCFGDMD::ml_import(methods[1]);
     ForceFieldEAMDMD::ml_new(methods[2],methods[3],methods[4]);
 #ifdef SC_DMD
-    ForceFieldEAM_DMD::ml_new(methods[5],methods[6],methods[7]);
-    ForceFieldEAMDMDSC::ml_new(methods[8],methods[9],methods[10]);
+    ForceFieldEAMDMDSC::ml_new(methods[5],methods[6],methods[7]);
 #endif
 }
 /*--------------------------------------------
@@ -277,6 +278,27 @@ void AtomsDMD::getset_fe(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->fe);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_s(PyGetSetDef& getset)
+{
+    getset.name=(char*)"s";
+    getset.doc=(char*)R"---(
+    (double) free energy
+    
+    Entropy
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->s);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {

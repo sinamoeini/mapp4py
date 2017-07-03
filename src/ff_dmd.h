@@ -12,6 +12,8 @@ namespace MAPP_NS
         void reset();
         void reset_c_d();
     protected:
+        type0 __vec[__nvoigt__+2];
+        type0 __vec_lcl[__nvoigt__+2];
         class DynamicDMD* dynamic;
         class AtomsDMD* atoms;
         

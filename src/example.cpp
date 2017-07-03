@@ -754,7 +754,7 @@ void ExamplePython::ml_mv_c(PyMethodDef& tp_methods)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);
-        FuncAPI<OP<AtomsDMD>,type0> f("delta_c",{"atoms","dc"});
+        FuncAPI<OP<AtomsDMD>,type0> f("mv_c",{"atoms","dc"});
         if(f(args,kwds)) return NULL;
         
     
@@ -767,6 +767,68 @@ void ExamplePython::ml_mv_c(PyMethodDef& tp_methods)
         {
             c[0]=x;
             c[1]=__x;
+        }
+        
+        Py_RETURN_NONE;
+    };
+
+
+    tp_methods.ml_doc=(char*)R"---(
+    quick function for calculateing phonon freq
+    use with caution
+
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ExamplePython::ml_mv_c2(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="mv_c2";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        //Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsDMD>,type0> f("mv_c2",{"atoms","dc"});
+        if(f(args,kwds)) return NULL;
+        
+    
+        AtomsDMD* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        type0 x=f.v<1>();
+        
+        
+        if(x>0.25)
+        {
+            
+            type0 __ni=(1.0-x)*4.0/3.0;
+            type0 __al=1.0-__ni;
+            
+            type0* c=atoms->c->begin();
+            int natms_lcl=atoms->natms_lcl;
+            c[0]=0.0;
+            c[1]=1.0;
+            c+=2;
+            
+            for(int i=1;i<natms_lcl;i++,c+=2)
+            {
+                c[0]=__ni;
+                c[1]=__al;
+            }
+        }
+        else
+        {
+            type0* c=atoms->c->begin();
+            int natms_lcl=atoms->natms_lcl;
+            c[0]=1.0-4.0*x;
+            c[1]=4.0*x;
+            c+=2;
+            
+            for(int i=1;i<natms_lcl;i++,c+=2)
+            {
+                c[0]=1.0;
+                c[1]=0.0;
+            }
         }
         
         Py_RETURN_NONE;

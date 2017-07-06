@@ -94,7 +94,7 @@ void ForceFieldDMD::post_fin()
 type0 ForceFieldDMD::value_timer()
 {
     //timer->start(FORCE_TIME_mode);
-    __vec_lcl[0]=0.0;
+    __vec_lcl[0]=__vec_lcl[1+__nvoigt__]=0.0;
     energy_calc();
     type0 en;
     MPI_Allreduce(&__vec_lcl[0],&en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -274,7 +274,7 @@ void ForceFieldDMD::J_timer(Vec<type0>* x,Vec<type0>* Jx)
  --------------------------------------------*/
 type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f)
 {
-    Algebra::zero<__nvoigt__+1>(__vec_lcl);
+    Algebra::zero<__nvoigt__+2>(__vec_lcl);
     type0 err_sq=prep(f);
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]/=atoms->vol;});
@@ -289,7 +289,7 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f)
  --------------------------------------------*/
 void ForceFieldDMD::J_timer(VecTens<type0,2>& x,VecTens<type0,2>& Jx)
 {
-    Algebra::zero<__nvoigt__>(__vec_lcl);
+    Algebra::zero<__nvoigt__+2>(__vec_lcl);
     J(x,Jx);
     if(x.chng_box)
     {
@@ -302,7 +302,7 @@ void ForceFieldDMD::J_timer(VecTens<type0,2>& x,VecTens<type0,2>& Jx)
  --------------------------------------------*/
 type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f,type0 (&S)[__dim__][__dim__])
 {
-    Algebra::zero<__nvoigt__+1>(__vec_lcl);
+    Algebra::zero<__nvoigt__+2>(__vec_lcl);
     type0 err_sq=prep(f);
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     type0 vol=atoms->vol;

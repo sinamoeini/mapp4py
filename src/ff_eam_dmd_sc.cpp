@@ -305,7 +305,7 @@ void ForceFieldEAMDMDSC::force_calc()
     sc_loop();
     
     
-    __vec_lcl[1+__nvoigt__]+=kbT*ent_lcl;
+    __vec_lcl[1+__nvoigt__]+=ent_lcl;
     __vec_lcl[0]+=kbT*ent_lcl+vib_lcl;
     
     
@@ -537,7 +537,7 @@ void ForceFieldEAMDMDSC::energy_calc()
     
     sc_loop();
     
-    __vec_lcl[1+__nvoigt__]+=kbT*ent_lcl;
+    __vec_lcl[1+__nvoigt__]+=ent_lcl;
     __vec_lcl[0]+=kbT*ent_lcl+vib_lcl;
 }
 /*--------------------------------------------
@@ -662,7 +662,7 @@ void ForceFieldEAMDMDSC::sc_loop()
             }
         }
         
-        __vec_lcl[1+__nvoigt__]+=ent_corr_lcl*kbT;
+        __vec_lcl[1+__nvoigt__]+=ent_corr_lcl;
         __vec_lcl[0]+=ent_corr_lcl*kbT;
         
         MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);

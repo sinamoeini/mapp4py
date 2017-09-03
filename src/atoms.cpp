@@ -284,6 +284,36 @@ void Atoms::restart()
     while(nvecs)
         delete vecs[0];
 }
+/*--------------------------------------------
+ reset the domain
+ --------------------------------------------*/
+#include "exchange.h"
+void Atoms::reset_domain()
+{
+    ndynamic_vecs=0;
+    for(int i=0;i<nvecs;i++)
+        if(!vecs[i]->is_empty())
+            ndynamic_vecs++;
+    if(ndynamic_vecs==0) return;
+    
+    dynamic_vecs=new vec*[ndynamic_vecs];
+    ndynamic_vecs=0;
+    for(int i=0;i<nvecs;i++)
+        if(!vecs[i]->is_empty())
+            dynamic_vecs[ndynamic_vecs++]=vecs[i];
+    
+    
+    Exchange xchng(this,ndynamic_vecs);
+    x2s_lcl();
+    xchng.full_xchng();
+    s2x_lcl();
+    
+    
+    delete [] dynamic_vecs;
+    dynamic_vecs=NULL;
+    ndynamic_vecs=0;
+    
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -738,6 +768,7 @@ void Atoms::getset_comm_dims(PyGetSetDef& getset)
         }
         
         __self->atoms->comm.grid(dims.val);
+        __self->atoms->reset_domain();
         return 0;
     };
 }
@@ -774,6 +805,81 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         Algebra::MSQ_2_MLT(__H,H);
         Algebra::MLT_mul_MLT(B,H,F);
         if(Algebra::MLT_det(F)<=0.0)
+        {
+            PyErr_SetString(PyExc_TypeError,"strain should result in transformation tensor with positive determinant");
+            return NULL;
+        }
+        
+        Algebra::MLT_inv(H,B);
+        
+        __self->atoms->x2s_lcl();
+        Algebra::V_eq<__dim__*__dim__>(&H[0][0],&(__self->atoms->H[0][0]));
+        __self->atoms->update_H();
+        __self->atoms->s2x_lcl();
+        /*
+        type0* x=__self->atoms->x->begin();
+        int x_dim=__self->atoms->x->dim;
+        int natms_lcl=__self->atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++,x+=x_dim)
+            Algebra::V_mul_MLT(x,F,x);
+        */
+        Py_RETURN_NONE;
+    };
+    
+    tp_methods.ml_doc=R"---(
+    strain(E)
+    
+    Strain the system
+        
+    Parameters
+    ----------
+    E : double[dim][dim]
+       Strain tensor, here dim is the dimension of simulation
+    
+    Returns
+    -------
+    None
+   
+    )---";
+}
+/*--------------------------------------------
+ python constructor
+ --------------------------------------------*/
+void Atoms::ml_mul(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="mul";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<int[__dim__]> f("mul",{"n"});
+        
+        f.get<0>().logics[0]=VLogics("ge",1);
+        if(f(args,kwds)) return NULL;
+        type0 n[__dim__];
+        Algebra::Do<__dim__>::func([&n,&f](int i){n[i]=static_cast<type0>(f.val<0>()[i]);});
+        /*
+        
+        Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
+        
+        type0 H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 B[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        Algebra::DoLT<__dim__>::func([&H,&B,&__self](int i,int j)
+        {
+            H[i][j]=__self->atoms->H[i][j];
+            B[i][j]=__self->atoms->B[i][j];
+        });
+        
+        type0 (&strain)[__dim__][__dim__]=f.val<0>();
+        
+        Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
+        type0 F[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 __H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        Algebra::MLT_mul_MSQ(H,strain,__H);
+        
+        Algebra::MSQ_2_MLT(__H,H);
+        Algebra::MLT_mul_MLT(B,H,F);
+        if(Algebra::MLT_det(F)<=0.0)
         PyErr_SetString(PyExc_TypeError,"strain should result in transformation tensor with positive determinant");
         Algebra::MLT_inv(H,B);
         
@@ -785,7 +891,7 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         int x_dim=__self->atoms->x->dim;
         int natms_lcl=__self->atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,x+=x_dim)
-            Algebra::V_mul_MLT(x,F,x);
+            Algebra::V_mul_MLT(x,F,x);*/
         
         Py_RETURN_NONE;
     };
@@ -799,6 +905,51 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
     ----------
     E : double[dim][dim]
        Strain tensor, here dim is the dimension of simulation
+    
+    Returns
+    -------
+    None
+   
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Atoms::ml_do(PyMethodDef& tp_method)
+{
+    tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_method.ml_name="do";
+    tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        
+        FuncAPI<OB<PyFunctionObject,PyFunction_Type>> f("do",{"func"});
+        if(f(args,kwds)) return NULL;
+        
+        PyObject* op=f.val<0>();
+        
+        Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
+        try
+        {
+            __self->atoms->DO(op);
+        }
+        catch(std::string& err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+
+        Py_RETURN_NONE;
+    };
+    tp_method.ml_doc=R"---(
+    do(func)
+    
+    acts a given function on every atom
+        
+    Parameters
+    ----------
+    func : callable python object
+       function
     
     Returns
     -------

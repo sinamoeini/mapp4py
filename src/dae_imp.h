@@ -11,8 +11,6 @@ namespace MAPP_NS
         type0 update_c();
         void J_test();
     public:
-        int max_nnewton_iters;
-        int max_ngmres_iters;
         
         int nnonlin_acc;
         int nnonlin_rej;

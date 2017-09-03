@@ -25,6 +25,9 @@ namespace MAPP_NS
         class ExportDMD* xprt;
         class DynamicDMD* dynamic;
     public:
+        int max_nnewton_iters;
+        int max_ngmres_iters;
+        
         int ntally;
         int nreset;
         int max_nsteps;

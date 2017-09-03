@@ -844,6 +844,50 @@ void ExamplePython::ml_mv_c2(PyMethodDef& tp_methods)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void ExamplePython::ml_mv_c3(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="mv_c3";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        //Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsDMD>,type0,type0> f("mv_c3",{"atoms","x","a"});
+        if(f(args,kwds)) return NULL;
+        
+    
+        AtomsDMD* atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+        type0 x=f.v<1>();
+        type0 a=f.v<2>();
+        type0 b=(4.0*x-a)/3.0;
+        
+        //printf(">>>>>>>>>>>>>>>>>>>> %e %e\n",a,b);
+        type0* c=atoms->c->begin();
+        int natms_lcl=atoms->natms_lcl;
+        c[0]=a;
+        c[1]=1.0-a;
+        c+=2;
+        
+        for(int i=1;i<natms_lcl;i++,c+=2)
+        {
+            c[0]=b;
+            c[1]=1.0-b;
+        }
+        
+        
+        Py_RETURN_NONE;
+    };
+
+
+    tp_methods.ml_doc=(char*)R"---(
+    quick function for calculateing phonon freq
+    use with caution
+
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void ExamplePython::ml_prt(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;

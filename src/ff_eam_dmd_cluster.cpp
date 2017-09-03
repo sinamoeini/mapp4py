@@ -1,4 +1,4 @@
-#include "ff_eam_dmd_sc.h"
+#include "ff_eam_dmd_cluster.h"
 #include <stdlib.h>
 #include "neighbor_dmd_sc.h"
 #include "elements.h"
@@ -10,15 +10,15 @@
 #include "import_eam.h"
 #include <limits>
 #define PI_IN_SQ 0.564189583547756286948079451561
-#define TOL 1.0e-12
+#define TOL 1.0e-9
 
 #define CONST 1.0
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-ForceFieldEAMDMDSC::
-ForceFieldEAMDMDSC(AtomsDMD* atoms,
+ForceFieldEAMDMDCLUSTER::
+ForceFieldEAMDMDCLUSTER(AtomsDMD* atoms,
 type0 __dr,type0 __drho,size_t __nr,size_t __nrho,
 type0(***&& __r_phi_arr)[4],type0(***&& __rho_arr)[4],type0(**&& __F_arr)[5],
 type0**&& __cut,type0*&& __r_crd,type0*&& __zeta):
@@ -34,6 +34,7 @@ rho_phi(NULL),
 drho_phi_dr(NULL),
 drho_phi_dalpha(NULL),
 B_pair(NULL),
+is_pair(NULL),
 max_pairs(0),
 vec0(NULL),
 vec1(NULL),
@@ -42,7 +43,9 @@ vec3(NULL),
 mu_ptr(NULL),
 dE_ptr(NULL),
 rho_ptr(NULL),
-cv_ptr(NULL),
+d_ptr(NULL),
+b_ptr(NULL),
+theta_ptr(NULL),
 N(atoms->N)
 {
     
@@ -112,7 +115,7 @@ N(atoms->N)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-ForceFieldEAMDMDSC::~ForceFieldEAMDMDSC()
+ForceFieldEAMDMDCLUSTER::~ForceFieldEAMDMDCLUSTER()
 {
     Memory::dealloc(F_arr);
     Memory::dealloc(r_rho_arr);
@@ -129,18 +132,20 @@ ForceFieldEAMDMDSC::~ForceFieldEAMDMDSC()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::calc_pair(type0 r,type0* alpha_i,type0* alpha_j,type0*& __rho_phi,type0*&,type0*&)
+void ForceFieldEAMDMDCLUSTER::calc_pair(type0 r,type0* alpha_i,type0* alpha_j,type0*& __rho_phi,type0*&,type0*&)
 {}
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::force_calc()
+void ForceFieldEAMDMDCLUSTER::force_calc()
 {
     if(max_pairs<neighbor->no_pairs)
     {
         delete [] rho_phi;
         delete [] drho_phi_dr;
         delete [] drho_phi_dalpha;
+        delete [] B_pair;
+        delete [] is_pair;
         
         max_pairs=neighbor->no_pairs;
         size_t no_0=3*max_pairs*c_dim*c_dim;
@@ -148,10 +153,12 @@ void ForceFieldEAMDMDSC::force_calc()
         Memory::alloc(drho_phi_dr,no_0);
         Memory::alloc(drho_phi_dalpha,no_0);
         Memory::alloc(B_pair,c_dim*c_dim*max_pairs);
+        Memory::alloc(is_pair,max_pairs);
     }
     
     for(int i=0;i<max_pairs*c_dim*c_dim*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
     for(int i=0;i<max_pairs*c_dim*c_dim;i++) B_pair[i]=0.0;
+    for(int i=0;i<max_pairs;i++) is_pair[i]=false;
     
     
     
@@ -197,6 +204,8 @@ void ForceFieldEAMDMDSC::force_calc()
                     alpha_ij_sq=alpha[i*c_dim+ic]*alpha[i*c_dim+ic]+alpha[j*c_dim+jc]*alpha[j*c_dim+jc];
                     alpha_ij=sqrt(alpha_ij_sq);
                     if(r-alpha_ij*xi[N-1]>=cut[ic][jc]) continue;
+                    
+                    is_pair[istart/(3*c_dim*c_dim)]=true;
                     
                     type0 upper=(r+cut[ic][jc])/alpha_ij;
                     type0 lower=(r-cut[ic][jc])/alpha_ij;
@@ -303,10 +312,10 @@ void ForceFieldEAMDMDSC::force_calc()
     
     dynamic->update(dE_ptr);
     
-    //sc_loop___();
-    
+    ___sc_loop();
+    __vec_lcl[0]+=vib_lcl;
     __vec_lcl[1+__nvoigt__]+=ent_lcl;
-    __vec_lcl[0]+=kbT*ent_lcl+vib_lcl;
+    __vec_lcl[0]+=kbT*ent_lcl;
     
     
     
@@ -330,8 +339,8 @@ void ForceFieldEAMDMDSC::force_calc()
                 for(int ic=0;ic<c_dim;ic++)
                     for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
                     {
-                        fpair-=(drho_phi_dr[istart+2]*dE[i*c_dim+ic]+drho_phi_dr[istart+1]*dE[j*c_dim+jc]+drho_phi_dr[istart])*c[i*c_dim+ic]*c[j*c_dim+jc];
-                        apair=-(drho_phi_dalpha[istart+2]*dE[i*c_dim+ic]+drho_phi_dalpha[istart+1]*dE[j*c_dim+jc]+drho_phi_dalpha[istart])*c[i*c_dim+ic]*c[j*c_dim+jc];
+                        fpair-=(drho_phi_dr[istart+2]*dE[i*c_dim+ic]+drho_phi_dr[istart+1]*dE[j*c_dim+jc]+drho_phi_dr[istart])*B_pair[iistart];
+                        apair=-(drho_phi_dalpha[istart+2]*dE[i*c_dim+ic]+drho_phi_dalpha[istart+1]*dE[j*c_dim+jc]+drho_phi_dalpha[istart])*B_pair[iistart];
                         f_alphavec[i*c_dim+ic]+=apair*alpha[i*c_dim+ic];
                         f_alphavec[j*c_dim+jc]+=apair*alpha[j*c_dim+jc];
                         
@@ -345,8 +354,8 @@ void ForceFieldEAMDMDSC::force_calc()
                 for(int ic=0;ic<c_dim;ic++)
                     for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
                     {
-                        fpair-=(drho_phi_dr[istart+2]*dE[i*c_dim+ic]+drho_phi_dr[istart+1]*dE[j*c_dim+jc]+drho_phi_dr[istart])*c[i*c_dim+ic]*c[j*c_dim+jc];
-                        apair=-(drho_phi_dalpha[istart+2]*dE[i*c_dim+ic]+drho_phi_dalpha[istart+1]*dE[j*c_dim+jc]+drho_phi_dalpha[istart])*c[i*c_dim+ic]*c[j*c_dim+jc];
+                        fpair-=(drho_phi_dr[istart+2]*dE[i*c_dim+ic]+drho_phi_dr[istart+1]*dE[j*c_dim+jc]+drho_phi_dr[istart])*B_pair[iistart];
+                        apair=-(drho_phi_dalpha[istart+2]*dE[i*c_dim+ic]+drho_phi_dalpha[istart+1]*dE[j*c_dim+jc]+drho_phi_dalpha[istart])*B_pair[iistart];
                         f_alphavec[i*c_dim+ic]+=apair*alpha[i*c_dim+ic];
                     }
                 Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,fvec+i*__dim__);
@@ -367,7 +376,7 @@ void ForceFieldEAMDMDSC::force_calc()
 /*--------------------------------------------
  energy calculation
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::energy_calc()
+void ForceFieldEAMDMDCLUSTER::energy_calc()
 {
     if(max_pairs<neighbor->no_pairs)
     {
@@ -375,6 +384,7 @@ void ForceFieldEAMDMDSC::energy_calc()
         delete [] drho_phi_dr;
         delete [] drho_phi_dalpha;
         delete [] B_pair;
+        delete [] is_pair;
         
         max_pairs=neighbor->no_pairs;
         size_t no_0=3*max_pairs*c_dim*c_dim;
@@ -382,10 +392,12 @@ void ForceFieldEAMDMDSC::energy_calc()
         Memory::alloc(drho_phi_dr,no_0);
         Memory::alloc(drho_phi_dalpha,no_0);
         Memory::alloc(B_pair,c_dim*c_dim*max_pairs);
+        Memory::alloc(is_pair,max_pairs);
     }
     
     for(int i=0;i<max_pairs*c_dim*c_dim*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
     for(int i=0;i<max_pairs*c_dim*c_dim;i++) B_pair[i]=0.0;
+    for(int i=0;i<max_pairs;i++) is_pair[i]=false;
     
     
     
@@ -433,6 +445,7 @@ void ForceFieldEAMDMDSC::energy_calc()
                     alpha_ij=sqrt(alpha_ij_sq);
                     if(r-alpha_ij*xi[N-1]>=cut[ic][jc]) continue;
                     
+                    is_pair[istart/(3*c_dim*c_dim)]=true;
                     type0 upper=(r+cut[ic][jc])/alpha_ij;
                     type0 lower=(r-cut[ic][jc])/alpha_ij;
                     type0 __r,p,tmp0,xi2;
@@ -529,25 +542,634 @@ void ForceFieldEAMDMDSC::energy_calc()
     
     dynamic->update(dE_ptr);
     
-    //sc_loop___();
-
+    ___sc_loop();
+    __vec_lcl[0]+=vib_lcl;
     __vec_lcl[1+__nvoigt__]+=ent_lcl;
-    __vec_lcl[0]+=kbT*ent_lcl+vib_lcl;
-    
-    //__vec_lcl[0]+=vib_lcl;
+    __vec_lcl[0]+=kbT*ent_lcl;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::sc_loop___()
+void ForceFieldEAMDMDCLUSTER::sc_loop()
 {
- 
+    
     
     type0* dE=dE_ptr->begin();
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    size_t m,iistart,istart;
+    type0 prev_en,curr_en;
+    MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
+    type0 p,en_diff=1.0,tmp0,tmp1;
+    int natms_lcl=atoms->natms_lcl;
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    type0 const* c=atoms->c->begin();
+    type0* b=b_ptr->begin();
+    type0 pe_lcl=0.0,ent_corr_lcl=0.0;
+    type0 curr_en_lcl=0.0;
+    while(en_diff>TOL)
+    {
+        for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
+        for(int i=0;i<natms_lcl;i++) b[i]=0.0;
+        
+        
+        istart=0;
+        iistart=0;
+        pe_lcl=ent_corr_lcl=0.0;
+        for(int i=0;i<natms_lcl;i++)
+        {
+            const int neigh_sz=neighbor_list_size[i];
+            for(int j,__j=0;__j<neigh_sz;__j++)
+            {
+                j=neighbor_list[i][__j];
+                
+                if(! is_pair[iistart/4])
+                {
+                    
+                    B_pair[iistart]=c[i*c_dim]*c[j*c_dim];
+                    B_pair[iistart+1]=c[i*c_dim]*c[j*c_dim+1];
+                    B_pair[iistart+2]=c[i*c_dim+1]*c[j*c_dim];
+                    B_pair[iistart+3]=c[i*c_dim+1]*c[j*c_dim+1];
+                    
+                    
+                    if(j<natms_lcl)
+                    {
+                        for(int ic=0;ic<c_dim;ic++)
+                        for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                        {
+                            pe_lcl+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                            rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                            rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
+                            
+                        }
+                    }
+                    else{
+                        for(int ic=0;ic<c_dim;ic++)
+                        for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                        {
+                            pe_lcl+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                            rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                        }
+                    }
+                    
+                    continue;
+                }
+                
+                type0 m=0.0;
+                for(int ic=0;ic<c_dim;ic++)
+                    for(int jc=0;jc<c_dim;jc++,istart+=3)
+                    {
+                        if(ic==jc)
+                            m+=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                        else
+                            m-=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                    }
+                istart-=3*c_dim*c_dim;
+                
+                
+                type0 u;
+                
+                if(m!=0.0)
+                {
+                    
+                    type0 __a,__b,__c,__delta;
+                    
+                    if((c[i*c_dim]==0.0 && c[j*c_dim]==0.0) || (c[i*c_dim]==1.0 && c[j*c_dim]==1.0))
+                    {
+                        u=c[i*c_dim];
+                    }
+                    else
+                    {
+                        __a=0.0;
+                        
+                        if(m<0.0)
+                        {
+                            __a=exp(m)-1.0;
+                            __b=-1.0-(c[j*c_dim]+c[i*c_dim])*__a;
+                            __c=c[j*c_dim]*c[i*c_dim]*(__a+1.0);
+                        }
+                        else
+                        {
+                            __a=1.0-exp(-m);
+                            __b=-(c[j*c_dim]+c[i*c_dim]-1.0)*__a-1.0;
+                            __c=c[j*c_dim]*c[i*c_dim];
+                        }
+                        
+                        type0 __x0=0.0,__x1=0.0;
+                        if(__a==0.0)
+                        {
+                            
+                            
+                            u=-__c/__b;
+                        }
+                        else
+                        {
+                            __delta=sqrt(__b*__b-4.0*__a*__c);
+                            
+                            __x1=0.5*(-__b+__delta)/__a;
+                            __x0=0.5*(-__b-__delta)/__a;
+                            if(__x0<=c[i*c_dim] && __x0<=c[j*c_dim] && __x0>=0.0)
+                                u=__x0;
+                            else
+                                u=__x1;
+                        }
+                        
+                    }
+
+                    
+                    B_pair[iistart]=u;
+                    B_pair[iistart+1]=c[i*c_dim]-u;
+                    B_pair[iistart+2]=c[j*c_dim]-u;
+                    B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
+                    
+                    
+                    if(j<natms_lcl)
+                    {
+                        ent_corr_lcl+=calc_ent(B_pair[iistart]);
+                        b[i]+=u;
+                        b[j]+=u;
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=B_pair[iistart]*rho_phi[istart];
+                                if(c[i*c_dim+ic]>0.0)
+                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
+                                if(c[j*c_dim+jc]>0.0)
+                                    rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
+                                
+                                
+                            }
+                    }
+                    else
+                    {
+                        b[i]+=u;
+                        ent_corr_lcl+=0.5*calc_ent(B_pair[iistart]);
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=0.5*B_pair[iistart]*rho_phi[istart];
+                                if(c[i*c_dim+ic]>0.0)
+                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
+
+                            }
+                    }
+                    
+                }
+                else
+                {
+                    B_pair[iistart]=c[i*c_dim]*c[j*c_dim];
+                    B_pair[iistart+1]=c[i*c_dim]*c[j*c_dim+1];
+                    B_pair[iistart+2]=c[i*c_dim+1]*c[j*c_dim];
+                    B_pair[iistart+3]=c[i*c_dim+1]*c[j*c_dim+1];
+                    
+                    
+                    if(j<natms_lcl)
+                    {
+                        b[i]+=c[i*c_dim]*c[j*c_dim];
+                        b[j]+=c[i*c_dim]*c[j*c_dim];
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                                rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
+                                
+                            }
+                    }
+                    else
+                    {
+                        b[i]+=c[i*c_dim]*c[j*c_dim];
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                            }
+                    }
+                }
+
+                
+            }
+            
+            for(int ic=0;ic<c_dim;ic++)
+            {
+                
+                p=rho[i*c_dim+ic]*drho_inv;
+                m=static_cast<size_t>(p);
+                m=MIN(m,nrho-2);
+                p-=m;
+                p=MIN(p,1.0);
+                coef=F_arr[ic][m];
+                
+                tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
+                tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
+                
+                if(rho[i*c_dim+ic]>rho_max) tmp0+=tmp1*(rho[i*c_dim+ic]-rho_max);
+                
+                dE[i*c_dim+ic]=tmp1;
+                pe_lcl+=c[i*c_dim+ic]*tmp0;
+                
+            }
+        }
+        
+        
+        
+        
+        curr_en_lcl=pe_lcl+ent_corr_lcl*kbT;
+        MPI_Allreduce(&curr_en_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
+        
+        en_diff=fabs(curr_en-prev_en);
+        prev_en=curr_en;
+        dynamic->update(dE_ptr);
+    }
+    
+    
+    dynamic->update(b_ptr);
+    type0* theta=theta_ptr->begin();
+    type0* d=d_ptr->begin();
+    for(int i=0;i<natms_lcl+atoms->natms_ph;i++) theta[i]=c[2*i];
+    en_diff=1.0;
+    type0 curr_fe_lcl=0.0,curr_fe=0.0;
+
+    for(int i=0;i<natms_lcl;i++) d[i]=0.0;
+    iistart=0;
+    for(int i=0;i<natms_lcl;i++)
+    {
+        const int neigh_sz=neighbor_list_size[i];
+        for(int j,__j=0;__j<neigh_sz;__j++,iistart++)
+        {
+            j=neighbor_list[i][__j];
+            if(!  is_pair[iistart]) continue;
+            d[i]+=theta[j];
+            if(j<natms_lcl)
+            d[j]+=theta[i];
+        }
+        if(theta[i]!=0.0 || theta[i]!=1.0)
+        {
+            curr_fe_lcl+=(1.0-c[i*c_dim])*log(1.0-theta[i])+(c[i*c_dim]-b[i])*log(theta[i]);
+        }
+        curr_fe_lcl+=0.5*(theta[i]*d[i]-b[i]);
+    }
+    
+    MPI_Allreduce(&curr_fe_lcl,&curr_fe,1,Vec<type0>::MPI_T,MPI_SUM,world);
+    dynamic->update(d_ptr);
+    type0 prev_fe=curr_fe;
+
+    
+    while(en_diff>TOL)
+    {
+        
+        
+    
+        for(int i=0;i<natms_lcl;i++)
+        {
+            if(d[i]!=0.0)
+            {
+                
+                type0 delta_sq=(d[i]+b[i]-1.0)*(d[i]+b[i]-1.0)-4.0*(b[i]-c[i*c_dim])*d[i];
+                
+                type0 delta=sqrt(delta_sq);
+                type0 theta_i0=0.5*(d[i]+b[i]-1.0-delta)/d[i];
+                type0 theta_i1=0.5*(d[i]+b[i]-1.0+delta)/d[i];
+                bool theta0_acc=false;
+                bool theta1_acc=false;
+                if(0.0<=theta_i0 && theta_i0<=1.0)
+                    theta0_acc=true;
+                if(0.0<=theta_i1 && theta_i1<=1.0)
+                    theta1_acc=true;
+                if(theta0_acc && theta1_acc)
+                {
+                    type0 d0=fabs(c[i*c_dim]-theta_i0);
+                    type0 d1=fabs(c[i*c_dim]-theta_i1);
+                    
+                    if(d0<d1)
+                        theta[i]=theta_i0;
+                    else theta[i]=theta_i1;
+                }
+                else
+                {
+                    if(theta0_acc)
+                        theta[i]=theta_i0;
+                    else
+                        theta[i]=theta_i1;
+                }
+                
+                //printf("theta 1 is %e %e\n",theta_i0,theta_i1);
+                
+            }
+            else
+                theta[i]=(c[i*c_dim]-b[i])/(1.0-b[i]);
+            
+            
+            
+        }
+        
+        
+        for(int i=0;i<natms_lcl;i++) d[i]=0.0;
+        curr_fe_lcl=0.0;
+        iistart=0;
+        for(int i=0;i<natms_lcl;i++)
+        {
+            const int neigh_sz=neighbor_list_size[i];
+            for(int j,__j=0;__j<neigh_sz;__j++,iistart++)
+            {
+                j=neighbor_list[i][__j];
+                if(!  is_pair[iistart]) continue;
+                d[i]+=theta[j];
+                if(j<natms_lcl)
+                    d[j]+=theta[i];
+            }
+            
+            if(theta[i]!=0.0 && theta[i]!=1.0)
+            {
+                curr_fe_lcl+=(1.0-c[i*c_dim])*log(1.0-theta[i])+(c[i*c_dim]-b[i])*log(theta[i]);
+                //printf("kkkkunt\n");
+                
+                
+            }
+            curr_fe_lcl+=0.5*(theta[i]*d[i]-b[i]);
+            //printf("theta[%d] %e %e %e| %e %e\n",i,theta[i],d[i],b[i],curr_fe_lcl,0.5*(theta[i]*d[i]-b[i]));
+        }
+        
+        dynamic->update(d_ptr);
+        MPI_Allreduce(&curr_fe_lcl,&curr_fe,1,Vec<type0>::MPI_T,MPI_SUM,world);
+        
+        en_diff=fabs(curr_fe-prev_fe);
+        prev_fe=curr_fe;
+    }
+    
+    
+    
+    for(int i=0;i<natms_lcl;i++)
+        printf("theta[%d] %e %e %e | %e\n",i,theta[i],theta[i]*d[i],b[i],theta[i]+b[i]*(1.0-theta[i])-theta[i]*(1.0-theta[i])*d[i]);
+
+    __vec_lcl[1+__nvoigt__]=ent_corr_lcl+curr_fe_lcl;
+    
+    
+    
+    
+    __vec_lcl[0]=pe_lcl+kbT*(ent_corr_lcl+curr_fe_lcl);
+    
+    
+    
+    
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldEAMDMDCLUSTER::_sc_loop()
+{
+    
+    
+    type0* dE=dE_ptr->begin();
+    type0* rho=rho_ptr->begin();
+    
+    type0* coef;
+    size_t m,iistart,istart;
+    type0 prev_en,curr_en;
+    MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
+    type0 p,en_diff=1.0,tmp0,tmp1;
+    int natms_lcl=atoms->natms_lcl;
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    type0 const* c=atoms->c->begin();
+    type0 pe_lcl=0.0,ent_corr_lcl=0.0;
+    type0 curr_en_lcl=0.0;
+    while(en_diff>TOL)
+    {
+        for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
+        
+        
+        istart=0;
+        iistart=0;
+        pe_lcl=ent_corr_lcl=0.0;
+        for(int i=0;i<natms_lcl;i++)
+        {
+            const int neigh_sz=neighbor_list_size[i];
+            for(int j,__j=0;__j<neigh_sz;__j++)
+            {
+                j=neighbor_list[i][__j];
+                
+                if(! is_pair[iistart/4])
+                {
+                    
+                    B_pair[iistart]=c[i*c_dim]*c[j*c_dim];
+                    B_pair[iistart+1]=c[i*c_dim]*c[j*c_dim+1];
+                    B_pair[iistart+2]=c[i*c_dim+1]*c[j*c_dim];
+                    B_pair[iistart+3]=c[i*c_dim+1]*c[j*c_dim+1];
+                    
+                    
+                    if(j<natms_lcl)
+                    {
+                        for(int ic=0;ic<c_dim;ic++)
+                        for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                        {
+                            pe_lcl+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                            rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                            rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
+                            
+                        }
+                    }
+                    else{
+                        for(int ic=0;ic<c_dim;ic++)
+                        for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                        {
+                            pe_lcl+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                            rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                        }
+                    }
+                    
+                    continue;
+                }
+                
+                type0 m=0.0;
+                for(int ic=0;ic<c_dim;ic++)
+                    for(int jc=0;jc<c_dim;jc++,istart+=3)
+                    {
+                        if(ic==jc)
+                            m+=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                        else
+                            m-=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                    }
+                istart-=3*c_dim*c_dim;
+                
+                
+                type0 u;
+                
+                if(m!=0.0)
+                {
+                    
+                    type0 __a,__b,__c,__delta;
+                    
+                    if((c[i*c_dim]==0.0 && c[j*c_dim]==0.0) || (c[i*c_dim]==1.0 && c[j*c_dim]==1.0))
+                    {
+                        u=c[i*c_dim];
+                    }
+                    else
+                    {
+                        __a=0.0;
+                        
+                        if(m<0.0)
+                        {
+                            __a=exp(m)-1.0;
+                            __b=-1.0-(c[j*c_dim]+c[i*c_dim])*__a;
+                            __c=c[j*c_dim]*c[i*c_dim]*(__a+1.0);
+                        }
+                        else
+                        {
+                            __a=1.0-exp(-m);
+                            __b=-(c[j*c_dim]+c[i*c_dim]-1.0)*__a-1.0;
+                            __c=c[j*c_dim]*c[i*c_dim];
+                        }
+                        
+                        type0 __x0=0.0,__x1=0.0;
+                        if(__a==0.0)
+                        {
+                            
+                            
+                            u=-__c/__b;
+                        }
+                        else
+                        {
+                            __delta=sqrt(__b*__b-4.0*__a*__c);
+                            
+                            __x1=0.5*(-__b+__delta)/__a;
+                            __x0=0.5*(-__b-__delta)/__a;
+                            if(__x0<=c[i*c_dim] && __x0<=c[j*c_dim] && __x0>=0.0)
+                                u=__x0;
+                            else
+                                u=__x1;
+                        }
+                        
+                    }
+
+                    
+                    B_pair[iistart]=u;
+                    B_pair[iistart+1]=c[i*c_dim]-u;
+                    B_pair[iistart+2]=c[j*c_dim]-u;
+                    B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
+                    
+                    type0 eps_ij=-1.0;
+                    if(c[i*c_dim]*c[i*c_dim]!=0.0)
+                        eps_ij=u/(c[i*c_dim]*c[j*c_dim])-1.0;
+                    //printf("%e\n",eps_ij);
+                    if(j<natms_lcl)
+                    {
+                        ent_corr_lcl+=(calc_ent(1.0+eps_ij)-eps_ij)*(c[i*c_dim]*c[j*c_dim]);
+
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=B_pair[iistart]*rho_phi[istart];
+                                if(c[i*c_dim+ic]>0.0)
+                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
+                                if(c[j*c_dim+jc]>0.0)
+                                    rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
+                                
+                                
+                            }
+                    }
+                    else
+                    {
+                        ent_corr_lcl+=0.5*(calc_ent(1.0+eps_ij)-eps_ij)*(c[i*c_dim]*c[j*c_dim]);
+                        
+                        
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=0.5*B_pair[iistart]*rho_phi[istart];
+                                if(c[i*c_dim+ic]>0.0)
+                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
+
+                            }
+                    }
+                    
+                }
+                else
+                {
+                    B_pair[iistart]=c[i*c_dim]*c[j*c_dim];
+                    B_pair[iistart+1]=c[i*c_dim]*c[j*c_dim+1];
+                    B_pair[iistart+2]=c[i*c_dim+1]*c[j*c_dim];
+                    B_pair[iistart+3]=c[i*c_dim+1]*c[j*c_dim+1];
+                    
+                    
+                    if(j<natms_lcl)
+                    {
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                                rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
+                                
+                            }
+                    }
+                    else
+                    {
+                        for(int ic=0;ic<c_dim;ic++)
+                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
+                            {
+                                pe_lcl+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
+                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
+                            }
+                    }
+                }
+
+                
+            }
+            
+            for(int ic=0;ic<c_dim;ic++)
+            {
+                
+                p=rho[i*c_dim+ic]*drho_inv;
+                m=static_cast<size_t>(p);
+                m=MIN(m,nrho-2);
+                p-=m;
+                p=MIN(p,1.0);
+                coef=F_arr[ic][m];
+                
+                tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
+                tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
+                
+                if(rho[i*c_dim+ic]>rho_max) tmp0+=tmp1*(rho[i*c_dim+ic]-rho_max);
+                
+                dE[i*c_dim+ic]=tmp1;
+                pe_lcl+=c[i*c_dim+ic]*tmp0;
+                
+            }
+        }
+        
+        
+        
+        
+        curr_en_lcl=pe_lcl+ent_corr_lcl*kbT;
+        MPI_Allreduce(&curr_en_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
+        
+        en_diff=fabs(curr_en-prev_en);
+        prev_en=curr_en;
+        dynamic->update(dE_ptr);
+    }
+    
+    
+    __vec_lcl[1+__nvoigt__]=ent_corr_lcl;
+
+    __vec_lcl[0]=pe_lcl+kbT*ent_corr_lcl;
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldEAMDMDCLUSTER::__sc_loop()
+{
+    
+    
+    type0* dE=dE_ptr->begin();
+    type0* rho=rho_ptr->begin();
+    
+    type0* coef;
     size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -572,85 +1194,45 @@ void ForceFieldEAMDMDSC::sc_loop___()
             {
                 j=neighbor_list[i][__j];
                 
+                type0 oo=c[i*c_dim]*c[j*c_dim]*(1.0-c[i*c_dim])*(1.0-c[j*c_dim]);
+                type0 delta_min=MAX(-c[i*c_dim]*c[j*c_dim],-(1.0-c[i*c_dim])*(1.0-c[j*c_dim]));
+                type0 delta_max=MIN(c[i*c_dim]*(1.0-c[j*c_dim]),(1.0-c[i*c_dim])*c[j*c_dim]);
                 
+                type0 m=0.0;
                 for(int ic=0;ic<c_dim;ic++)
                     for(int jc=0;jc<c_dim;jc++,istart+=3)
-                        A[ic][jc]=-0.5*beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                    {
+                        if(ic==jc)
+                            m+=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                        else
+                            m-=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                    }
+                
                 istart-=3*c_dim*c_dim;
                 
+                m*=oo;
+                type0 delta=m;
+                if(delta>delta_max)
+                    delta=delta_max;
+                if(delta<delta_min)
+                    delta=delta_min;
                 
-                type0 m=A[0][0]+A[1][1]-A[0][1]-A[1][0],u;
-                if(m!=0.0)
+                
+                if(delta!=0.0)
                 {
                     
-                    type0 __a,__b,__c,__delta;
-                    
-                    if((c[i*c_dim]==0.0 && c[j*c_dim]==0.0) || (c[i*c_dim]==1.0 && c[j*c_dim]==1.0))
-                    {
-                        u=c[i*c_dim];
-                    }
-                    else
-                    {
-                        __a=0.0;
-                        type0 __x0=0.0,__x1=0.0;
-                        if(m<0.0)
-                        {
-                            __a=exp(m)-1.0;
-                            __b=-1.0-(c[j*c_dim]+c[i*c_dim])*__a;
-                            __c=c[j*c_dim]*c[i*c_dim]*(__a+1.0);
-                            __delta=sqrt(__b*__b-4.0*__a*__c);
-                            
-                            __x1=0.5*(-__b-__delta)/__a;
-                            __x0=0.5*(-__b+__delta)/__a;
-                        }
-                        else
-                        {
-                            __a=1.0-exp(-m);
-                            __b=-(c[j*c_dim]+c[i*c_dim]-1.0)*__a-1.0;
-                            __c=c[j*c_dim]*c[i*c_dim];
-                            __delta=sqrt(__b*__b-4.0*__a*__c);
-                            
-                            __x1=0.5*(-__b+__delta)/__a;
-                            __x0=0.5*(-__b-__delta)/__a;
-                        }
+
+                    B_pair[iistart]=c[i*c_dim]*c[j*c_dim]+delta;
+                    B_pair[iistart+1]=c[i*c_dim]*(1.0-c[j*c_dim])-delta;
+                    B_pair[iistart+2]=c[j*c_dim]*(1.0-c[i*c_dim])-delta;
+                    B_pair[iistart+3]=(1.0-c[i*c_dim])*(1.0-c[j*c_dim])+delta;
                         
-                        if(__a==0.0)
-                        {
-                            
-                            
-                            u=-__c/__b;
-                        }
-                        else
-                        {
-                            
-                            if(__x0<=c[i*c_dim] && __x0<=c[j*c_dim] && __x0>=0.0)
-                                u=__x0;
-                            else
-                                u=__x1;
-                        }
-                        
-                        
-                    }
-                    
-                    
-                    
-                    if(i==0 && j==1)
-                    {
-                        if(c[i*c_dim]==1.0)
-                            tt=1.0;
-                        else
-                            tt=(1.0-c[i*c_dim]-c[j*c_dim]+u)/((1.0-c[i*c_dim])*(1.0-c[i*c_dim]));
-                        
-                    }
-                    
-                    B_pair[iistart]=u;
-                    B_pair[iistart+1]=c[i*c_dim]-u;
-                    B_pair[iistart+2]=c[j*c_dim]-u;
-                    B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
-                    
                     
                     if(j<natms_lcl)
                     {
+                        if(oo!=0.0)
+                            ent_corr_lcl+=0.5*oo*log(1.0+delta*delta/(oo*oo));
+                            
                         for(int ic=0;ic<c_dim;ic++)
                             for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
                             {
@@ -659,33 +1241,19 @@ void ForceFieldEAMDMDSC::sc_loop___()
                                     rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
                                 if(c[j*c_dim+jc]>0.0)
                                     rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
-                                
-                                
-                                ent_corr_lcl+=-CONST*calc_ent(c[i*c_dim+ic]*c[j*c_dim+jc]);
-                                
-                                
-                                if(B_pair[iistart]>0.0 && c[i*c_dim+ic]*c[j*c_dim+jc]>0.0)
-                                {
-                                    ent_corr_lcl+=CONST*B_pair[iistart]*log(B_pair[iistart]*B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
-                                }
                             }
                     }
                     else
                     {
+                        if(oo!=0.0)
+                            ent_corr_lcl+=0.25*oo*log(1.0+delta*delta/(oo*oo));
+                        
                         for(int ic=0;ic<c_dim;ic++)
                             for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
                             {
                                 __vec_lcl[0]+=0.5*B_pair[iistart]*rho_phi[istart];
                                 if(c[i*c_dim+ic]>0.0)
                                     rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                
-                                ent_corr_lcl+=-0.5*CONST*calc_ent(c[i*c_dim+ic]*c[j*c_dim+jc]);
-                                
-                                
-                                if(B_pair[iistart]>0.0 && c[i*c_dim+ic]*c[j*c_dim+jc]>0.0)
-                                {
-                                    ent_corr_lcl+=0.5*CONST*B_pair[iistart]*log(B_pair[iistart]*B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
-                                }
                             }
                     }
                     
@@ -756,12 +1324,13 @@ void ForceFieldEAMDMDSC::sc_loop___()
         dynamic->update(dE_ptr);
     }
     
+    
     atoms->BB=tt;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::sc_loop()
+void ForceFieldEAMDMDCLUSTER::___sc_loop()
 {
     
     
@@ -769,7 +1338,7 @@ void ForceFieldEAMDMDSC::sc_loop()
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    
     size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -796,14 +1365,19 @@ void ForceFieldEAMDMDSC::sc_loop()
             {
                 j=neighbor_list[i][__j];
                 
-                
+                type0 m=0.0,u;
                 for(int ic=0;ic<c_dim;ic++)
                     for(int jc=0;jc<c_dim;jc++,istart+=3)
-                        A[ic][jc]=-12.0*beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                    {
+                        if(ic==jc)
+                            m-=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                        else
+                            m+=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
+                    }
                 istart-=3*c_dim*c_dim;
                 
                 
-                type0 m=A[0][0]+A[1][1]-A[0][1]-A[1][0],u;
+                
                 type0 rsq=Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__)/(atoms->H[0][0]*atoms->H[0][0]);
                 if(m!=0.0 && rsq<.9)
                 {
@@ -832,8 +1406,8 @@ void ForceFieldEAMDMDSC::sc_loop()
                         }
                         //printf("%e\n",__a);
                         /*
-                        if(__a==-1.0 || __a==1.0)
-                            printf("%e %e\n",__a,m);
+                         if(__a==-1.0 || __a==1.0)
+                         printf("%e %e\n",__a,m);
                          */
                         
                         type0 __x0=0.0,__x1=0.0;
@@ -856,9 +1430,9 @@ void ForceFieldEAMDMDSC::sc_loop()
                         }
                         
                         /*
-                        
-                        if(c[0]==1.0-0.031250000)
-                            printf(">>>> %e %e %e | %e %e\n",u,c[0],m,__x0,__x1);
+                         
+                         if(c[0]==1.0-0.031250000)
+                         printf(">>>> %e %e %e | %e %e\n",u,c[0],m,__x0,__x1);
                          */
                         
                     }
@@ -869,7 +1443,7 @@ void ForceFieldEAMDMDSC::sc_loop()
                             tt=1.0;
                         else
                             tt=(1.0-c[i*c_dim]-c[j*c_dim]+u)/((1.0-c[i*c_dim])*(1.0-c[i*c_dim]));
-
+                        
                     }
                     
                     B_pair[iistart]=u;
@@ -895,7 +1469,7 @@ void ForceFieldEAMDMDSC::sc_loop()
                                 
                                 if(B_pair[iistart]>0.0 && c[i*c_dim+ic]*c[j*c_dim+jc]>0.0)
                                 {
-                                    ent_corr_lcl+=B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]))/12.0;
+                                    ent_corr_lcl-=B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
                                 }
                                 
                             }
@@ -914,7 +1488,7 @@ void ForceFieldEAMDMDSC::sc_loop()
                                 
                                 if(B_pair[iistart]>0.0 && c[i*c_dim+ic]*c[j*c_dim+jc]>0.0)
                                 {
-                                    ent_corr_lcl+=B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]))/24.0;
+                                    ent_corr_lcl-=0.5*B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]));
                                 }
                             }
                     }
@@ -948,7 +1522,7 @@ void ForceFieldEAMDMDSC::sc_loop()
                             }
                     }
                 }
-
+                
                 
             }
             
@@ -993,876 +1567,28 @@ void ForceFieldEAMDMDSC::sc_loop()
     
 }
 /*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMDSC::sc_loop__Z6_2nd()
-{
-    
-    
-    type0* dE=dE_ptr->begin();
-    type0* rho=rho_ptr->begin();
-    
-    type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
-    size_t m,iistart,istart;
-    type0 ent_corr_lcl=0.0,prev_en,curr_en;
-    MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 p,en_diff=1.0,tmp0,tmp1;
-    int natms_lcl=atoms->natms_lcl;
-    int** neighbor_list=neighbor->neighbor_list;
-    int* neighbor_list_size=neighbor->neighbor_list_size;
-    type0 const* c=atoms->c->begin();
-    type0* x=atoms->x->begin();
-    
-    type0 tt=0.0;
-    //printf("*********************************************************************************\n");
-    
-    //int npairs=0;
-    while(en_diff>TOL)
-    {
-        for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
-        
-        __vec_lcl[0]=__vec_lcl[1+__nvoigt__]=0.0;
-        istart=0;
-        iistart=0;
-        ent_corr_lcl=0.0;
-        //bool kk=true;
-        for(int i=0;i<natms_lcl;i++)
-        {
-            //npairs=0;
-            const int neigh_sz=neighbor_list_size[i];
-            for(int j,__j=0;__j<neigh_sz;__j++)
-            {
-                j=neighbor_list[i][__j];
-                
-                
-                for(int ic=0;ic<c_dim;ic++)
-                    for(int jc=0;jc<c_dim;jc++,istart+=3)
-                        A[ic][jc]=-6.0*beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
-                istart-=3*c_dim*c_dim;
-                
-                
-                type0 m=A[0][0]+A[1][1]-A[0][1]-A[1][0],u;
-                type0 rsq=Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__)/(atoms->H[0][0]*atoms->H[0][0]);
-                if(m!=0.0 && (0.8<rsq && rsq<1.2))
-                {
-                    //npairs++;
-                    type0 __a,__b,__c,__delta;
-                    
-                    if((c[i*c_dim]==0.0 && c[j*c_dim]==0.0) || (c[i*c_dim]==1.0 && c[j*c_dim]==1.0))
-                    {
-                        u=c[i*c_dim];
-                    }
-                    else
-                    {
-                        __a=0.0;
-                        type0 __x0=0.0,__x1=0.0;
-                        
-                        
-                        if(m<0.0)
-                        {
-                            __a=exp(m)-1.0;
-                            __b=-1.0-(c[j*c_dim]+c[i*c_dim])*__a;
-                            __c=c[j*c_dim]*c[i*c_dim]*(__a+1.0);
-                            
-                            __delta=sqrt(__b*__b-4.0*__a*__c);
-                            
-                            __x0=0.5*(-__b-__delta)/__a;
-                            __x1=0.5*(-__b+__delta)/__a;
-                            
-                        }
-                        else
-                        {
-                            __a=1.0-exp(-m);
-                            __b=-(c[j*c_dim]+c[i*c_dim]-1.0)*__a-1.0;
-                            __c=c[j*c_dim]*c[i*c_dim];
-                            
-                            __delta=sqrt(__b*__b-4.0*__a*__c);
-                            
-                            __x0=0.5*(-__b+__delta)/__a;
-                            __x1=0.5*(-__b-__delta)/__a;
-                            
-                            
-                        }
-
-                        
-                        
-                        if(__a==0.0)
-                        {
-                            
-                            
-                            u=-__c/__b;
-                        }
-                        else
-                        {
-                            
-                            if(__x0<=c[i*c_dim] && __x0<=c[j*c_dim] && __x0>=0.0)
-                                u=__x0;
-                            else
-                                u=__x1;
-                        }
-                        
-        
-                    }
-                    
-                    
-                    if(c[i*c_dim]==0.0)
-                        tt=1.0;
-                    else
-                        //tt=(1.0-c[i*c_dim]-c[j*c_dim]+u)/((1.0-c[i*c_dim])*(1.0-c[i*c_dim]));
-                        tt=u/(c[i*c_dim]*c[i*c_dim]);
-                    
-                    /*
-                    if(kk)
-                    {
-                        printf("eta %.12lf alpha %e %e a %e\n",u,atoms->alpha->begin()[0],atoms->alpha->begin()[1],atoms->H[0][0]);
-                        
-                        
-                        printf("*********\n");
-                        printf("[%.9lf\t%.9lf]\n[%.9lf\t%.9lf]\n",B_pair[iistart],B_pair[iistart+1],B_pair[iistart+2],B_pair[iistart+3]);
-                        printf("#########\n");
-                        for(int __i=0;__i<12;__i++)
-                        {
-                            printf("%.9lf\n",rho_phi[istart+__i]);
-                        }
-                        
-                        kk=false;
-                    }*/
-                    B_pair[iistart]=u;
-                    B_pair[iistart+1]=c[i*c_dim]-u;
-                    B_pair[iistart+2]=c[j*c_dim]-u;
-                    B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
-                    
-                    if(j<natms_lcl)
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=B_pair[iistart]*rho_phi[istart];
-                                if(c[i*c_dim+ic]>0.0)
-                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                if(c[j*c_dim+jc]>0.0)
-                                    rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
-                                
-                                
-                                //ent_corr_lcl+=4.0*(c[i*c_dim+ic]*c[j*c_dim+jc]-B_pair[iistart]);
-                                
-                                
-                                if(B_pair[iistart]>0.0 && c[i*c_dim+ic]*c[j*c_dim+jc]>0.0)
-                                {
-                                    ent_corr_lcl+=B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]))/6.0;
-                                }
-                                
-                            }
-                    }
-                    else
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=0.5*B_pair[iistart]*rho_phi[istart];
-                                if(c[i*c_dim+ic]>0.0)
-                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                
-                                //ent_corr_lcl+=2.0*(c[i*c_dim+ic]*c[j*c_dim+jc]-B_pair[iistart]);
-                                
-                                
-                                if(B_pair[iistart]>0.0 && c[i*c_dim+ic]*c[j*c_dim+jc]>0.0)
-                                {
-                                    ent_corr_lcl+=B_pair[iistart]*log(B_pair[iistart]/(c[i*c_dim+ic]*c[j*c_dim+jc]))/12.0;
-                                }
-                            }
-                    }
-                    
-                }
-                else
-                {
-                    B_pair[iistart]=c[i*c_dim]*c[j*c_dim];
-                    B_pair[iistart+1]=c[i*c_dim]*c[j*c_dim+1];
-                    B_pair[iistart+2]=c[i*c_dim+1]*c[j*c_dim];
-                    B_pair[iistart+3]=c[i*c_dim+1]*c[j*c_dim+1];
-                    /*
-                    if(i==0 && j==1)
-                    {
-                        printf("********* 1st\n");
-                        for(int __i=0;__i<12;__i++)
-                        {
-                            printf("%.9lf\n",rho_phi[istart+__i]);
-                        }
-                        printf("********* 1st\n");
-                        
-                    }*/
-                    
-                    if(j<natms_lcl)
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
-                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
-                                rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
-                                
-                            }
-                    }
-                    else{
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
-                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
-                            }
-                    }
-                }
-
-                
-            }
-            
-            for(int ic=0;ic<c_dim;ic++)
-            {
-                
-                p=rho[i*c_dim+ic]*drho_inv;
-                m=static_cast<size_t>(p);
-                m=MIN(m,nrho-2);
-                p-=m;
-                p=MIN(p,1.0);
-                coef=F_arr[ic][m];
-                
-                tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
-                tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
-                
-                if(rho[i*c_dim+ic]>rho_max) tmp0+=tmp1*(rho[i*c_dim+ic]-rho_max);
-                
-                dE[i*c_dim+ic]=tmp1;
-                __vec_lcl[0]+=c[i*c_dim+ic]*tmp0;
-                
-            }
-        }
-        
-        
-        
-        
-        __vec_lcl[1+__nvoigt__]+=ent_corr_lcl;
-        __vec_lcl[0]+=ent_corr_lcl*kbT;
-        MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-        en_diff=fabs(curr_en-prev_en);
-        prev_en=curr_en;
-        dynamic->update(dE_ptr);
-    }
-    
-    //printf("npairs %d\n",npairs);
-    atoms->BB=tt;
-    
-    
-    
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMDSC::sc_loop__()
-{
-    
-    
-    //type0 __n=static_cast<type0>(atoms->natms-1);
-    type0* dE=dE_ptr->begin();
-    type0* rho=rho_ptr->begin();
-    
-    type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
-    size_t m,iistart,istart;
-    type0 ent_corr_lcl=0.0,prev_en,curr_en;
-    MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 p,en_diff=1.0,tmp0,tmp1;
-    int natms_lcl=atoms->natms_lcl;
-    int** neighbor_list=neighbor->neighbor_list;
-    int* neighbor_list_size=neighbor->neighbor_list_size;
-    type0 const* c=atoms->c->begin();
-    while(en_diff>TOL)
-    {
-        for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
-        
-        __vec_lcl[0]=__vec_lcl[1+__nvoigt__]=0.0;
-        istart=0;
-        iistart=0;
-        ent_corr_lcl=0.0;
-        for(int i=0;i<natms_lcl;i++)
-        {
-            const int neigh_sz=neighbor_list_size[i];
-            for(int j,__j=0;__j<neigh_sz;__j++)
-            {
-                j=neighbor_list[i][__j];
-                
-                
-                for(int ic=0;ic<c_dim;ic++)
-                    for(int jc=0;jc<c_dim;jc++,istart+=3)
-                        A[ic][jc]=exp(-0.5*beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]))/8.0);
-                //A[ic][jc]=(1.0-0.5*beta*((rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart])))*c[i*c_dim+ic]*c[j*c_dim+jc];
-                istart-=3*c_dim*c_dim;
-                
-                if(A[0][0]!=1.0 && A[0][1]!=1.0 && A[1][0]!=1.0 && A[1][1]!=1.0)
-                {
-                    type0 u=0.0;
-                    if(c[i*c_dim]!=0.0 && c[j*c_dim]!=0.0)
-                    {
-                        type0 __a=c[j*c_dim]*A[0][1]*A[1][1]/(A[1][0]*A[0][0]);
-                        type0 __b=(c[j*c_dim]-c[i*c_dim])*A[1][1]/A[1][0]+(c[j*c_dim]+c[i*c_dim]-1.0)*A[0][1]/A[0][0];
-                        if(__a==0.0)
-                        {
-                            u=c[i*c_dim]/(1.0-(A[0][1]/A[0][0])*(c[j*c_dim]-1.0)/__b);
-                        }
-                        else
-                        {
-                            type0 delta=sqrt(__b*__b-4.0*__a*(c[j*c_dim]-1.0));
-                            type0 x0=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b-delta)/__a);
-                            type0 x1=c[i*c_dim]/(1.0+(A[0][1]/A[0][0])*0.5*(-__b+delta)/__a);
-                            
-                            if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
-                                u=x0;
-                            else
-                                u=x1;
-                            
-                        }
-                    }
-                    
-                    
-                    
-                    
-                    B_pair[iistart]=u;
-                    B_pair[iistart+1]=c[i*c_dim]-u;
-                    B_pair[iistart+2]=c[j*c_dim]-u;
-                    B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
-                    
-                    
-                    if(j<natms_lcl)
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=B_pair[iistart]*rho_phi[istart];
-                                if(c[i*c_dim+ic]>0.0)
-                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                if(c[j*c_dim+jc]>0.0)
-                                    rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
-                                if(B_pair[iistart]>0.0)
-                                    ent_corr_lcl+=calc_ent(fabs(B_pair[iistart]-c[i*c_dim+ic]*c[j*c_dim+jc]))*8.0;
-                                
-                                
-                            }
-                    }
-                    else
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=0.5*B_pair[iistart]*rho_phi[istart];
-                                if(c[i*c_dim+ic]>0.0)
-                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                if(B_pair[iistart]>0.0)
-                                    ent_corr_lcl+=calc_ent(fabs(B_pair[iistart]-c[i*c_dim+ic]*c[j*c_dim+jc]))*4.0;
-                            }
-                    }
-                    
-                }
-                else
-                {
-                    B_pair[iistart]=0.0;
-                    B_pair[iistart+1]=0.0;
-                    B_pair[iistart+2]=0.0;
-                    B_pair[iistart+3]=0.0;
-                    
-                    
-                    if(j<natms_lcl)
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
-                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
-                                rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
-                                
-                            }
-                    }
-                    else{
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
-                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
-                            }
-                    }
-                }
-                
-                
-                
-                
-                
-                
-            }
-            
-            for(int ic=0;ic<c_dim;ic++)
-            {
-                
-                p=rho[i*c_dim+ic]*drho_inv;
-                m=static_cast<size_t>(p);
-                m=MIN(m,nrho-2);
-                p-=m;
-                p=MIN(p,1.0);
-                coef=F_arr[ic][m];
-                
-                tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
-                tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
-                
-                if(rho[i*c_dim+ic]>rho_max) tmp0+=tmp1*(rho[i*c_dim+ic]-rho_max);
-                
-                dE[i*c_dim+ic]=tmp1;
-                __vec_lcl[0]+=c[i*c_dim+ic]*tmp0;
-                
-            }
-        }
-        
-        __vec_lcl[1+__nvoigt__]+=ent_corr_lcl;
-        __vec_lcl[0]+=ent_corr_lcl*kbT;
-        
-        MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-        en_diff=fabs(curr_en-prev_en);
-        prev_en=curr_en;
-        dynamic->update(dE_ptr);
-    }
-    
-    
-    /*
-     iistart=0;
-     ent_corr_lcl=0.0;
-     type0* x=atoms->x->begin();
-     printf("######################################################################\n");
-     for(int i=0;i<natms_lcl;i++)
-     {
-     const int neigh_sz=neighbor_list_size[i];
-     for(int j,__j=0;__j<neigh_sz;__j++)
-     {
-     j=neighbor_list[i][__j];
-     if(i==0)
-     {
-     
-     printf("%lf\t%lf\t%lf\t%lf\t%lf\n",sqrt(Algebra::RSQ<__dim__>(x+i*__dim__,x+j*__dim__)),B_pair[iistart],B_pair[iistart+1],B_pair[iistart+2],B_pair[iistart+3]);
-     }
-     
-     iistart+=4;
-     }
-     
-     }
-     printf("######################################################################\n");*/
-    
-}
-#include "ls.h"
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void ForceFieldEAMDMDSC::sc_loop_cluster()
-{
-    
-    
-    type0* dE=dE_ptr->begin();
-    type0* rho=rho_ptr->begin();
-    
-    type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
-    size_t m,iistart,istart;
-    type0 prev_en,curr_en;
-    MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 p,en_diff=1.0,tmp0,tmp1;
-    int natms_lcl=atoms->natms_lcl;
-    int** neighbor_list=neighbor->neighbor_list;
-    int* neighbor_list_size=neighbor->neighbor_list_size;
-    type0 const* c=atoms->c->begin();
-    while(en_diff>TOL)
-    {
-        for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;
-        
-        __vec_lcl[0]=__vec_lcl[1+__nvoigt__]=0.0;
-        istart=0;
-        iistart=0;
-        for(int i=0;i<natms_lcl;i++)
-        {
-            const int neigh_sz=neighbor_list_size[i];
-            for(int j,__j=0;__j<neigh_sz;__j++)
-            {
-                j=neighbor_list[i][__j];
-                
-                
-                for(int ic=0;ic<c_dim;ic++)
-                    for(int jc=0;jc<c_dim;jc++,istart+=3)
-                        A[ic][jc]=-beta*(rho_phi[istart+2]*dE[i*c_dim+ic]+rho_phi[istart+1]*dE[j*c_dim+jc]+rho_phi[istart]);
-                istart-=3*c_dim*c_dim;
-                
-                if(A[0][0]!=0.0 || A[0][1]!=0.0 || A[1][0]!=0.0 || A[1][1]!=0.0)
-                {
-                    type0 r0=exp(A[0][1]-A[0][0]);
-                    type0 r1=exp(A[1][1]-A[1][0]);
-                    type0 u=0.0;
-                    if(c[i*c_dim]!=0.0 && c[j*c_dim]!=0.0)
-                    {
-                        
-                        type0 __a=c[j*c_dim]*r0*r1;
-                        type0 __b=(c[j*c_dim]+c[i*c_dim]-1.0)*r0+(c[j*c_dim]-c[i*c_dim])*r1;
-                        type0 __c=-(1.0-c[j*c_dim]);
-                        
-                        if(__a==0.0)
-                        {
-                            u=c[i*c_dim]/(1.0-r0*__c/__b);
-                        }
-                        else
-                        {
-                            type0 delta=sqrt(__b*__b-4.0*__a*__c);
-                            type0 x0=c[i*c_dim]/(1.0+r0*0.5*(-__b-delta)/__a);
-                            type0 x1=c[i*c_dim]/(1.0+r0*0.5*(-__b+delta)/__a);
-                            
-                            if(x0<=c[i*c_dim] && x0<=c[j*c_dim] && x0>=0.0)
-                                u=x0;
-                            else
-                                u=x1;
-                            
-                        }
-                    }
-                    
-                    
-                    
-                    
-                    B_pair[iistart]=u;
-                    B_pair[iistart+1]=c[i*c_dim]-u;
-                    B_pair[iistart+2]=c[j*c_dim]-u;
-                    B_pair[iistart+3]=1.0-c[i*c_dim]-c[j*c_dim]+u;
-                    
-                    
-                    if(j<natms_lcl)
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=B_pair[iistart]*rho_phi[istart];
-                                if(c[i*c_dim+ic]>0.0)
-                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                if(c[j*c_dim+jc]>0.0)
-                                    rho[j*c_dim+jc]+=B_pair[iistart]*rho_phi[istart+1]/c[j*c_dim+jc];
-                            }
-                    }
-                    else
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=0.5*B_pair[iistart]*rho_phi[istart];
-                                if(c[i*c_dim+ic]>0.0)
-                                    rho[i*c_dim+ic]+=B_pair[iistart]*rho_phi[istart+2]/c[i*c_dim+ic];
-                                
-                            }
-                    }
-                    
-                }
-                else
-                {
-                    B_pair[iistart]=0.0;
-                    B_pair[iistart+1]=0.0;
-                    B_pair[iistart+2]=0.0;
-                    B_pair[iistart+3]=0.0;
-                    
-                    
-                    if(j<natms_lcl)
-                    {
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
-                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
-                                rho[j*c_dim+jc]+=c[i*c_dim+ic]*rho_phi[istart+1];
-                                
-                            }
-                    }
-                    else{
-                        for(int ic=0;ic<c_dim;ic++)
-                            for(int jc=0;jc<c_dim;jc++,istart+=3,iistart++)
-                            {
-                                __vec_lcl[0]+=0.5*c[i*c_dim+ic]*c[j*c_dim+jc]*rho_phi[istart];
-                                rho[i*c_dim+ic]+=c[j*c_dim+jc]*rho_phi[istart+2];
-                            }
-                    }
-                }
-                
-                
-                
-                
-                
-                
-            }
-            
-            for(int ic=0;ic<c_dim;ic++)
-            {
-                
-                p=rho[i*c_dim+ic]*drho_inv;
-                m=static_cast<size_t>(p);
-                m=MIN(m,nrho-2);
-                p-=m;
-                p=MIN(p,1.0);
-                coef=F_arr[ic][m];
-                
-                tmp0=(((coef[4]*p+coef[3])*p+coef[2])*p+coef[1])*p+coef[0];
-                tmp1=(((4.0*coef[4]*p+3.0*coef[3])*p+2.0*coef[2])*p+coef[1])*drho_inv;
-                
-                if(rho[i*c_dim+ic]>rho_max) tmp0+=tmp1*(rho[i*c_dim+ic]-rho_max);
-                
-                dE[i*c_dim+ic]=tmp1;
-                __vec_lcl[0]+=c[i*c_dim+ic]*tmp0;
-                
-            }
-        }
-        
-        MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-        en_diff=fabs(curr_en-prev_en);
-        prev_en=curr_en;
-        dynamic->update(dE_ptr);
-    }
-    
-    type0 __q=0.0,__l=0.0,__n=0.0;
-    iistart=0.0;
-    for(int j,__j=0;__j<neighbor_list_size[0];__j++)
-    {
-        j=neighbor_list[0][__j];
-        if(B_pair[iistart]>0.0)
-        {
-            __q+=B_pair[iistart];
-            __l+=calc_ent(B_pair[iistart]);
-            __n++;
-        }
-        
-        iistart+=c_dim*c_dim;
-    }
-    
-    type0 __a=c[0]-__n*__q;
-    type0 __b=1.0-c[0];
-    type0 __c=0.5*__n;
-    type0 __d=0.5*(__l-__q);
-    
-
-    
-    class Func
-    {
-    public:
-        type0 a;
-        type0 b;
-        type0 c;
-        type0 d,x0;
-        type0 dir;
-        
-        Func(type0 __a,type0 __b,type0 __c,type0 __d,type0 __x0):
-        a(__a),
-        b(__b),
-        c(__c),
-        d(__d),
-        x0(__x0)
-        {
-            if(x0==0.0)
-                x0+=std::numeric_limits<type0>::epsilon();
-            if(x0==1.0)
-                x0-=std::numeric_limits<type0>::epsilon();
-                
-            if(dm(x0)<0.0)
-                dir=1.0;
-            else
-                dir=-1.0;
-        }
-        
-        type0 m(type0 x)
-        {
-            return a*log(x)+b*log(1.0-x)+c*x*x+d;
-        };
-        type0 dm(type0 x)
-        {
-            return a/x-b/(1.0-x)+2.0*c*x;
-        };
-        
-        void F_reset(){}
-        
-        type0 F(type0 x)
-        {
-            x*=dir;
-            if(x+x0>1.0)
-                return m(1.0-std::numeric_limits<type0>::epsilon());
-            if(x+x0<0.0)
-                return m(std::numeric_limits<type0>::epsilon());
-            
-            return m(x);
-        }
-        void ls_prep(type0& dfa,type0& h_norm,type0& max_a)
-        {
-            h_norm=0.0;
-            if(dir==1.0)
-            {
-                max_a=1.0-std::numeric_limits<type0>::epsilon()-x0;
-                dfa=dm(x0);
-            }
-            else
-            {
-                max_a=x0-std::numeric_limits<type0>::epsilon();
-                dfa=-dm(x0);
-            }
-        }
-    };
-    
-    
-
-    Func func=Func(__a,__b,__c,__d,c[0]);
-    LineSearchBrent ls=LineSearchBrent();
-    type0 dd;
-    type0 en=func.F(c[0]);
-    printf("%lf*Log[x]+%lf*Log[1-x]+%lf*x^2+%lf\n",__a,__b,__c,__d);
-    
-    ls.min(&func,en,dd,1);
-    //en*=-1.0;
-    printf("after %e\n",en);
-    
-    
-    if(c[0]==0.0 || c[0]==1.0)
-    {
-        __vec_lcl[1+__nvoigt__]=0.0;
-    }
-    else
-        __vec_lcl[1+__nvoigt__]=static_cast<type0>(atoms->natms)*en;
-    
-    
-    /*
-    
-    type0 S_lcl=0.0,S=0.0,S_tilde=0.0,S_tilde_lcl;
-    for(int i=0;i<natms_lcl;i++)
-        S_lcl+=c[i*c_dim];
-    MPI_Allreduce(&S_lcl,&S,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 delta_ent_lcl=0.0,delta_ent=0.0;
-    S_tilde=S;
-    
-    iistart=0;
-    type0 dp,ds;
-    type0* __p=p_ptr->begin();
-    type0* c_tilde=c_tilde_ptr->begin();
-    
-    for(int i=0;i<natms_lcl;i++) __p[i]=0.0;
-    
-    for(int i=0;i<natms_lcl;i++)
-    {
-        c_tilde[i]=c[i*c_dim];
-        delta_ent_lcl+=(S-c[i*c_dim])*calc_ent(c[i*c_dim]);
-        const int neigh_sz=neighbor_list_size[i];
-        for(int j,__j=0;__j<neigh_sz;__j++)
-        {
-            j=neighbor_list[i][__j];
-            dp=B_pair[iistart]-c[i*c_dim]*c[j*c_dim];
-            
-            __p[i]+=dp;
-            ds=calc_ent(B_pair[iistart]);
-            
-            if(j<natms_lcl)
-            {
-                __p[j]+=dp;
-                delta_ent_lcl+=ds;
-            }
-            else
-            {
-                delta_ent_lcl+=0.5*ds;
-            }
-            
-            
-            
-            iistart+=c_dim*c_dim;
-        }
-        
-
-        __p[i]+=c[i*c_dim]*(S-c[i*c_dim]);
-    }
-    
-    
-    
-    
-    MPI_Allreduce(&delta_ent_lcl,&delta_ent,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    
-    */
-    
-    /*
-    
-    type0 conf_ent_lcl=0.0,conf_ent=std::numeric_limits<type0>::infinity();
-    type0 eps=std::numeric_limits<type0>::epsilon();
-    en_diff=1.0;
-    type0 new_ent=0.0;
-    while(en_diff>TOL)
-    {
-        S_tilde_lcl=0.0;
-        conf_ent_lcl=0.0;
-        for(int i=0;i<natms_lcl;i++)
-        {
-            
-            
-
-            type0 l=1.0-(__p[i]-c_tilde[i]*(S_tilde-c_tilde[i]));
-            
-            type0 new_c0=1.0+(c[i*c_dim]-1.0)/l;
-            if(new_c0>1.0)
-                new_c0=1.0-eps;
-            
-            if(new_c0<0.0)
-                new_c0=eps;
-                
-
-            
-            c_tilde[i]=new_c0;
-            
-            
-            conf_ent_lcl+=(1.0-c[i*c_dim])*log(1.0-c_tilde[i])+(c[i*c_dim]*(S-c[i*c_dim]+1.0)-__p[i])*log(c_tilde[i])+0.5*((c[i*c_dim]-c_tilde[i])/(1.0-c_tilde[i]));
-            S_tilde_lcl+=c_tilde[i];
-        }
-        MPI_Allreduce(&conf_ent_lcl,&new_ent,1,Vec<type0>::MPI_T,MPI_SUM,world);
-        MPI_Allreduce(&S_tilde_lcl,&S_tilde,1,Vec<type0>::MPI_T,MPI_SUM,world);
-        en_diff=fabs(new_ent-conf_ent);
-        conf_ent=new_ent;
-    }
-    
-    conf_ent_lcl=0.0;
-    for(int i=0;i<natms_lcl;i++)
-    {
-        
-        
-        if(c[i*c_dim]!=1.0 && c[i*c_dim]!=0.0)
-        {
-           conf_ent_lcl+=(1.0-c[i*c_dim])*log(1.0-c_tilde[i])+(c[i*c_dim]*(S-c[i*c_dim]+1.0)-__p[i])*log(c_tilde[i])+0.5*((c[i*c_dim]-c_tilde[i])/(1.0-c_tilde[i]));
-        }
-    }
-     
-     
-    __vec_lcl[1+__nvoigt__]=delta_ent_lcl+conf_ent_lcl;
-    //printf("%lf %lf\n",delta_ent_lcl,conf_ent_lcl);
-    
-    */
-
-    
-}
-/*--------------------------------------------
  force calculation
  --------------------------------------------*/
-type0 ForceFieldEAMDMDSC::prep(VecTens<type0,2>& f)
+type0 ForceFieldEAMDMDCLUSTER::prep(VecTens<type0,2>& f)
 { return 0.0;}
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
+void ForceFieldEAMDMDCLUSTER::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
 {}
 /*--------------------------------------------
  init
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::init()
+void ForceFieldEAMDMDCLUSTER::init()
 {
     pre_init();
     set_temp();
     
     
     mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
-    cv_ptr=new Vec<type0>(atoms,1);
-    p_ptr=new Vec<type0>(atoms,1);
-    c_tilde_ptr=new Vec<type0>(atoms,1);
+    d_ptr=new Vec<type0>(atoms,1);
+    b_ptr=new Vec<type0>(atoms,1);
+    theta_ptr=new Vec<type0>(atoms,1);
     E_ptr=new Vec<type0>(atoms,c_dim);
     dE_ptr=new Vec<type0>(atoms,c_dim);
     rho_ptr=new Vec<type0>(atoms,c_dim);
@@ -1870,31 +1596,32 @@ void ForceFieldEAMDMDSC::init()
 /*--------------------------------------------
  fin
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::fin()
+void ForceFieldEAMDMDCLUSTER::fin()
 {
     
     Memory::dealloc(rho_phi);
     Memory::dealloc(drho_phi_dr);
     Memory::dealloc(drho_phi_dalpha);
     Memory::dealloc(B_pair);
+    Memory::dealloc(is_pair);
     max_pairs=0;
     
     delete rho_ptr;
     delete dE_ptr;
     delete E_ptr;
-    delete c_tilde_ptr;
-    delete p_ptr;
-    delete cv_ptr;
+    delete theta_ptr;
+    delete b_ptr;
+    delete d_ptr;
     delete mu_ptr;
     
-    dE_ptr=rho_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
+    dE_ptr=rho_ptr=d_ptr=vec0=vec1=vec2=vec3=NULL;
     mu_ptr=NULL;
     post_fin();
 }
 /*--------------------------------------------
  set the temperature in the simulation
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::set_temp()
+void ForceFieldEAMDMDCLUSTER::set_temp()
 {
     type0 T=atoms->temp;
     type0 kb=atoms->kB;
@@ -1916,7 +1643,7 @@ void ForceFieldEAMDMDSC::set_temp()
 /*--------------------------------------------
  return M_{ij}^{\alpha}
  --------------------------------------------*/
-inline type0 ForceFieldEAMDMDSC::calc_ent(type0 x)
+inline type0 ForceFieldEAMDMDCLUSTER::calc_ent(type0 x)
 {
     if(x==0.0) return 0.0;
     return x*log(x);
@@ -1925,15 +1652,15 @@ inline type0 ForceFieldEAMDMDSC::calc_ent(type0 x)
 /*--------------------------------------------
  python constructor
  --------------------------------------------*/
-void ForceFieldEAMDMDSC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodDef& method_2)
+void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodDef& method_2)
 {
     method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    method_0.ml_name="ff_eam_funcfl_sc";
+    method_0.ml_name="ff_eam_funcfl_cluster";
     method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string*,type0*,type0*,std::string*> f("ff_eam_funcfl_sc",{"funcfl_files","r_crd","C","elems"});
+        FuncAPI<std::string*,type0*,type0*,std::string*> f("ff_eam_funcfl_cluster",{"funcfl_files","r_crd","C","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
         f.logics<2>()[0]=VLogics("gt",0.0);
@@ -1972,7 +1699,7 @@ void ForceFieldEAMDMDSC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMe
             }
         
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMDSC(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
+        __self->ff=new ForceFieldEAMDMDCLUSTER(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
     };
     method_0.ml_doc=(char*)R"---(
@@ -2017,12 +1744,12 @@ void ForceFieldEAMDMDSC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMe
     )---";
     
     method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    method_1.ml_name="ff_eam_setfl_sc";
+    method_1.ml_name="ff_eam_setfl_cluster";
     method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_setfl_sc",{"setfl_file","r_crd","C","elems"});
+        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_setfl_cluster",{"setfl_file","r_crd","C","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
         f.logics<2>()[0]=VLogics("gt",0.0);
@@ -2062,7 +1789,7 @@ void ForceFieldEAMDMDSC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMe
             }
         
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMDSC(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
+        __self->ff=new ForceFieldEAMDMDCLUSTER(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
     };
     method_1.ml_doc=(char*)R"---(
@@ -2107,12 +1834,12 @@ void ForceFieldEAMDMDSC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMe
     )---";
     
     method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    method_2.ml_name="ff_eam_fs_sc";
+    method_2.ml_name="ff_eam_fs_cluster";
     method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
-        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_fs_sc",{"fs_file","r_crd","C","elems"});
+        FuncAPI<std::string,type0*,type0*,std::string*> f("ff_eam_fs_cluster",{"fs_file","r_crd","C","elems"});
         f.noptionals=1;
         f.logics<1>()[0]=VLogics("gt",0.0);
         f.logics<2>()[0]=VLogics("gt",0.0);
@@ -2151,7 +1878,7 @@ void ForceFieldEAMDMDSC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMe
             }
         
         delete __self->ff;
-        __self->ff=new ForceFieldEAMDMDSC(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
+        __self->ff=new ForceFieldEAMDMDCLUSTER(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
     };
     method_2.ml_doc=(char*)R"---(

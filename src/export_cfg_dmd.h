@@ -21,6 +21,7 @@ namespace MAPP_NS
 
         void init();
         void write(int);
+        void write(const char*);
         void fin();
         
         typedef struct

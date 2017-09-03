@@ -503,7 +503,9 @@ namespace MAPP_NS
         void restart();
         int is_dynamic(vec*);
         
+        void reset_domain();
         
+        virtual void DO(PyObject*){}
         
         
         typedef struct
@@ -523,6 +525,8 @@ namespace MAPP_NS
         static PyMethodDef methods[];
         static void setup_tp_methods();
         static void ml_strain(PyMethodDef&);
+        static void ml_mul(PyMethodDef&);
+        static void ml_do(PyMethodDef&);
         
         
         static PyGetSetDef getset[];
@@ -667,6 +671,378 @@ inline void Vec<T>::print(FILE* fp,int i)
     T* __data_dump=begin_dump()+dim*i;
     for(int j=0;j<dim;j++)
         fprintf(fp,print_format,__data_dump[j]);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*------------------------------------------------------------------------------------------------
+  
+ ------------------------------------------------------------------------------------------------*/
+
+namespace MAPP_NS
+{
+    template<typename T,class F>
+    class VecPy
+    {
+    private:
+    protected:
+    public:
+        size_t ipos;
+        bool inc;
+        PyObject* op;
+        int dim;
+        std::remove_pointer<npy_intp>::type npy_dim;
+        
+        T* data;
+        T* arr_data;
+        T* head;
+        
+        F& func;
+        Vec<T>* vec;
+        
+        VecPy(Vec<T>*,F&);
+        ~VecPy();
+        
+        void init();
+        void fin();
+        void pre_iter();
+        void post_iter();
+        //bool iter();
+        
+    };
+}
+
+
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
+VecPy<T,F>::VecPy(Vec<T>* __vec,F& __func):
+data(NULL),
+arr_data(NULL),
+vec(__vec),
+dim(__vec->dim),
+func(__func),
+op(NULL),
+inc(false),
+ipos(0)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
+void VecPy<T,F>::init()
+{
+    int natms_lcl=vec->atoms->natms_lcl;
+    if(natms_lcl) data=new T[natms_lcl*dim];
+    if(vec->is_empty())
+    {
+        T empty_val=vec->empty_val;
+        for(int i=0;i<natms_lcl*dim;i++)
+        {
+            data[i]=empty_val;
+        }
+    }
+    else
+    {
+        memcpy(data,vec->begin(),natms_lcl*dim*sizeof(T));
+    }
+    
+    arr_data=new T[dim];
+    npy_dim=static_cast<std::remove_pointer<npy_intp>::type>(dim);
+    op=PyArray_SimpleNewFromData(1,&npy_dim,cpp_type2type_num<T>::type_num(),arr_data);
+    head=data;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
+void VecPy<T,F>::pre_iter()
+{
+    memcpy(arr_data,head,sizeof(T)*dim);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
+void VecPy<T,F>::post_iter()
+{
+    try
+    {
+        func(head,arr_data);
+    }
+    catch(std::string& err_msg)
+    {
+        throw err_msg;
+    }
+    
+    memcpy(head,arr_data,sizeof(T)*dim);
+    head+=dim;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
+void VecPy<T,F>::fin()
+{
+    head=NULL;
+    if(op)
+    {
+        Py_DECREF(op);
+        op=NULL;
+    }
+    
+    
+    
+    delete [] arr_data;
+    arr_data=NULL;
+    if(vec->is_empty())
+    {
+        int natms_lcl=vec->atoms->natms_lcl;
+        T empty_val=vec->empty_val;
+        int i=0;
+        while(i<natms_lcl*dim && data[i]==empty_val)
+            i++;
+        
+        int is_empty_lcl=0,is_empty;
+        if(i!=natms_lcl*dim) is_empty_lcl=1;
+        MPI_Allreduce(&is_empty_lcl,&is_empty,1,MPI_INT,MPI_MAX,vec->atoms->world);
+        
+        if(is_empty)
+        {
+            vec->fill();
+            memcpy(vec->begin(),data,natms_lcl*dim*sizeof(T));
+        }
+        
+    }
+    else
+    {
+        int natms_lcl=vec->atoms->natms_lcl;
+        memcpy(vec->begin(),data,natms_lcl*dim*sizeof(T));
+    }
+    
+    delete [] data;
+    data=NULL;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
+VecPy<T,F>::~VecPy()
+{
+    
+}
+
+/*------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------*/
+namespace MAPP_NS
+{
+    class VecPyFunc
+    {
+    private:
+    protected:
+    public:
+        template <typename T,class F, class... Ss>
+        static void find(const size_t i,const char* name,VecPy<T,F>& __v,Ss&... ss)
+        {
+            
+            if(strcmp(name,__v.vec->name)==0)
+            {
+                __v.inc=true;
+                __v.ipos=i;
+            }
+            else
+                return find(i,name,ss...);
+        }
+        
+        
+        
+        
+        
+        template <typename T,class F, class... Ss>
+        static void init(PyObject* tuple,VecPy<T,F>& __v,Ss&... ss)
+        {
+            if(__v.inc)
+            {
+                __v.init();
+                PyTuple_SET_ITEM(tuple,__v.ipos,__v.op);
+                Py_INCREF(__v.op);
+            }
+            
+            init(tuple,ss...);
+        }
+        
+        
+        template <typename T,class F, class... Ss>
+        static void fin(VecPy<T,F>& __v,Ss&... ss)
+        {
+            if(__v.inc)
+                __v.fin();
+            fin(ss...);
+        }
+        
+        
+        
+        
+        template <typename T,class F, class... Ss>
+        static void pre_iter(VecPy<T,F>& __v,Ss&... ss)
+        {
+            if(__v.inc)
+                __v.pre_iter();
+            
+            pre_iter(ss...);
+        }
+        
+        
+        template <typename T,class F, class... Ss>
+        static void post_iter(VecPy<T,F>& __v,Ss&... ss)
+        {
+            try
+            {
+                if(__v.inc)   __v.post_iter();
+            }
+            catch(std::string& err_msg)
+            {
+                throw err_msg;
+            }
+            post_iter(ss...);
+        }
+        
+        
+        
+        
+        static void find(const size_t,const char*){}
+        static void init(PyObject*){}
+        static void fin(){}
+        static void pre_iter(){}
+        static void post_iter(){}
+        
+        
+        
+        
+        template <class... Ss>
+        static void Do(Atoms* ,PyObject*,Ss&... ss);
+        
+
+        
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template <class... Ss>
+void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
+{
+    PyCodeObject* co=(PyCodeObject *)PyFunction_GET_CODE(op);
+    PyObject* co_varnames=co->co_varnames;
+    size_t co_nvars=PyTuple_Size(co_varnames);
+    
+    
+    
+    try{
+        for(size_t i=0;i<co_nvars;i++)
+        {
+            char* var_name=PyString_AsString(PyTuple_GetItem(co_varnames,i));
+            find(i,var_name,ss...);
+        }
+    }
+    catch(std::string& err_msg)
+    {
+        throw err_msg;
+    }
+    
+    
+    PyObject* tuple=PyTuple_New(co_nvars);
+    init(tuple,ss...);
+    
+    int natms_lcl=atoms->natms_lcl;
+    int err_lcl=0;
+    std::string err_msg;
+    PyObject* ans=NULL;
+    
+    for(int i=0;i<natms_lcl && err_lcl==0;i++)
+    {
+        pre_iter(ss...);
+        
+        // DO THE FUNCTION HERE AND FIND OUT IF THERE IS A PROBLEM
+        ans=PyEval_CallObject(op,tuple);
+        if(Py_None!=ans)
+        {
+            Py_DECREF(ans);
+            err_lcl=1;
+            err_msg=std::string("provided function should not return any value");
+            continue;
+        }
+        
+        Py_DECREF(ans);
+        if(PyErr_Occurred()!=NULL)
+        {
+            err_lcl=1;
+            err_msg=std::string("An error occured in the provided function");
+            PyErr_Clear();
+            continue;
+        }
+
+        // NO ERROR CHECK YET
+        
+        
+        
+        try
+        {
+            post_iter(ss...);
+        }
+        catch(std::string& __err_msg)
+        {
+            err_lcl=1;
+            err_msg=__err_msg;
+        }
+    }
+    
+    int err;
+    MPI_Allreduce(&err_lcl,&err,1,MPI_INT,MPI_MAX,atoms->world);
+    if(err)
+    {
+        int first_proc;
+        int comm_rank=0;
+        if(err_lcl)
+            comm_rank=atoms->comm_rank;
+        else
+            comm_rank=atoms->comm_size;
+        
+        MPI_Allreduce(&comm_rank,&first_proc,1,MPI_INT,MPI_MIN,atoms->world);
+        int err_msg_length=0;
+        if(atoms->comm_rank==first_proc)
+            err_msg_length=static_cast<int>(err_msg.size())+1;
+        MPI_Bcast(&err_msg_length,1,MPI_INT,first_proc,atoms->world);
+        char* __err_msg=NULL;
+        __err_msg=new char[err_msg_length];
+        if(atoms->comm_rank==first_proc)
+            memcpy(__err_msg,err_msg.c_str(),err_msg_length);
+        MPI_Bcast(__err_msg,err_msg_length,MPI_CHAR,first_proc,atoms->world);
+        err_msg=std::string(__err_msg);
+        delete [] __err_msg;
+        throw err_msg;
+        
+    }
+    
+    
+    
+    Py_DECREF(tuple);
+    fin(ss...);
+    
 }
 
 #endif

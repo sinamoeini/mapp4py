@@ -169,13 +169,15 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
+    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
     const int natms0=atoms->natms_lcl;
     for(int i=0;i<natms0;++i)
     {
         m_i=m[*elem];
-        Algebra::Do<__dim__>::func([&x_d,&x,&f,&m_i,&fac_x_d,this](const int j)
+        Algebra::Do<__dim__>::func([&dx_lcl,&x_d,&x,&f,&m_i,&fac_x_d,this](const int j)
         {
             x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;
+            dx_lcl[j]+=x_d[j]*dt;
             x[j]+=x_d[j]*dt;
         });
         
@@ -184,6 +186,14 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
         x+=__dim__;
         ++elem;
     }
+    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    type0 natms=static_cast<type0>(atoms->natms);
+    Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
+    x=atoms->x->begin();
+    for(int i=0;i<natms0;++i,x+=__dim__)
+        Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
+    
     
     
     dynamic->update(atoms->x);

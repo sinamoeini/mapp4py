@@ -11,8 +11,6 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 DAEImplicit::DAEImplicit():
 DAE(),
-max_nnewton_iters(5),
-max_ngmres_iters(5),
 y_0(NULL),
 c_0(NULL),
 del_c(NULL),

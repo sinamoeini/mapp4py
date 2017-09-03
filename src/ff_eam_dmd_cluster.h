@@ -1,10 +1,10 @@
-#ifndef __MAPP__ff_eam__dmd_sc__
-#define __MAPP__ff_eam__dmd_sc__
+#ifndef __MAPP__ff_eam__dmd_cluster__
+#define __MAPP__ff_eam__dmd_cluster__
 #include "ff_dmd.h"
 namespace MAPP_NS
 {
     template<class> class DMDVec;
-    class ForceFieldEAMDMDSC : public ForceFieldDMD
+    class ForceFieldEAMDMDCLUSTER : public ForceFieldDMD
     {
     private:
         size_t nr,nrho;
@@ -19,9 +19,9 @@ namespace MAPP_NS
         Vec<type0>* dE_ptr;
         Vec<type0>* rho_ptr;
         DMDVec<type0>* mu_ptr;
-        Vec<type0>* cv_ptr;
-        Vec<type0>* p_ptr;
-        Vec<type0>* c_tilde_ptr;
+        Vec<type0>* b_ptr;
+        Vec<type0>* d_ptr;
+        Vec<type0>* theta_ptr;
         
         Vec<type0>* vec0;
         Vec<type0>* vec1;
@@ -41,7 +41,7 @@ namespace MAPP_NS
         type0* drho_phi_dr;
         type0* drho_phi_dalpha;
         type0* B_pair;
-        int* NN;
+        bool* is_pair;
         size_t max_pairs;
         
         /*--------------------------------------------*/
@@ -65,12 +65,9 @@ namespace MAPP_NS
         /*--------------------------------------------*/
         
         void sc_loop();
-        void sc_loop_var();
-        void sc_loop__();
-        void sc_loop___();
-        void sc_loop____();
-        void sc_loop_cluster();
-        void sc_loop__Z6_2nd();
+        void _sc_loop();
+        void __sc_loop();
+        void ___sc_loop();
 
         
     protected:
@@ -83,12 +80,12 @@ namespace MAPP_NS
         
         void init_static(){};
         void fin_static(){};
-        ForceFieldEAMDMDSC(class AtomsDMD*,
+        ForceFieldEAMDMDCLUSTER(class AtomsDMD*,
         type0,type0,size_t,size_t,
         type0(***&&)[4],type0(***&&)[4],type0(**&&)[5],
         type0**&&,type0*&&,type0*&&);
     
-        ~ForceFieldEAMDMDSC();
+        ~ForceFieldEAMDMDCLUSTER();
         void init();
         void fin();
         

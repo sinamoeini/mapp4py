@@ -112,6 +112,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     type0* m=atoms->elements.masses;
     type0 m_i,m_inv;
     const int natms0=atoms->natms_lcl;
+    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
     for(int i=0;i<natms0;++i)
     {
         m_inv=1.0/m[*elem];
@@ -120,12 +121,22 @@ void MDNST::update_x_d__x__x_d(type0 xi)
         MDMath::____NONAME2<__dim__,__dim__>::func(v0,&MLT2[0][0]);
         
         Algebra::V_add<__dim__>(v0,x);
+        Algebra::V_add<__dim__>(v0,dx_lcl);
         
         f+=__dim__;
         x_d+=__dim__;
         x+=__dim__;
         ++elem;
     }
+    
+    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    type0 natms=static_cast<type0>(atoms->natms);
+    Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
+    x=atoms->x->begin();
+    for(int i=0;i<natms0;++i,x+=__dim__)
+        Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
+    
     
     Algebra::MLT_mul_MLT(MLT2,V_H,MLT2);
     Algebra::Do<__dim__>::func([this](int i){MLT2[i][i]++;});

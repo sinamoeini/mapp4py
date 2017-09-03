@@ -223,6 +223,37 @@ void ExportCFGDMD::write(int stps)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void ExportCFGDMD::write(const char* file_name)
+{
+    try
+    {
+        init();
+    }
+    catch(std::string& err_msg)
+    {
+        fin();
+        throw err_msg;
+    }
+    
+    FILE* fp;
+    bool file_chk=open(atoms->comm_rank,atoms->world,file_name,"w",fp);
+    if(!file_chk)
+    {
+        fin();
+        return;
+    }
+    
+    write_header(fp);
+    if(sort) write_body_sort(fp);
+    else write_body(fp);
+    
+    close(atoms->comm_rank,atoms->world,fp);
+    
+    fin();
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void ExportCFGDMD::init()
 {
     try
@@ -303,6 +334,7 @@ int ExportCFGDMD::setup_tp()
     TypeObject.tp_init=__init__;
     TypeObject.tp_alloc=__alloc__;
     TypeObject.tp_dealloc=__dealloc__;
+    TypeObject.tp_call=__call__;
     setup_tp_methods();
     TypeObject.tp_methods=methods;
     setup_tp_getset();

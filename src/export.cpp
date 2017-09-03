@@ -124,26 +124,49 @@ void Export::find_vecs(Atoms* atoms)
     vec* v;
     
     ndims=0;
-    for(int i=0;i<nvecs;i++)
+    if(ndynamic_vecs)
     {
-        v=find_vec(vec_names[i],dynamic_vecs,ndynamic_vecs);
-        if(!v)
+        for(int i=0;i<nvecs;i++)
         {
-            vec* __v=find_vec(vec_names[i],__vecs,__nvecs);
-            if(!__v)
+            v=find_vec(vec_names[i],dynamic_vecs,ndynamic_vecs);
+            if(!v)
+            {
+                vec* __v=find_vec(vec_names[i],__vecs,__nvecs);
+                if(!__v)
                 throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it does not exist";
+                else
+                {
+                    if(__v->is_empty())
+                    throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it is empty";
+                    else
+                    throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it is not included in this simulation (it is archived)";
+                }
+            }
+            ndims+=v->ndim_dump();
+            
+            vecs[i]=v;
+        }
+    }
+    else
+    {
+        for(int i=0;i<nvecs;i++)
+        {
+            v=find_vec(vec_names[i],__vecs,__nvecs);
+            if(!v)
+            {
+                throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it does not exist";
+                
+            }
             else
             {
-                if(__v->is_empty())
+                if(v->is_empty())
                     throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it is empty";
-                else
-                    throw "cannot export vector '"+std::string(vec_names[i])+"' to file, it is not included in this simulation (it is archived)";
             }
+            ndims+=v->ndim_dump();
+            
+            vecs[i]=v;
         }
-        ndims+=v->ndim_dump();
-        
-        vecs[i]=v;
-    }    
+    }
 }
 /*--------------------------------------------
  
@@ -350,6 +373,30 @@ void ExportMD::__dealloc__(PyObject* self)
     __self->xprt=NULL;
     delete __self;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* ExportMD::__call__(PyObject* self,PyObject* args,PyObject* kwds)
+{
+    FuncAPI<OP<AtomsMD>,std::string> f("__call__",{"atoms","file_name"});
+    
+    if(f(args,kwds)==-1) return NULL;
+    
+    reinterpret_cast<ExportMD::Object*>(self)->xprt->atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
+    try
+    {
+        reinterpret_cast<ExportMD::Object*>(self)->xprt->write(f.val<1>().c_str());
+    }
+    catch(std::string& err_msg)
+    {
+        reinterpret_cast<ExportMD::Object*>(self)->xprt->atoms=NULL;
+        PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+        return NULL;
+    }
+    
+    reinterpret_cast<ExportMD::Object*>(self)->xprt->atoms=NULL;
+    Py_RETURN_NONE;
+}
 /*--------------------------------------------*/
 PyTypeObject ExportMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
@@ -365,6 +412,7 @@ int ExportMD::setup_tp()
     TypeObject.tp_init=__init__;
     TypeObject.tp_alloc=__alloc__;
     TypeObject.tp_dealloc=__dealloc__;
+    TypeObject.tp_call=__call__;
     setup_tp_methods();
     TypeObject.tp_methods=methods;
     setup_tp_getset();
@@ -434,6 +482,30 @@ void ExportDMD::__dealloc__(PyObject* self)
     __self->xprt=NULL;
     delete __self;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* ExportDMD::__call__(PyObject* self,PyObject* args,PyObject* kwds)
+{
+    FuncAPI<OP<AtomsDMD>,std::string> f("__call__",{"atoms","file_name"});
+    
+    if(f(args,kwds)==-1) return NULL;
+    
+    reinterpret_cast<ExportDMD::Object*>(self)->xprt->atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
+    try
+    {
+        reinterpret_cast<ExportDMD::Object*>(self)->xprt->write(f.val<1>().c_str());
+    }
+    catch(std::string& err_msg)
+    {
+        reinterpret_cast<ExportDMD::Object*>(self)->xprt->atoms=NULL;
+        PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+        return NULL;
+    }
+    
+    reinterpret_cast<ExportDMD::Object*>(self)->xprt->atoms=NULL;
+    Py_RETURN_NONE;
+}
 /*--------------------------------------------*/
 PyTypeObject ExportDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
@@ -449,6 +521,8 @@ int ExportDMD::setup_tp()
     TypeObject.tp_init=__init__;
     TypeObject.tp_alloc=__alloc__;
     TypeObject.tp_dealloc=__dealloc__;
+    TypeObject.tp_call=__call__;
+    
     setup_tp_methods();
     TypeObject.tp_methods=methods;
     setup_tp_getset();

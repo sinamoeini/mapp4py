@@ -15,7 +15,7 @@ namespace MAPP_NS
         Vec<elem_type>* elem;
         void create_T(type0,int);
 
-        //void DO(PyFunctionObject*);
+        void DO(PyObject*);
         AtomsMD(MPI_Comm&);
         ~AtomsMD();
         AtomsMD& operator=(const Atoms&);

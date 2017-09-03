@@ -97,53 +97,78 @@ void AtomsMD::create_T(type0 T,int seed)
 /*--------------------------------------------
  
  --------------------------------------------*/
-/*
-void AtomsMD::DO(PyFunctionObject* op)
-{
-    
-    PyCodeObject* co=(PyCodeObject *)PyFunction_GET_CODE(op);
-    PyObject* co_varnames=co->co_varnames;
-    size_t co_nvars=PyTuple_Size(co_varnames);
-    
-    constexpr int atoms_nkwds=5;
-    enum{__id,__elem,__x,__x_d,__dof};
-    const char* atoms_kwds[atoms_nkwds]={[__id]="id",[__elem]="elem",[__x]="x",[__x_d]="x_d",[__dof]="dof"};
-    vec* atoms_vecs[atoms_nkwds]={[__id]=id,[__elem]=elem,[__x]=x,[__x_d]=x_d,[__dof]=dof};
-    bool found[atoms_nkwds]={[0 ... atoms_nkwds-1]=false};
-    
-    
-    for(size_t i=0;i<co_nvars;i++)
+void AtomsMD::DO(PyObject* op)
+{   
+    class Func_x
     {
-        char* var_name=PyString_AsString(PyTuple_GetItem(co_varnames,i));
-        bool var_found=false;
-        int j=0;
-        for(;j<atoms_nkwds && !var_found;j++)
-        if(strcmp(var_name,atoms_kwds[j])==0) var_found=true;
-        if(!var_found)
-        throw std::string("unknown parameter: ")+std::string(var_name);
-        found[j-1]=true;
+    public:
+        void operator()(type0*,type0*)
+        {};
+    };
+    Func_x func_x;
+    VecPy<type0,Func_x> x_vec_py(x,func_x);
+    
+    class Func_x_d
+    {
+    public:
+        void operator()(type0*,type0*)
+        {};
+    };
+    Func_x_d func_x_d;
+    VecPy<type0,Func_x_d> x_d_vec_py(x_d,func_x_d);
+    
+    
+    class Func_id
+    {
+    public:
+        void operator()(unsigned int* old_val,unsigned int* new_val)
+        {
+            if(*old_val!=*new_val)
+                throw std::string("id of atoms cannot be changed");
+        };
+    };
+    Func_id func_id;
+    VecPy<unsigned int,Func_id> id_vec_py(id,func_id);
+    
+    
+    
+    class Func_elem
+    {
+    public:
+        elem_type nelem;
+        Func_elem(elem_type __nelem):nelem(__nelem){}
+        void operator()(elem_type* old_val,elem_type* new_val)
+        {
+            if(*new_val>=nelem)
+                throw std::string("elem of atoms should be less than ")+Print::to_string(static_cast<int>(nelem));
+        };
+    };
+    Func_elem func_elem(elements.__nelems);
+    VecPy<elem_type,Func_elem> elem_vec_py(elem,func_elem);
+    
+    
+    
+    class Func_dof
+    {
+    public:
+        void operator()(bool*,bool*)
+        {
+        };
+    };
+    Func_dof func_dof;
+    VecPy<bool,Func_dof> dof_vec_py(dof,func_dof);
+    try
+    {
+        VecPyFunc::Do(this,op,id_vec_py,x_vec_py,x_d_vec_py,elem_vec_py);
+    }
+    catch(std::string& err_msg)
+    {
+        throw err_msg;
     }
     
+    if(x_vec_py.inc) this->reset_domain();
     
-    if(found[__dof] && !dof)
-    {
-        dof=new Vec<bool>(this,__dim__,"dof");
-        bool* ___dof=dof->begin();
-        for(int i=0;i<natms_lcl*__dim__;i++) ___dof[i]=true;
-    }
-    if(found[__x_d] && !x_d)
-    {
-        x_d=new Vec<type0>(this,__dim__,"x_d");
-        type0* ___x_d=x_d->begin();
-        for(int i=0;i<natms_lcl*__dim__;i++) ___x_d[i]=0.0;
-    }
-    
-    std::remove_pointer<npy_intp>::type npy__dim__=static_cast<std::remove_pointer<npy_intp>::type>(__dim__);
-    std::remove_pointer<npy_intp>::type npy__1=static_cast<std::remove_pointer<npy_intp>::type>(1);
-    PyObject* Py_x=PyArray_SimpleNewFromData(1,&npy__dim__,cpp_type2type_num<type0>::type_num(),x->begin());
-
-    
-}*/
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -278,17 +303,18 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
     };
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsMD::methods[]={[0 ... 9]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsMD::methods[]={[0 ... 10]={NULL,NULL,0,NULL}};
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {
-    ml_strain(methods[0]);
-    ml_create_temp(methods[1]);
-    ml_add_elem(methods[2]);
-    ForceFieldLJ::ml_new(methods[3]);
-    ForceFieldEAM::ml_new(methods[4],methods[5],methods[6]);
-    ForceFieldFS::ml_new(methods[7]);
-    ImportCFGMD::ml_import(methods[8]);
+    ml_do(methods[0]);
+    ml_strain(methods[1]);
+    ml_create_temp(methods[2]);
+    ml_add_elem(methods[3]);
+    ForceFieldLJ::ml_new(methods[4]);
+    ForceFieldEAM::ml_new(methods[5],methods[6],methods[7]);
+    ForceFieldFS::ml_new(methods[8]);
+    ImportCFGMD::ml_import(methods[9]);
 }
 /*--------------------------------------------
  

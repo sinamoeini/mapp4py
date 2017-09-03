@@ -179,7 +179,13 @@ int AtomsDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
+
+#ifdef SC_DMD
+PyGetSetDef AtomsDMD::getset[]={[0 ... 18]={NULL,NULL,NULL,NULL,NULL}};
+#elif 
 PyGetSetDef AtomsDMD::getset[]={[0 ... 16]={NULL,NULL,NULL,NULL,NULL}};
+#endif
+
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
 {
@@ -199,9 +205,18 @@ void AtomsDMD::setup_tp_getset()
     getset_fe(getset[13]);
     getset_S_fe(getset[14]);
     getset_s(getset[15]);
+#ifdef SC_DMD
+    getset_BB(getset[16]);
+    getset_delta(getset[17]);
+#endif
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsDMD::methods[]={[0 ... 8]={NULL,NULL,0,NULL}};
+
+#ifdef SC_DMD
+PyMethodDef AtomsDMD::methods[]={[0 ... 14]={NULL,NULL,0,NULL}};
+#elif
+PyMethodDef AtomsDMD::methods[]={[0 ... 5]={NULL,NULL,0,NULL}};
+#endif
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
@@ -210,6 +225,8 @@ void AtomsDMD::setup_tp_methods()
     ForceFieldEAMDMD::ml_new(methods[2],methods[3],methods[4]);
 #ifdef SC_DMD
     ForceFieldEAMDMDSC::ml_new(methods[5],methods[6],methods[7]);
+    ForceFieldEAMDMDSCC::ml_new(methods[8],methods[9],methods[10]);
+    ForceFieldEAMDMDCLUSTER::ml_new(methods[11],methods[12],methods[13]);
 #endif
 }
 /*--------------------------------------------
@@ -232,7 +249,7 @@ void AtomsDMD::getset_temp(PyGetSetDef& getset)
         Object* __self=reinterpret_cast<Object*>(self);
         if(!__self->atoms)
         {
-            PyErr_Format(PyExc_TypeError,"cannot set 'h' prior to loading system configuration");
+            PyErr_Format(PyExc_TypeError,"cannot set 'temp' prior to loading system configuration");
             return -1;
         }
         
@@ -306,5 +323,58 @@ void AtomsDMD::getset_s(PyGetSetDef& getset)
         return -1;
     };
 }
+#ifdef SC_DMD
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_BB(PyGetSetDef& getset)
+{
+    getset.name=(char*)"BB";
+    getset.doc=(char*)R"---(
+    (double) free energy
+    
+    BB
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->BB);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_delta(PyGetSetDef& getset)
+{
+    getset.name=(char*)"delta";
+    getset.doc=(char*)R"---(
+    (double) temperature
+    
+    Temperature of the system
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->delta);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        Object* __self=reinterpret_cast<Object*>(self);
+        if(!__self->atoms)
+        {
+            PyErr_Format(PyExc_TypeError,"cannot set 'delta' prior to loading system configuration");
+            return -1;
+        }
+        
+        VarAPI<type0> temp("delta");
+        if(temp.set(val)==-1) return -1;
+        reinterpret_cast<Object*>(self)->atoms->delta=temp.val;
+        return 0;
+    };
+}
+#endif
 
 

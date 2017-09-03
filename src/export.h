@@ -56,6 +56,7 @@ namespace MAPP_NS
         virtual ~ExportMD();
         virtual void init(){};
         virtual void write(int){};
+        virtual void write(const char*){};
         virtual void fin(){};
         
         typedef struct
@@ -69,6 +70,7 @@ namespace MAPP_NS
         static int __init__(PyObject*, PyObject*,PyObject*);
         static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
         static void __dealloc__(PyObject*);
+        static PyObject* __call__(PyObject*,PyObject*,PyObject*);
         
         static PyMethodDef methods[];
         static void setup_tp_methods();
@@ -93,6 +95,7 @@ namespace MAPP_NS
         virtual ~ExportDMD();
         virtual void init(){};
         virtual void write(int){};
+        virtual void write(const char*){};
         virtual void fin(){};
         
         typedef struct
@@ -106,6 +109,7 @@ namespace MAPP_NS
         static int __init__(PyObject*, PyObject*,PyObject*);
         static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
         static void __dealloc__(PyObject*);
+        static PyObject* __call__(PyObject*,PyObject*,PyObject*);
         
         static PyMethodDef methods[];
         static void setup_tp_methods();

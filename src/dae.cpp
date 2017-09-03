@@ -19,7 +19,9 @@ ntally(1000),
 nreset(0),
 chng_box(false),
 S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
-S{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}}
+S{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}},
+max_nnewton_iters(5),
+max_ngmres_iters(5)
 {
 }
 /*--------------------------------------------
@@ -148,7 +150,7 @@ void DAE::min_error()
     type0 norm,res;
 
     
-    __GMRES__<VecTens<type0,2>> gmres(10,atoms,chng_box,__dim__,c_dim);
+    __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
         ff->J_timer(x,Jx);
@@ -176,7 +178,7 @@ void DAE::min_error()
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
     type0 r;
     int istep=0;
-    for(;istep<1000 && res/a_tol_sqrt_nc_dofs>1.0;istep++)
+    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nc_dofs>1.0;istep++)
     {
         /*
         if(atoms->comm_rank==0)
@@ -187,6 +189,7 @@ void DAE::min_error()
                    ,atoms->S_fe[1][2]
                    ,atoms->S_fe[2][0]
                    ,atoms->S_fe[0][1]);
+        
         */
         /*
         if(atoms->comm_rank==0)

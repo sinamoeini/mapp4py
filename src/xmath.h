@@ -1636,6 +1636,30 @@ namespace MAPP_NS
         
         
         
+        /* dot product for aligned vectors */
+        template<const int i>
+        class __V_mul_SCL
+        {
+        public:
+            template<typename T>
+            static inline void func(T* vec,T scl)
+            {
+                *vec*=scl;
+                return __V_mul_SCL::func(vec+1,scl);
+            }
+        };
+        
+        template<>
+        class __V_mul_SCL<1>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* vec,T scl)
+            {
+                *vec*=scl;
+            }
+        };
+        
         
         
         
@@ -2886,6 +2910,47 @@ namespace MAPP_NS
         };
         
         
+        
+        template<const int dim,const int i>
+        class __DX_HAT_R
+        {
+        public:
+            template<class T>
+            static inline T func(T const* xi,T const* xj ,T* dxij)
+            {
+                *dxij=*xi-*xj;
+                return *dxij**dxij+__DX_HAT_R<dim,i-1>::func(xi+1,xj+1,dxij+1);
+            }
+        };
+        
+        template<const int dim>
+        class __DX_HAT_R<dim,1>
+        {
+        public:
+            template<class T>
+            static inline T func(T const* xi,T const* xj ,T* dxij)
+            {
+                *dxij=*xi-*xj;
+                return *dxij**dxij;
+            }
+        };
+        
+        template<const int dim>
+        class __DX_HAT_R<dim,dim>
+        {
+        public:
+            template<class T>
+            static inline T func(T const* xi,T const* xj ,T* dxij)
+            {
+                *dxij=*xi-*xj;
+                T r=sqrt(*dxij**dxij+__DX_HAT_R<dim,dim-1>::func(xi+1,xj+1,dxij+1));
+                __V_mul_SCL<dim>::func(dxij,1.0/r);
+                return r;
+            }
+        };
+        
+        
+        
         template<const int N,const int M>
         class __pow
         {
@@ -3208,6 +3273,12 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<const int dim,typename T>
+        void DyadicV(T scl,T* x,T* dyad)
+        {
+            __DyadicV<dim,dim>::func(scl,x,dyad);
+        }
+        /*
+        template<const int dim,typename T>
         void DyadicV(T& scl,T* x,T (&dyad)[dim*(dim+1)/2])
         {
             __DyadicV<dim,dim>::func(scl,x,dyad);
@@ -3221,7 +3292,7 @@ namespace MAPP_NS
         void DyadicV(T& scl,T(&x)[dim],T (&dyad)[dim*(dim+1)/2])
         {
             __DyadicV<dim,dim>::func(scl,x,dyad);
-        }
+        }*/
         template<const int dim,typename T>
         void DyadicV(T*&x,T*& y,T* dyad)
         {
@@ -3311,6 +3382,12 @@ namespace MAPP_NS
         T DX_RSQ(T const * xi,T const * xj,T (&dxij)[dim])
         {
             return __DX_RSQ<dim>::func(xi,xj,dxij);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        T DX_HAT_R(T const * xi,T const * xj,T (&dxij)[dim])
+        {
+            return __DX_HAT_R<dim,dim>::func(xi,xj,dxij);
         }
         /*==========================================================================*/
         /*

@@ -84,6 +84,16 @@ void ForceFieldMD::force_calc_timer()
 {
     reset();
     force_calc();
+    
+    if(!dof_empty)
+    {
+        type0* fvec=f->begin();
+        bool* dof=atoms->dof->begin();
+        const int natms_lcl=atoms->natms_lcl;
+        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,dof+=__dim__)
+            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
+    }
+    
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     const type0 vol=atoms->vol;
     Algebra::Do<__nvoigt__>::func([this,&vol](int i){__vec[i+1]/=vol;});
@@ -140,7 +150,7 @@ void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
     {
         bool* dof=atoms->dof->begin();
         const int natms_lcl=atoms->natms_lcl;
-        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
+        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__,dof+=__dim__)
         {
             Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
             Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
@@ -177,7 +187,7 @@ void ForceFieldMD::derivative_timer(bool affine,type0(*&S)[__dim__])
         {
             bool* dof=atoms->dof->begin();
             const int natms_lcl=atoms->natms_lcl;
-            for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
+            for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__,dof+=__dim__)
             {
                 Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
                 Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);

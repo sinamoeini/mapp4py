@@ -61,6 +61,100 @@ void MDMuVT::update_x_d__x(type0 fac_x_d)
         Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
 }
 /*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDMuVT::update_x_d()
+{
+    
+    type0* f=ff->f->begin();
+    type0* x_d=atoms->x_d->begin();
+    elem_type* elem=atoms->elem->begin();
+    type0* m=atoms->elements.masses;
+    type0 m_i;
+    Algebra::zero<__nvoigt__>(__vec_lcl);
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;++i)
+    {
+        m_i=m[*elem];
+        Algebra::Do<__dim__>::func([&x_d,&f,&m_i,this](const int j){x_d[j]+=f[j]*dt2/m_i;});
+        Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+        f+=__dim__;
+        x_d+=__dim__;
+        ++elem;
+    }
+    
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDMuVT::update_x_d__x_w_dof(type0 fac_x_d)
+{
+    type0* x=atoms->x->begin();
+    type0* f=ff->f->begin();
+    type0* x_d=atoms->x_d->begin();
+    elem_type* elem=atoms->elem->begin();
+    bool* dof=atoms->dof->begin();
+    type0* m=atoms->elements.masses;
+    type0 m_i;
+    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;++i)
+    {
+        m_i=m[*elem];
+        Algebra::Do<__dim__>::func([&x_d,&dx_lcl,&x,&f,&m_i,&fac_x_d,&dof,this](const int j)
+        {
+            if(dof[j]) x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;
+            dx_lcl[j]+=x_d[j]*dt;
+            x[j]+=x_d[j]*dt;
+        });
+        
+        f+=__dim__;
+        x_d+=__dim__;
+        x+=__dim__;
+        dof+=__dim__;
+        ++elem;
+    }
+    
+    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    type0 natms=static_cast<type0>(atoms->natms);
+    Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
+    x=atoms->x->begin();
+    for(int i=0;i<natms_lcl;++i,x+=__dim__)
+        Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDMuVT::update_x_d_w_dof()
+{
+    
+    type0* f=ff->f->begin();
+    type0* x_d=atoms->x_d->begin();
+    elem_type* elem=atoms->elem->begin();
+    bool* dof=atoms->dof->begin();
+    type0* m=atoms->elements.masses;
+    type0 m_i;
+    Algebra::zero<__nvoigt__>(__vec_lcl);
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;++i)
+    {
+        m_i=m[*elem];
+        Algebra::Do<__dim__>::func([&dof,&x_d,&f,&m_i,this](const int j){if(dof[j])x_d[j]+=f[j]*dt2/m_i;});
+        Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+        
+        dof+=__dim__;
+        f+=__dim__;
+        x_d+=__dim__;
+        ++elem;
+    }
+    
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+}
+/*--------------------------------------------
  pre run check it throw excepctions
  --------------------------------------------*/
 void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
@@ -89,6 +183,23 @@ void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
         throw "atom "+gas_elem_name+" is not assigned to configuration";
     }
     
+    
+    if(!atoms->dof->is_empty())
+    {
+        bool* dof=atoms->dof->begin();
+        elem_type* elem=atoms->elem->begin();
+        int err_lcl=0;
+        for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
+        {
+            if(elem[i]==ielem)
+                Algebra::Do<__dim__>::func([&dof,&err_lcl](int i){ if(!dof[i]) err_lcl=1;});
+        }
+        
+        int err=0;
+        MPI_Allreduce(&err_lcl,&err,1,MPI_INT,MPI_MAX,atoms->world);
+        if(err)
+            throw std::string("cannot fix any degrees of freedom of any of the gas atoms (")+gas_elem_name+std::string(")");
+    }
 }
 /*--------------------------------------------
  
@@ -141,11 +252,12 @@ void MDMuVT::fin()
  --------------------------------------------*/
 void MDMuVT::run(int nsteps)
 {
+    
     int step=atoms->step;
     
     PGCMC gcmc(atoms,ff,dynamic,1,atoms->elements.find(gas_elem_name.c_str()),mu,T,seed);
     gcmc.init();
-
+    type0 gas_frac=static_cast<type0>(gcmc.tot_ngas)/static_cast<type0>(atoms->natms);
 #ifdef GCMCDEBUG
     type0 delta_u=0.0;
     FILE* fp_debug=NULL;
@@ -167,7 +279,8 @@ void MDMuVT::run(int nsteps)
     "S[2][2]",S_part[2][2],
     "S[1][2]",S_part[2][1],
     "S[2][0]",S_part[2][0],
-    "S[0][1]",S_part[1][0]);
+    "S[0][1]",S_part[1][0],
+    "GAS_FRAC",gas_frac);
     
     if(ntally) thermo.init();
     Algebra::DoLT<__dim__>::func([this](const int i,const int j)
@@ -197,6 +310,7 @@ void MDMuVT::run(int nsteps)
             delta_u=atoms->pe;
 #endif
             gcmc.xchng(false,nattempts);
+            gas_frac=static_cast<type0>(gcmc.tot_ngas)/static_cast<type0>(atoms->natms);
             ndof_part+=static_cast<type0>(gcmc.dof_diff);
             Algebra::Do<__nvoigt__>::func([this,&gcmc](const int i){mvv[i]+=gcmc.mvv[i];});
             T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);

@@ -48,66 +48,6 @@ void MDNVT::change_dt(type0 __dt)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNVT::update_x()
-{
-    type0* x=atoms->x->begin();
-    type0* x_d=atoms->x_d->begin();
-    const int natms_lcl=atoms->natms_lcl;
-    for(int i=0;i<natms_lcl;++i)
-    {
-        Algebra::Do<__dim__>::func(
-        [&x,&x_d,this](const int j){x[j]+=x_d[j]*dt;});
-        x+=__dim__;
-        x_d+=__dim__;
-    }
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MDNVT::update_x_d()
-{
-    
-    type0* f=ff->f->begin();
-    type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements.masses;
-    type0 m_i;
-    Algebra::zero<__nvoigt__>(__vec_lcl);
-    const int natms_lcl=atoms->natms_lcl;
-    if(dof_empty)
-    {
-        for(int i=0;i<natms_lcl;++i)
-        {
-            m_i=m[*elem];
-            Algebra::Do<__dim__>::func([&x_d,&f,&m_i,this](const int j){x_d[j]+=f[j]*dt2/m_i;});
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            f+=__dim__;
-            x_d+=__dim__;
-            ++elem;
-        }
-    }
-    else
-    {
-        bool* dof=atoms->dof->begin();
-        for(int i=0;i<natms_lcl;++i)
-        {
-            m_i=m[*elem];
-            Algebra::Do<__dim__>::func([&dof,&x_d,&f,&m_i,this](const int j){if(dof[j])x_d[j]+=f[j]*dt2/m_i;});
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            
-            dof+=__dim__;
-            f+=__dim__;
-            x_d+=__dim__;
-            ++elem;
-        }
-    }
-    
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 void MDNVT::update_x_d_final(type0 fac_x_d)
 {
     const int n=atoms->natms_lcl*__dim__;
@@ -117,46 +57,12 @@ void MDNVT::update_x_d_final(type0 fac_x_d)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNVT::update_x_d(type0 fac_x_d)
+void MDNVT::update_x_d_final_w_dof(type0 fac_x_d)
 {
-    
-    type0* f=ff->f->begin();
+    const int n=atoms->natms_lcl*__dim__;
     type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements.masses;
-    type0 m_i;
-    Algebra::zero<__nvoigt__>(__vec_lcl);
-    const int natms_lcl=atoms->natms_lcl;
-    if(dof_empty)
-    {
-        for(int i=0;i<natms_lcl;++i)
-        {
-            m_i=m[*elem];
-            Algebra::Do<__dim__>::func([&x_d,&f,&m_i,&fac_x_d,this](const int j){x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;});
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            f+=__dim__;
-            x_d+=__dim__;
-            ++elem;
-        }
-    }
-    else
-    {
-        bool* dof=atoms->dof->begin();
-        for(int i=0;i<natms_lcl;++i)
-        {
-            m_i=m[*elem];
-            Algebra::Do<__dim__>::func([&dof,&x_d,&f,&m_i,&fac_x_d,this](const int j){if(dof[j])x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;});
-            Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-            
-            dof+=__dim__;
-            f+=__dim__;
-            x_d+=__dim__;
-            ++elem;
-        }
-    }
-    
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+    bool* dof=atoms->dof->begin();
+    for(int i=0;i<n;i++) if(dof[i]) x_d[i]*=fac_x_d;
 }
 /*--------------------------------------------
  
@@ -204,6 +110,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     elem=atoms->elem->begin();
     Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms1=atoms->natms_lcl;
+
     for(int i=0;i<natms1;++i)
     {
         m_i=m[*elem];
@@ -212,6 +119,83 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
         
         f+=__dim__;
         x_d+=__dim__;
+        ++elem;
+    }
+    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
+{
+    type0* x=atoms->x->begin();
+    type0* f=ff->f->begin();
+    type0* x_d=atoms->x_d->begin();
+    elem_type* elem=atoms->elem->begin();
+    type0* m=atoms->elements.masses;
+    type0 m_i;
+    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    const int natms0=atoms->natms_lcl;
+    bool* dof=atoms->dof->begin();
+    for(int i=0;i<natms0;++i)
+    {
+        m_i=m[*elem];
+        Algebra::Do<__dim__>::func([&dof,&dx_lcl,&x_d,&x,&f,&m_i,&fac_x_d,this](const int j)
+        {
+            if(dof[j])
+            {
+                x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;
+                dx_lcl[j]+=x_d[j]*dt;
+            }
+            
+            x[j]+=x_d[j]*dt;
+        });
+        
+        f+=__dim__;
+        x_d+=__dim__;
+        x+=__dim__;
+        dof+=__dim__;
+        ++elem;
+    }
+    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    
+    Algebra::Do<__dim__>::func([&dx,this](const int i){dx[i]/=Ndof_part[i];});
+    x=atoms->x->begin();
+    dof=atoms->dof->begin();
+    for(int i=0;i<natms0;++i,x+=__dim__,dof+=__dim__)
+        Algebra::Do<__dim__>::func([&dx,&x,&dof](const int j){if(dof[j]) x[j]-=dx[j];});
+    
+    
+    
+    dynamic->update(atoms->x);
+    ff->force_calc_timer();
+    
+    f=ff->f->begin();
+    x_d=atoms->x_d->begin();
+    elem=atoms->elem->begin();
+    dof=atoms->dof->begin();
+    Algebra::zero<__nvoigt__>(__vec_lcl);
+    type0 __x_d[__dim__];
+    const int natms1=atoms->natms_lcl;
+
+    for(int i=0;i<natms1;++i)
+    {
+        m_i=m[*elem];
+        Algebra::Do<__dim__>::func([&x_d,&f,&m_i,&dof,&__x_d,this](const int j)
+        {
+            x_d[j]+=f[j]*dt2/m_i;
+            if(dof[j])
+                __x_d[j]=x_d[j];
+            else
+                __x_d[j]=0.0;
+        });
+        Algebra::DyadicV<__dim__>(m_i,__x_d,__vec_lcl);
+        
+        f+=__dim__;
+        x_d+=__dim__;
+        dof+=__dim__;
         ++elem;
     }
     MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
@@ -243,17 +227,29 @@ void MDNVT::pre_init()
     /*
      calculating the number of degress of freedom
      */
+    
+    int natms=atoms->natms;
     ndof_part=atoms->natms*__dim__;
+    Algebra::Do<__dim__>::func([this,&natms](int i){Ndof_part[i]=static_cast<type0>(natms);});
+    
     if(!dof_empty)
     {
         bool* dof=atoms->dof->begin();
-        int ndof_red_lcl=0;
-        const int n=atoms->natms_lcl*__dim__;
-        for(int i=0;i<n;i++)
-            if(!dof[i]) ndof_red_lcl++;
-        int ndof_red;
-        MPI_Allreduce(&ndof_red_lcl,&ndof_red,1,MPI_INT,MPI_SUM,atoms->world);
-        ndof_part-=ndof_red;
+        int Ndof_red_lcl[__dim__]={[0 ... __dim__-1]=0};
+        int natms_lcl=atoms->natms_lcl;
+        
+        for(int i=0;i<natms_lcl;i++,dof+=__dim__)
+            Algebra::Do<__dim__>::func([&dof,&Ndof_red_lcl](int j){if(!dof[j])Ndof_red_lcl[j]++;});
+        
+        int Ndof_red[__dim__]={[0 ... __dim__-1]=0};
+        
+        MPI_Allreduce(Ndof_red_lcl,Ndof_red,__dim__,MPI_INT,MPI_SUM,atoms->world);
+
+        Algebra::Do<__dim__>::func([&Ndof_red,this](int i)
+        {
+            ndof_part-=Ndof_red[i];
+            Ndof_part[i]-=static_cast<type0>(Ndof_red[i]);
+        });
     }
     
     /*
@@ -286,13 +282,13 @@ void MDNVT::pre_init()
         else
         {
             bool* dof=atoms->dof->begin();
-            
+            type0 __x_d[__dim__];
             for(int i=0;i<natms_lcl;i++)
             {
-                
-                Algebra::Do<__dim__>::func([&dof,&x_d](int i){x_d[i]=dof[i] ? x_d[i]:0.0;});
+                Algebra::V_eq<__dim__>(x_d,__x_d);
+                Algebra::Do<__dim__>::func([&dof,&x_d,&__x_d](int i){__x_d[i]=dof[i] ? x_d[i]:0.0;});
                 m_i=m[*elem];
-                Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
+                Algebra::DyadicV<__dim__>(m_i,__x_d,__vec_lcl);
                 
                 dof+=__dim__;
                 x_d+=__dim__;
@@ -373,38 +369,72 @@ void MDNVT::run(int nsteps)
     if(ntally) thermo.print(step);
     
     type0 fac,fac_x_d=1.0;
-    for(int istep=0;istep<nsteps;istep++)
+    if(dof_empty)
     {
-        // particle thermostat
-        fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
-        fac*=fac;
-        Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
-        T_part*=fac;
-        
-        
-        update_x_d__x__x_d(fac_x_d);
-        
-        
-        // particle thermostat
-        fac_x_d=fac=thermo_part(T_part/T,ndof_part);
-        fac*=fac;
-        Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
-        T_part*=fac;
-        
-        
-        Algebra::DoLT<__dim__>::func([this](const int i,const int j)
+        for(int istep=0;istep<nsteps;istep++)
         {
-            S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
-        });
-        
-        if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
-        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+            // particle thermostat
+            fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            update_x_d__x__x_d(fac_x_d);
+            
+            
+            // particle thermostat
+            fac_x_d=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            
+            Algebra::DoLT<__dim__>::func([this](const int i,const int j)
+            {
+                S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+            });
+            
+            if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
+            if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+        }
+    }
+    else
+    {
+        for(int istep=0;istep<nsteps;istep++)
+        {
+            // particle thermostat
+            fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            update_x_d__x__x_d_w_dof(fac_x_d);
+            
+            
+            // particle thermostat
+            fac_x_d=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            
+            Algebra::DoLT<__dim__>::func([this](const int i,const int j)
+            {
+                S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+            });
+            
+            if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
+            if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+        }
     }
     
     if(ntally && nsteps%ntally) thermo.print(step+nsteps);
     if(nevery_xprt && nsteps%nevery_xprt) xprt->write(step+nsteps);
     
-    update_x_d_final(fac_x_d);
+    if(dof_empty)
+        update_x_d_final(fac_x_d);
+    else
+        update_x_d_final_w_dof(fac_x_d);
     
     if(ntally) thermo.fin();
     

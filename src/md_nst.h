@@ -43,9 +43,8 @@ namespace MAPP_NS
         type0 tau[__dim__][__dim__];
         int nreset;
         
-        void update_x();
-        void update_x_d(type0=1.0);
         void update_x_d__x__x_d(type0);
+        void update_x_d__x__x_d_w_dof(type0);
         void update_V_H();
         void change_dt(type0);
         void pre_run_chk(AtomsMD*,ForceFieldMD*);

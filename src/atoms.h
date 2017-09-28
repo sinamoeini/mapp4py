@@ -924,7 +924,8 @@ namespace MAPP_NS
         
         
         
-        static void find(const size_t,const char*){}
+        static void find(const size_t,const char* name)
+        {throw std::string("no vriable named ")+name+std::string(" exists in the system");}
         static void init(PyObject*){}
         static void fin(){}
         static void pre_iter(){}

@@ -182,7 +182,7 @@ int AtomsDMD::setup_tp()
 
 #ifdef SC_DMD
 PyGetSetDef AtomsDMD::getset[]={[0 ... 18]={NULL,NULL,NULL,NULL,NULL}};
-#elif 
+#else
 PyGetSetDef AtomsDMD::getset[]={[0 ... 16]={NULL,NULL,NULL,NULL,NULL}};
 #endif
 
@@ -214,7 +214,7 @@ void AtomsDMD::setup_tp_getset()
 
 #ifdef SC_DMD
 PyMethodDef AtomsDMD::methods[]={[0 ... 14]={NULL,NULL,0,NULL}};
-#elif
+#else
 PyMethodDef AtomsDMD::methods[]={[0 ... 5]={NULL,NULL,0,NULL}};
 #endif
 /*--------------------------------------------*/

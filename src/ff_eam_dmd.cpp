@@ -343,7 +343,7 @@ void ForceFieldEAMDMD::force_calc()
             }
             else
                 fpair*=0.5;
-            Algebra::DyadicV(-fpair,dx_ij,&__vec_lcl[1]);
+            Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
         }
         
         f_alpha_i+=3.0*kbT*c_i/alpha_i;
@@ -644,7 +644,7 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
             else
                 fpair*=0.5;
             
-            Algebra::DyadicV(fpair*c_i*c[j],dx_ij,&__vec_lcl[1]);
+            Algebra::DyadicV<__dim__>(fpair*c_i*c[j],dx_ij,&__vec_lcl[1]);
             
         }
         
@@ -775,7 +775,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
                 df_pair*=0.5;
             }
             
-            Algebra::DyadicV(-df_pair*c_i*c[j],dx_ij,__vec_lcl);
+            Algebra::DyadicV<__dim__>(-df_pair*c_i*c[j],dx_ij,__vec_lcl);
             Algebra::DyadicV<__dim__>(-f_pair*c_i*c[j],ddx_ij,dx_ij,__vec_lcl);
             
         }
@@ -829,7 +829,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
             else
                 df_pair*=0.5;
             
-            Algebra::DyadicV(-df_pair*c_i*c[j],dx_ij,__vec_lcl);
+            Algebra::DyadicV<__dim__>(-df_pair*c_i*c[j],dx_ij,__vec_lcl);
 
         }
         
@@ -1374,7 +1374,7 @@ void ForceFieldEAMDMD::force_calc_static()
                 __vec_lcl[0]+=0.5*rho_phi[istart]*c_i*c[j];
             }
             
-            Algebra::DyadicV(-fpair,dx_ij,&__vec_lcl[1]);
+            Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
         }
     }
 }

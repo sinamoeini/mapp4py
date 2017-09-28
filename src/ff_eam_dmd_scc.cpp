@@ -13,6 +13,7 @@
 #define TOL 1.0e-8
 using namespace MAPP_NS;
 #define ROUND(rsq,dr_sq) static_cast<int>(floor(rsq/dr_sq+0.5))
+#ifdef SC_DMD
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
@@ -314,7 +315,9 @@ void ForceFieldEAMDMDSCC::force_calc()
     type0* f_alphavec=f_alpha->begin();
     type0 dx_ij[__dim__];
     type0 fpair,apair;
+#ifdef SC_DMD
     type0 delta=atoms->delta;
+#endif
     istart=iistart=0;
     for(int i=0;i<natms_lcl;i++)
     {
@@ -358,7 +361,7 @@ void ForceFieldEAMDMDSCC::force_calc()
                 fpair*=0.5;
             }
             
-            Algebra::DyadicV(-fpair,dx_ij,&__vec_lcl[1]);
+            Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
         }
         
         
@@ -569,9 +572,9 @@ void ForceFieldEAMDMDSCC::sc_loop()
     __vec_lcl[0]=__vec_lcl[1+__nvoigt__]=0.0;
     istart=0;
     iistart=0;
-    
+#ifdef SC_DMD
     type0 delta=atoms->delta;
-    
+#endif
     
     for(int i=0;i<natms_lcl;i++)
     {
@@ -1083,5 +1086,5 @@ void ForceFieldEAMDMDSCC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyM
     >>> sim.ff_eam_fs("potentials/FeH.eam.fs")
     )---";
 }
-
+#endif
 

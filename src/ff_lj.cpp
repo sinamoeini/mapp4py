@@ -203,7 +203,7 @@ void ForceFieldLJ::force_calc()
                 en*=0.5;
             }
             __vec_lcl[0]+=en;
-            Algebra::DyadicV(-fpair,dx_ij,&__vec_lcl[1]);
+            Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
         }
         
         Algebra::V_add<__dim__>(f_i,fvec+iatm*__dim__);

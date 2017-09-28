@@ -77,30 +77,6 @@ void MDNST::change_dt(type0 __dt)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::update_x()
-{
-    MDMath::calc(dt,V_H,MLT0,MLT1);
-    
-    type0* x=atoms->x->begin();
-    type0* x_d=atoms->x_d->begin();
-    for(int i=0;i<atoms->natms_lcl;++i)
-    {
-        Algebra::V_mul_MLT(x,MLT0,v0);
-        Algebra::V_mul_MLT(x_d,MLT1,v1);
-        
-        Algebra::Do<__dim__>::func(
-        [&x,this](const int j){x[j]=v0[j]+v1[j];});
-        
-        x+=__dim__;
-        x_d+=__dim__;
-    }
-    
-    Algebra::MLT_mul_MLT(atoms->H,MLT0,atoms->H);
-    atoms->update_H();
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 void MDNST::update_x_d__x__x_d(type0 xi)
 {
 
@@ -170,33 +146,77 @@ void MDNST::update_x_d__x__x_d(type0 xi)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MDNST::update_x_d(type0 fac_x_d)
+void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
 {
+
+    MDMath::calc(Algebra::Tr(V_H)/ndof_part,dt,dt2,V_H,MLT0,MLT1,MLT2);
+    type0* RESTRICT f=ff->f->begin();
+    type0* RESTRICT x=atoms->x->begin();
+    type0* RESTRICT x_d=atoms->x_d->begin();
+    elem_type* RESTRICT elem=atoms->elem->begin();
+    bool* RESTRICT dof=atoms->dof->begin();
     
-    Algebra::DoLT<__dim__>::func([this](int i,int j){MLT0[i][j]=-V_H[i][j];});
-    type0 tr=Algebra::Tr(V_H)/ndof_part;
-    Algebra::Do<__dim__>::func([this,&tr](int i){MLT0[i][i]-=tr;});
-    MDMath::calc(dt2,MLT0,MLT1,MLT2);
-    if(fac_x_d!=1.0) Algebra::DoLT<__dim__>::func([this,&fac_x_d](int i,int j){MLT1[i][j]*=fac_x_d;});
-    
-    type0* f=ff->f->begin();
-    type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements.masses;
-    type0 m_i;
-    Algebra::zero<__nvoigt__>(__vec_lcl);
-    
-    for(int i=0;i<atoms->natms_lcl;++i)
+    type0 m_i,m_inv;
+    const int natms0=atoms->natms_lcl;
+    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 __x_d[__dim__]={[0 ... __dim__-1]=0.0};
+    for(int i=0;i<natms0;++i)
     {
-        Algebra::V_mul_MLT(x_d,MLT1,v0);
-        Algebra::V_mul_MLT(f,MLT2,v1);
-        m_i=m[*elem];
+        m_inv=1.0/m[*elem];
+        Algebra::V_eq<__dim__>(x_d,__x_d);
+        MDMath::____NONAME0<__dim__,__dim__>::func(xi,x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        Algebra::Do<__dim__>::func([&__x_d,&x_d,&dof](const int j){if(!dof[j]) x_d[j]=__x_d[j];});
+        MDMath::____NONAME1<__dim__,__dim__>::func(x,&V_H[0][0],x_d,v0);
+        MDMath::____NONAME2<__dim__,__dim__>::func(v0,&MLT2[0][0]);
         
-        Algebra::Do<__dim__>::func([&x_d,&m_i,this](const int j){x_d[j]=v0[j]+v1[j]/m_i;});
+        Algebra::V_add<__dim__>(v0,x);
+        Algebra::V_add<__dim__>(v0,dx_lcl);
+        
+        f+=__dim__;
+        x_d+=__dim__;
+        x+=__dim__;
+        dof+=__dim__;
+        ++elem;
+    }
+    
+    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
+    type0 natms=static_cast<type0>(atoms->natms);
+    Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
+    x=atoms->x->begin();
+    for(int i=0;i<natms0;++i,x+=__dim__)
+        Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
+    
+    
+    Algebra::MLT_mul_MLT(MLT2,V_H,MLT2);
+    Algebra::Do<__dim__>::func([this](int i){MLT2[i][i]++;});
+    Algebra::MLT_mul_MLT(atoms->H,MLT2,atoms->H);
+    atoms->update_H();
+    
+    dynamic->update(atoms->x);
+    ff->force_calc_timer();
+    
+    
+    f=ff->f->begin();
+    x_d=atoms->x_d->begin();
+    elem=atoms->elem->begin();
+    dof=atoms->dof->begin();
+    Algebra::zero<__nvoigt__>(__vec_lcl);
+    const int natms1=atoms->natms_lcl;
+    for(int i=0;i<natms1;++i)
+    {
+        m_i=m[*elem];
+        m_inv=1.0/m_i;
+        
+        Algebra::V_eq<__dim__>(x_d,__x_d);
+        MDMath::____NONAME0<__dim__,__dim__>::func(x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        Algebra::Do<__dim__>::func([&__x_d,&x_d,&dof](const int j){if(!dof[j]) x_d[j]=__x_d[j];});
         Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
         
         f+=__dim__;
         x_d+=__dim__;
+        dof+=__dim__;
         ++elem;
     }
     MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
@@ -399,10 +419,8 @@ void MDNST::run(int nsteps)
         
         update_V_H();
         
-        
         update_x_d__x__x_d(fac_x_d);
         
-
         update_V_H();
         
         // particle thermostat

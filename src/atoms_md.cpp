@@ -159,7 +159,7 @@ void AtomsMD::DO(PyObject* op)
     VecPy<bool,Func_dof> dof_vec_py(dof,func_dof);
     try
     {
-        VecPyFunc::Do(this,op,id_vec_py,x_vec_py,x_d_vec_py,elem_vec_py);
+        VecPyFunc::Do(this,op,id_vec_py,x_vec_py,x_d_vec_py,elem_vec_py,dof_vec_py);
     }
     catch(std::string& err_msg)
     {

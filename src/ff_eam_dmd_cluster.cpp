@@ -362,7 +362,7 @@ void ForceFieldEAMDMDCLUSTER::force_calc()
                 fpair*=0.5;
             }
             
-            Algebra::DyadicV(-fpair,dx_ij,&__vec_lcl[1]);
+            Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
         }
         
         
@@ -1324,8 +1324,9 @@ void ForceFieldEAMDMDCLUSTER::__sc_loop()
         dynamic->update(dE_ptr);
     }
     
-    
+#ifdef SC_DMD
     atoms->BB=tt;
+#endif
 }
 /*--------------------------------------------
  
@@ -1560,9 +1561,9 @@ void ForceFieldEAMDMDCLUSTER::___sc_loop()
         dynamic->update(dE_ptr);
     }
     
-    
+ #ifdef SC_DMD
     atoms->BB=tt;
-    
+#endif
     
     
 }

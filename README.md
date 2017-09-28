@@ -1,4 +1,4 @@
-MAPP is a parallel atomistic simulation package written entirely in C++, it is presented in form of a `python <http://www.python.org>`_ package in order to facilitate usage. Some of the main features of MAPP are:
+MAPP is a parallel atomistic simulation package written entirely in C++, it is presented in form of a [python](http://www.python.org) package in order to facilitate usage. Some of the main features of MAPP are:
 
   * Molecular Dynamics (MD)
   * Diffusive Molecular Dynamics (DMD) canonical ensemble

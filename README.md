@@ -1,5 +1,11 @@
 
-# ![alt text](http://l17.mit.edu/~sina/_static/logo.png) MAPP (MIT Atomistic Parallel Package)
+
+
+
+<a href="http://www.mit.edu/~sinam/mapp" target="_blank"><img src="http://l17.mit.edu/~sina/_static/logo.png"
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+
+MAPP (MIT Atomistic Parallel Package)
 MAPP is a parallel atomistic simulation package written entirely in C++, it is presented in form of a [python](http://www.python.org) package in order to facilitate usage. Some of the main features of MAPP are:
 
   * Molecular Dynamics (MD)

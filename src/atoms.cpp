@@ -779,7 +779,7 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="strain";
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<type0[__dim__][__dim__]> f("strain",{"E"});
@@ -824,7 +824,7 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
             Algebra::V_mul_MLT(x,F,x);
         */
         Py_RETURN_NONE;
-    };
+    });
     
     tp_methods.ml_doc=R"---(
     strain(E)
@@ -849,7 +849,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="mul";
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<int[__dim__]> f("mul",{"n"});
@@ -894,7 +894,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
             Algebra::V_mul_MLT(x,F,x);*/
         
         Py_RETURN_NONE;
-    };
+    });
     
     tp_methods.ml_doc=R"---(
     strain(E)
@@ -919,7 +919,7 @@ void Atoms::ml_do(PyMethodDef& tp_method)
 {
     tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_method.ml_name="do";
-    tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_method.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         
@@ -940,7 +940,7 @@ void Atoms::ml_do(PyMethodDef& tp_method)
         }
 
         Py_RETURN_NONE;
-    };
+    });
     tp_method.ml_doc=R"---(
     do(func)
     

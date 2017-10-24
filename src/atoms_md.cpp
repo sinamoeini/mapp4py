@@ -323,7 +323,7 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
 {
     tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_method.ml_name="create_temp";
-    tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_method.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<type0,int> f("create_temp",{"temp","seed"});
@@ -334,7 +334,7 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
         __self->atoms->create_T(f.val<0>(),f.val<1>());
         Py_RETURN_NONE;
-    };
+    });
     tp_method.ml_doc=R"---(
     create_temp(temp,seed)
     
@@ -360,7 +360,7 @@ void AtomsMD::ml_add_elem(PyMethodDef& tp_method)
 {
     tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_method.ml_name="add_elem";
-    tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_method.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<std::string,type0> f("add_elem",{"elem","mass"});
@@ -371,7 +371,7 @@ void AtomsMD::ml_add_elem(PyMethodDef& tp_method)
         __self->atoms->elements.add_type(f.val<1>(),f.val<0>().c_str());
         
         Py_RETURN_NONE;
-    };
+    });
     tp_method.ml_doc=R"---(
     add_elem(elem,mass)
     

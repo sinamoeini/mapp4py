@@ -539,7 +539,7 @@ void DAE::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";    
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         Object* __self=reinterpret_cast<Object*>(self);
@@ -589,7 +589,7 @@ void DAE::ml_run(PyMethodDef& tp_methods)
         __self->dae->atoms=NULL;
         
         Py_RETURN_NONE;
-    };
+    });
     
     tp_methods.ml_doc=(char*)R"---(
     run(atoms,t)
@@ -638,7 +638,7 @@ void DAE::ml_Jtest(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="Jtest";
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         
@@ -825,7 +825,7 @@ void DAE::ml_Jtest(PyMethodDef& tp_methods)
         delete dynamic;
         
         Py_RETURN_NONE;
-    };
+    });
     
     tp_methods.ml_doc=(char*)R"---(
 

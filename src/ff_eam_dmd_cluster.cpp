@@ -1657,7 +1657,7 @@ void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1
 {
     method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_0.ml_name="ff_eam_funcfl_cluster";
-    method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    method_0.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
@@ -1702,7 +1702,7 @@ void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1
         delete __self->ff;
         __self->ff=new ForceFieldEAMDMDCLUSTER(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
-    };
+    });
     method_0.ml_doc=(char*)R"---(
     ff_eam_funcfl(funcfl_files,r_crd,C,elems=None)
    
@@ -1746,7 +1746,7 @@ void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1
     
     method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_1.ml_name="ff_eam_setfl_cluster";
-    method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    method_1.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
@@ -1792,7 +1792,7 @@ void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1
         delete __self->ff;
         __self->ff=new ForceFieldEAMDMDCLUSTER(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
-    };
+    });
     method_1.ml_doc=(char*)R"---(
     ff_eam_setfl(setfl_file,r_crd,C,elems=None)
    
@@ -1836,7 +1836,7 @@ void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1
     
     method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_2.ml_name="ff_eam_fs_cluster";
-    method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)
+    method_2.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
@@ -1881,7 +1881,7 @@ void ForceFieldEAMDMDCLUSTER::ml_new(PyMethodDef& method_0,PyMethodDef& method_1
         delete __self->ff;
         __self->ff=new ForceFieldEAMDMDCLUSTER(__self->atoms,dr,drho,nr,nrho,std::move(r_phi),std::move(rho),std::move(F),std::move(r_c),f.mov<1>(),f.mov<2>());
         Py_RETURN_NONE;
-    };
+    });
     method_2.ml_doc=(char*)R"---(
     ff_eam_fs(fs_file,r_crd,C,elems=None)
    

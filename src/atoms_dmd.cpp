@@ -78,7 +78,8 @@ type0 AtomsDMD::vac_msd()
 {
     type0* __c=c->begin();
     type0* __x=x->begin();
-    type0 cv_vals_lcl[__dim__+2]={[0 ... __dim__+1]=0.0};
+    type0 cv_vals_lcl[__dim__+2];
+    Algebra::zero<__dim__+2>(cv_vals_lcl);
     type0 __xi[__dim__];
     type0 cv;
     for(int i=0;i<natms_lcl;i++,__c+=c_dim,__x+=__dim__)
@@ -97,6 +98,7 @@ type0 AtomsDMD::vac_msd()
     }
     
     type0 cv_vals[__dim__+2]={[0 ... __dim__+1]=0.0};
+    Algebra::zero<__dim__+2>(cv_vals);
     
     MPI_Allreduce(cv_vals_lcl,cv_vals,__dim__+2,Vec<type0>::MPI_T,MPI_SUM,world);
     

@@ -12,8 +12,9 @@ const char* Min::err_msgs[]=
     [MIN_S_TOLERANCE]="minimization finished: energy tolerance reached\n",
     [MIN_F_MAX_ITER]="minimization finished: maximum iteration reached\n",
     [B_S]="",
-    [B_F_DOWNHILL]="bracketing failed: not downhill direction\n",
-    [B_F_MAX_ALPHA]="bracketing failed: maximum alpha reached\n"
+    [B_F_MAX_ALPHA]="bracketing failed: maximum alpha reached\n",
+    [B_F_DOWNHILL]="bracketing failed: not downhill direction\n"
+    
 };
 /*--------------------------------------------
  constructor

@@ -11,7 +11,7 @@ void ExamplePython::setup_tp_methods()
 {
     tp_methods[0].ml_name="func";
     tp_methods[0].ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods[0].ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods[0].ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
 
@@ -152,7 +152,7 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
     tp_methods.ml_name="test";
     tp_methods.ml_doc="run simulation for n steps";
     
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<OP<AtomsDMD>>f("test",{"atoms"});
@@ -337,7 +337,7 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="phonon";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         /*
@@ -528,7 +528,7 @@ void ExamplePython::ml_phonon_1d(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="phonon_1d";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<OP<AtomsMD>,type0> f("phonon",{"atoms","max_disp"});
@@ -581,7 +581,7 @@ void ExamplePython::ml_phonon_1dd(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="phonon_1dd";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<OP<AtomsMD>,type0> f("phonon",{"atoms","max_disp"});
@@ -643,7 +643,7 @@ void ExamplePython::ml_alpha(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="alpha";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);
@@ -721,7 +721,7 @@ void ExamplePython::ml_delta_c(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="delta_c";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);
@@ -751,7 +751,7 @@ void ExamplePython::ml_mv_c(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="mv_c";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);
@@ -787,7 +787,7 @@ void ExamplePython::ml_mv_c2(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="mv_c2";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);
@@ -849,7 +849,7 @@ void ExamplePython::ml_mv_c3(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="mv_c3";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);
@@ -893,7 +893,7 @@ void ExamplePython::ml_prt(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="prt";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         //Object* __self=reinterpret_cast<Object*>(self);

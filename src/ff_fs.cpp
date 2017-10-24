@@ -73,7 +73,7 @@ void ForceFieldFS::ml_new(PyMethodDef& tp_methods)
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="ff_fs";
     
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);

@@ -790,7 +790,7 @@ void ForceFieldEAMDMDSCC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyM
 {
     method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_0.ml_name="ff_eam_funcfl_scc";
-    method_0.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
@@ -879,7 +879,7 @@ void ForceFieldEAMDMDSCC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyM
     
     method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_1.ml_name="ff_eam_setfl_scc";
-    method_1.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);
@@ -969,7 +969,7 @@ void ForceFieldEAMDMDSCC::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyM
     
     method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
     method_2.ml_name="ff_eam_fs_scc";
-    method_2.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsDMD::Object* __self=reinterpret_cast<AtomsDMD::Object*>(self);

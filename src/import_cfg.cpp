@@ -627,7 +627,7 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
     
     )---";
     
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<std::string,OP<MAPP_MPI>> f("cfg",{"cfg_file","mpi"});
@@ -949,7 +949,7 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
        0.333333 0.75000 0.58333 0.0 0.1 -1.0 0.00000001
        0.333333 0.25000 0.08333 0.0 0.1 -1.0 0.00000001
     )---";
-    tp_methods.ml_meth=(PyCFunction)((PyCFunctionWithKeywords)
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* type,PyObject* args,PyObject* kwds)->PyObject*
     {
         FuncAPI<int,std::string,OP<MAPP_MPI>> f("cfg",{"N","cfg_file","mpi"});

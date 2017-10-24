@@ -97,7 +97,7 @@ type0 AtomsDMD::vac_msd()
         cv_vals_lcl[__dim__+1]+=cv;
     }
     
-    type0 cv_vals[__dim__+2]={[0 ... __dim__+1]=0.0};
+    type0 cv_vals[__dim__+2];
     Algebra::zero<__dim__+2>(cv_vals);
     
     MPI_Allreduce(cv_vals_lcl,cv_vals,__dim__+2,Vec<type0>::MPI_T,MPI_SUM,world);

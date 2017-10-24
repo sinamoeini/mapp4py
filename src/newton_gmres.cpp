@@ -15,8 +15,8 @@ xprt(NULL),
 ntally(1000),
 m(0),
 chng_box(false),
-S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
-S{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}}
+S_dof{DESIG2(__dim__,__dim__,false)},
+S{DESIG2(__dim__,__dim__,NAN)}
 {
 }
 /*--------------------------------------------
@@ -49,11 +49,11 @@ void NewtonGMRES::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
     if(!__atoms->dof->is_empty())
     {
         bool* dof=__atoms->dof->begin();
-        int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
+        int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
-        int __dof[__dim__]{[0 ... __dim__-1]=0};
+        int __dof[__dim__]{DESIG(__dim__,0)};
         MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
         std::string err_msg=std::string();
         for(int i=0;i<__dim__;i++)
@@ -311,7 +311,7 @@ int NewtonGMRES::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef NewtonGMRES::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef NewtonGMRES::getset[]=EmptyPyGetSetDef(7);
 /*--------------------------------------------*/
 void NewtonGMRES::setup_tp_getset()
 {
@@ -323,7 +323,7 @@ void NewtonGMRES::setup_tp_getset()
     getset_m(getset[5]);
 }
 /*--------------------------------------------*/
-PyMethodDef NewtonGMRES::methods[]={[0 ... 1]={NULL}};
+PyMethodDef NewtonGMRES::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void NewtonGMRES::setup_tp_methods()
 {

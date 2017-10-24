@@ -17,7 +17,7 @@ const char* Min::err_msgs[]=
  constructor
  --------------------------------------------*/
 Min::Min():
-H_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
+H_dof{DESIG2(__dim__,__dim__,false)},
 ls(NULL),
 chng_box(false),
 e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
@@ -30,7 +30,7 @@ ntally(1000)
  constructor
  --------------------------------------------*/
 Min::Min(type0 __e_tol,bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
-H_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}},
+H_dof{DESIG2(__dim__,__dim__,false)},
 ls(__ls),
 chng_box(false),
 e_tol(__e_tol),
@@ -68,11 +68,11 @@ void Min::pre_run_chk(Atoms* atoms,ForceField* ff)
     if(chng_box && !atoms->dof->is_empty())
     {
         bool* dof=atoms->dof->begin();
-        int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
+        int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
-        int __dof[__dim__]{[0 ... __dim__-1]=0};
+        int __dof[__dim__]{DESIG(__dim__,0)};
         MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
         std::string err_msg=std::string();
         for(int i=0;i<__dim__;i++)
@@ -164,7 +164,7 @@ int Min::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef Min::getset[]={[0 ... 5]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef Min::getset[]=EmptyPyGetSetDef(6);
 /*--------------------------------------------*/
 void Min::setup_tp_getset()
 {
@@ -175,7 +175,7 @@ void Min::setup_tp_getset()
     getset_ntally(getset[4]);
 }
 /*--------------------------------------------*/
-PyMethodDef Min::methods[]={[0 ... 0]={NULL}};
+PyMethodDef Min::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void Min::setup_tp_methods()
 {

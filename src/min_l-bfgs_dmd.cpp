@@ -263,14 +263,14 @@ int MinLBFGSDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinLBFGSDMD::getset[]={[0 ... 1]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinLBFGSDMD::getset[]=EmptyPyGetSetDef(2);
 /*--------------------------------------------*/
 void MinLBFGSDMD::setup_tp_getset()
 {
     getset_m(getset[0]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinLBFGSDMD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef MinLBFGSDMD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void MinLBFGSDMD::setup_tp_methods()
 {

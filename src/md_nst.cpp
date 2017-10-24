@@ -15,15 +15,15 @@ MDNST::MDNST(type0(&__S)[__dim__][__dim__],type0 __T,type0 __dt):
 MDNVT(__T,__dt),
 thermo_baro(__dt/2.0,1000.0*__dt,3,1),
 nreset(0),
-MLT0{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-MLT1{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-MLT2{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-S{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-S_dev{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-B_ref{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-tau{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-V_H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-S_dof{[0 ... __dim__-1]={[0 ... __dim__-1]=false}}
+MLT0{DESIG2(__dim__,__dim__,0.0)},
+MLT1{DESIG2(__dim__,__dim__,0.0)},
+MLT2{DESIG2(__dim__,__dim__,0.0)},
+S{DESIG2(__dim__,__dim__,0.0)},
+S_dev{DESIG2(__dim__,__dim__,0.0)},
+B_ref{DESIG2(__dim__,__dim__,0.0)},
+tau{DESIG2(__dim__,__dim__,0.0)},
+V_H{DESIG2(__dim__,__dim__,0.0)},
+S_dof{DESIG2(__dim__,__dim__,false)}
 {
     
     Algebra::DoLT<__dim__>::func([this,&__S,&__dt]
@@ -88,7 +88,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     type0* m=atoms->elements.masses;
     type0 m_i,m_inv;
     const int natms0=atoms->natms_lcl;
-    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
     for(int i=0;i<natms0;++i)
     {
         m_inv=1.0/m[*elem];
@@ -105,7 +105,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
         ++elem;
     }
     
-    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx[__dim__]={DESIG(__dim__,0.0)};
     MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     type0 natms=static_cast<type0>(atoms->natms);
     Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
@@ -159,8 +159,8 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
     type0* m=atoms->elements.masses;
     type0 m_i,m_inv;
     const int natms0=atoms->natms_lcl;
-    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
-    type0 __x_d[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
+    type0 __x_d[__dim__]={DESIG(__dim__,0.0)};
     for(int i=0;i<natms0;++i)
     {
         m_inv=1.0/m[*elem];
@@ -180,7 +180,7 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
         ++elem;
     }
     
-    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx[__dim__]={DESIG(__dim__,0.0)};
     MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     type0 natms=static_cast<type0>(atoms->natms);
     Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
@@ -243,11 +243,11 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     if(!atoms->dof->is_empty())
     {
         bool* dof=atoms->dof->begin();
-        int __dof_lcl[__dim__]{[0 ... __dim__-1]=0};
+        int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
-        int __dof[__dim__]{[0 ... __dim__-1]=0};
+        int __dof[__dim__]{DESIG(__dim__,0)};
         MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
         std::string err_msg=std::string();
         for(int i=0;i<__dim__;i++)
@@ -579,7 +579,7 @@ int MDNST::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MDNST::getset[]={[0 ... 6]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MDNST::getset[]=EmptyPyGetSetDef(7);
 /*--------------------------------------------*/
 void MDNST::setup_tp_getset()
 {

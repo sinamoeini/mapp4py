@@ -204,7 +204,7 @@ void ForceFieldEAMDMDSCC::force_calc()
                     type0* coef;
                     
                     
-                    type0 H[3][3]{[0 ... 2]={[0 ... 2]=0.0}};
+                    type0 H[3][3]{DESIG2(3,3,0.0)};
                     for(int l=0;l<N;l++)
                     {
                         if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -447,7 +447,7 @@ void ForceFieldEAMDMDSCC::energy_calc()
                     type0* coef;
                     
                     
-                    type0 H[3][1]{[0 ... 2]={[0 ... 0]=0.0}};
+                    type0 H[3][1]{DESIG2(3,1,0.0)};
                     for(int l=0;l<N;l++)
                     {
                         if(xi[l]<=lower && xi[l]>=upper) continue;

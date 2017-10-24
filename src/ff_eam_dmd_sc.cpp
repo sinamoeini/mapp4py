@@ -204,7 +204,7 @@ void ForceFieldEAMDMDSC::force_calc()
                     type0* coef;
                     
                     
-                    type0 H[3][3]{[0 ... 2]={[0 ... 2]=0.0}};
+                    type0 H[3][3]{DESIG2(3,3,0.0)};
                     for(int l=0;l<N;l++)
                     {
                         if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -439,7 +439,7 @@ void ForceFieldEAMDMDSC::energy_calc()
                     type0* coef;
                     
                     
-                    type0 H[3][1]{[0 ... 2]={[0 ... 0]=0.0}};
+                    type0 H[3][1]{DESIG2(3,1,0.0)};
                     for(int l=0;l<N;l++)
                     {
                         if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -547,7 +547,7 @@ void ForceFieldEAMDMDSC::sc_loop___()
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    type0 A[2][2]{DESIG2(2,2,1.0)};
     size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -770,7 +770,7 @@ void ForceFieldEAMDMDSC::sc_loop()
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    type0 A[2][2]{DESIG2(2,2,1.0)};
     size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -1004,7 +1004,7 @@ void ForceFieldEAMDMDSC::sc_loop__Z6_2nd()
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    type0 A[2][2]{DESIG2(2,2,1.0)};
     size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -1269,7 +1269,7 @@ void ForceFieldEAMDMDSC::sc_loop__()
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    type0 A[2][2]{DESIG2(2,2,1.0)};
     size_t m,iistart,istart;
     type0 ent_corr_lcl=0.0,prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
@@ -1467,7 +1467,7 @@ void ForceFieldEAMDMDSC::sc_loop_cluster()
     type0* rho=rho_ptr->begin();
     
     type0* coef;
-    type0 A[2][2]{[0 ... 1]={[0 ... 1]=1.0}};
+    type0 A[2][2]{DESIG2(2,2,1.0)};
     size_t m,iistart,istart;
     type0 prev_en,curr_en;
     MPI_Allreduce(__vec_lcl,&prev_en,1,Vec<type0>::MPI_T,MPI_SUM,world);

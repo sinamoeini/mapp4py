@@ -10,7 +10,7 @@ Atoms(world),
 xi(new type0[__N]),
 wi(new type0[__N]),
 temp(NAN),
-S_fe{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}},
+S_fe{DESIG2(__dim__,__dim__,NAN)},
 fe(NAN),
 s(NAN)
 {
@@ -183,9 +183,9 @@ int AtomsDMD::setup_tp()
 /*--------------------------------------------*/
 
 #ifdef SC_DMD
-PyGetSetDef AtomsDMD::getset[]={[0 ... 18]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(19);
 #else
-PyGetSetDef AtomsDMD::getset[]={[0 ... 16]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(17);
 #endif
 
 /*--------------------------------------------*/
@@ -215,9 +215,9 @@ void AtomsDMD::setup_tp_getset()
 /*--------------------------------------------*/
 
 #ifdef SC_DMD
-PyMethodDef AtomsDMD::methods[]={[0 ... 14]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(15);
 #else
-PyMethodDef AtomsDMD::methods[]={[0 ... 5]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(6);
 #endif
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()

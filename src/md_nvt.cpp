@@ -75,7 +75,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
-    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
     const int natms0=atoms->natms_lcl;
     for(int i=0;i<natms0;++i)
     {
@@ -92,7 +92,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
         x+=__dim__;
         ++elem;
     }
-    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx[__dim__]={DESIG(__dim__,0.0)};
     MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     type0 natms=static_cast<type0>(atoms->natms);
     Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
@@ -135,7 +135,7 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
-    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
     const int natms0=atoms->natms_lcl;
     bool* dof=atoms->dof->begin();
     for(int i=0;i<natms0;++i)
@@ -158,7 +158,7 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
         dof+=__dim__;
         ++elem;
     }
-    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx[__dim__]={DESIG(__dim__,0.0)};
     MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     
     Algebra::Do<__dim__>::func([&dx,this](const int i){dx[i]/=Ndof_part[i];});
@@ -235,13 +235,13 @@ void MDNVT::pre_init()
     if(!dof_empty)
     {
         bool* dof=atoms->dof->begin();
-        int Ndof_red_lcl[__dim__]={[0 ... __dim__-1]=0};
+        int Ndof_red_lcl[__dim__]={DESIG(__dim__,0)};
         int natms_lcl=atoms->natms_lcl;
         
         for(int i=0;i<natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&Ndof_red_lcl](int j){if(!dof[j])Ndof_red_lcl[j]++;});
         
-        int Ndof_red[__dim__]={[0 ... __dim__-1]=0};
+        int Ndof_red[__dim__]={DESIG(__dim__,0)};
         
         MPI_Allreduce(Ndof_red_lcl,Ndof_red,__dim__,MPI_INT,MPI_SUM,atoms->world);
 
@@ -536,7 +536,7 @@ int MDNVT::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MDNVT::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MDNVT::getset[]=EmptyPyGetSetDef(8);
 /*--------------------------------------------*/
 void MDNVT::setup_tp_getset()
 {
@@ -549,7 +549,7 @@ void MDNVT::setup_tp_getset()
     getset_ntally(getset[6]);
 }
 /*--------------------------------------------*/
-PyMethodDef MDNVT::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MDNVT::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void MDNVT::setup_tp_methods()
 {

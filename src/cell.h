@@ -45,7 +45,7 @@ head_atm(NULL)
     rel_neigh_lst=new int[nneighs];
     rel_neigh_lst_coord=new int[nneighs][__dim__];
     
-    int countr[__dim__]={[0 ... __dim__-1]=-M};
+    int countr[__dim__]={DESIG(__dim__,-M)};
     constexpr int max_nneighs=Algebra::pow<2*M+1,__dim__>();
     
     int sum,icurs=0;
@@ -92,7 +92,7 @@ Cell<M>::~Cell()
 template<const int M>
 int Cell<M>::neigh_size()
 {
-    int countr[__dim__]={[0 ... __dim__-1]=-M};
+    int countr[__dim__]={DESIG(__dim__,-M)};
     constexpr int max_nneighs=Algebra::pow<2*M+1,__dim__>();
     constexpr int rc_sq=M*M;
     int ans=0;

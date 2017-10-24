@@ -455,7 +455,7 @@ int MinCGDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCGDMD::getset[]={[0 ... 8]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinCGDMD::getset[]=EmptyPyGetSetDef(9);
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp_getset()
 {
@@ -469,7 +469,7 @@ void MinCGDMD::setup_tp_getset()
     getset_export(getset[7]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCGDMD::methods[]={[0 ... 2]={NULL}};
+PyMethodDef MinCGDMD::methods[]=EmptyPyMethodDef(3);
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp_methods()
 {

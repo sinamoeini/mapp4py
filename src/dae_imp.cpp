@@ -376,7 +376,7 @@ int DAEImplicit::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEImplicit::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEImplicit::getset[]=EmptyPyGetSetDef(3);
 /*--------------------------------------------*/
 void DAEImplicit::setup_tp_getset()
 {
@@ -384,7 +384,7 @@ void DAEImplicit::setup_tp_getset()
     getset_max_nnewton_iters(getset[1]);
 }
 /*--------------------------------------------*/
-PyMethodDef DAEImplicit::methods[]={[0 ... 0]={NULL}};
+PyMethodDef DAEImplicit::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void DAEImplicit::setup_tp_methods()
 {

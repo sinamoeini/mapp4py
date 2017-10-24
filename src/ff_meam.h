@@ -242,7 +242,7 @@ namespace MAPP_NS
         type0 phi_ij,type0 dphi_ij,
         type0 r_ij,type0 S_ij,type0 dS_ij_ij)
         {
-            type0 dF_ij[3]={[0 ... 2]=0.0};
+            type0 dF_ij[3]={DESIG(3,0.0)};
             type0 fpair=0.0;
             type0 spair=0.0;
             type0 r_ij_inv=1.0/r_ij;

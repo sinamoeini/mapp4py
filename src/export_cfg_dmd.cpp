@@ -347,13 +347,13 @@ int ExportCFGDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef ExportCFGDMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef ExportCFGDMD::getset[]=EmptyPyGetSetDef(1);
 /*--------------------------------------------*/
 void ExportCFGDMD::setup_tp_getset()
 {
 }
 /*--------------------------------------------*/
-PyMethodDef ExportCFGDMD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef ExportCFGDMD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void ExportCFGDMD::setup_tp_methods()
 {

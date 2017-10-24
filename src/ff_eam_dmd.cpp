@@ -200,7 +200,7 @@ void ForceFieldEAMDMD::force_calc()
             type0* coef;
             
             
-            type0 H[3][5]{[0 ... 2]={[0 ... 4]=0.0}};
+            type0 H[3][5]{DESIG2(3,5,0.0)};
             for(int l=0;l<N;l++)
             {
                 if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -307,7 +307,7 @@ void ForceFieldEAMDMD::force_calc()
     
     type0* fvec=f->begin();
     type0* f_alphavec=f_alpha->begin();
-    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
     istart=0;
     for(int i=0;i<n;i++)
@@ -435,7 +435,7 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
             
             
             
-            type0 H[3][5]{[0 ... 2]={[0 ... 4]=0.0}};
+            type0 H[3][5]{DESIG2(3,5,0.0)};
             for(int l=0;l<N;l++)
             {
                 if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -607,7 +607,7 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
     for(int i=0;i<natms_lcl*__dim__;i++) fvec[i]=0.0;
     
     
-    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
     type0 dx_ij[__dim__];
     type0 norm_sq_lcl=0.0,fpair,apair;
@@ -882,7 +882,7 @@ void ForceFieldEAMDMD::energy_calc()
             
             r_inv=1.0/r;
             
-            type0 __arr[3]{[0 ... 2]=0.0};
+            type0 __arr[3]{DESIG(3,0.0)};
             for(int l=0;l<N;l++)
             {
                 if(xi[l]<=lower && xi[l]>=upper) continue;
@@ -1258,7 +1258,7 @@ void ForceFieldEAMDMD::calc_mu()
     
     
     type0* x=atoms->x->begin();
-    type0 f_i[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
     type0 dx_ij[__dim__];
     type0 norm_sq_lcl=0.0,fpair,apair;

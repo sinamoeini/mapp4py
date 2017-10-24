@@ -45,3 +45,9 @@ namespace MAPP_NS
     constexpr type0 sqrt_2=1.4142135623730951454746218587388284504413604736328125;
 }
 #endif /* type_def_h */
+
+#define DESIG___dim__(v) DESIG_3(v)
+#define DESIG____dim__(n,v) DESIG__3(n,v)
+
+#include "macro_extra.h"
+

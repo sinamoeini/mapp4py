@@ -7,5 +7,6 @@ doc
 doc/src/generated
 doc/build
 doc/scipy-sphinx-theme
+src/gen_macro
 Makefile
 setup.py

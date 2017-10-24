@@ -13,13 +13,14 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 DAEBDF::DAEBDF():
 DAEImplicit(),
-t{[0 ... max_q]=0.0},
-l{[0 ... max_q]=0.0},
-A{[0 ... max_q]={[0 ... max_q]= 0.0}},
-A_bar{[0 ... max_q]={[0 ... max_q]= 0.0}},
 z(NULL),
 dy(NULL)
 {
+    Algebra::zero<max_q+1>(t);
+    Algebra::zero<max_q+1>(l);
+    Algebra::zero<(max_q+1)*(max_q+1)>(A[0]);
+    Algebra::zero<(max_q+1)*(max_q+1)>(A_bar[0]);
+    
     for(int i=0;i<max_q+1;i++)
         A[0][i]=A[i][i]=1.0;
     
@@ -745,7 +746,7 @@ int DAEBDF::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEBDF::getset[]={[0 ... 9]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef DAEBDF::getset[]=EmptyPyGetSetDef(10);
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_getset()
 {
@@ -761,7 +762,7 @@ void DAEBDF::setup_tp_getset()
     
 }
 /*--------------------------------------------*/
-PyMethodDef DAEBDF::methods[]={[0 ... 1]={NULL}};
+PyMethodDef DAEBDF::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void DAEBDF::setup_tp_methods()
 {

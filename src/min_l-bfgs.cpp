@@ -276,13 +276,13 @@ int MinLBFGS::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyMethodDef MinLBFGS::methods[]={[0 ... 0]={NULL}};
+PyMethodDef MinLBFGS::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void MinLBFGS::setup_tp_methods()
 {
 }
 /*--------------------------------------------*/
-PyGetSetDef MinLBFGS::getset[]={[0 ... 1]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinLBFGS::getset[]=EmptyPyGetSetDef(2);
 /*--------------------------------------------*/
 void MinLBFGS::setup_tp_getset()
 {

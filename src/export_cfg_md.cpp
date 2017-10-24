@@ -294,7 +294,7 @@ int ExportCFGMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef ExportCFGMD::getset[]={[0 ... 2]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef ExportCFGMD::getset[]=EmptyPyGetSetDef(3);
 /*--------------------------------------------*/
 void ExportCFGMD::setup_tp_getset()
 {
@@ -302,7 +302,7 @@ void ExportCFGMD::setup_tp_getset()
     getset_extra_vecs(getset[1]);
 }
 /*--------------------------------------------*/
-PyMethodDef ExportCFGMD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef ExportCFGMD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void ExportCFGMD::setup_tp_methods()
 {

@@ -177,7 +177,7 @@ void ForceFieldLJ::force_calc()
     {
         ielem=evec[iatm];
         Algebra::V_eq<__dim__>(x+iatm*__dim__,x_i);
-        type0 f_i[__dim__]{[0 ... __dim__-1]=0.0};
+        type0 f_i[__dim__]{DESIG(__dim__,0.0)};
         const int list_size=neighbor_list_size[iatm];
         for(int j=0,jatm;j<list_size;j++)
         {

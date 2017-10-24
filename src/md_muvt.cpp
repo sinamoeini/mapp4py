@@ -34,7 +34,7 @@ void MDMuVT::update_x_d__x(type0 fac_x_d)
     elem_type* elem=atoms->elem->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
-    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
     const int natms_lcl=atoms->natms_lcl;
     for(int i=0;i<natms_lcl;++i)
     {
@@ -52,7 +52,7 @@ void MDMuVT::update_x_d__x(type0 fac_x_d)
         ++elem;
     }
     
-    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx[__dim__]={DESIG(__dim__,0.0)};
     MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     type0 natms=static_cast<type0>(atoms->natms);
     Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
@@ -98,7 +98,7 @@ void MDMuVT::update_x_d__x_w_dof(type0 fac_x_d)
     bool* dof=atoms->dof->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
-    type0 dx_lcl[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
     const int natms_lcl=atoms->natms_lcl;
     for(int i=0;i<natms_lcl;++i)
     {
@@ -117,7 +117,7 @@ void MDMuVT::update_x_d__x_w_dof(type0 fac_x_d)
         ++elem;
     }
     
-    type0 dx[__dim__]={[0 ... __dim__-1]=0.0};
+    type0 dx[__dim__]={DESIG(__dim__,0.0)};
     MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     type0 natms=static_cast<type0>(atoms->natms);
     Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
@@ -464,7 +464,7 @@ int MDMuVT::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MDMuVT::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MDMuVT::getset[]=EmptyPyGetSetDef(5);
 /*--------------------------------------------*/
 void MDMuVT::setup_tp_getset()
 {

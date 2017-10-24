@@ -66,13 +66,13 @@ elements(Elements()),
 hP(NAN),
 kB(NAN),
 vol(0.0),
-H{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-B{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}},
-__h{[0 ... __nvoigt__-1]=0},
-__b{[0 ... __nvoigt__-1]=0},
-depth_inv{[0 ... __dim__-1]=0.0},
+H{DESIG2(__dim__,__dim__,0.0)},
+B{DESIG2(__dim__,__dim__,0.0)},
+depth_inv{DESIG(__dim__,0.0)},
 step(0)
 {
+    Algebra::zero<__nvoigt__>(__h);
+    Algebra::zero<__nvoigt__>(__b);
     x=new Vec<type0>(this,__dim__,"x");
     id= new Vec<unsigned int>(this,1,"id");
     dof=new Vec<bool>(this,__dim__,"dof");
@@ -385,7 +385,7 @@ int Atoms::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef Atoms::getset[]={[0 ... 12]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef Atoms::getset[]=EmptyPyGetSetDef(13);
 /*--------------------------------------------*/
 void Atoms::setup_tp_getset()
 {
@@ -403,7 +403,7 @@ void Atoms::setup_tp_getset()
     getset_comm_dims(getset[11]);
 }
 /*--------------------------------------------*/
-PyMethodDef Atoms::methods[]={[0 ... 1]={NULL}};
+PyMethodDef Atoms::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void Atoms::setup_tp_methods()
 {
@@ -787,8 +787,8 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         
         Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
         
-        type0 H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
-        type0 B[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 B[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         Algebra::DoLT<__dim__>::func([&H,&B,&__self](int i,int j)
         {
             H[i][j]=__self->atoms->H[i][j];
@@ -798,8 +798,8 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         type0 (&strain)[__dim__][__dim__]=f.val<0>();
         
         Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
-        type0 F[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
-        type0 __H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 F[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 __H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         Algebra::MLT_mul_MSQ(H,strain,__H);
         
         Algebra::MSQ_2_MLT(__H,H);
@@ -862,8 +862,8 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
         
         Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
         
-        type0 H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
-        type0 B[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 B[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         Algebra::DoLT<__dim__>::func([&H,&B,&__self](int i,int j)
         {
             H[i][j]=__self->atoms->H[i][j];
@@ -873,8 +873,8 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
         type0 (&strain)[__dim__][__dim__]=f.val<0>();
         
         Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
-        type0 F[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
-        type0 __H[__dim__][__dim__]{[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+        type0 F[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 __H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         Algebra::MLT_mul_MSQ(H,strain,__H);
         
         Algebra::MSQ_2_MLT(__H,H);

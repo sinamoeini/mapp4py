@@ -1,10 +1,11 @@
 #include <Python.h>
 #include "example.h"
 #include <structmember.h>
+#include "global.h"
 using namespace MAPP_NS;
 
 /*--------------------------------------------*/
-PyMethodDef ExamplePython::tp_methods[]={[0 ... 1]={NULL,NULL,0,NULL}};
+PyMethodDef ExamplePython::tp_methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void ExamplePython::setup_tp_methods()
 {
@@ -31,14 +32,14 @@ eps : array_like
 )---";
 }
 /*--------------------------------------------*/
-PyMemberDef ExamplePython::tp_members[]={[0 ... 1]={NULL}};
+PyMemberDef ExamplePython::tp_members[]=EmptyPyMemberDef(2);
 /*--------------------------------------------*/
 void ExamplePython::setup_tp_members()
 {
     
 }
 /*--------------------------------------------*/
-PyGetSetDef ExamplePython::tp_getset[]={[0 ... 1]={NULL,NULL,NULL,NULL}};
+PyGetSetDef ExamplePython::tp_getset[]=EmptyPyGetSetDef(2);
 /*--------------------------------------------*/
 void ExamplePython::setup_tp_getset()
 {/*

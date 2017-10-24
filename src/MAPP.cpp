@@ -16,7 +16,7 @@
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
-PyMethodDef MAPP::methods[]={[0 ... 2]={NULL}};
+PyMethodDef MAPP::methods[]=EmptyPyMethodDef(3);
 /*--------------------------------------------*/
 void MAPP::setup_methods()
 {
@@ -174,7 +174,7 @@ void MAPP::init_module(void)
     pause_out(NULL);
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::MD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef MAPP::MD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void MAPP::MD::setup_methods()
 {
@@ -227,7 +227,7 @@ PyObject* MAPP::MD::init_module(void)
     return module;
 }
 /*--------------------------------------------*/
-PyMethodDef MAPP::DMD::methods[]={[0 ... 3]={NULL}};
+PyMethodDef MAPP::DMD::methods[]=EmptyPyMethodDef(4);
 /*--------------------------------------------*/
 void MAPP::DMD::setup_methods()
 {

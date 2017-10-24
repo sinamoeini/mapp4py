@@ -336,7 +336,7 @@ int MinCG::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCG::getset[]={[0 ... 7]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef MinCG::getset[]=EmptyPyGetSetDef(8);
 /*--------------------------------------------*/
 void MinCG::setup_tp_getset()
 {
@@ -349,7 +349,7 @@ void MinCG::setup_tp_getset()
     getset_export(getset[6]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCG::methods[]={[0 ... 1]={NULL}};
+PyMethodDef MinCG::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void MinCG::setup_tp_methods()
 {

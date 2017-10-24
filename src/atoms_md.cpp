@@ -5,7 +5,7 @@
  --------------------------------------------*/
 AtomsMD::AtomsMD(MPI_Comm& world):
 Atoms(world),
-S_pe{[0 ... __dim__-1]={[0 ... __dim__-1]=NAN}},
+S_pe{DESIG2(__dim__,__dim__,NAN)},
 pe(NAN)
 {
     elem=new Vec<elem_type>(this,1,"elem");
@@ -241,7 +241,7 @@ int AtomsMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsMD::getset[]={[0 ... 14]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef AtomsMD::getset[]=EmptyPyGetSetDef(15);
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_getset()
 {
@@ -303,7 +303,7 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
     };
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsMD::methods[]={[0 ... 10]={NULL,NULL,0,NULL}};
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(11);
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {

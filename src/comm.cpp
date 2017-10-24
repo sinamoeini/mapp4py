@@ -69,7 +69,7 @@ int MAPP_MPI::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyMemberDef MAPP_MPI::tp_members[]={[0 ... 2]={NULL,0,0,0,NULL}};
+PyMemberDef MAPP_MPI::tp_members[]=EmptyPyMemberDef(3);
 /*--------------------------------------------*/
 void MAPP_MPI::setup_tp_members()
 {
@@ -107,7 +107,7 @@ rank(get_rank(__world)),
 skin(__skin),
 xchng_id(0)
 {
-    int N[__dim__]={[0 ... __dim__-1]=0};
+    int N[__dim__]={DESIG(__dim__,0)};
     grid(N,H);
 }
 /*--------------------------------------------
@@ -120,8 +120,8 @@ rank(get_rank(__world)),
 skin(__skin),
 xchng_id(0)
 {
-    int N[__dim__]={[0 ... __dim__-1]=0};
-    type0 H[__dim__][__dim__]={[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+    int N[__dim__]={DESIG(__dim__,0)};
+    type0 H[__dim__][__dim__]={DESIG2(__dim__,__dim__,0.0)};
     for(int i=0;i<__dim__;i++) H[i][i]=1.0;
     grid(N,H);
 }
@@ -159,7 +159,7 @@ Communication& Communication::operator=(const Communication& r)
  --------------------------------------------*/
 void Communication::grid(type0(&H)[__dim__][__dim__])
 {
-    int N[__dim__]={[0 ... __dim__-1]=0};
+    int N[__dim__]={DESIG(__dim__,0)};
     grid(N,H);
 }
 /*--------------------------------------------
@@ -167,7 +167,7 @@ void Communication::grid(type0(&H)[__dim__][__dim__])
  --------------------------------------------*/
 void Communication::grid(int(&N)[__dim__])
 {
-    type0 H[__dim__][__dim__]={[0 ... __dim__-1]={[0 ... __dim__-1]=0.0}};
+    type0 H[__dim__][__dim__]={DESIG2(__dim__,__dim__,0.0)};
     for(int i=0;i<__dim__;i++) H[i][i]=1.0;
     grid(N,H);
 }

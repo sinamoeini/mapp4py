@@ -78,13 +78,13 @@ int LineSearch::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef LineSearch::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef LineSearch::getset[]=EmptyPyGetSetDef(1);
 /*--------------------------------------------*/
 void LineSearch::setup_tp_getset()
 {
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearch::methods[]={[0 ... 0]={NULL}};
+PyMethodDef LineSearch::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void LineSearch::setup_tp_methods()
 {
@@ -168,7 +168,7 @@ int LineSearchGoldenSection::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef LineSearchGoldenSection::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef LineSearchGoldenSection::getset[]=EmptyPyGetSetDef(4);
 /*--------------------------------------------*/
 void LineSearchGoldenSection::setup_tp_getset()
 {
@@ -177,7 +177,7 @@ void LineSearchGoldenSection::setup_tp_getset()
     getset_tol(getset[2]);
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearchGoldenSection::methods[]={[0 ... 0]={NULL}};
+PyMethodDef LineSearchGoldenSection::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void LineSearchGoldenSection::setup_tp_methods()
 {
@@ -335,7 +335,7 @@ int LineSearchBrent::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef LineSearchBrent::getset[]={[0 ... 4]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef LineSearchBrent::getset[]=EmptyPyGetSetDef(5);
 /*--------------------------------------------*/
 void LineSearchBrent::setup_tp_getset()
 {
@@ -345,7 +345,7 @@ void LineSearchBrent::setup_tp_getset()
     getset_zeps(getset[3]);
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearchBrent::methods[]={[0 ... 0]={NULL}};
+PyMethodDef LineSearchBrent::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void LineSearchBrent::setup_tp_methods()
 {
@@ -530,7 +530,7 @@ int LineSearchBackTrack::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef LineSearchBackTrack::getset[]={[0 ... 3]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef LineSearchBackTrack::getset[]=EmptyPyGetSetDef(4);
 /*--------------------------------------------*/
 void LineSearchBackTrack::setup_tp_getset()
 {
@@ -539,7 +539,7 @@ void LineSearchBackTrack::setup_tp_getset()
     getset_min_alpha(getset[2]);
 }
 /*--------------------------------------------*/
-PyMethodDef LineSearchBackTrack::methods[]={[0 ... 0]={NULL}};
+PyMethodDef LineSearchBackTrack::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void LineSearchBackTrack::setup_tp_methods()
 {

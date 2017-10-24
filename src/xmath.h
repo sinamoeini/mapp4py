@@ -42,295 +42,6 @@ namespace MAPP_NS
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-template<const int N>
-void XMath::quad_hg(type0 (&x)[N],type0 (&w)[N])
-{
-    constexpr int M=N/2+1;
-    const int max_iter=50;
-    constexpr type0 tol=std::numeric_limits<type0>::epsilon();
-    
-    
-    
-    
-    
-    type0 p_1[M]{[0 ... M-1]=0.0};
-    type0 p_2[M]{[0 ... M-1]=0.0};
-    type0 p_coef[M]{[0 ... M-1]=0.0};
-    type0 dp_coef[M]{[0 ... M-1]=0.0};
-    
-    
-    p_1[0]=1.0;
-    p_coef[0]=1.0;
-    type0 ii;
-    for(int m,i=0;i<N;i++)
-    {
-        ii=static_cast<type0>(i+1);
-        m=(i+3)/2;
-        if(i%2)
-        {
-            for(int j=0;j<m;j++)
-                p_coef[j]=-2.0*(ii-1.0)*p_2[j];
-            for(int j=1;j<m;j++)
-                p_coef[j]+=2.0*p_1[j-1];
-        }
-        else
-        {
-            for(int j=0;j<m;j++)
-                p_coef[j]=2.0*p_1[j]-2.0*(ii-1.0)*p_2[j];
-        }
-        
-        for(int j=0;j<m;j++)
-        {
-            p_2[j]=p_1[j];
-            p_1[j]=p_coef[j];
-        }
-    }
-    
-    
-    for(int i=0;i<M-1;i++)
-        dp_coef[i]=p_coef[i+1]*static_cast<type0>(i+1);
-    
-    int iter,ord,icurs;
-    type0 a,u0,inv_u0,f,df,tmp0,tmp1,del_u0;
-    
-    ord=M;
-    icurs=N/2;
-    if(N%2==1)
-    {
-        x[icurs]=0.0;
-        icurs++;
-    }
-    
-    a=p_coef[M-1];
-    
-    for(int i=0;i<M;i++)
-        p_coef[i]/=a;
-    for(int i=0;i<M-1;i++)
-        dp_coef[i]/=a;
-    
-    
-    
-    while(ord>1)
-    {
-        u0=0.0;
-        f=1.0;
-        del_u0=0.0;
-        iter=max_iter;
-        while(fabs(f)>tol && iter)
-        {
-            u0+=del_u0;
-            df=f=0.0;
-            tmp0=1.0;
-            for(int j=0;j<ord-1;j++)
-            {
-                f+=p_coef[j]*tmp0;
-                df+=dp_coef[j]*tmp0;
-                tmp0*=u0;
-            }
-            f+=p_coef[ord-1]*tmp0;
-            del_u0=-f/df;
-            iter--;
-        }
-        
-        x[icurs]=sqrt(u0);
-        
-        tmp0=1.0;
-        tmp1=0.0;
-        for(int i=0;i<M;i++)
-        {
-            tmp1+=p_2[i]*tmp0;
-            tmp0*=u0;
-        }
-        
-        if(N%2==0)
-            tmp1*=sqrt(u0);
-        
-        w[icurs]=1.0/(tmp1*tmp1);
-        
-        
-        inv_u0=1.0/u0;
-        p_coef[0]*=-inv_u0;
-        for(int i=1;i<ord-1;i++)
-        {
-            p_coef[i]*=-inv_u0;
-            p_coef[i]+=inv_u0*p_coef[i-1];
-            dp_coef[i-1]=p_coef[i]*static_cast<type0>(i);
-        }
-        
-        ord--;
-        icurs++;
-    }
-    
-    tmp0=sqrt(M_PI)/static_cast<type0>(N);
-    for(int i=0;i<N-1;i++)
-        tmp0*=static_cast<type0>(2*(i+1));
-    
-    if(N%2==1)
-        w[N/2]=tmp0/(p_2[0]*p_2[0]);
-    
-    
-    for(int i=0;i<N/2;i++)
-    {
-        icurs--;
-        w[icurs]*=tmp0;
-        w[i]=w[icurs];
-        x[i]=-x[icurs];
-    }
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<const int N>
-void XMath::quad_lg(type0 (&x)[N],type0 (&w)[N])
-{
-    constexpr int M=N/2+1;
-    constexpr int max_iter=50;
-    constexpr type0 tol=std::numeric_limits<type0>::epsilon();
-    
-    
-    int iter,ord,icurs,jcurs;
-    type0 a,u0,inv_u0,f,up,df,tmp0;
-    type0 ii,jj,del_u0;
-    type0 p_coef[M]{[0 ... M-1]=0.0};
-    type0 dp_coef[M]{[0 ... M-1]=0.0};
-    
-    up=0.0;
-    
-    p_coef[0]=1.0;
-    
-    
-    
-    for(int __m,i=0;i<N;i++)
-    {
-        ii=static_cast<type0>(i+1);
-        if(i%2)
-        {
-            __m=(i+3)/2;
-            p_coef[__m-1]=(2.0-1.0/ii)*p_coef[__m-2];
-            for(int j=__m-2;j>0;j--)
-            {
-                jj=static_cast<type0>(j);
-                p_coef[j]*=-(2.0*jj+1)/ii;
-                p_coef[j]+=(1.0+(2*jj-1.0)/ii)*p_coef[j-1];
-            }
-            p_coef[0]*=-1.0/ii;
-        }
-        else
-        {
-            __m=i/2+1;
-            for(int j=0;j<__m-1;j++)
-            {
-                jj=static_cast<type0>(j);
-                p_coef[j]*=1.0+2.0*jj/ii;
-                p_coef[j]-=2.0*(jj+1.0)*p_coef[j+1]/ii;
-            }
-            //2.0-1.0/ii=(1+2*(m-1)/i)
-            p_coef[__m-1]*=2.0-1.0/ii;
-        }
-    }
-    
-    
-    
-    for(int i=0;i<M-1;i++)
-        dp_coef[i]=p_coef[i+1]*static_cast<type0>(i+1);
-    
-    ord=M;
-    icurs=N-1;
-    a=p_coef[M-1];
-    
-    for(int i=0;i<M;i++)
-        p_coef[i]/=a;
-    for(int i=0;i<M-1;i++)
-        dp_coef[i]/=a;
-    
-    while(ord>1)
-    {
-        u0=1.0;
-        f=1.0;
-        del_u0=0.0;
-        iter=max_iter;
-        while(fabs(f)>tol && iter)
-        {
-            u0+=del_u0;
-            df=f=0.0;
-            tmp0=1.0;
-            for(int j=0;j<ord-1;j++)
-            {
-                f+=p_coef[j]*tmp0;
-                df+=dp_coef[j]*tmp0;
-                tmp0*=u0;
-            }
-            f+=p_coef[ord-1]*tmp0;
-            del_u0=-f/df;
-            iter--;
-        }
-        
-        x[icurs]=sqrt(u0);
-        
-        inv_u0=1.0/u0;
-        p_coef[0]*=-inv_u0;
-        for(int i=1;i<ord-1;i++)
-        {
-            p_coef[i]*=-inv_u0;
-            p_coef[i]+=inv_u0*p_coef[i-1];
-            dp_coef[i-1]=p_coef[i]*static_cast<type0>(i);
-        }
-        
-        ord--;
-        icurs--;
-    }
-    
-    
-    if(N%2==0)
-    {
-        icurs++;
-        jcurs=icurs-1;
-        for(int i=icurs;i<N;i++)
-        {
-            tmp0=a;
-            for(int j=icurs;j<N;j++)
-            {
-                if(i!=j)
-                    tmp0*=x[i]*x[i]-x[j]*x[j];
-                else
-                    tmp0*=x[i]+x[j];
-            }
-            w[i]=2.0/(tmp0*tmp0*(1.0-x[i]*x[i]));
-            w[jcurs]=w[i];
-            x[jcurs]=-x[i];
-            jcurs--;
-        }
-    }
-    else
-    {
-        x[icurs]=0.0;
-        icurs++;
-        tmp0=a;
-        for(int i=icurs;i<N;i++)
-            tmp0*=-x[i]*x[i];
-        w[icurs-1]=2.0/(tmp0*tmp0);
-        
-        jcurs=icurs-2;
-        for(int i=icurs;i<N;i++)
-        {
-            tmp0=a*x[i];
-            for(int j=icurs;j<N;j++)
-            {
-                if(i!=j)
-                    tmp0*=x[i]*x[i]-x[j]*x[j];
-                else
-                    tmp0*=x[i]+x[j];
-            }
-            w[i]=2.0/(tmp0*tmp0*(1.0-x[i]*x[i]));
-            w[jcurs]=w[i];
-            x[jcurs]=-x[i];
-            jcurs--;
-        }
-    }
-}
-/*------------------------------------------------------------------------------------------------------------------------------------
- 
- ------------------------------------------------------------------------------------------------------------------------------------*/
 namespace MAPP_NS
 {
     template<typename T0,class C0>
@@ -3495,6 +3206,302 @@ namespace MAPP_NS
         
         
         
+    }
+}
+/*------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ------------------------------------------------------------------------------------------------------------------------------------*/
+template<const int N>
+void XMath::quad_hg(type0 (&x)[N],type0 (&w)[N])
+{
+    constexpr int M=N/2+1;
+    const int max_iter=50;
+    constexpr type0 tol=std::numeric_limits<type0>::epsilon();
+    
+    
+    
+    
+    
+    type0 p_1[M];
+    type0 p_2[M];
+    type0 p_coef[M];
+    type0 dp_coef[M];
+    
+    Algebra::zero<M>(p_1);
+    Algebra::zero<M>(p_2);
+    Algebra::zero<M>(p_coef);
+    Algebra::zero<M>(dp_coef);
+    
+    
+    p_1[0]=1.0;
+    p_coef[0]=1.0;
+    type0 ii;
+    for(int m,i=0;i<N;i++)
+    {
+        ii=static_cast<type0>(i+1);
+        m=(i+3)/2;
+        if(i%2)
+        {
+            for(int j=0;j<m;j++)
+                p_coef[j]=-2.0*(ii-1.0)*p_2[j];
+            for(int j=1;j<m;j++)
+                p_coef[j]+=2.0*p_1[j-1];
+        }
+        else
+        {
+            for(int j=0;j<m;j++)
+                p_coef[j]=2.0*p_1[j]-2.0*(ii-1.0)*p_2[j];
+        }
+        
+        for(int j=0;j<m;j++)
+        {
+            p_2[j]=p_1[j];
+            p_1[j]=p_coef[j];
+        }
+    }
+    
+    
+    for(int i=0;i<M-1;i++)
+        dp_coef[i]=p_coef[i+1]*static_cast<type0>(i+1);
+    
+    int iter,ord,icurs;
+    type0 a,u0,inv_u0,f,df,tmp0,tmp1,del_u0;
+    
+    ord=M;
+    icurs=N/2;
+    if(N%2==1)
+    {
+        x[icurs]=0.0;
+        icurs++;
+    }
+    
+    a=p_coef[M-1];
+    
+    for(int i=0;i<M;i++)
+        p_coef[i]/=a;
+    for(int i=0;i<M-1;i++)
+        dp_coef[i]/=a;
+    
+    
+    
+    while(ord>1)
+    {
+        u0=0.0;
+        f=1.0;
+        del_u0=0.0;
+        iter=max_iter;
+        while(fabs(f)>tol && iter)
+        {
+            u0+=del_u0;
+            df=f=0.0;
+            tmp0=1.0;
+            for(int j=0;j<ord-1;j++)
+            {
+                f+=p_coef[j]*tmp0;
+                df+=dp_coef[j]*tmp0;
+                tmp0*=u0;
+            }
+            f+=p_coef[ord-1]*tmp0;
+            del_u0=-f/df;
+            iter--;
+        }
+        
+        x[icurs]=sqrt(u0);
+        
+        tmp0=1.0;
+        tmp1=0.0;
+        for(int i=0;i<M;i++)
+        {
+            tmp1+=p_2[i]*tmp0;
+            tmp0*=u0;
+        }
+        
+        if(N%2==0)
+            tmp1*=sqrt(u0);
+        
+        w[icurs]=1.0/(tmp1*tmp1);
+        
+        
+        inv_u0=1.0/u0;
+        p_coef[0]*=-inv_u0;
+        for(int i=1;i<ord-1;i++)
+        {
+            p_coef[i]*=-inv_u0;
+            p_coef[i]+=inv_u0*p_coef[i-1];
+            dp_coef[i-1]=p_coef[i]*static_cast<type0>(i);
+        }
+        
+        ord--;
+        icurs++;
+    }
+    
+    tmp0=sqrt(M_PI)/static_cast<type0>(N);
+    for(int i=0;i<N-1;i++)
+        tmp0*=static_cast<type0>(2*(i+1));
+    
+    if(N%2==1)
+        w[N/2]=tmp0/(p_2[0]*p_2[0]);
+    
+    
+    for(int i=0;i<N/2;i++)
+    {
+        icurs--;
+        w[icurs]*=tmp0;
+        w[i]=w[icurs];
+        x[i]=-x[icurs];
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<const int N>
+void XMath::quad_lg(type0 (&x)[N],type0 (&w)[N])
+{
+    constexpr int M=N/2+1;
+    constexpr int max_iter=50;
+    constexpr type0 tol=std::numeric_limits<type0>::epsilon();
+    
+    
+    int iter,ord,icurs,jcurs;
+    type0 a,u0,inv_u0,f,up,df,tmp0;
+    type0 ii,jj,del_u0;
+    type0 p_coef[M];
+    type0 dp_coef[M];
+    Algebra::zero<M>(p_coef);
+    Algebra::zero<M>(dp_coef);
+    
+    up=0.0;
+    
+    p_coef[0]=1.0;
+    
+    
+    
+    for(int __m,i=0;i<N;i++)
+    {
+        ii=static_cast<type0>(i+1);
+        if(i%2)
+        {
+            __m=(i+3)/2;
+            p_coef[__m-1]=(2.0-1.0/ii)*p_coef[__m-2];
+            for(int j=__m-2;j>0;j--)
+            {
+                jj=static_cast<type0>(j);
+                p_coef[j]*=-(2.0*jj+1)/ii;
+                p_coef[j]+=(1.0+(2*jj-1.0)/ii)*p_coef[j-1];
+            }
+            p_coef[0]*=-1.0/ii;
+        }
+        else
+        {
+            __m=i/2+1;
+            for(int j=0;j<__m-1;j++)
+            {
+                jj=static_cast<type0>(j);
+                p_coef[j]*=1.0+2.0*jj/ii;
+                p_coef[j]-=2.0*(jj+1.0)*p_coef[j+1]/ii;
+            }
+            //2.0-1.0/ii=(1+2*(m-1)/i)
+            p_coef[__m-1]*=2.0-1.0/ii;
+        }
+    }
+    
+    
+    
+    for(int i=0;i<M-1;i++)
+        dp_coef[i]=p_coef[i+1]*static_cast<type0>(i+1);
+    
+    ord=M;
+    icurs=N-1;
+    a=p_coef[M-1];
+    
+    for(int i=0;i<M;i++)
+        p_coef[i]/=a;
+    for(int i=0;i<M-1;i++)
+        dp_coef[i]/=a;
+    
+    while(ord>1)
+    {
+        u0=1.0;
+        f=1.0;
+        del_u0=0.0;
+        iter=max_iter;
+        while(fabs(f)>tol && iter)
+        {
+            u0+=del_u0;
+            df=f=0.0;
+            tmp0=1.0;
+            for(int j=0;j<ord-1;j++)
+            {
+                f+=p_coef[j]*tmp0;
+                df+=dp_coef[j]*tmp0;
+                tmp0*=u0;
+            }
+            f+=p_coef[ord-1]*tmp0;
+            del_u0=-f/df;
+            iter--;
+        }
+        
+        x[icurs]=sqrt(u0);
+        
+        inv_u0=1.0/u0;
+        p_coef[0]*=-inv_u0;
+        for(int i=1;i<ord-1;i++)
+        {
+            p_coef[i]*=-inv_u0;
+            p_coef[i]+=inv_u0*p_coef[i-1];
+            dp_coef[i-1]=p_coef[i]*static_cast<type0>(i);
+        }
+        
+        ord--;
+        icurs--;
+    }
+    
+    
+    if(N%2==0)
+    {
+        icurs++;
+        jcurs=icurs-1;
+        for(int i=icurs;i<N;i++)
+        {
+            tmp0=a;
+            for(int j=icurs;j<N;j++)
+            {
+                if(i!=j)
+                    tmp0*=x[i]*x[i]-x[j]*x[j];
+                else
+                    tmp0*=x[i]+x[j];
+            }
+            w[i]=2.0/(tmp0*tmp0*(1.0-x[i]*x[i]));
+            w[jcurs]=w[i];
+            x[jcurs]=-x[i];
+            jcurs--;
+        }
+    }
+    else
+    {
+        x[icurs]=0.0;
+        icurs++;
+        tmp0=a;
+        for(int i=icurs;i<N;i++)
+            tmp0*=-x[i]*x[i];
+        w[icurs-1]=2.0/(tmp0*tmp0);
+        
+        jcurs=icurs-2;
+        for(int i=icurs;i<N;i++)
+        {
+            tmp0=a*x[i];
+            for(int j=icurs;j<N;j++)
+            {
+                if(i!=j)
+                    tmp0*=x[i]*x[i]-x[j]*x[j];
+                else
+                    tmp0*=x[i]+x[j];
+            }
+            w[i]=2.0/(tmp0*tmp0*(1.0-x[i]*x[i]));
+            w[jcurs]=w[i];
+            x[jcurs]=-x[i];
+            jcurs--;
+        }
     }
 }
 #endif

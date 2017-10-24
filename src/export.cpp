@@ -424,13 +424,13 @@ int ExportMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef ExportMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef ExportMD::getset[]=EmptyPyGetSetDef(1);
 /*--------------------------------------------*/
 void ExportMD::setup_tp_getset()
 {
 }
 /*--------------------------------------------*/
-PyMethodDef ExportMD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef ExportMD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void ExportMD::setup_tp_methods()
 {
@@ -534,13 +534,13 @@ int ExportDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef ExportDMD::getset[]={[0 ... 0]={NULL,NULL,NULL,NULL,NULL}};
+PyGetSetDef ExportDMD::getset[]=EmptyPyGetSetDef(1);
 /*--------------------------------------------*/
 void ExportDMD::setup_tp_getset()
 {
 }
 /*--------------------------------------------*/
-PyMethodDef ExportDMD::methods[]={[0 ... 0]={NULL}};
+PyMethodDef ExportDMD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void ExportDMD::setup_tp_methods()
 {

@@ -154,11 +154,39 @@ namespace MAPP_NS
         return VecTensMulScl<T,N,E<T,N,Ts...>>(u, v);
     }
     
+#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE == 20171018 or __INTEL_COMPILER_BUILD_DATE == 20170811)
+    template<class T,const int N,template<class,const int> class E>
+    VecTensMulScl<T,N,E<T,N>> operator*(T const& u,const E<T,N>& v)
+    {
+        return VecTensMulScl<T,N,E<T,N>>(u, v);
+    }
+#endif
+    
     template<class T,const int N,class ...Ts0,class ...Ts1,template<class,const int,class...> class E0,template<class,const int,class...> class E1>
     VecTensSum<T,N,E0<T,N,Ts0...>,E1<T,N,Ts1...>> operator+(const E0<T,N,Ts0...>& v0,const E1<T,N,Ts1...>& v1)
     {
         return VecTensSum<T,N,E0<T,N,Ts0...>,E1<T,N,Ts1...>>(v0,v1);
     }
+    
+#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE == 20171018 or __INTEL_COMPILER_BUILD_DATE == 20170811)
+    template<class T,const int N,template<class,const int> class E0,template<class,const int> class E1>
+    VecTensSum<T,N,E0<T,N>,E1<T,N>> operator+(const E0<T,N>& v0,const E1<T,N>& v1)
+    {
+        return VecTensSum<T,N,E0<T,N>,E1<T,N>>(v0,v1);
+    }
+    
+    template<class T,const int N,class ...Ts0,template<class,const int,class...> class E0,template<class,const int> class E1>
+    VecTensSum<T,N,E0<T,N,Ts0...>,E1<T,N>> operator+(const E0<T,N,Ts0...>& v0,const E1<T,N>& v1)
+    {
+        return VecTensSum<T,N,E0<T,N,Ts0...>,E1<T,N>>(v0,v1);
+    }
+    
+    template<class T,const int N,class ...Ts1,template<class,const int> class E0,template<class,const int,class...> class E1>
+    VecTensSum<T,N,E0<T,N>,E1<T,N,Ts1...>> operator+(const E0<T,N>& v0,const E1<T,N,Ts1...>& v1)
+    {
+        return VecTensSum<T,N,E0<T,N>,E1<T,N,Ts1...>>(v0,v1);
+    }
+#endif
     
     template<class T,const int N,class ...Ts0,class ...Ts1,template<class,const int,class...> class E0,template<class,const int,class...> class E1>
     VecTensSub<T,N,E0<T,N,Ts0...>,E1<T,N,Ts1...>> operator-(const E0<T,N,Ts0...>& v0,const E1<T,N,Ts1...>& v1)
@@ -166,6 +194,25 @@ namespace MAPP_NS
         return VecTensSub<T,N,E0<T,N,Ts0...>,E1<T,N,Ts1...>>(v0,v1);
     }
     
+#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE == 20171018 or __INTEL_COMPILER_BUILD_DATE == 20170811)
+    template<class T,const int N,template<class,const int> class E0,template<class,const int> class E1>
+    VecTensSub<T,N,E0<T,N>,E1<T,N>> operator-(const E0<T,N>& v0,const E1<T,N>& v1)
+    {
+        return VecTensSub<T,N,E0<T,N>,E1<T,N>>(v0,v1);
+    }
+    
+    template<class T,const int N,class ...Ts0,template<class,const int,class...> class E0,template<class,const int> class E1>
+    VecTensSub<T,N,E0<T,N,Ts0...>,E1<T,N>> operator-(const E0<T,N,Ts0...>& v0,const E1<T,N>& v1)
+    {
+        return VecTensSub<T,N,E0<T,N,Ts0...>,E1<T,N>>(v0,v1);
+    }
+    
+    template<class T,const int N,class ...Ts1,template<class,const int> class E0,template<class,const int,class...> class E1>
+    VecTensSub<T,N,E0<T,N>,E1<T,N,Ts1...>> operator-(const E0<T,N>& v0,const E1<T,N,Ts1...>& v1)
+    {
+        return VecTensSub<T,N,E0<T,N>,E1<T,N,Ts1...>>(v0,v1);
+    }
+#endif
     
     template<const int N,const int I=N-1>
     class VecOp

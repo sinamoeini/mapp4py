@@ -949,7 +949,7 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
 {
     PyCodeObject* co=(PyCodeObject *)PyFunction_GET_CODE(op);
     PyObject* co_varnames=co->co_varnames;
-    size_t co_nvars=PyTuple_Size(co_varnames);
+    size_t co_nvars=static_cast<size_t>(co->co_argcount);
     
     
     

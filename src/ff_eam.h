@@ -8,6 +8,7 @@ namespace MAPP_NS
     private:
         Vec<type0>* rho_ptr;
         Vec<type0>* F_ptr;
+        Vec<type0>* dF_ptr;
         Vec<type0>* rho_xchng_ptr;
         Vec<type0>* F_xchng_ptr;
         

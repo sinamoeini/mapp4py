@@ -303,7 +303,7 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
     };
 }
 /*--------------------------------------------*/
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(11);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(12);
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {
@@ -315,6 +315,7 @@ void AtomsMD::setup_tp_methods()
     ForceFieldEAM::ml_new(methods[5],methods[6],methods[7]);
     ForceFieldFS::ml_new(methods[8]);
     ImportCFGMD::ml_import(methods[9]);
+    ForceFieldEAMFit::ml_new(methods[10]);
 }
 /*--------------------------------------------
  

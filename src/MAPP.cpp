@@ -173,11 +173,13 @@ void MAPP::init_module(void)
     
     pause_out(NULL);
 }
+#include "potfit.h"
 /*--------------------------------------------*/
-PyMethodDef MAPP::MD::methods[]=EmptyPyMethodDef(1);
+PyMethodDef MAPP::MD::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void MAPP::MD::setup_methods()
 {
+    PotFit::ml_run(methods[0]);
     /*
     ExamplePython::ml_phonon(methods[0]);
     ExamplePython::ml_phonon_1d(methods[1]);

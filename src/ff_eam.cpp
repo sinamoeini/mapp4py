@@ -76,6 +76,7 @@ void ForceFieldEAM::force_calc()
     type0* fvec=f->begin();
     elem_type* evec=atoms->elem->begin();
     type0* rho=rho_ptr->begin();
+    type0* dF=dF_ptr->begin();
     
     int iatm,jatm;
     int icomp,jcomp;
@@ -186,10 +187,10 @@ void ForceFieldEAM::force_calc()
         if(rho[iatm]>rho_max)
             tmp0+=tmp1*(rho[iatm]-rho_max);
         __vec_lcl[0]+=tmp0;
-        rho[iatm]=tmp1;
+        dF[iatm]=tmp1;
     }
     
-    dynamic->update(rho_ptr);
+    dynamic->update(dF_ptr);
 
     
     istart=0;
@@ -205,7 +206,7 @@ void ForceFieldEAM::force_calc()
                 jelem=evec[jatm];
                 jcomp=3*jatm;
                 
-                fpair=rho[iatm]*drhoi_dr[istart]+rho[jatm]*drhoj_dr[istart];
+                fpair=dF[iatm]*drhoi_dr[istart]+dF[jatm]*drhoj_dr[istart];
                 
                 dx0=xvec[icomp]-xvec[jcomp];
                 dx1=xvec[icomp+1]-xvec[jcomp+1];
@@ -485,7 +486,8 @@ void ForceFieldEAM::post_xchng_energy(GCMC* gcmc)
 void ForceFieldEAM::init()
 {
     pre_init();
-    rho_ptr=new Vec<type0>(atoms,1);
+    rho_ptr=new Vec<type0>(atoms,1,"rho");
+    dF_ptr=new Vec<type0>(atoms,1);
     
 }
 /*--------------------------------------------
@@ -496,6 +498,7 @@ void ForceFieldEAM::fin()
     Memory::dealloc(drhoj_dr);
     Memory::dealloc(drhoi_dr);
     max_pairs=0;
+    delete dF_ptr;
     delete rho_ptr;
     post_fin();
 }

@@ -1234,6 +1234,29 @@ namespace MAPP_NS
         };
         
         template<const int dim>
+        class __V_sub
+        {
+        public:
+            template<typename T>
+            static inline void func(T const * src,T* dst)
+            {
+                *dst-=*src;
+                __V_sub<dim-1>::func(src+1,dst+1);
+            }
+        };
+        
+        template<>
+        class __V_sub<1>
+        {
+        public:
+            template<typename T>
+            static inline void func(T const * src,T* dst)
+            {
+                *dst-=*src;
+            }
+        };
+        
+        template<const int dim>
         class __V_add_x_mul_V
         {
         public:
@@ -2506,6 +2529,64 @@ namespace MAPP_NS
         };
         
         
+        
+        
+        template<const int i,const int j,const int dim>
+        class __MSY_2_DyadicV
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSY,T* dyad)
+            {
+                *dyad=*MSY;
+                __MSY_2_DyadicV<i-1,j,dim>::func(MSY+1,dyad+1);
+            }
+        };
+        
+        
+        template<const int i,const int dim>
+        class __MSY_2_DyadicV<i,i,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSY,T* dyad)
+            {
+                *dyad=*MSY;
+                __MSY_2_DyadicV<i-1,i,dim>::func(MSY+1,dyad+1);
+            }
+        };
+        
+        template<const int j,const int dim>
+        class __MSY_2_DyadicV<1,j,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSY,T* dyad)
+            {
+                *dyad=*MSY;
+                __MSY_2_DyadicV<j-1,j-1,dim>::func(MSY+dim+2-j,dyad+1);
+            }
+        };
+        
+        template<const int dim>
+        class __MSY_2_DyadicV<1,1,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSY,T* dyad)
+            {
+                *dyad=*MSY;
+            }
+        };
+        
+        
+        
+        
+        
+        
+        
+        
+        
         template <const int i,const int dim>
         class __MLT_det
         {
@@ -3032,6 +3113,11 @@ namespace MAPP_NS
         {
             __DyadicV_2_MSY<dim,dim,dim>::func(dyad,MLT[0]);
         }
+        template<const int dim,typename T>
+        void MSY_2_DyadicV(T (*MLT)[dim],T* dyad)
+        {
+            __MSY_2_DyadicV<dim,dim,dim>::func(MLT[0],dyad);
+        }
         /*==========================================================================*/
         template<const int dim,typename T>
         void DyadicV_2_MUT(T(&dyad)[dim*(dim+1)/2],T (&MUT)[dim][dim])
@@ -3132,15 +3218,21 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<const int dim,typename T>
+        void V_sub(T const * src,T* dst)
+        {
+            __V_sub<dim>::func(src,dst);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
         void V_add_x_mul_V(const T x,T const * src,T* dst)
         {
-            __V_add_x_mul_V<__dim__>::func(x,src,dst);
+            __V_add_x_mul_V<dim>::func(x,src,dst);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
         void V_eq_x_mul_V(const T x,T const * src,T* dst)
         {
-            __V_eq_x_mul_V<__dim__>::func(x,src,dst);
+            __V_eq_x_mul_V<dim>::func(x,src,dst);
         }
         /*==========================================================================*/
         template<const int N,const int M>

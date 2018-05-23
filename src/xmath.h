@@ -1187,6 +1187,29 @@ namespace MAPP_NS
     namespace Algebra
     {
         
+        template<const int N>
+        class __POW
+        {
+            public:
+            template<typename T>
+            static inline T func(T x)
+            {
+                return x*__POW<N-1>::func(x);
+            }
+        };
+        
+        template<>
+        class __POW<1>
+        {
+            public:
+            template<typename T>
+            static inline T func(T x)
+            {
+                return x;
+            }
+        };
+        
+        
         template<const int dim>
         class __V_eq
         {
@@ -2900,8 +2923,12 @@ namespace MAPP_NS
         
         
 
-        
-        
+        /*==========================================================================*/
+        template<const int N,typename T>
+        T pow(T x)
+        {
+            return __POW<N>::func(x);
+        }
         /*==========================================================================*/
         template<const int dim,typename T>
         void zero(T* V)
@@ -3012,6 +3039,11 @@ namespace MAPP_NS
         }
         template<const int dim,typename T>
         void MLT_mul_MLT(T(*&MLTL)[dim],T(&MLTR)[dim][dim],T(&MLT)[dim][dim])
+        {
+            __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
+        }
+        template<const int dim,typename T>
+        void MLT_mul_MLT(T(&MLTL)[dim][dim],T(&MLTR)[dim][dim],T(*&MLT)[dim])
         {
             __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
         }

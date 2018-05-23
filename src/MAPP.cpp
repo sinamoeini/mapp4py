@@ -161,7 +161,7 @@ void MAPP::init_module(void)
     if(LineSearchBackTrack::setup_tp()<0) return;
     PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
     
-    
+
     PyObject* md=MAPP::MD::init_module();
     if(md==NULL) return;
     PyModule_AddObject(module,"md",md);
@@ -173,13 +173,11 @@ void MAPP::init_module(void)
     
     pause_out(NULL);
 }
-#include "potfit.h"
 /*--------------------------------------------*/
-PyMethodDef MAPP::MD::methods[]=EmptyPyMethodDef(2);
+PyMethodDef MAPP::MD::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
 void MAPP::MD::setup_methods()
 {
-    PotFit::ml_run(methods[0]);
     /*
     ExamplePython::ml_phonon(methods[0]);
     ExamplePython::ml_phonon_1d(methods[1]);

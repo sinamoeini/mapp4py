@@ -13,6 +13,10 @@
 #include "dae_styles.h"
 #include "export_styles.h"
 #include "newton_gmres.h"
+#ifdef POTFIT
+#include "potfit.h"
+#include "potfit_o.h"
+#endif
 #define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
@@ -160,8 +164,15 @@ void MAPP::init_module(void)
     
     if(LineSearchBackTrack::setup_tp()<0) return;
     PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
-    
 
+#ifdef POTFIT
+    if(PotFit::setup_tp()<0) return;
+    PyModule_AddObject(module,"potfit",reinterpret_cast<PyObject*>(&PotFit::TypeObject));
+    
+    if(PotFitO::setup_tp()<0) return;
+    PyModule_AddObject(module,"potfit_o",reinterpret_cast<PyObject*>(&PotFitO::TypeObject));
+#endif
+    
     PyObject* md=MAPP::MD::init_module();
     if(md==NULL) return;
     PyModule_AddObject(module,"md",md);

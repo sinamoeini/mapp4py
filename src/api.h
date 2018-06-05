@@ -254,7 +254,7 @@ void FuncTuple<T>::match_kwd(const char* kwd,PyObject* val)
 template <class T, class... Ts>
 void FuncTuple<T, Ts...>::match(PyObject* tuple,Py_ssize_t i)
 {
-    op=PyTuple_GetItem(tuple,i);
+    op=PySequence_Fast_GET_ITEM(tuple,i);
     if(i==PyObject_Size(tuple)-1)
         return;
     return next_func.match(tuple,i+1);
@@ -265,7 +265,7 @@ void FuncTuple<T, Ts...>::match(PyObject* tuple,Py_ssize_t i)
 template <class T>
 void FuncTuple<T>::match(PyObject* tuple,Py_ssize_t i)
 {
-    op=PyTuple_GetItem(tuple,i);
+    op=PySequence_Fast_GET_ITEM(tuple,i);
 }
 /*--------------------------------------------
  

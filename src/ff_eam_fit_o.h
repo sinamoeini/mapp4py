@@ -5,6 +5,7 @@
 #define nrho_H 2
 #ifdef FeH_SPLINE
 #define nphi_FeH 18
+//#define nphi_FeH 32
 #else
 #define nphi_FeH 4
 #endif
@@ -108,8 +109,9 @@ namespace MAPP_NS
         void calc_Drho_Fe(type0,type0);
         
         void gradient();
+        void f_sq_gradient();
         type0 mean_rho_H();
-        size_t get_rFeH(type0*&,int*&);
+        size_t get_rFeH(type0*&,type0*&,int*&);
         
         
         

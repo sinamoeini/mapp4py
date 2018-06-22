@@ -26,7 +26,7 @@ namespace MAPP_NS
         type0 F(type0);
         void ls_prep(type0&,type0&,type0&);
         void F_reset();
-        size_t get_rFeH(type0*&,int*&);
+        size_t get_rFeH(type0*&,type0*&,int*&);
         
         
         int nconfigs;
@@ -118,7 +118,7 @@ namespace MAPP_NS
         static void getset_nmin_steps(PyGetSetDef&);
         static void getset_tol(PyGetSetDef&);
         static void getset_coefs(PyGetSetDef&);
-        
+        static void getset_errs(PyGetSetDef&);
         
         static void getset_RFeH(PyGetSetDef&);
         

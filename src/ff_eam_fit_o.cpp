@@ -37,6 +37,7 @@ type0 ForceFieldEAMFitO::B_phi_FeFe[4]={7.4122709384068,-0.64180690713367,-2.604
 type0 ForceFieldEAMFitO::A_F_Fe[3]={-1.0*sqrt(rho_Fe_gauge),-6.7314115586063e-4*rho_Fe_gauge*rho_Fe_gauge,7.6514905604792e-8*rho_Fe_gauge*rho_Fe_gauge*rho_Fe_gauge*rho_Fe_gauge};
 #ifdef FeH_SPLINE
 type0 ForceFieldEAMFitO::R_phi_FeH[nphi_FeH]={1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.3,3.6,3.9,4.2};
+//type0 ForceFieldEAMFitO::R_phi_FeH[nphi_FeH]={1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2., 2.1, 2.2, 2.3,2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3., 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7,3.8, 3.9, 4., 4.1, 4.2};
 #endif
 /*--------------------------------------------
  This is for my personal and fitting of iron
@@ -253,9 +254,7 @@ type0 ForceFieldEAMFitO::mean_rho_H()
     return data[0]/data[1];
 }
 /*--------------------------------------------
- only energy calculation this is useful for
- minimization/linesearch methods that do not
- use derivatives of energy
+
  --------------------------------------------*/
 void ForceFieldEAMFitO::gradient()
 {
@@ -342,21 +341,6 @@ void ForceFieldEAMFitO::gradient()
             }
             
             
-            /*
-            
-            if(ielem!=1 && jelem!=1) continue;
-            
-            
-            r=sqrt(rsq);
-            if(r>=rc_rho_H) continue;
-            
-            if(jatm<natms_lcl)
-            {
-                calc_Drho_H((ielem==1 ? calc_dF(jelem,rho[jatm]):0.0)+
-                            (jelem==1 ? dFi:0.0),r);
-            }
-            else if(jelem==1) calc_Drho_H(dFi,r);
-            */
         }
     }
     
@@ -365,7 +349,104 @@ void ForceFieldEAMFitO::gradient()
 /*--------------------------------------------
  
  --------------------------------------------*/
-size_t ForceFieldEAMFitO::get_rFeH(type0*& Rs,int*& Ns)
+void ForceFieldEAMFitO::f_sq_gradient()
+{
+    Algebra::zero<nHvars>(dv_lcl);
+    type0* xvec=atoms->x->begin();
+    type0* rho=rho_ptr->begin();
+    elem_type* evec=atoms->elem->begin();
+    
+    int iatm,jatm;
+    elem_type ielem,jelem;
+    type0 r,rsq,dFi,fpair;
+    
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
+        rho[i]=0.0;
+    
+    
+    
+    
+    for(iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=evec[iatm];
+        for(int j=0;j<neighbor_list_size[iatm];j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=evec[jatm];
+            rsq=Algebra::RSQ<__dim__>(xvec+iatm*__dim__,xvec+jatm*__dim__);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            
+            if(((ielem==0 && jelem==1) || (ielem==1 && jelem==0)) && r<rc_phi_FeH)
+            calc_Dphi_FeH(r,jatm<natms_lcl);
+            
+            if((ielem==1 && jelem==1)  && r<rc_phi_FeH)
+            calc_Dphi_HH(r,jatm<natms_lcl);
+            
+            rho[iatm]+=calc_rho(jelem,r);
+            if(jatm<natms_lcl)
+            rho[jatm]+=calc_rho(ielem,r);
+        }
+        
+        if(ielem==1) calc_DF_H(rho[iatm]);
+        else calc_DF_Fe(rho[iatm]);
+    }
+    
+    
+    
+    type0 dFj;
+    
+    for(iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=evec[iatm];
+        dFi=calc_dF(ielem,rho[iatm]);
+        for(int j=0;j<neighbor_list_size[iatm];j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=evec[jatm];
+            rsq=Algebra::RSQ<__dim__>(xvec+iatm*__dim__,xvec+jatm*__dim__);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            
+            
+            fpair=-(calc_dF(ielem,rho[iatm])*calc_drho(jelem,r)+
+                    calc_dF(jelem,rho[jatm])*calc_drho(ielem,r)+
+                    calc_dphi(ielem,jelem,r));
+            
+            dFj=jatm<natms_lcl ? calc_dF(jelem,rho[jatm]):0.0;
+            
+            if(ielem==0 && jelem==0)
+            {
+                calc_Drho_Fe(dFi+dFj,r);
+            }
+            else if(ielem==1 && jelem==1)
+            {
+                calc_Drho_H(dFi+dFj,r);
+            }
+            else if(ielem==1 && jelem==0)
+            {
+                calc_Drho_Fe(dFi,r);
+                calc_Drho_H(dFj,r);
+            }
+            else
+            {
+                calc_Drho_H(dFi,r);
+                calc_Drho_Fe(dFj,r);
+            }
+            
+            
+        }
+    }
+    
+    MPI_Allreduce(dv_lcl,dv,nHvars,Vec<type0>::MPI_T,MPI_SUM,world);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+size_t ForceFieldEAMFitO::get_rFeH(type0*& Rs,type0*& Fs,int*& Ns)
 {
     
     
@@ -375,16 +456,16 @@ size_t ForceFieldEAMFitO::get_rFeH(type0*& Rs,int*& Ns)
     
     int iatm,jatm;
     elem_type ielem,jelem;
-    type0 r,rsq;
+    type0 r,rsq,fpair;
     
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
     const int natms_lcl=atoms->natms_lcl;
-    for(int i=0;i<natms_lcl;i++)
-    rho[i]=0.0;
-    
     type0* rs_lcl=NULL;
-    Memory::alloc(rs_lcl,natms_lcl);
+    type0* fs_lcl=NULL;
+    int sz_lcl=natms_lcl;
+    Memory::alloc(rs_lcl,sz_lcl);
+    Memory::alloc(fs_lcl,sz_lcl);
     int n_lcl=0;
     
     for(iatm=0;iatm<natms_lcl;iatm++)
@@ -403,9 +484,18 @@ size_t ForceFieldEAMFitO::get_rFeH(type0*& Rs,int*& Ns)
             rsq=Algebra::RSQ<__dim__>(xvec+iatm*__dim__,xvec+jatm*__dim__);
             if(rsq>=cut_sq[ielem][jelem]) continue;
             r=sqrt(rsq);
-            
-            rs_lcl[n_lcl++]=r;
-            
+            fpair=-(calc_dF(ielem,rho[iatm])*calc_drho(jelem,r)+
+                    calc_dF(jelem,rho[jatm])*calc_drho(ielem,r)+
+                    calc_dphi(ielem,jelem,r));
+            if(n_lcl+1>=sz_lcl)
+            {
+                Memory::grow(rs_lcl,sz_lcl,sz_lcl+100);
+                Memory::grow(fs_lcl,sz_lcl,sz_lcl+100);
+                sz_lcl+=100;
+            }
+            fs_lcl[n_lcl]=fpair;
+            rs_lcl[n_lcl]=r;
+            ++n_lcl;
         }
         
     }
@@ -414,71 +504,96 @@ size_t ForceFieldEAMFitO::get_rFeH(type0*& Rs,int*& Ns)
     MPI_Allreduce(&n_lcl,&n,1,Vec<int>::MPI_T,MPI_SUM,world);
     type0* rs=NULL;
     Memory::alloc(rs,n);
+    type0* fs=NULL;
+    Memory::alloc(fs,n);
     int __n_lcl;
     type0* __rs=rs;
+    type0* __fs=fs;
     for(int i=0;i<atoms->comm_size;i++)
     {
         __n_lcl=n_lcl;
         MPI_Bcast(&__n_lcl,1,Vec<int>::MPI_T,i,world);
         if(atoms->comm_rank==i)
-        memcpy(__rs,rs_lcl,__n_lcl*sizeof(type0));
+        {
+            memcpy(__rs,rs_lcl,__n_lcl*sizeof(type0));
+            memcpy(__fs,fs_lcl,__n_lcl*sizeof(type0));
+        }
         
         MPI_Bcast(__rs,__n_lcl,Vec<type0>::MPI_T,i,world);
+        MPI_Bcast(__fs,__n_lcl,Vec<type0>::MPI_T,i,world);
         __rs+=__n_lcl;
+        __fs+=__n_lcl;
     }
     Memory::dealloc(rs_lcl);
+    Memory::dealloc(fs_lcl);
     
-    XMath::quicksort(rs,rs+n,
-                     [](type0* r_i,type0* r_j)
-                     {return (*r_i<*r_j);},
-                     [](type0* r_i,type0* r_j)
-                     {
-                         std::swap(*r_i,*r_j);
-                     });
+    size_t* key=NULL;
+    Memory::alloc(key,n);
+    for(size_t i=0;i<n;i++) key[i]=i;
+    
+    XMath::quicksort(key,key+n,
+    [&rs](size_t* rank_i,size_t* rank_j){return (rs[*rank_i]<rs[*rank_j]);},
+    [&rs,&fs](size_t* rank_i,size_t* rank_j)
+    {
+        std::swap(rs[*rank_i],rs[*rank_j]);
+        std::swap(fs[*rank_i],fs[*rank_j]);
+    });
+    
+    Memory::dealloc(key);
+    
     
     type0 tol=1.0e-5;
     int i0=0,i1=0;
-    type0 r0,n0;
+    type0 r0,f0,n0;
     size_t sz=0;
     
     type0* __Rs=NULL;
     Memory::alloc(__Rs,n);
+    type0* __Fs=NULL;
+    Memory::alloc(__Fs,n);
     int* __Ns=NULL;
     Memory::alloc(__Ns,n);
     
     while(i0<n)
     {
         r0=0.0;
+        f0=0.0;
         n0=0.0;
         while (i1<n && fabs(rs[i1]-rs[i0])<tol)
         {
             r0+=rs[i1];
+            f0+=fs[i1];
             n0++;
             i1++;
         }
         r0/=n0;
+        f0/=n0;
         
         __Rs[sz]=r0;
+        __Fs[sz]=f0;
         __Ns[sz]=static_cast<int>(n0);
         sz++;
         i0=i1;
     }
     Memory::dealloc(rs);
+    Memory::dealloc(fs);
     
     Rs=NULL;
     Memory::alloc(Rs,sz);
+    Fs=NULL;
+    Memory::alloc(Fs,sz);
     Ns=NULL;
     Memory::alloc(Ns,sz);
     memcpy(Rs,__Rs,sz*sizeof(type0));
+    memcpy(Fs,__Fs,sz*sizeof(type0));
     memcpy(Ns,__Ns,sz*sizeof(int));
     
     Memory::dealloc(__Rs);
+    Memory::dealloc(__Fs);
     Memory::dealloc(__Ns);
     
     
     return sz;
-    
-    
     
 }
 /*--------------------------------------------

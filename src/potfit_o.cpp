@@ -549,13 +549,13 @@ type0 PotFitO::find_max_alpha(const type0 xlo,const type0 xhi,bool dof,type0 max
 /*--------------------------------------------
  
  --------------------------------------------*/
-size_t PotFitO::get_rFeH(type0*& Rs,int*& Ns)
+size_t PotFitO::get_rFeH(type0*& Rs,type0*& Fs,int*& Ns)
 {
     if(ntrial%max_ntrials==0) full_reset();
     ntrial++;
     min->init();
     min->run(nmin_steps);
-    size_t sz=ff->get_rFeH(Rs,Ns);
+    size_t sz=ff->get_rFeH(Rs,Fs,Ns);
     min->fin();
     
     return sz;
@@ -741,7 +741,7 @@ int PotFitO::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef PotFitO::getset[]=EmptyPyGetSetDef(19);
+PyGetSetDef PotFitO::getset[]=EmptyPyGetSetDef(20);
 /*--------------------------------------------*/
 void PotFitO::setup_tp_getset()
 {
@@ -765,8 +765,9 @@ void PotFitO::setup_tp_getset()
     getset_nmin_steps(getset[14]);
     getset_tol(getset[15]);
     getset_coefs(getset[16]);
+    getset_errs(getset[17]);
     
-    getset_RFeH(getset[17]);
+    getset_RFeH(getset[18]);
 }
 /*--------------------------------------------*/
 PyMethodDef PotFitO::methods[]=EmptyPyMethodDef(6);
@@ -1180,6 +1181,29 @@ void PotFitO::getset_tol(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void PotFitO::getset_errs(PyGetSetDef& getset)
+{
+    getset.name=(char*)"errs";
+    getset.doc=(char*)"";
+    
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        PotFitO* potfit=reinterpret_cast<Object*>(self)->potfit;
+        size_t sz;
+        size_t* szp=&sz;
+        sz=potfit->nconfigs;
+        PyObject* op=var<type0*>::build(potfit->errs,&szp);
+        return op;
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void PotFitO::getset_coefs(PyGetSetDef& getset)
 {
     getset.name=(char*)"coefs";
@@ -1229,15 +1253,18 @@ void PotFitO::getset_RFeH(PyGetSetDef& getset)
         }
         
         type0* Rs=NULL;
+        type0* Fs=NULL;
         int* Ns=NULL;
-        size_t sz=potfit->get_rFeH(Rs,Ns);
+        size_t sz=potfit->get_rFeH(Rs,Fs,Ns);
         size_t* szp=&sz;
 
-        PyObject* py_obj=PyList_New(2);
+        PyObject* py_obj=PyList_New(3);
         PyList_SET_ITEM(py_obj,0,var<type0*>::build(Rs,&szp));
-        PyList_SET_ITEM(py_obj,1,var<int*>::build(Ns,&szp));
+        PyList_SET_ITEM(py_obj,1,var<type0*>::build(Fs,&szp));
+        PyList_SET_ITEM(py_obj,2,var<int*>::build(Ns,&szp));
  
         Memory::dealloc(Rs);
+        Memory::dealloc(Fs);
         Memory::dealloc(Ns);
  
         return py_obj;

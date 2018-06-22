@@ -304,7 +304,7 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
 }
 /*--------------------------------------------*/
 #ifdef POTFIT
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(13);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(14);
 #else
 PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(11);
 #endif
@@ -322,6 +322,7 @@ void AtomsMD::setup_tp_methods()
 #ifdef POTFIT
     ForceFieldEAMFit::ml_new(methods[10]);
     ForceFieldEAMFitO::ml_new(methods[11]);
+    ForceFieldEAMPotFitAckOgata::ml_new(methods[12]);
 #endif
 }
 /*--------------------------------------------

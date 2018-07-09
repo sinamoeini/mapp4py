@@ -1,8 +1,8 @@
 #ifndef __MAPP__potfit_funcs__
 #define __MAPP__potfit_funcs__
+#include "api.h"
 #include "global.h"
 #include "xmath.h"
-#include "api.h"
 namespace MAPP_NS
 {
     class PotFitAux
@@ -21,8 +21,15 @@ namespace MAPP_NS
         PotFitPairFunc(const char*);
         virtual ~PotFitPairFunc();
         const char* name;
+        std::string A_name;
+        std::string dA_name_max;
+        std::string A_name_dof;
+        
         type0* vars;
+        type0* hvars;
+        type0* dvars_max;
         type0* dvars_lcl;
+        bool* dofs;
         type0 rc;
         size_t nvars;
         virtual type0 F(type0)=0;
@@ -30,12 +37,20 @@ namespace MAPP_NS
         virtual type0 ddF(type0)=0;
         virtual void DF(type0,type0,type0*)=0;
         virtual void DdF(type0,type0,type0*)=0;
-        virtual void find_max_alpha(type0&,type0*,type0*)=0;
+        virtual void find_max_alpha(type0&)=0;
+        virtual void random_neigh(class Random*);
+        virtual bool validate()=0;
         virtual int set_init(PyObject*,type0*&,size_t&)=0;
-        virtual int set(PyObject*);
-        virtual PyObject* get();
+        
         void DF(type0 coef,type0 r){DF(coef,r,dvars_lcl);};
         void DdF(type0 coef,type0 r){DdF(coef,r,dvars_lcl);};
+        
+        virtual int set_A(PyObject*);
+        virtual PyObject* get_A();
+        virtual int set_dA_max(PyObject*);
+        virtual PyObject* get_dA_max();
+        virtual int set_A_dof(PyObject*);
+        virtual PyObject* get_A_dof();
     };
     
     class PotFitEmbFunc
@@ -46,20 +61,34 @@ namespace MAPP_NS
         PotFitEmbFunc(const char*);
         virtual ~PotFitEmbFunc();
         const char* name;
+        std::string A_name;
+        std::string dA_name_max;
+        std::string A_name_dof;
+        
         type0* vars;
+        type0* hvars;
+        type0* dvars_max;
         type0* dvars_lcl;
+        bool* dofs;
         size_t nvars;
         virtual type0 F(type0)=0;
         virtual type0 dF(type0)=0;
         virtual type0 ddF(type0)=0;
         virtual void DF(type0,type0*)=0;
         virtual void DdF(type0,type0*)=0;
-        virtual void find_max_alpha(type0&,type0*,type0*)=0;
+        virtual void find_max_alpha(type0&)=0;
+        virtual void random_neigh(class Random*);
+        virtual bool validate()=0;
         virtual int set_init(PyObject*,type0*&,size_t&)=0;
-        virtual int set(PyObject*);
-        virtual PyObject* get();
         void DF(type0 rho){DF(rho,dvars_lcl);};
         void DdF(type0 rho){DdF(rho,dvars_lcl);};
+        
+        virtual int set_A(PyObject*);
+        virtual PyObject* get_A();
+        virtual int set_dA_max(PyObject*);
+        virtual PyObject* get_dA_max();
+        virtual int set_A_dof(PyObject*);
+        virtual PyObject* get_A_dof();
     };
     
     
@@ -87,7 +116,9 @@ namespace MAPP_NS
         type0 ddF(type0);
         void DF(type0,type0,type0*);
         void DdF(type0,type0,type0*);
-        void find_max_alpha(type0&,type0*,type0*);
+        void find_max_alpha(type0&);
+        void random_neigh(class Random*);
+        bool validate();
         int set_init(PyObject*,type0*&,size_t&);
         int set(PyObject*);
     };
@@ -105,7 +136,8 @@ namespace MAPP_NS
         type0 ddF(type0);
         void DF(type0,type0,type0*);
         void DdF(type0,type0,type0*);
-        void find_max_alpha(type0&,type0*,type0*);
+        void find_max_alpha(type0&);
+        bool validate();
         int set_init(PyObject*,type0*&,size_t&);
         int set(PyObject*);
     };
@@ -126,7 +158,9 @@ namespace MAPP_NS
         type0 ddF(type0);
         void DF(type0,type0,type0*);
         void DdF(type0,type0,type0*);
-        void find_max_alpha(type0&,type0*,type0*);
+        void find_max_alpha(type0&);
+        void random_neigh(class Random*);
+        bool validate();
         int set_init(PyObject*,type0*&,size_t&);
         int set(PyObject*);
     };
@@ -144,7 +178,8 @@ namespace MAPP_NS
         type0 ddF(type0);
         void DF(type0,type0*);
         void DdF(type0,type0*);
-        void find_max_alpha(type0&,type0*,type0*);
+        void find_max_alpha(type0&);
+        bool validate();
         int set_init(PyObject*,type0*&,size_t&);
         int set(PyObject*);
     };
@@ -152,6 +187,7 @@ namespace MAPP_NS
     class PotFitEmbAng:public PotFitEmbFunc
     {
     private:
+        type0 lim;
     protected:
     public:
         PotFitEmbAng(const char*);
@@ -161,7 +197,9 @@ namespace MAPP_NS
         type0 ddF(type0);
         void DF(type0,type0*);
         void DdF(type0,type0*);
-        void find_max_alpha(type0&,type0*,type0*);
+        void find_max_alpha(type0&);
+        
+        bool validate();
         int set_init(PyObject*,type0*&,size_t&);
         int set(PyObject*);
     };

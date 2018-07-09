@@ -166,11 +166,13 @@ void MAPP::init_module(void)
     PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
 
 #ifdef POTFIT
-    if(PotFit::setup_tp()<0) return;
-    PyModule_AddObject(module,"potfit",reinterpret_cast<PyObject*>(&PotFit::TypeObject));
+
     
     if(PotFitO::setup_tp()<0) return;
     PyModule_AddObject(module,"potfit_o",reinterpret_cast<PyObject*>(&PotFitO::TypeObject));
+    
+    if(PotFit<ForceFieldEAMPotFitAckOgata,2>::setup_tp()<0) return;
+    PyModule_AddObject(module,"potfit",reinterpret_cast<PyObject*>(&PotFit<ForceFieldEAMPotFitAckOgata,2>::TypeObject));
 #endif
     
     PyObject* md=MAPP::MD::init_module();

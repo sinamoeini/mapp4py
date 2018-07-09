@@ -26,7 +26,7 @@ namespace MAPP_NS
         type0 S_tmp[__dim__][__dim__];
         
         
-        class DynamicMD* dynamic;
+        
     public:
         MinCGFit(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*,vec*,vec*);
         ~MinCGFit();
@@ -48,6 +48,7 @@ namespace MAPP_NS
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
         class ExportMD* xprt;
+        class DynamicMD* dynamic;
         
         typedef struct
         {

@@ -1,5 +1,7 @@
 #include "potfit_funcs.h"
 #include "memory.h"
+#include "random.h"
+#define NMAX_ALPHA_SHRNK_ATTMPS 10
 #include <cmath>
 using namespace MAPP_NS;
 /*--------------------------------------------
@@ -14,14 +16,16 @@ type0 PotFitAux::find_max_alpha(const type0 xlo,const type0 xhi,bool dof,type0 m
     if(h>0.0 && std::isnan(xhi)==false)
     {
         max_alpha=MIN(max_alpha,(xhi-x)/h);
-        while(x+max_alpha*h>xhi)
+        for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS && x+max_alpha*h>xhi;it++)
             max_alpha=nextafter(max_alpha,0.0);
+        if(x+max_alpha*h>xhi)  return 0.0;
     }
     else if(h<0.0 && std::isnan(xlo)==false)
     {
         max_alpha=MIN(max_alpha,(xlo-x)/h);
-        while(x+max_alpha*h<xlo)
+        for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS && x+max_alpha*h<xlo;it++)
             max_alpha=nextafter(max_alpha,0.0);
+        if(x+max_alpha*h<xlo) return 0.0;
         
     }
     
@@ -38,15 +42,16 @@ type0 PotFitAux::find_max_alpha(const type0 xlo,const type0 xhi,type0 max_dx,typ
     if(h>0.0 && std::isnan(xhi)==false)
     {
         max_alpha=MIN(max_alpha,(xhi-x)/h);
-        while(x+max_alpha*h>xhi)
+        for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS && x+max_alpha*h>xhi;it++)
             max_alpha=nextafter(max_alpha,0.0);
+        if(x+max_alpha*h>xhi)  return 0.0;
     }
     else if(h<0.0 && std::isnan(xlo)==false)
     {
         max_alpha=MIN(max_alpha,(xlo-x)/h);
-        while(x+max_alpha*h<xlo)
+        for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS && x+max_alpha*h<xlo;it++)
             max_alpha=nextafter(max_alpha,0.0);
-        
+        if(x+max_alpha*h<xlo) return 0.0;
     }
     
     return max_alpha;
@@ -61,7 +66,10 @@ type0 PotFitAux::find_max_alpha(const type0 xlo,const type0 xhi,type0 max_dx,typ
  
  ----------------------------------------------------------------------------------------*/
 PotFitPairFunc::PotFitPairFunc(const char* __name):
-name(__name),nvars(0),rc(0.0),vars(NULL),dvars_lcl(NULL)
+name(__name),nvars(0),rc(0.0),vars(NULL),dvars_lcl(NULL),
+A_name(std::string("A_")+std::string(name)),
+dA_name_max(std::string("dA_")+std::string(name)+std::string("_max")),
+A_name_dof(std::string("A_")+std::string(name)+std::string("_dof"))
 {
 }
 /*--------------------------------------------
@@ -73,13 +81,23 @@ PotFitPairFunc::~PotFitPairFunc()
 /*--------------------------------------------
  
  --------------------------------------------*/
-int PotFitPairFunc::set(PyObject* val)
+void PotFitPairFunc::random_neigh(Random* random)
 {
-    VarAPI<type0*> var(name);
+    for(size_t i=0;i<nvars;i++)
+        if(dofs[i])
+            hvars[i]=(2.0*random->uniform()-1.0)*dvars_max[i];
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitPairFunc::set_A(PyObject* val)
+{
+    VarAPI<type0*> var(A_name.c_str());
     if(var.set(val)!=0) return -1;
     if(var.__var__.size!=nvars)
     {
-        PyErr_Format(PyExc_TypeError,"size mismatch in %s",name);
+        PyErr_Format(PyExc_TypeError,"size mismatch in %s",A_name.c_str());
         return -1;
     }
     memcpy(vars,var.val,nvars*sizeof(type0));
@@ -88,10 +106,56 @@ int PotFitPairFunc::set(PyObject* val)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* PotFitPairFunc::get()
+PyObject* PotFitPairFunc::get_A()
 {
     size_t* szp=&nvars;
     return var<type0*>::build(vars,&szp);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitPairFunc::set_dA_max(PyObject* val)
+{
+    VarAPI<type0*> var(dA_name_max.c_str());
+    if(var.set(val)!=0) return -1;
+    if(var.__var__.size!=nvars)
+    {
+        PyErr_Format(PyExc_TypeError,"size mismatch in %s",dA_name_max.c_str());
+        return -1;
+    }
+    memcpy(dvars_max,var.val,nvars*sizeof(type0));
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* PotFitPairFunc::get_dA_max()
+{
+    size_t* szp=&nvars;
+    return var<type0*>::build(dvars_max,&szp);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitPairFunc::set_A_dof(PyObject* val)
+{
+    VarAPI<bool*> var(A_name_dof.c_str());
+    if(var.set(val)!=0) return -1;
+    if(var.__var__.size!=nvars)
+    {
+        PyErr_Format(PyExc_TypeError,"size mismatch in %s",A_name_dof.c_str());
+        return -1;
+    }
+    memcpy(dofs,var.val,nvars*sizeof(bool));
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* PotFitPairFunc::get_A_dof()
+{
+    size_t* szp=&nvars;
+    return var<bool*>::build(dofs,&szp);
 }
 /*--------------------------------------------
  
@@ -387,7 +451,7 @@ const type0& x_lo,const type0& x_hi,type0& max_alpha)
     type0 ans[2];
     type0 df;
     bool trial=true;
-    while(trial)
+    for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS && trial;it++)
     {
         Algebra::V_eq<4>(c0,c);
         Algebra::V_add_x_mul_V<4>(max_alpha,dc,c);
@@ -424,6 +488,8 @@ const type0& x_lo,const type0& x_hi,type0& max_alpha)
         }
     }
     
+    if(trial) max_alpha=0.0;
+    
 }
 /*--------------------------------------------
  
@@ -450,7 +516,7 @@ type0 PotFitRhoSpl::F(type0 alpha,type0* h,type0 r)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitRhoSpl::find_max_alpha(type0& max_alpha,type0* h,type0* max_dv)
+void PotFitRhoSpl::find_max_alpha(type0& max_alpha)
 {
     
     type0 c0[4]={0.0,0.0,0.0,0.0};
@@ -465,33 +531,109 @@ void PotFitRhoSpl::find_max_alpha(type0& max_alpha,type0* h,type0* max_dv)
         c0[1]+=vars[i]*3.0*R[i];
         c0[2]+=-vars[i]*3.0*R[i]*R[i];
         c0[3]+=vars[i]*R[i]*R[i]*R[i];
-        if(h[i]!=0.0) dof=true;
+        if(dofs[i]) dof=true;
         if(!dof) continue;
-        dc[0]+=-h[i];
-        dc[1]+=h[i]*3.0*R[i];
-        dc[2]+=-h[i]*3.0*R[i]*R[i];
-        dc[3]+=h[i]*R[i]*R[i]*R[i];
+        dc[0]+=-hvars[i];
+        dc[1]+=hvars[i]*3.0*R[i];
+        dc[2]+=-hvars[i]*3.0*R[i]*R[i];
+        dc[3]+=hvars[i]*R[i]*R[i]*R[i];
         x_hi=R[i];
         if(i!=nvars-1) x_lo=R[i+1];
         else x_lo=0.0;
         
-        df_lo=F(h,x_lo);
+        df_lo=F(hvars,x_lo);
         if(df_lo!=0.0)
-            max_alpha=MIN(max_alpha,max_dv[i]/fabs(df_lo));
+            max_alpha=MIN(max_alpha,dvars_max[i]/fabs(df_lo));
         
         f_lo=F(x_lo);
         if((df_lo<0.0 && std::isinf(max_alpha)) || f_lo+max_alpha*df_lo<0.0)
         {
             max_alpha=MIN(max_alpha,-f_lo/df_lo);
-            while(F(max_alpha,h,x_lo)<0.0)
+            
+            for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS&&F(max_alpha,hvars,x_lo)<0.0;it++)
                 max_alpha=nextafter(max_alpha,0.0);
+            if(F(max_alpha,hvars,x_lo)<0.0) max_alpha=0.0;
         }
         
         if(std::isinf(max_alpha))
             slpine_max_alpha(c0,dc,x_lo,x_hi,max_alpha);
         
-        slpine_max_alpha(h,c0,dc,x_lo,x_hi,max_alpha);
+        slpine_max_alpha(hvars,c0,dc,x_lo,x_hi,max_alpha);
     }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitRhoSpl::random_neigh(Random* random)
+{
+    for(size_t i=0;i<nvars;i++)
+        hvars[i]=(2.0*random->uniform()-1.0)*dvars_max[i];
+    /*
+    type0 x_hi,x_lo;
+    for(size_t i=0;i<nvars;i++)
+    {
+        x_hi=R[i];
+        if(i!=nvars-1) x_lo=R[i+1];
+        else x_lo=0.0;
+        hvars[i]/=Algebra::pow<3>(x_hi-x_lo);
+        
+        for(size_t j=i+1;j<nvars;j++)
+        {
+            if(j!=nvars-1) x_lo=R[j+1];
+            else x_lo=0.0;
+            hvars[j]-=hvars[i]*Algebra::pow<3>(x_hi-x_lo);
+        }
+    }*/
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool PotFitRhoSpl::validate()
+{
+    type0 c0[4]={0.0,0.0,0.0,0.0};
+    type0 c1[3]={0.0,0.0,0.0};
+    type0 ans[3];
+    bool dof=false;
+    type0 x_hi,x_lo;
+    int nroots;
+    
+    for(size_t i=0;i<nvars;i++)
+    {
+        c0[0]+=-vars[i];
+        c0[1]+=vars[i]*3.0*R[i];
+        c0[2]+=-vars[i]*3.0*R[i]*R[i];
+        c0[3]+=vars[i]*R[i]*R[i]*R[i];
+        if(dofs[i]) dof=true;
+        if(!dof) continue;
+        x_hi=R[i];
+        if(i!=nvars-1) x_lo=R[i+1];
+        else x_lo=0.0;
+        nroots=0;
+        if(c0[0]!=0.0)
+        {
+            c1[0]=c0[1]/c0[0];
+            c1[1]=c0[2]/c0[0];
+            c1[2]=c0[3]/c0[0];
+            nroots=cubic(c1,ans);
+        }
+        else if(c0[1]!=0.0)
+        {
+            c1[0]=c0[2]/c0[1];
+            c1[1]=c0[3]/c0[1];
+            nroots=quadratic(c1,ans);
+        }
+        else if(c0[2]!=0.0)
+        {
+            nroots=1;
+            ans[0]=-c0[3]/c0[2];
+        }
+        else if(c0[3]<0.0) return false;
+        
+        for(int j=0;j<nroots;j++)
+            if(x_lo<=ans[j] && ans[j]<x_hi) return false;
+        
+    }
+    return true;
 }
 /*--------------------------------------------
  
@@ -610,11 +752,20 @@ void PotFitRhoAng::DdF(type0 coef,type0 r,type0* dv)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitRhoAng::find_max_alpha(type0& max_alpha,type0* h,type0* max_dv)
+void PotFitRhoAng::find_max_alpha(type0& max_alpha)
 {
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),max_dv[0],vars[0],h[0]));
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),max_dv[1],vars[1],h[1]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[0],vars[0],hvars[0]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[1],vars[1],hvars[1]));
 
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool PotFitRhoAng::validate()
+{
+    if(vars[0]<0.0) return false;
+    if(vars[1]<0.0) return false;
+    return true;
 }
 /*--------------------------------------------
  
@@ -726,23 +877,54 @@ type0 PotFitPhiSpl::F(type0* h,type0 r)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitPhiSpl::find_max_alpha(type0& max_alpha,type0* h,type0* max_dv)
+void PotFitPhiSpl::find_max_alpha(type0& max_alpha)
 {
     type0 x_lo,df_lo;
     bool dof=false;
     for(size_t i=0;i<nvars;i++)
     {
         if(max_alpha==0.0) continue;
-        if(h[i]!=0.0) dof=true;
+        if(hvars[i]!=0.0) dof=true;
         if(!dof) continue;
 
         if(i!=nvars-1) x_lo=R[i+1];
         else x_lo=0.0;
         
-        df_lo=F(h,x_lo);
+        df_lo=F(hvars,x_lo);
         if(df_lo!=0.0)
-            max_alpha=MIN(max_alpha,max_dv[i]/fabs(df_lo));
+            max_alpha=MIN(max_alpha,dvars_max[i]/fabs(df_lo));
     }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitPhiSpl::random_neigh(Random* random)
+{
+    for(size_t i=0;i<nvars;i++)
+        hvars[i]=(2.0*random->uniform()-1.0)*dvars_max[i];
+    /*
+    type0 x_hi,x_lo;
+    for(size_t i=0;i<nvars;i++)
+    {
+        x_hi=R[i];
+        if(i!=nvars-1) x_lo=R[i+1];
+        else x_lo=0.0;
+        hvars[i]/=Algebra::pow<3>(x_hi-x_lo);
+        
+        for(size_t j=i+1;j<nvars;j++)
+        {
+            if(j!=nvars-1) x_lo=R[j+1];
+            else x_lo=0.0;
+            hvars[j]-=hvars[i]*Algebra::pow<3>(x_hi-x_lo);
+        }
+    }*/
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool PotFitPhiSpl::validate()
+{
+    return true;
 }
 /*--------------------------------------------
  
@@ -795,7 +977,10 @@ int PotFitPhiSpl::set(PyObject* val)
  
  ----------------------------------------------------------------------------------------*/
 PotFitEmbFunc::PotFitEmbFunc(const char* __name):
-name(__name),nvars(0),vars(NULL),dvars_lcl(NULL)
+name(__name),nvars(0),vars(NULL),dvars_lcl(NULL),
+A_name(std::string("A_")+std::string(name)),
+dA_name_max(std::string("dA_")+std::string(name)+std::string("_max")),
+A_name_dof(std::string("A_")+std::string(name)+std::string("_dof"))
 {
 }
 /*--------------------------------------------
@@ -807,13 +992,21 @@ PotFitEmbFunc::~PotFitEmbFunc()
 /*--------------------------------------------
  
  --------------------------------------------*/
-int PotFitEmbFunc::set(PyObject* val)
+void PotFitEmbFunc::random_neigh(Random* random)
 {
-    VarAPI<type0*> var(name);
+    for(size_t i=0;i<nvars;i++)
+        hvars[i]=(2.0*random->uniform()-1.0)*dvars_max[i];
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitEmbFunc::set_A(PyObject* val)
+{
+    VarAPI<type0*> var(A_name.c_str());
     if(var.set(val)!=0) return -1;
     if(var.__var__.size!=nvars)
     {
-        PyErr_Format(PyExc_TypeError,"size mismatch in %s",name);
+        PyErr_Format(PyExc_TypeError,"size mismatch in %s",A_name.c_str());
         return -1;
     }
     memcpy(vars,var.val,nvars*sizeof(type0));
@@ -822,10 +1015,56 @@ int PotFitEmbFunc::set(PyObject* val)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* PotFitEmbFunc::get()
+PyObject* PotFitEmbFunc::get_A()
 {
     size_t* szp=&nvars;
     return var<type0*>::build(vars,&szp);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitEmbFunc::set_dA_max(PyObject* val)
+{
+    VarAPI<type0*> var(dA_name_max.c_str());
+    if(var.set(val)!=0) return -1;
+    if(var.__var__.size!=nvars)
+    {
+        PyErr_Format(PyExc_TypeError,"size mismatch in %s",dA_name_max.c_str());
+        return -1;
+    }
+    memcpy(dvars_max,var.val,nvars*sizeof(type0));
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* PotFitEmbFunc::get_dA_max()
+{
+    size_t* szp=&nvars;
+    return var<type0*>::build(dvars_max,&szp);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitEmbFunc::set_A_dof(PyObject* val)
+{
+    VarAPI<bool*> var(A_name_dof.c_str());
+    if(var.set(val)!=0) return -1;
+    if(var.__var__.size!=nvars)
+    {
+        PyErr_Format(PyExc_TypeError,"size mismatch in %s",A_name_dof.c_str());
+        return -1;
+    }
+    memcpy(dofs,var.val,nvars*sizeof(bool));
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* PotFitEmbFunc::get_A_dof()
+{
+    size_t* szp=&nvars;
+    return var<bool*>::build(dofs,&szp);
 }
 /*--------------------------------------------
  
@@ -887,11 +1126,20 @@ void PotFitEmbAck::DdF(type0 rho,type0* dv)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitEmbAck::find_max_alpha(type0& max_alpha,type0* h,type0* max_dv)
+void PotFitEmbAck::find_max_alpha(type0& max_alpha)
 {
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),0.0,max_dv[0],vars[0],h[0]));
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),max_dv[1],vars[1],h[1]));
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),max_dv[2],vars[2],h[2]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),0.0,dvars_max[0],vars[0],hvars[0]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[1],vars[1],hvars[1]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[2],vars[2],hvars[2]));
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool PotFitEmbAck::validate()
+{
+    if(vars[0]>0.0) return false;
+    if(vars[2]>0.0 && 0.875*pow(-2.0*vars[0],4.0/7.0)*pow(vars[2],3.0/7.0)+vars[1]<0.0) return false;
+    return true;
 }
 /*--------------------------------------------
  
@@ -923,6 +1171,8 @@ int PotFitEmbAck::set(PyObject* val)
 PotFitEmbAng::PotFitEmbAng(const char* __name):
 PotFitEmbFunc(__name)
 {
+    type0 t=3.0*sqrt(5.0)*cos((M_PI-acos(0.4*sqrt(5.0)))/3.0)-2.5;
+    lim=pow(t,2.0/3.0)*((t+5.0)*t-5.0)/(9.0*t*Algebra::pow<3>(1.0+t));
 }
 /*--------------------------------------------
  
@@ -937,7 +1187,8 @@ type0 PotFitEmbAng::F(type0 rho)
 {
     type0 rho_b=rho/vars[3];
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
-    return (vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3/(1.0+rho_b))*rho_b;
+    //return (vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3/(1.0+rho_b))*rho_b;
+    return (vars[0]*rho_b+vars[1]+vars[2]*lim*rho_b+vars[2]*rho_b_2_3/(1.0+rho_b))*rho_b;
 }
 /*--------------------------------------------
  
@@ -947,7 +1198,8 @@ type0 PotFitEmbAng::dF(type0 rho)
     if(rho==0.0) return 0.0;
     type0 rho_b=rho/vars[3];
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
-    return (2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
+    //return (2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
+    return (2.0*vars[0]*rho_b+vars[1]+2.0*vars[2]*lim*rho_b+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
 }
 /*--------------------------------------------
  
@@ -957,7 +1209,8 @@ type0 PotFitEmbAng::ddF(type0 rho)
     if(rho==0.0) return 0.0;
     type0 rho_b=rho/vars[3];
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
-    return 2.0*(vars[0]-vars[2]*rho_b_2_3*((rho_b+5.0)*rho_b-5.0)/(9.0*rho_b*Algebra::pow<3>(1.0+rho_b)))/(vars[3]*vars[3]);
+    //return 2.0*(vars[0]-vars[2]*rho_b_2_3*((rho_b+5.0)*rho_b-5.0)/(9.0*rho_b*Algebra::pow<3>(1.0+rho_b)))/(vars[3]*vars[3]);
+    return 2.0*(vars[0]-vars[2]*lim-vars[2]*rho_b_2_3*((rho_b+5.0)*rho_b-5.0)/(9.0*rho_b*Algebra::pow<3>(1.0+rho_b)))/(vars[3]*vars[3]);
 }
 /*--------------------------------------------
  
@@ -969,11 +1222,10 @@ void PotFitEmbAng::DF(type0 rho,type0* dv)
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
     dv[0]+=rho_b*rho_b;
     dv[1]+=rho_b;
-    dv[2]+=rho_b*rho_b_2_3/(1.0+rho_b);
-    dv[3]+=
-    -(vars[0]*4.0*rho_b+
-    vars[1]+
-    vars[2]*rho_b_2_3*((4.0*rho_b+11.0)*rho_b+25.0)/(9.0*Algebra::pow<3>(1.0+rho_b)))/(vars[3]*vars[3]);
+    //dv[2]+=rho_b*rho_b_2_3/(1.0+rho_b);
+    dv[2]+=lim*rho_b*rho_b+rho_b*rho_b_2_3/(1.0+rho_b);
+    dv[3]+=-rho_b*(2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
+    
 }
 /*--------------------------------------------
  
@@ -985,18 +1237,32 @@ void PotFitEmbAng::DdF(type0 rho,type0* dv)
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
     dv[0]+=2.0*rho_b/vars[3];
     dv[1]+=1.0/vars[3];
-    dv[2]+=(rho_b_2_3*(5.0+2.0*rho_b)/(3.0*(1.0+rho_b)*(1.0+rho_b)))/vars[3];
-    dv[3]+=-rho_b_2_3*((4.0*rho_b+11.0)*rho_b+25.0)/(9.0*Algebra::pow<3>((1.0+rho_b)));
+    //dv[2]+=(rho_b_2_3*(5.0+2.0*rho_b)/(3.0*(1.0+rho_b)*(1.0+rho_b)))/vars[3];
+    dv[2]+=(2.0*lim*rho_b+rho_b_2_3*(5.0+2.0*rho_b)/(3.0*(1.0+rho_b)*(1.0+rho_b)))/vars[3];
+    dv[3]+=
+    (vars[0]+
+    vars[1]*4.0*rho_b+
+    vars[2]*rho_b_2_3*((4.0*rho_b+11.0)*rho_b+25.0)/(9.0*Algebra::pow<3>((1.0+rho_b))))/(vars[3]*vars[3]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitEmbAng::find_max_alpha(type0& max_alpha,type0* h,type0* max_dv)
+void PotFitEmbAng::find_max_alpha(type0& max_alpha)
 {
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),max_dv[0],vars[0],h[0]));
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),max_dv[1],vars[1],h[1]));
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),max_dv[2],vars[2],h[2]));
-    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),max_dv[3],vars[3],h[3]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[2],vars[2],hvars[2]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[3],vars[3],hvars[3]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[1],vars[1],hvars[1]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[0],vars[0],hvars[0]));
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool PotFitEmbAng::validate()
+{
+    if(vars[3]<0.0) return false;
+    if(vars[0]<0.0) return false;
+    if(vars[2]<0.0) return false;
+    return true;
 }
 /*--------------------------------------------
  

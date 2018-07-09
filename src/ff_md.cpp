@@ -114,7 +114,7 @@ type0 ForceFieldMD::value_timer()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldMD::derivative_timer()
+type0* ForceFieldMD::derivative_timer()
 {
     reset();
     force_calc();
@@ -130,6 +130,7 @@ void ForceFieldMD::derivative_timer()
         const int n=atoms->natms_lcl*__dim__;
         for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
     }
+    return __vec;
 }
 /*--------------------------------------------
  this does not sound right hs to be check later

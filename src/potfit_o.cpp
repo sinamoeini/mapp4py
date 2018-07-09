@@ -87,8 +87,6 @@ world(__world)
     my_world=new MPI_Comm;
     
     MPI_Comm_split(world,my_conf,my_lcl_rank,my_world);
-    
-    
     coef=__coefs[my_conf][0];
     target=__targets[my_conf][0];
     

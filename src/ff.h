@@ -38,7 +38,7 @@ namespace MAPP_NS
         
 
         virtual type0 value_timer()=0;
-        virtual void derivative_timer()=0;
+        virtual type0* derivative_timer()=0;
         virtual void derivative_timer(type0(*&)[__dim__])=0;
         
     };

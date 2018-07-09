@@ -104,7 +104,7 @@ type0 ForceFieldDMD::value_timer()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldDMD::derivative_timer()
+type0* ForceFieldDMD::derivative_timer()
 {
     reset();
     force_calc();
@@ -130,6 +130,7 @@ void ForceFieldDMD::derivative_timer()
     atoms->fe=__vec[0];
     Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
     atoms->s=__vec[1+__nvoigt__];
+    return __vec;
 }
 /*--------------------------------------------
  this does not sound right hs to be check later

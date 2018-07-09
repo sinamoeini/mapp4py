@@ -36,7 +36,7 @@ namespace MAPP_NS
         void force_calc_timer();
 
         type0 value_timer();
-        void derivative_timer();
+        type0* derivative_timer();
         void derivative_timer(type0(*&)[__dim__]);
         void derivative_timer(bool,type0(*&)[__dim__]);
         

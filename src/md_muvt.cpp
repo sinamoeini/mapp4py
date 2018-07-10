@@ -307,6 +307,8 @@ void MDMuVT::run(int nsteps)
         else
         {
 #ifdef GCMCDEBUG
+            dynamic->update(atoms->x);
+            ff->force_calc_timer();
             delta_u=atoms->pe;
 #endif
             gcmc.xchng(false,nattempts);

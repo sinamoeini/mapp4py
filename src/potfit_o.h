@@ -1,7 +1,7 @@
 #ifndef __MAPP__potfit_o__
 #define __MAPP__potfit_o__
 #include "atoms_md.h"
-#include "min_cg_fit.h"
+#include "min_cg_potfit.h"
 #include "ff_eam_fit_o.h"
 #include "thermo_dynamics.h"
 namespace MAPP_NS
@@ -38,7 +38,7 @@ namespace MAPP_NS
         MPI_Comm* my_world;
         int my_rank,my_conf,my_lcl_rank;
         AtomsMD* atoms;
-        MinCGFit* min;
+        MinCGPotFit* min;
         LineSearchBrent* min_ls;
         ForceFieldEAMFitO* ff;
         int* nHs;

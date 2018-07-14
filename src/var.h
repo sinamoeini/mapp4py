@@ -1,6 +1,7 @@
 #ifndef __MAPP__var__
 #define __MAPP__var__
 #include <Python.h>
+#include "py_compat.h"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
@@ -83,11 +84,21 @@ namespace MAPP_NS
     {public: static const std::string name(); static const long double zero;};
     template<>class type_attr<std::string>
     {public: static const std::string name(); static const std::string zero;};
+    //template<class T>class type_attr<T*>
+    //{public: static const std::string name(); static const T* zero;};
     
     
     template<class T> class remove_matrix_attr{public: typedef T type;};
     template<class T> class remove_matrix_attr<symm<T>>{public: typedef T type;};
     template<class T> class remove_matrix_attr<sq<T>>{public: typedef T type;};
+    
+    
+    template<class T> class cpp_type{public: typedef T type;};
+    template<class T> class cpp_type<symm<T>>{public: typedef T type;};
+    template<class T> class cpp_type<sq<T>>{public: typedef T type;};
+    template<class T> class cpp_type<T*>{public: typedef typename cpp_type<T>::type* type;};
+    template<class T,size_t N> class cpp_type<T[N]>{public: typedef typename cpp_type<T>::type type[N];};
+
 }
 using namespace MAPP_NS;
 /*------------------------------------------------------------------------------------------------------------------------------------
@@ -551,7 +562,6 @@ vars(NULL)
         {
             try
             {
-                //vars[i]=std::move(py_var<T>(depth-1,sz+1,objs));
                 (vars+i)->~py_var<T>();
                 new (vars+i) py_var<T>(depth-1,sz+1,objs);
             }
@@ -1136,7 +1146,7 @@ PyObject* var<T>::build(T& v,size_t**)
         else
         {
             i=static_cast<long>(v);
-            return PyInt_FromLong(i);
+            return PyLong_FromLong(i);
         }
     }
     else
@@ -1152,7 +1162,7 @@ PyObject* var<T>::build(T& v,size_t**)
  --------------------------------------------*/
 template<>
 inline PyObject* var<std::string>::build(std::string& v,size_t**)
-{return PyString_FromString(v.c_str());}
+{return __PyString_FromString(v.c_str());}
 /*--------------------------------------------
  constructor:
  usage: direct
@@ -1366,7 +1376,7 @@ PyObject* var<T>::get()
         else
         {
             i=static_cast<long>(*ptr);
-            return PyInt_FromLong(i);
+            return PyLong_FromLong(i);
         }
     }
     else
@@ -1381,7 +1391,7 @@ PyObject* var<T>::get()
  --------------------------------------------*/
 template<>
 inline PyObject* var<std::string>::get()
-{return PyString_FromString(ptr->c_str());}
+{return __PyString_FromString(ptr->c_str());}
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -1547,31 +1557,32 @@ namespace MAPP_NS
     public:
         typedef typename var<T>::T_BASE T_BASE;
         typedef typename std::add_pointer<typename var<T>::T_EQUIV>::type T_EQUIV;
+        typedef typename cpp_type<T>::type T_CPP;
         static constexpr int get_rank();
         static size_t base_hash_code();
-        static void allocate(void**,T(&)[N],size_t*);
-        static void deallocate(T(&)[N]);
+        static void allocate(void**,T_CPP(&)[N],size_t*);
+        static void deallocate(T_CPP(&)[N]);
         static void accum_size(py_var<T_EQUIV>&,size_t*);
         static bool is_size_compatible_nothrow(py_var<T_EQUIV>&,var<size_t>**);
         static void is_size_compatible(py_var<T_EQUIV>&,const std::string&,var<size_t>**);
         static std::string type_name(var<size_t>**);
-        static PyObject* build(T(&)[N],size_t(**)=NULL);
+        static PyObject* build(T_CPP(&)[N],size_t(**)=NULL);
         
         var<T> vars[N];
-        T (*ptr)[N];
+        T_CPP (*ptr)[N];
         
-        var(T(&)[N],const char*);
-        template<class... Ts>
-        var(T(&)[N],const char*,Ts&&...);
-        var(T(&)[N],std::string&&,py_var<T_EQUIV>&,void**);
+        var(T_CPP(&)[N],const char*);
+        //template<class... Ts>
+        //var(T(&)[N],const char*,Ts&&...);
+        var(T_CPP(&)[N],std::string&&,py_var<T_EQUIV>&,void**);
         var();
         virtual ~var();
-        var(T(&)[N]);
+        var(T_CPP(&)[N]);
         var(const var<T[N]>&);
         var(var<T[N]>&&);
         var<T[N]>& operator = (const var<T[N]>&);
         var<T[N]>& operator = (var<T[N]>&&);
-        var<T[N]>& operator = (const T (&)[N]);
+        var<T[N]>& operator = (const T_CPP (&)[N]);
         Var* clone();
         
         var<T>& operator [] (const size_t);
@@ -1606,7 +1617,7 @@ size_t var<T[N]>::base_hash_code()
  
  --------------------------------------------*/
 template <class T,size_t N>
-void var<T[N]>::allocate(void** ptr,T (&v)[N],size_t* sz)
+void var<T[N]>::allocate(void** ptr,T_CPP (&v)[N],size_t* sz)
 {
     *ptr=NULL;
     if(get_rank()==1) return;
@@ -1616,7 +1627,7 @@ void var<T[N]>::allocate(void** ptr,T (&v)[N],size_t* sz)
  
  --------------------------------------------*/
 template <class T,size_t N>
-void var<T[N]>::deallocate(T (&v)[N])
+void var<T[N]>::deallocate(T_CPP (&v)[N])
 {
     var<T>::deallocate(v[0]);
 }
@@ -1688,7 +1699,7 @@ std::string var<T[N]>::type_name(var<size_t>** sz)
  
  --------------------------------------------*/
 template<class T,size_t N>
-PyObject* var<T[N]>::build(T(&v)[N],size_t** sz)
+PyObject* var<T[N]>::build(T_CPP(&v)[N],size_t** sz)
 {
     
     PyObject* py_obj=PyList_New(N);
@@ -1708,7 +1719,7 @@ PyObject* var<T[N]>::build(T(&v)[N],size_t** sz)
  usage: direct
  --------------------------------------------*/
 template<class T,size_t N>
-var<T[N]>::var(T (&v)[N],const char* name_):
+var<T[N]>::var(T_CPP (&v)[N],const char* name_):
 ptr(&v),
 __dsizes__(NULL),
 Var(get_rank(),base_hash_code(),name_)
@@ -1719,7 +1730,7 @@ Var(get_rank(),base_hash_code(),name_)
  constructor:
  usage: direct
  --------------------------------------------*/
-template<class T,size_t N>template<class... Ts>
+/*template<class T,size_t N>template<class... Ts>
 var<T[N]>::var(T (&v)[N],const char* name_,Ts&&...____dsizes__):
 Var(get_rank(),base_hash_code(),name_),
 __dsizes__(NULL),
@@ -1730,14 +1741,14 @@ ptr(&v)
     __dsizes__=new var<size_t>*[rank];
     for(int i=0;i<rank;i++) __dsizes__[i]=NULL;
     Var::assign_dynamic_size(__dsizes__,____dsizes__...);
-}
+}*/
 /*--------------------------------------------
  constructor:
  usage: indirect by same template class with
  one upper rank
  --------------------------------------------*/
 template<class T,size_t N>
-var<T[N]>::var(T(&v)[N],std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
+var<T[N]>::var(T_CPP(&v)[N],std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
 ptr(&v),
 __dsizes__(NULL),
 Var(get_rank(),base_hash_code(),std::move(name_))
@@ -1776,7 +1787,7 @@ var<T[N]>::~var()
  it is only used for string literals
  --------------------------------------------*/
 template<class T,size_t N>
-var<T[N]>::var(T (&v)[N]):
+var<T[N]>::var(T_CPP (&v)[N]):
 ptr(&v),
 __dsizes__(NULL),
 Var(get_rank(),base_hash_code())
@@ -1856,7 +1867,7 @@ var<T[N]>& var<T[N]>::operator=(var<T[N]>&& r)
  copy assignment from variable
  --------------------------------------------*/
 template<class T,size_t N>
-var<T[N]>& var<T[N]>::operator=(const T (&v)[N])
+var<T[N]>& var<T[N]>::operator=(const T_CPP (&v)[N])
 {
     size=N;
     for(size_t i=0;i<size;i++)
@@ -1969,7 +1980,9 @@ template<class T,size_t N>
 PyObject* var<T[N]>::get()
 {
     if(std::is_same<T,char>::value || std::is_same<T,const char>::value)
-        return PyString_FromString(reinterpret_cast<char*>(*ptr));
+        return PyBytes_FromString(reinterpret_cast<char*>(*ptr));
+
+        
     
     PyObject* py_obj=PyList_New(size);
     for(size_t i=0;i<size;i++)
@@ -2004,32 +2017,33 @@ namespace MAPP_NS
     public:
         typedef typename var<T>::T_BASE T_BASE;
         typedef typename std::add_pointer<typename var<T>::T_EQUIV>::type T_EQUIV;
+        typedef typename cpp_type<T>::type T_CPP;
         constexpr static int get_rank();
         static size_t base_hash_code();
-        static void allocate(void**,T*&,size_t*);
-        static void deallocate(T*&);
+        static void allocate(void**,T_CPP*&,size_t*);
+        static void deallocate(T_CPP*&);
         static void accum_size(py_var<T_EQUIV>&,size_t*);
         static bool is_size_compatible_nothrow(py_var<T_EQUIV>&,var<size_t>**);
         static void is_size_compatible(py_var<T_EQUIV>&,const std::string&,var<size_t>**);
         static std::string type_name(var<size_t>**);
-        static PyObject* build(T*&,size_t(**)=NULL);
+        static PyObject* build(T_CPP*&,size_t(**)=NULL);
         var<T>* vars;
-        T** ptr;
+        T_CPP** ptr;
         
-        var(T*&,const char*);
-        template<class... Ts>
-        var(T*&,const char*,Ts&&...);
-        var(T*&,std::string&&,py_var<T_EQUIV>&,void**);
-        var(T*&,var<T*>&,void**,const size_t*,const size_t);
+        var(T_CPP*&,const char*);
+        //template<class... Ts>
+        //var(T*&,const char*,Ts&&...);
+        var(T_CPP*&,std::string&&,py_var<T_EQUIV>&,void**);
+        var(T_CPP*&,var<T*>&,void**,const size_t*,const size_t);
         var();
         virtual ~var();
-        var(T*&);
+        var(T_CPP*&);
         var(const var<T*>&);
         var(var<T*>&&);
         var<T*>& operator = (const var<T*>&);
         var<T*>& operator = (var<T*>&&);
         template<size_t N>
-        var<T*>& operator = (const T(&)[N]);
+        var<T*>& operator = (const T_CPP(&)[N]);
         Var* clone();
         
         var<T>& operator [] (const size_t);
@@ -2064,10 +2078,10 @@ size_t var<T*>::base_hash_code()
  
  --------------------------------------------*/
 template <class T>
-void var<T*>::allocate(void** ptr,T*& v,size_t* sz)
+void var<T*>::allocate(void** ptr,T_CPP*& v,size_t* sz)
 {
     v=NULL;
-    if(*sz) v=new T[*sz];
+    if(*sz) v=new T_CPP[*sz];
     *ptr=v;
     if(get_rank()==1) return;
     var<T>::allocate(ptr+1,v[0],sz+1);
@@ -2076,7 +2090,7 @@ void var<T*>::allocate(void** ptr,T*& v,size_t* sz)
  
  --------------------------------------------*/
 template <class T>
-void var<T*>::deallocate(T*& v)
+void var<T*>::deallocate(T_CPP*& v)
 {
     if(v) var<T>::deallocate(v[0]);
     delete [] v;
@@ -2159,7 +2173,7 @@ std::string var<T*>::type_name(var<size_t>** sz)
  
  --------------------------------------------*/
 template<class T>
-PyObject* var<T*>::build(T*& v,size_t** sz)
+PyObject* var<T*>::build(T_CPP*& v,size_t** sz)
 {
     
     PyObject* py_obj=PyList_New(**sz);
@@ -2172,7 +2186,7 @@ PyObject* var<T*>::build(T*& v,size_t** sz)
  usage: direct
  --------------------------------------------*/
 template<class T>
-var<T*>::var(T*& v,const char* name_):
+var<T*>::var(T_CPP*& v,const char* name_):
 vars(NULL),
 ptr(&v),
 __dsizes__(NULL),
@@ -2185,7 +2199,7 @@ Var(get_rank(),base_hash_code(),name_)
  constructor:
  usage: direct
  --------------------------------------------*/
-template<class T>template<class... Ts>
+/*template<class T>template<class... Ts>
 var<T*>::var(T*& v,const char* __name,Ts&&...____dsizes__):
 Var(get_rank(),base_hash_code(),__name),
 vars(NULL),
@@ -2199,14 +2213,14 @@ ptr(&v)
     for(int i=0;i<rank;i++) __dsizes__[i]=NULL;
     Var::assign_dynamic_size(__dsizes__,____dsizes__...);
         
-}
+}*/
 /*--------------------------------------------
  constructor:
  usage: indirect by same template class with
  one upper rank
  --------------------------------------------*/
 template<class T>
-var<T*>::var(T*& v,std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
+var<T*>::var(T_CPP*& v,std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
 Var(get_rank(),base_hash_code(),std::move(name_)),
 vars(NULL),
 __dsizes__(NULL),
@@ -2228,7 +2242,7 @@ ptr(&v)
  one upper rank for remaping purpose
  --------------------------------------------*/
 template<class T>
-var<T*>::var(T*& v,var<T*>& __var,void** data_ptr,const size_t* map,const size_t map_sz):
+var<T*>::var(T_CPP*& v,var<T*>& __var,void** data_ptr,const size_t* map,const size_t map_sz):
 Var(get_rank(),base_hash_code(),__var.name),
 vars(NULL),
 __dsizes__(NULL),
@@ -2274,7 +2288,7 @@ var<T*>::~var()
  it is only used for string literals
  --------------------------------------------*/
 template<class T>
-var<T*>::var(T*& v):
+var<T*>::var(T_CPP*& v):
 vars(NULL),
 ptr(&v),
 __dsizes__(NULL),
@@ -2357,14 +2371,14 @@ var<T*>& var<T*>::operator=(var<T*>&& r)
  copy assignment from variable
  --------------------------------------------*/
 template<class T>template<size_t N>
-var<T*>& var<T*>::operator=(const T (&v_arr)[N])
+var<T*>& var<T*>::operator=(const T_CPP (&v_arr)[N])
 {
     assert(root);
     delete [] this->vars;
     if(ptr) delete [] *(this->ptr);
     this->size=N;
     this->vars=new var<T>[this->size];
-    T* v=new T[this->size];
+    T_CPP* v=new T_CPP[this->size];
     *(this->ptr)=v;
 
     for(size_t i=0;i<this->size;i++)
@@ -2520,7 +2534,7 @@ template<class T>
 PyObject* var<T*>::get()
 {
     if(std::is_same<T,char>::value || std::is_same<T,const char>::value)
-        return PyString_FromString(reinterpret_cast<char*>(*ptr));
+        return __PyString_FromString(reinterpret_cast<char*>(*ptr));
     
     PyObject* py_obj=PyList_New(size);
     for(size_t i=0;i<size;i++)
@@ -2551,9 +2565,16 @@ namespace MAPP_NS
     public:
         typedef typename var<T>::T_BASE T_BASE;
         typedef typename var<T>::T_EQUIV T_EQUIV;
+        
+        static bool is_size_compatible_nothrow(py_var<T_EQUIV>&,var<size_t>**);
+        static void is_size_compatible(py_var<T_EQUIV>&,const std::string&,var<size_t>**);
+        static std::string type_name(var<size_t>** sz){return var<T>::type_name(sz);};
         var(T&,const char*);
-        template<class... Ts>
-        var(T&,const char*,Ts&&...);
+        //template<class... Ts>
+        //var(T&,const char*,Ts&&...);
+        var(T&,std::string&&,py_var<T_EQUIV>&,void**);
+        var(T&,var<symm<T>>&,void**,const size_t*,const size_t);
+        var();
         ~var();
         void set(PyObject*);
         bool set_nothrow(PyObject*);
@@ -2562,11 +2583,26 @@ namespace MAPP_NS
     
 }
 /*--------------------------------------------
- desstructor:
+ 
  --------------------------------------------*/
-template<class T>
-var<symm<T>>::~var()
+template <class T>
+bool var<symm<T>>::is_size_compatible_nothrow(py_var<T_EQUIV>& pv,var<size_t>** sz)
 {
+    if(!pv.is_symmetric()) return false;
+    return var<T>::is_size_compatible_nothrow(pv,sz);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template <class T>
+void var<symm<T>>::is_size_compatible(py_var<T_EQUIV>& pv,const std::string& name,var<size_t>** sz)
+{
+    if(!pv.is_symmetric())
+    {
+        
+        throw "expected symmetric, triangular or voigt representation for '"+name+"'";
+    }
+    return var<T>::is_size_compatible(pv,name,sz);
 }
 /*--------------------------------------------
  constructor:
@@ -2581,9 +2617,47 @@ var<T>(v,name_)
  constructor:
  usage: direct
  --------------------------------------------*/
-template<class T>template<class... Ts>
+/*template<class T>template<class... Ts>
 var<symm<T>>::var(T& v,const char* name_,Ts&&...____dsizes__):
 var<T>(v,name_,____dsizes__...)
+{
+}*/
+/*--------------------------------------------
+ constructor:
+ usage: indirect by same template class with
+ one upper rank
+ --------------------------------------------*/
+template<class T>
+var<symm<T>>::var(T& v,std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
+var<T>::var(v,std::move(name_),pv,data_ptr)
+{
+}
+/*--------------------------------------------
+ constructor:
+ usage: indirect by same template class with
+ one upper rank for remaping purpose
+ --------------------------------------------*/
+template<class T>
+var<symm<T>>::var(T& v,var<symm<T>>& __var,void** data_ptr,const size_t* map,const size_t map_sz):
+var<T>::var(v,__var,data_ptr,map,map_sz)
+{
+
+}
+/*--------------------------------------------
+ default constructor:
+ usage: indirect by same template class with
+ one upper rank
+ --------------------------------------------*/
+template<class T>
+var<symm<T>>::var():
+var<T>::var()
+{
+}
+/*--------------------------------------------
+ desstructor:
+ --------------------------------------------*/
+template<class T>
+var<symm<T>>::~var()
 {
 }
 /*--------------------------------------------

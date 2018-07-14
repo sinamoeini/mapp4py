@@ -1283,3 +1283,559 @@
 #define EmptyPyGetSetDef(m) {EmptyPyGetSetDef_##m}
 #define EmptyPyMethodDef(m) {EmptyPyMethodDef_##m}
 #define EmptyPyMemberDef(m) {EmptyPyMemberDef_##m}
+
+
+
+#define EmptyModule {PyModuleDef_HEAD_INIT,NULL,NULL,-1,NULL,NULL,NULL,NULL}
+
+
+/*
+//the code that was used to generate the following bullshit macros:
+ 
+#include<stdio.h>
+int main()
+{
+ 
+    int max_n=256;
+    for(int i=0;i<max_n+1;i++)
+    {
+        if(i==0) printf("#define POTFIT_THRMO_0 2,\"ERR\",err\n");
+        else printf("#define POTFIT_THRMO_%d POTFIT_THRMO_%d,names[%d],errs[%d]\n",i,i-1,i-1,i-1);
+ 
+    }
+ 
+    for(int i=0;i<max_n+1;i++)
+    {
+        if(i!=max_n) printf("#define RET_POTFIT_THRMO_%d if(nconfigs==%d) return ThermoDynamics(POTFIT_THRMO_%d); RET_POTFIT_THRMO_%d\n",i,i,i,i+1);
+        else printf("#define RET_POTFIT_THRMO_%d return ThermoDynamics(POTFIT_THRMO_%d);\n",i,i);
+    }
+ 
+    printf("#define RET_POTFIT_THRMO RET_POTFIT_THRMO_0\n");
+ 
+    return 0;
+}
+ */
+
+
+
+
+
+
+
+
+
+#define POTFIT_THRMO_0 2,"ERR",err
+#define POTFIT_THRMO_1 POTFIT_THRMO_0,names[0],errs[0]
+#define POTFIT_THRMO_2 POTFIT_THRMO_1,names[1],errs[1]
+#define POTFIT_THRMO_3 POTFIT_THRMO_2,names[2],errs[2]
+#define POTFIT_THRMO_4 POTFIT_THRMO_3,names[3],errs[3]
+#define POTFIT_THRMO_5 POTFIT_THRMO_4,names[4],errs[4]
+#define POTFIT_THRMO_6 POTFIT_THRMO_5,names[5],errs[5]
+#define POTFIT_THRMO_7 POTFIT_THRMO_6,names[6],errs[6]
+#define POTFIT_THRMO_8 POTFIT_THRMO_7,names[7],errs[7]
+#define POTFIT_THRMO_9 POTFIT_THRMO_8,names[8],errs[8]
+#define POTFIT_THRMO_10 POTFIT_THRMO_9,names[9],errs[9]
+#define POTFIT_THRMO_11 POTFIT_THRMO_10,names[10],errs[10]
+#define POTFIT_THRMO_12 POTFIT_THRMO_11,names[11],errs[11]
+#define POTFIT_THRMO_13 POTFIT_THRMO_12,names[12],errs[12]
+#define POTFIT_THRMO_14 POTFIT_THRMO_13,names[13],errs[13]
+#define POTFIT_THRMO_15 POTFIT_THRMO_14,names[14],errs[14]
+#define POTFIT_THRMO_16 POTFIT_THRMO_15,names[15],errs[15]
+#define POTFIT_THRMO_17 POTFIT_THRMO_16,names[16],errs[16]
+#define POTFIT_THRMO_18 POTFIT_THRMO_17,names[17],errs[17]
+#define POTFIT_THRMO_19 POTFIT_THRMO_18,names[18],errs[18]
+#define POTFIT_THRMO_20 POTFIT_THRMO_19,names[19],errs[19]
+#define POTFIT_THRMO_21 POTFIT_THRMO_20,names[20],errs[20]
+#define POTFIT_THRMO_22 POTFIT_THRMO_21,names[21],errs[21]
+#define POTFIT_THRMO_23 POTFIT_THRMO_22,names[22],errs[22]
+#define POTFIT_THRMO_24 POTFIT_THRMO_23,names[23],errs[23]
+#define POTFIT_THRMO_25 POTFIT_THRMO_24,names[24],errs[24]
+#define POTFIT_THRMO_26 POTFIT_THRMO_25,names[25],errs[25]
+#define POTFIT_THRMO_27 POTFIT_THRMO_26,names[26],errs[26]
+#define POTFIT_THRMO_28 POTFIT_THRMO_27,names[27],errs[27]
+#define POTFIT_THRMO_29 POTFIT_THRMO_28,names[28],errs[28]
+#define POTFIT_THRMO_30 POTFIT_THRMO_29,names[29],errs[29]
+#define POTFIT_THRMO_31 POTFIT_THRMO_30,names[30],errs[30]
+#define POTFIT_THRMO_32 POTFIT_THRMO_31,names[31],errs[31]
+#define POTFIT_THRMO_33 POTFIT_THRMO_32,names[32],errs[32]
+#define POTFIT_THRMO_34 POTFIT_THRMO_33,names[33],errs[33]
+#define POTFIT_THRMO_35 POTFIT_THRMO_34,names[34],errs[34]
+#define POTFIT_THRMO_36 POTFIT_THRMO_35,names[35],errs[35]
+#define POTFIT_THRMO_37 POTFIT_THRMO_36,names[36],errs[36]
+#define POTFIT_THRMO_38 POTFIT_THRMO_37,names[37],errs[37]
+#define POTFIT_THRMO_39 POTFIT_THRMO_38,names[38],errs[38]
+#define POTFIT_THRMO_40 POTFIT_THRMO_39,names[39],errs[39]
+#define POTFIT_THRMO_41 POTFIT_THRMO_40,names[40],errs[40]
+#define POTFIT_THRMO_42 POTFIT_THRMO_41,names[41],errs[41]
+#define POTFIT_THRMO_43 POTFIT_THRMO_42,names[42],errs[42]
+#define POTFIT_THRMO_44 POTFIT_THRMO_43,names[43],errs[43]
+#define POTFIT_THRMO_45 POTFIT_THRMO_44,names[44],errs[44]
+#define POTFIT_THRMO_46 POTFIT_THRMO_45,names[45],errs[45]
+#define POTFIT_THRMO_47 POTFIT_THRMO_46,names[46],errs[46]
+#define POTFIT_THRMO_48 POTFIT_THRMO_47,names[47],errs[47]
+#define POTFIT_THRMO_49 POTFIT_THRMO_48,names[48],errs[48]
+#define POTFIT_THRMO_50 POTFIT_THRMO_49,names[49],errs[49]
+#define POTFIT_THRMO_51 POTFIT_THRMO_50,names[50],errs[50]
+#define POTFIT_THRMO_52 POTFIT_THRMO_51,names[51],errs[51]
+#define POTFIT_THRMO_53 POTFIT_THRMO_52,names[52],errs[52]
+#define POTFIT_THRMO_54 POTFIT_THRMO_53,names[53],errs[53]
+#define POTFIT_THRMO_55 POTFIT_THRMO_54,names[54],errs[54]
+#define POTFIT_THRMO_56 POTFIT_THRMO_55,names[55],errs[55]
+#define POTFIT_THRMO_57 POTFIT_THRMO_56,names[56],errs[56]
+#define POTFIT_THRMO_58 POTFIT_THRMO_57,names[57],errs[57]
+#define POTFIT_THRMO_59 POTFIT_THRMO_58,names[58],errs[58]
+#define POTFIT_THRMO_60 POTFIT_THRMO_59,names[59],errs[59]
+#define POTFIT_THRMO_61 POTFIT_THRMO_60,names[60],errs[60]
+#define POTFIT_THRMO_62 POTFIT_THRMO_61,names[61],errs[61]
+#define POTFIT_THRMO_63 POTFIT_THRMO_62,names[62],errs[62]
+#define POTFIT_THRMO_64 POTFIT_THRMO_63,names[63],errs[63]
+#define POTFIT_THRMO_65 POTFIT_THRMO_64,names[64],errs[64]
+#define POTFIT_THRMO_66 POTFIT_THRMO_65,names[65],errs[65]
+#define POTFIT_THRMO_67 POTFIT_THRMO_66,names[66],errs[66]
+#define POTFIT_THRMO_68 POTFIT_THRMO_67,names[67],errs[67]
+#define POTFIT_THRMO_69 POTFIT_THRMO_68,names[68],errs[68]
+#define POTFIT_THRMO_70 POTFIT_THRMO_69,names[69],errs[69]
+#define POTFIT_THRMO_71 POTFIT_THRMO_70,names[70],errs[70]
+#define POTFIT_THRMO_72 POTFIT_THRMO_71,names[71],errs[71]
+#define POTFIT_THRMO_73 POTFIT_THRMO_72,names[72],errs[72]
+#define POTFIT_THRMO_74 POTFIT_THRMO_73,names[73],errs[73]
+#define POTFIT_THRMO_75 POTFIT_THRMO_74,names[74],errs[74]
+#define POTFIT_THRMO_76 POTFIT_THRMO_75,names[75],errs[75]
+#define POTFIT_THRMO_77 POTFIT_THRMO_76,names[76],errs[76]
+#define POTFIT_THRMO_78 POTFIT_THRMO_77,names[77],errs[77]
+#define POTFIT_THRMO_79 POTFIT_THRMO_78,names[78],errs[78]
+#define POTFIT_THRMO_80 POTFIT_THRMO_79,names[79],errs[79]
+#define POTFIT_THRMO_81 POTFIT_THRMO_80,names[80],errs[80]
+#define POTFIT_THRMO_82 POTFIT_THRMO_81,names[81],errs[81]
+#define POTFIT_THRMO_83 POTFIT_THRMO_82,names[82],errs[82]
+#define POTFIT_THRMO_84 POTFIT_THRMO_83,names[83],errs[83]
+#define POTFIT_THRMO_85 POTFIT_THRMO_84,names[84],errs[84]
+#define POTFIT_THRMO_86 POTFIT_THRMO_85,names[85],errs[85]
+#define POTFIT_THRMO_87 POTFIT_THRMO_86,names[86],errs[86]
+#define POTFIT_THRMO_88 POTFIT_THRMO_87,names[87],errs[87]
+#define POTFIT_THRMO_89 POTFIT_THRMO_88,names[88],errs[88]
+#define POTFIT_THRMO_90 POTFIT_THRMO_89,names[89],errs[89]
+#define POTFIT_THRMO_91 POTFIT_THRMO_90,names[90],errs[90]
+#define POTFIT_THRMO_92 POTFIT_THRMO_91,names[91],errs[91]
+#define POTFIT_THRMO_93 POTFIT_THRMO_92,names[92],errs[92]
+#define POTFIT_THRMO_94 POTFIT_THRMO_93,names[93],errs[93]
+#define POTFIT_THRMO_95 POTFIT_THRMO_94,names[94],errs[94]
+#define POTFIT_THRMO_96 POTFIT_THRMO_95,names[95],errs[95]
+#define POTFIT_THRMO_97 POTFIT_THRMO_96,names[96],errs[96]
+#define POTFIT_THRMO_98 POTFIT_THRMO_97,names[97],errs[97]
+#define POTFIT_THRMO_99 POTFIT_THRMO_98,names[98],errs[98]
+#define POTFIT_THRMO_100 POTFIT_THRMO_99,names[99],errs[99]
+#define POTFIT_THRMO_101 POTFIT_THRMO_100,names[100],errs[100]
+#define POTFIT_THRMO_102 POTFIT_THRMO_101,names[101],errs[101]
+#define POTFIT_THRMO_103 POTFIT_THRMO_102,names[102],errs[102]
+#define POTFIT_THRMO_104 POTFIT_THRMO_103,names[103],errs[103]
+#define POTFIT_THRMO_105 POTFIT_THRMO_104,names[104],errs[104]
+#define POTFIT_THRMO_106 POTFIT_THRMO_105,names[105],errs[105]
+#define POTFIT_THRMO_107 POTFIT_THRMO_106,names[106],errs[106]
+#define POTFIT_THRMO_108 POTFIT_THRMO_107,names[107],errs[107]
+#define POTFIT_THRMO_109 POTFIT_THRMO_108,names[108],errs[108]
+#define POTFIT_THRMO_110 POTFIT_THRMO_109,names[109],errs[109]
+#define POTFIT_THRMO_111 POTFIT_THRMO_110,names[110],errs[110]
+#define POTFIT_THRMO_112 POTFIT_THRMO_111,names[111],errs[111]
+#define POTFIT_THRMO_113 POTFIT_THRMO_112,names[112],errs[112]
+#define POTFIT_THRMO_114 POTFIT_THRMO_113,names[113],errs[113]
+#define POTFIT_THRMO_115 POTFIT_THRMO_114,names[114],errs[114]
+#define POTFIT_THRMO_116 POTFIT_THRMO_115,names[115],errs[115]
+#define POTFIT_THRMO_117 POTFIT_THRMO_116,names[116],errs[116]
+#define POTFIT_THRMO_118 POTFIT_THRMO_117,names[117],errs[117]
+#define POTFIT_THRMO_119 POTFIT_THRMO_118,names[118],errs[118]
+#define POTFIT_THRMO_120 POTFIT_THRMO_119,names[119],errs[119]
+#define POTFIT_THRMO_121 POTFIT_THRMO_120,names[120],errs[120]
+#define POTFIT_THRMO_122 POTFIT_THRMO_121,names[121],errs[121]
+#define POTFIT_THRMO_123 POTFIT_THRMO_122,names[122],errs[122]
+#define POTFIT_THRMO_124 POTFIT_THRMO_123,names[123],errs[123]
+#define POTFIT_THRMO_125 POTFIT_THRMO_124,names[124],errs[124]
+#define POTFIT_THRMO_126 POTFIT_THRMO_125,names[125],errs[125]
+#define POTFIT_THRMO_127 POTFIT_THRMO_126,names[126],errs[126]
+#define POTFIT_THRMO_128 POTFIT_THRMO_127,names[127],errs[127]
+#define POTFIT_THRMO_129 POTFIT_THRMO_128,names[128],errs[128]
+#define POTFIT_THRMO_130 POTFIT_THRMO_129,names[129],errs[129]
+#define POTFIT_THRMO_131 POTFIT_THRMO_130,names[130],errs[130]
+#define POTFIT_THRMO_132 POTFIT_THRMO_131,names[131],errs[131]
+#define POTFIT_THRMO_133 POTFIT_THRMO_132,names[132],errs[132]
+#define POTFIT_THRMO_134 POTFIT_THRMO_133,names[133],errs[133]
+#define POTFIT_THRMO_135 POTFIT_THRMO_134,names[134],errs[134]
+#define POTFIT_THRMO_136 POTFIT_THRMO_135,names[135],errs[135]
+#define POTFIT_THRMO_137 POTFIT_THRMO_136,names[136],errs[136]
+#define POTFIT_THRMO_138 POTFIT_THRMO_137,names[137],errs[137]
+#define POTFIT_THRMO_139 POTFIT_THRMO_138,names[138],errs[138]
+#define POTFIT_THRMO_140 POTFIT_THRMO_139,names[139],errs[139]
+#define POTFIT_THRMO_141 POTFIT_THRMO_140,names[140],errs[140]
+#define POTFIT_THRMO_142 POTFIT_THRMO_141,names[141],errs[141]
+#define POTFIT_THRMO_143 POTFIT_THRMO_142,names[142],errs[142]
+#define POTFIT_THRMO_144 POTFIT_THRMO_143,names[143],errs[143]
+#define POTFIT_THRMO_145 POTFIT_THRMO_144,names[144],errs[144]
+#define POTFIT_THRMO_146 POTFIT_THRMO_145,names[145],errs[145]
+#define POTFIT_THRMO_147 POTFIT_THRMO_146,names[146],errs[146]
+#define POTFIT_THRMO_148 POTFIT_THRMO_147,names[147],errs[147]
+#define POTFIT_THRMO_149 POTFIT_THRMO_148,names[148],errs[148]
+#define POTFIT_THRMO_150 POTFIT_THRMO_149,names[149],errs[149]
+#define POTFIT_THRMO_151 POTFIT_THRMO_150,names[150],errs[150]
+#define POTFIT_THRMO_152 POTFIT_THRMO_151,names[151],errs[151]
+#define POTFIT_THRMO_153 POTFIT_THRMO_152,names[152],errs[152]
+#define POTFIT_THRMO_154 POTFIT_THRMO_153,names[153],errs[153]
+#define POTFIT_THRMO_155 POTFIT_THRMO_154,names[154],errs[154]
+#define POTFIT_THRMO_156 POTFIT_THRMO_155,names[155],errs[155]
+#define POTFIT_THRMO_157 POTFIT_THRMO_156,names[156],errs[156]
+#define POTFIT_THRMO_158 POTFIT_THRMO_157,names[157],errs[157]
+#define POTFIT_THRMO_159 POTFIT_THRMO_158,names[158],errs[158]
+#define POTFIT_THRMO_160 POTFIT_THRMO_159,names[159],errs[159]
+#define POTFIT_THRMO_161 POTFIT_THRMO_160,names[160],errs[160]
+#define POTFIT_THRMO_162 POTFIT_THRMO_161,names[161],errs[161]
+#define POTFIT_THRMO_163 POTFIT_THRMO_162,names[162],errs[162]
+#define POTFIT_THRMO_164 POTFIT_THRMO_163,names[163],errs[163]
+#define POTFIT_THRMO_165 POTFIT_THRMO_164,names[164],errs[164]
+#define POTFIT_THRMO_166 POTFIT_THRMO_165,names[165],errs[165]
+#define POTFIT_THRMO_167 POTFIT_THRMO_166,names[166],errs[166]
+#define POTFIT_THRMO_168 POTFIT_THRMO_167,names[167],errs[167]
+#define POTFIT_THRMO_169 POTFIT_THRMO_168,names[168],errs[168]
+#define POTFIT_THRMO_170 POTFIT_THRMO_169,names[169],errs[169]
+#define POTFIT_THRMO_171 POTFIT_THRMO_170,names[170],errs[170]
+#define POTFIT_THRMO_172 POTFIT_THRMO_171,names[171],errs[171]
+#define POTFIT_THRMO_173 POTFIT_THRMO_172,names[172],errs[172]
+#define POTFIT_THRMO_174 POTFIT_THRMO_173,names[173],errs[173]
+#define POTFIT_THRMO_175 POTFIT_THRMO_174,names[174],errs[174]
+#define POTFIT_THRMO_176 POTFIT_THRMO_175,names[175],errs[175]
+#define POTFIT_THRMO_177 POTFIT_THRMO_176,names[176],errs[176]
+#define POTFIT_THRMO_178 POTFIT_THRMO_177,names[177],errs[177]
+#define POTFIT_THRMO_179 POTFIT_THRMO_178,names[178],errs[178]
+#define POTFIT_THRMO_180 POTFIT_THRMO_179,names[179],errs[179]
+#define POTFIT_THRMO_181 POTFIT_THRMO_180,names[180],errs[180]
+#define POTFIT_THRMO_182 POTFIT_THRMO_181,names[181],errs[181]
+#define POTFIT_THRMO_183 POTFIT_THRMO_182,names[182],errs[182]
+#define POTFIT_THRMO_184 POTFIT_THRMO_183,names[183],errs[183]
+#define POTFIT_THRMO_185 POTFIT_THRMO_184,names[184],errs[184]
+#define POTFIT_THRMO_186 POTFIT_THRMO_185,names[185],errs[185]
+#define POTFIT_THRMO_187 POTFIT_THRMO_186,names[186],errs[186]
+#define POTFIT_THRMO_188 POTFIT_THRMO_187,names[187],errs[187]
+#define POTFIT_THRMO_189 POTFIT_THRMO_188,names[188],errs[188]
+#define POTFIT_THRMO_190 POTFIT_THRMO_189,names[189],errs[189]
+#define POTFIT_THRMO_191 POTFIT_THRMO_190,names[190],errs[190]
+#define POTFIT_THRMO_192 POTFIT_THRMO_191,names[191],errs[191]
+#define POTFIT_THRMO_193 POTFIT_THRMO_192,names[192],errs[192]
+#define POTFIT_THRMO_194 POTFIT_THRMO_193,names[193],errs[193]
+#define POTFIT_THRMO_195 POTFIT_THRMO_194,names[194],errs[194]
+#define POTFIT_THRMO_196 POTFIT_THRMO_195,names[195],errs[195]
+#define POTFIT_THRMO_197 POTFIT_THRMO_196,names[196],errs[196]
+#define POTFIT_THRMO_198 POTFIT_THRMO_197,names[197],errs[197]
+#define POTFIT_THRMO_199 POTFIT_THRMO_198,names[198],errs[198]
+#define POTFIT_THRMO_200 POTFIT_THRMO_199,names[199],errs[199]
+#define POTFIT_THRMO_201 POTFIT_THRMO_200,names[200],errs[200]
+#define POTFIT_THRMO_202 POTFIT_THRMO_201,names[201],errs[201]
+#define POTFIT_THRMO_203 POTFIT_THRMO_202,names[202],errs[202]
+#define POTFIT_THRMO_204 POTFIT_THRMO_203,names[203],errs[203]
+#define POTFIT_THRMO_205 POTFIT_THRMO_204,names[204],errs[204]
+#define POTFIT_THRMO_206 POTFIT_THRMO_205,names[205],errs[205]
+#define POTFIT_THRMO_207 POTFIT_THRMO_206,names[206],errs[206]
+#define POTFIT_THRMO_208 POTFIT_THRMO_207,names[207],errs[207]
+#define POTFIT_THRMO_209 POTFIT_THRMO_208,names[208],errs[208]
+#define POTFIT_THRMO_210 POTFIT_THRMO_209,names[209],errs[209]
+#define POTFIT_THRMO_211 POTFIT_THRMO_210,names[210],errs[210]
+#define POTFIT_THRMO_212 POTFIT_THRMO_211,names[211],errs[211]
+#define POTFIT_THRMO_213 POTFIT_THRMO_212,names[212],errs[212]
+#define POTFIT_THRMO_214 POTFIT_THRMO_213,names[213],errs[213]
+#define POTFIT_THRMO_215 POTFIT_THRMO_214,names[214],errs[214]
+#define POTFIT_THRMO_216 POTFIT_THRMO_215,names[215],errs[215]
+#define POTFIT_THRMO_217 POTFIT_THRMO_216,names[216],errs[216]
+#define POTFIT_THRMO_218 POTFIT_THRMO_217,names[217],errs[217]
+#define POTFIT_THRMO_219 POTFIT_THRMO_218,names[218],errs[218]
+#define POTFIT_THRMO_220 POTFIT_THRMO_219,names[219],errs[219]
+#define POTFIT_THRMO_221 POTFIT_THRMO_220,names[220],errs[220]
+#define POTFIT_THRMO_222 POTFIT_THRMO_221,names[221],errs[221]
+#define POTFIT_THRMO_223 POTFIT_THRMO_222,names[222],errs[222]
+#define POTFIT_THRMO_224 POTFIT_THRMO_223,names[223],errs[223]
+#define POTFIT_THRMO_225 POTFIT_THRMO_224,names[224],errs[224]
+#define POTFIT_THRMO_226 POTFIT_THRMO_225,names[225],errs[225]
+#define POTFIT_THRMO_227 POTFIT_THRMO_226,names[226],errs[226]
+#define POTFIT_THRMO_228 POTFIT_THRMO_227,names[227],errs[227]
+#define POTFIT_THRMO_229 POTFIT_THRMO_228,names[228],errs[228]
+#define POTFIT_THRMO_230 POTFIT_THRMO_229,names[229],errs[229]
+#define POTFIT_THRMO_231 POTFIT_THRMO_230,names[230],errs[230]
+#define POTFIT_THRMO_232 POTFIT_THRMO_231,names[231],errs[231]
+#define POTFIT_THRMO_233 POTFIT_THRMO_232,names[232],errs[232]
+#define POTFIT_THRMO_234 POTFIT_THRMO_233,names[233],errs[233]
+#define POTFIT_THRMO_235 POTFIT_THRMO_234,names[234],errs[234]
+#define POTFIT_THRMO_236 POTFIT_THRMO_235,names[235],errs[235]
+#define POTFIT_THRMO_237 POTFIT_THRMO_236,names[236],errs[236]
+#define POTFIT_THRMO_238 POTFIT_THRMO_237,names[237],errs[237]
+#define POTFIT_THRMO_239 POTFIT_THRMO_238,names[238],errs[238]
+#define POTFIT_THRMO_240 POTFIT_THRMO_239,names[239],errs[239]
+#define POTFIT_THRMO_241 POTFIT_THRMO_240,names[240],errs[240]
+#define POTFIT_THRMO_242 POTFIT_THRMO_241,names[241],errs[241]
+#define POTFIT_THRMO_243 POTFIT_THRMO_242,names[242],errs[242]
+#define POTFIT_THRMO_244 POTFIT_THRMO_243,names[243],errs[243]
+#define POTFIT_THRMO_245 POTFIT_THRMO_244,names[244],errs[244]
+#define POTFIT_THRMO_246 POTFIT_THRMO_245,names[245],errs[245]
+#define POTFIT_THRMO_247 POTFIT_THRMO_246,names[246],errs[246]
+#define POTFIT_THRMO_248 POTFIT_THRMO_247,names[247],errs[247]
+#define POTFIT_THRMO_249 POTFIT_THRMO_248,names[248],errs[248]
+#define POTFIT_THRMO_250 POTFIT_THRMO_249,names[249],errs[249]
+#define POTFIT_THRMO_251 POTFIT_THRMO_250,names[250],errs[250]
+#define POTFIT_THRMO_252 POTFIT_THRMO_251,names[251],errs[251]
+#define POTFIT_THRMO_253 POTFIT_THRMO_252,names[252],errs[252]
+#define POTFIT_THRMO_254 POTFIT_THRMO_253,names[253],errs[253]
+#define POTFIT_THRMO_255 POTFIT_THRMO_254,names[254],errs[254]
+#define POTFIT_THRMO_256 POTFIT_THRMO_255,names[255],errs[255]
+#define RET_POTFIT_THRMO_0 if(nconfigs==0) return ThermoDynamics(POTFIT_THRMO_0); RET_POTFIT_THRMO_1
+#define RET_POTFIT_THRMO_1 if(nconfigs==1) return ThermoDynamics(POTFIT_THRMO_1); RET_POTFIT_THRMO_2
+#define RET_POTFIT_THRMO_2 if(nconfigs==2) return ThermoDynamics(POTFIT_THRMO_2); RET_POTFIT_THRMO_3
+#define RET_POTFIT_THRMO_3 if(nconfigs==3) return ThermoDynamics(POTFIT_THRMO_3); RET_POTFIT_THRMO_4
+#define RET_POTFIT_THRMO_4 if(nconfigs==4) return ThermoDynamics(POTFIT_THRMO_4); RET_POTFIT_THRMO_5
+#define RET_POTFIT_THRMO_5 if(nconfigs==5) return ThermoDynamics(POTFIT_THRMO_5); RET_POTFIT_THRMO_6
+#define RET_POTFIT_THRMO_6 if(nconfigs==6) return ThermoDynamics(POTFIT_THRMO_6); RET_POTFIT_THRMO_7
+#define RET_POTFIT_THRMO_7 if(nconfigs==7) return ThermoDynamics(POTFIT_THRMO_7); RET_POTFIT_THRMO_8
+#define RET_POTFIT_THRMO_8 if(nconfigs==8) return ThermoDynamics(POTFIT_THRMO_8); RET_POTFIT_THRMO_9
+#define RET_POTFIT_THRMO_9 if(nconfigs==9) return ThermoDynamics(POTFIT_THRMO_9); RET_POTFIT_THRMO_10
+#define RET_POTFIT_THRMO_10 if(nconfigs==10) return ThermoDynamics(POTFIT_THRMO_10); RET_POTFIT_THRMO_11
+#define RET_POTFIT_THRMO_11 if(nconfigs==11) return ThermoDynamics(POTFIT_THRMO_11); RET_POTFIT_THRMO_12
+#define RET_POTFIT_THRMO_12 if(nconfigs==12) return ThermoDynamics(POTFIT_THRMO_12); RET_POTFIT_THRMO_13
+#define RET_POTFIT_THRMO_13 if(nconfigs==13) return ThermoDynamics(POTFIT_THRMO_13); RET_POTFIT_THRMO_14
+#define RET_POTFIT_THRMO_14 if(nconfigs==14) return ThermoDynamics(POTFIT_THRMO_14); RET_POTFIT_THRMO_15
+#define RET_POTFIT_THRMO_15 if(nconfigs==15) return ThermoDynamics(POTFIT_THRMO_15); RET_POTFIT_THRMO_16
+#define RET_POTFIT_THRMO_16 if(nconfigs==16) return ThermoDynamics(POTFIT_THRMO_16); RET_POTFIT_THRMO_17
+#define RET_POTFIT_THRMO_17 if(nconfigs==17) return ThermoDynamics(POTFIT_THRMO_17); RET_POTFIT_THRMO_18
+#define RET_POTFIT_THRMO_18 if(nconfigs==18) return ThermoDynamics(POTFIT_THRMO_18); RET_POTFIT_THRMO_19
+#define RET_POTFIT_THRMO_19 if(nconfigs==19) return ThermoDynamics(POTFIT_THRMO_19); RET_POTFIT_THRMO_20
+#define RET_POTFIT_THRMO_20 if(nconfigs==20) return ThermoDynamics(POTFIT_THRMO_20); RET_POTFIT_THRMO_21
+#define RET_POTFIT_THRMO_21 if(nconfigs==21) return ThermoDynamics(POTFIT_THRMO_21); RET_POTFIT_THRMO_22
+#define RET_POTFIT_THRMO_22 if(nconfigs==22) return ThermoDynamics(POTFIT_THRMO_22); RET_POTFIT_THRMO_23
+#define RET_POTFIT_THRMO_23 if(nconfigs==23) return ThermoDynamics(POTFIT_THRMO_23); RET_POTFIT_THRMO_24
+#define RET_POTFIT_THRMO_24 if(nconfigs==24) return ThermoDynamics(POTFIT_THRMO_24); RET_POTFIT_THRMO_25
+#define RET_POTFIT_THRMO_25 if(nconfigs==25) return ThermoDynamics(POTFIT_THRMO_25); RET_POTFIT_THRMO_26
+#define RET_POTFIT_THRMO_26 if(nconfigs==26) return ThermoDynamics(POTFIT_THRMO_26); RET_POTFIT_THRMO_27
+#define RET_POTFIT_THRMO_27 if(nconfigs==27) return ThermoDynamics(POTFIT_THRMO_27); RET_POTFIT_THRMO_28
+#define RET_POTFIT_THRMO_28 if(nconfigs==28) return ThermoDynamics(POTFIT_THRMO_28); RET_POTFIT_THRMO_29
+#define RET_POTFIT_THRMO_29 if(nconfigs==29) return ThermoDynamics(POTFIT_THRMO_29); RET_POTFIT_THRMO_30
+#define RET_POTFIT_THRMO_30 if(nconfigs==30) return ThermoDynamics(POTFIT_THRMO_30); RET_POTFIT_THRMO_31
+#define RET_POTFIT_THRMO_31 if(nconfigs==31) return ThermoDynamics(POTFIT_THRMO_31); RET_POTFIT_THRMO_32
+#define RET_POTFIT_THRMO_32 if(nconfigs==32) return ThermoDynamics(POTFIT_THRMO_32); RET_POTFIT_THRMO_33
+#define RET_POTFIT_THRMO_33 if(nconfigs==33) return ThermoDynamics(POTFIT_THRMO_33); RET_POTFIT_THRMO_34
+#define RET_POTFIT_THRMO_34 if(nconfigs==34) return ThermoDynamics(POTFIT_THRMO_34); RET_POTFIT_THRMO_35
+#define RET_POTFIT_THRMO_35 if(nconfigs==35) return ThermoDynamics(POTFIT_THRMO_35); RET_POTFIT_THRMO_36
+#define RET_POTFIT_THRMO_36 if(nconfigs==36) return ThermoDynamics(POTFIT_THRMO_36); RET_POTFIT_THRMO_37
+#define RET_POTFIT_THRMO_37 if(nconfigs==37) return ThermoDynamics(POTFIT_THRMO_37); RET_POTFIT_THRMO_38
+#define RET_POTFIT_THRMO_38 if(nconfigs==38) return ThermoDynamics(POTFIT_THRMO_38); RET_POTFIT_THRMO_39
+#define RET_POTFIT_THRMO_39 if(nconfigs==39) return ThermoDynamics(POTFIT_THRMO_39); RET_POTFIT_THRMO_40
+#define RET_POTFIT_THRMO_40 if(nconfigs==40) return ThermoDynamics(POTFIT_THRMO_40); RET_POTFIT_THRMO_41
+#define RET_POTFIT_THRMO_41 if(nconfigs==41) return ThermoDynamics(POTFIT_THRMO_41); RET_POTFIT_THRMO_42
+#define RET_POTFIT_THRMO_42 if(nconfigs==42) return ThermoDynamics(POTFIT_THRMO_42); RET_POTFIT_THRMO_43
+#define RET_POTFIT_THRMO_43 if(nconfigs==43) return ThermoDynamics(POTFIT_THRMO_43); RET_POTFIT_THRMO_44
+#define RET_POTFIT_THRMO_44 if(nconfigs==44) return ThermoDynamics(POTFIT_THRMO_44); RET_POTFIT_THRMO_45
+#define RET_POTFIT_THRMO_45 if(nconfigs==45) return ThermoDynamics(POTFIT_THRMO_45); RET_POTFIT_THRMO_46
+#define RET_POTFIT_THRMO_46 if(nconfigs==46) return ThermoDynamics(POTFIT_THRMO_46); RET_POTFIT_THRMO_47
+#define RET_POTFIT_THRMO_47 if(nconfigs==47) return ThermoDynamics(POTFIT_THRMO_47); RET_POTFIT_THRMO_48
+#define RET_POTFIT_THRMO_48 if(nconfigs==48) return ThermoDynamics(POTFIT_THRMO_48); RET_POTFIT_THRMO_49
+#define RET_POTFIT_THRMO_49 if(nconfigs==49) return ThermoDynamics(POTFIT_THRMO_49); RET_POTFIT_THRMO_50
+#define RET_POTFIT_THRMO_50 if(nconfigs==50) return ThermoDynamics(POTFIT_THRMO_50); RET_POTFIT_THRMO_51
+#define RET_POTFIT_THRMO_51 if(nconfigs==51) return ThermoDynamics(POTFIT_THRMO_51); RET_POTFIT_THRMO_52
+#define RET_POTFIT_THRMO_52 if(nconfigs==52) return ThermoDynamics(POTFIT_THRMO_52); RET_POTFIT_THRMO_53
+#define RET_POTFIT_THRMO_53 if(nconfigs==53) return ThermoDynamics(POTFIT_THRMO_53); RET_POTFIT_THRMO_54
+#define RET_POTFIT_THRMO_54 if(nconfigs==54) return ThermoDynamics(POTFIT_THRMO_54); RET_POTFIT_THRMO_55
+#define RET_POTFIT_THRMO_55 if(nconfigs==55) return ThermoDynamics(POTFIT_THRMO_55); RET_POTFIT_THRMO_56
+#define RET_POTFIT_THRMO_56 if(nconfigs==56) return ThermoDynamics(POTFIT_THRMO_56); RET_POTFIT_THRMO_57
+#define RET_POTFIT_THRMO_57 if(nconfigs==57) return ThermoDynamics(POTFIT_THRMO_57); RET_POTFIT_THRMO_58
+#define RET_POTFIT_THRMO_58 if(nconfigs==58) return ThermoDynamics(POTFIT_THRMO_58); RET_POTFIT_THRMO_59
+#define RET_POTFIT_THRMO_59 if(nconfigs==59) return ThermoDynamics(POTFIT_THRMO_59); RET_POTFIT_THRMO_60
+#define RET_POTFIT_THRMO_60 if(nconfigs==60) return ThermoDynamics(POTFIT_THRMO_60); RET_POTFIT_THRMO_61
+#define RET_POTFIT_THRMO_61 if(nconfigs==61) return ThermoDynamics(POTFIT_THRMO_61); RET_POTFIT_THRMO_62
+#define RET_POTFIT_THRMO_62 if(nconfigs==62) return ThermoDynamics(POTFIT_THRMO_62); RET_POTFIT_THRMO_63
+#define RET_POTFIT_THRMO_63 if(nconfigs==63) return ThermoDynamics(POTFIT_THRMO_63); RET_POTFIT_THRMO_64
+#define RET_POTFIT_THRMO_64 if(nconfigs==64) return ThermoDynamics(POTFIT_THRMO_64); RET_POTFIT_THRMO_65
+#define RET_POTFIT_THRMO_65 if(nconfigs==65) return ThermoDynamics(POTFIT_THRMO_65); RET_POTFIT_THRMO_66
+#define RET_POTFIT_THRMO_66 if(nconfigs==66) return ThermoDynamics(POTFIT_THRMO_66); RET_POTFIT_THRMO_67
+#define RET_POTFIT_THRMO_67 if(nconfigs==67) return ThermoDynamics(POTFIT_THRMO_67); RET_POTFIT_THRMO_68
+#define RET_POTFIT_THRMO_68 if(nconfigs==68) return ThermoDynamics(POTFIT_THRMO_68); RET_POTFIT_THRMO_69
+#define RET_POTFIT_THRMO_69 if(nconfigs==69) return ThermoDynamics(POTFIT_THRMO_69); RET_POTFIT_THRMO_70
+#define RET_POTFIT_THRMO_70 if(nconfigs==70) return ThermoDynamics(POTFIT_THRMO_70); RET_POTFIT_THRMO_71
+#define RET_POTFIT_THRMO_71 if(nconfigs==71) return ThermoDynamics(POTFIT_THRMO_71); RET_POTFIT_THRMO_72
+#define RET_POTFIT_THRMO_72 if(nconfigs==72) return ThermoDynamics(POTFIT_THRMO_72); RET_POTFIT_THRMO_73
+#define RET_POTFIT_THRMO_73 if(nconfigs==73) return ThermoDynamics(POTFIT_THRMO_73); RET_POTFIT_THRMO_74
+#define RET_POTFIT_THRMO_74 if(nconfigs==74) return ThermoDynamics(POTFIT_THRMO_74); RET_POTFIT_THRMO_75
+#define RET_POTFIT_THRMO_75 if(nconfigs==75) return ThermoDynamics(POTFIT_THRMO_75); RET_POTFIT_THRMO_76
+#define RET_POTFIT_THRMO_76 if(nconfigs==76) return ThermoDynamics(POTFIT_THRMO_76); RET_POTFIT_THRMO_77
+#define RET_POTFIT_THRMO_77 if(nconfigs==77) return ThermoDynamics(POTFIT_THRMO_77); RET_POTFIT_THRMO_78
+#define RET_POTFIT_THRMO_78 if(nconfigs==78) return ThermoDynamics(POTFIT_THRMO_78); RET_POTFIT_THRMO_79
+#define RET_POTFIT_THRMO_79 if(nconfigs==79) return ThermoDynamics(POTFIT_THRMO_79); RET_POTFIT_THRMO_80
+#define RET_POTFIT_THRMO_80 if(nconfigs==80) return ThermoDynamics(POTFIT_THRMO_80); RET_POTFIT_THRMO_81
+#define RET_POTFIT_THRMO_81 if(nconfigs==81) return ThermoDynamics(POTFIT_THRMO_81); RET_POTFIT_THRMO_82
+#define RET_POTFIT_THRMO_82 if(nconfigs==82) return ThermoDynamics(POTFIT_THRMO_82); RET_POTFIT_THRMO_83
+#define RET_POTFIT_THRMO_83 if(nconfigs==83) return ThermoDynamics(POTFIT_THRMO_83); RET_POTFIT_THRMO_84
+#define RET_POTFIT_THRMO_84 if(nconfigs==84) return ThermoDynamics(POTFIT_THRMO_84); RET_POTFIT_THRMO_85
+#define RET_POTFIT_THRMO_85 if(nconfigs==85) return ThermoDynamics(POTFIT_THRMO_85); RET_POTFIT_THRMO_86
+#define RET_POTFIT_THRMO_86 if(nconfigs==86) return ThermoDynamics(POTFIT_THRMO_86); RET_POTFIT_THRMO_87
+#define RET_POTFIT_THRMO_87 if(nconfigs==87) return ThermoDynamics(POTFIT_THRMO_87); RET_POTFIT_THRMO_88
+#define RET_POTFIT_THRMO_88 if(nconfigs==88) return ThermoDynamics(POTFIT_THRMO_88); RET_POTFIT_THRMO_89
+#define RET_POTFIT_THRMO_89 if(nconfigs==89) return ThermoDynamics(POTFIT_THRMO_89); RET_POTFIT_THRMO_90
+#define RET_POTFIT_THRMO_90 if(nconfigs==90) return ThermoDynamics(POTFIT_THRMO_90); RET_POTFIT_THRMO_91
+#define RET_POTFIT_THRMO_91 if(nconfigs==91) return ThermoDynamics(POTFIT_THRMO_91); RET_POTFIT_THRMO_92
+#define RET_POTFIT_THRMO_92 if(nconfigs==92) return ThermoDynamics(POTFIT_THRMO_92); RET_POTFIT_THRMO_93
+#define RET_POTFIT_THRMO_93 if(nconfigs==93) return ThermoDynamics(POTFIT_THRMO_93); RET_POTFIT_THRMO_94
+#define RET_POTFIT_THRMO_94 if(nconfigs==94) return ThermoDynamics(POTFIT_THRMO_94); RET_POTFIT_THRMO_95
+#define RET_POTFIT_THRMO_95 if(nconfigs==95) return ThermoDynamics(POTFIT_THRMO_95); RET_POTFIT_THRMO_96
+#define RET_POTFIT_THRMO_96 if(nconfigs==96) return ThermoDynamics(POTFIT_THRMO_96); RET_POTFIT_THRMO_97
+#define RET_POTFIT_THRMO_97 if(nconfigs==97) return ThermoDynamics(POTFIT_THRMO_97); RET_POTFIT_THRMO_98
+#define RET_POTFIT_THRMO_98 if(nconfigs==98) return ThermoDynamics(POTFIT_THRMO_98); RET_POTFIT_THRMO_99
+#define RET_POTFIT_THRMO_99 if(nconfigs==99) return ThermoDynamics(POTFIT_THRMO_99); RET_POTFIT_THRMO_100
+#define RET_POTFIT_THRMO_100 if(nconfigs==100) return ThermoDynamics(POTFIT_THRMO_100); RET_POTFIT_THRMO_101
+#define RET_POTFIT_THRMO_101 if(nconfigs==101) return ThermoDynamics(POTFIT_THRMO_101); RET_POTFIT_THRMO_102
+#define RET_POTFIT_THRMO_102 if(nconfigs==102) return ThermoDynamics(POTFIT_THRMO_102); RET_POTFIT_THRMO_103
+#define RET_POTFIT_THRMO_103 if(nconfigs==103) return ThermoDynamics(POTFIT_THRMO_103); RET_POTFIT_THRMO_104
+#define RET_POTFIT_THRMO_104 if(nconfigs==104) return ThermoDynamics(POTFIT_THRMO_104); RET_POTFIT_THRMO_105
+#define RET_POTFIT_THRMO_105 if(nconfigs==105) return ThermoDynamics(POTFIT_THRMO_105); RET_POTFIT_THRMO_106
+#define RET_POTFIT_THRMO_106 if(nconfigs==106) return ThermoDynamics(POTFIT_THRMO_106); RET_POTFIT_THRMO_107
+#define RET_POTFIT_THRMO_107 if(nconfigs==107) return ThermoDynamics(POTFIT_THRMO_107); RET_POTFIT_THRMO_108
+#define RET_POTFIT_THRMO_108 if(nconfigs==108) return ThermoDynamics(POTFIT_THRMO_108); RET_POTFIT_THRMO_109
+#define RET_POTFIT_THRMO_109 if(nconfigs==109) return ThermoDynamics(POTFIT_THRMO_109); RET_POTFIT_THRMO_110
+#define RET_POTFIT_THRMO_110 if(nconfigs==110) return ThermoDynamics(POTFIT_THRMO_110); RET_POTFIT_THRMO_111
+#define RET_POTFIT_THRMO_111 if(nconfigs==111) return ThermoDynamics(POTFIT_THRMO_111); RET_POTFIT_THRMO_112
+#define RET_POTFIT_THRMO_112 if(nconfigs==112) return ThermoDynamics(POTFIT_THRMO_112); RET_POTFIT_THRMO_113
+#define RET_POTFIT_THRMO_113 if(nconfigs==113) return ThermoDynamics(POTFIT_THRMO_113); RET_POTFIT_THRMO_114
+#define RET_POTFIT_THRMO_114 if(nconfigs==114) return ThermoDynamics(POTFIT_THRMO_114); RET_POTFIT_THRMO_115
+#define RET_POTFIT_THRMO_115 if(nconfigs==115) return ThermoDynamics(POTFIT_THRMO_115); RET_POTFIT_THRMO_116
+#define RET_POTFIT_THRMO_116 if(nconfigs==116) return ThermoDynamics(POTFIT_THRMO_116); RET_POTFIT_THRMO_117
+#define RET_POTFIT_THRMO_117 if(nconfigs==117) return ThermoDynamics(POTFIT_THRMO_117); RET_POTFIT_THRMO_118
+#define RET_POTFIT_THRMO_118 if(nconfigs==118) return ThermoDynamics(POTFIT_THRMO_118); RET_POTFIT_THRMO_119
+#define RET_POTFIT_THRMO_119 if(nconfigs==119) return ThermoDynamics(POTFIT_THRMO_119); RET_POTFIT_THRMO_120
+#define RET_POTFIT_THRMO_120 if(nconfigs==120) return ThermoDynamics(POTFIT_THRMO_120); RET_POTFIT_THRMO_121
+#define RET_POTFIT_THRMO_121 if(nconfigs==121) return ThermoDynamics(POTFIT_THRMO_121); RET_POTFIT_THRMO_122
+#define RET_POTFIT_THRMO_122 if(nconfigs==122) return ThermoDynamics(POTFIT_THRMO_122); RET_POTFIT_THRMO_123
+#define RET_POTFIT_THRMO_123 if(nconfigs==123) return ThermoDynamics(POTFIT_THRMO_123); RET_POTFIT_THRMO_124
+#define RET_POTFIT_THRMO_124 if(nconfigs==124) return ThermoDynamics(POTFIT_THRMO_124); RET_POTFIT_THRMO_125
+#define RET_POTFIT_THRMO_125 if(nconfigs==125) return ThermoDynamics(POTFIT_THRMO_125); RET_POTFIT_THRMO_126
+#define RET_POTFIT_THRMO_126 if(nconfigs==126) return ThermoDynamics(POTFIT_THRMO_126); RET_POTFIT_THRMO_127
+#define RET_POTFIT_THRMO_127 if(nconfigs==127) return ThermoDynamics(POTFIT_THRMO_127); RET_POTFIT_THRMO_128
+#define RET_POTFIT_THRMO_128 if(nconfigs==128) return ThermoDynamics(POTFIT_THRMO_128); RET_POTFIT_THRMO_129
+#define RET_POTFIT_THRMO_129 if(nconfigs==129) return ThermoDynamics(POTFIT_THRMO_129); RET_POTFIT_THRMO_130
+#define RET_POTFIT_THRMO_130 if(nconfigs==130) return ThermoDynamics(POTFIT_THRMO_130); RET_POTFIT_THRMO_131
+#define RET_POTFIT_THRMO_131 if(nconfigs==131) return ThermoDynamics(POTFIT_THRMO_131); RET_POTFIT_THRMO_132
+#define RET_POTFIT_THRMO_132 if(nconfigs==132) return ThermoDynamics(POTFIT_THRMO_132); RET_POTFIT_THRMO_133
+#define RET_POTFIT_THRMO_133 if(nconfigs==133) return ThermoDynamics(POTFIT_THRMO_133); RET_POTFIT_THRMO_134
+#define RET_POTFIT_THRMO_134 if(nconfigs==134) return ThermoDynamics(POTFIT_THRMO_134); RET_POTFIT_THRMO_135
+#define RET_POTFIT_THRMO_135 if(nconfigs==135) return ThermoDynamics(POTFIT_THRMO_135); RET_POTFIT_THRMO_136
+#define RET_POTFIT_THRMO_136 if(nconfigs==136) return ThermoDynamics(POTFIT_THRMO_136); RET_POTFIT_THRMO_137
+#define RET_POTFIT_THRMO_137 if(nconfigs==137) return ThermoDynamics(POTFIT_THRMO_137); RET_POTFIT_THRMO_138
+#define RET_POTFIT_THRMO_138 if(nconfigs==138) return ThermoDynamics(POTFIT_THRMO_138); RET_POTFIT_THRMO_139
+#define RET_POTFIT_THRMO_139 if(nconfigs==139) return ThermoDynamics(POTFIT_THRMO_139); RET_POTFIT_THRMO_140
+#define RET_POTFIT_THRMO_140 if(nconfigs==140) return ThermoDynamics(POTFIT_THRMO_140); RET_POTFIT_THRMO_141
+#define RET_POTFIT_THRMO_141 if(nconfigs==141) return ThermoDynamics(POTFIT_THRMO_141); RET_POTFIT_THRMO_142
+#define RET_POTFIT_THRMO_142 if(nconfigs==142) return ThermoDynamics(POTFIT_THRMO_142); RET_POTFIT_THRMO_143
+#define RET_POTFIT_THRMO_143 if(nconfigs==143) return ThermoDynamics(POTFIT_THRMO_143); RET_POTFIT_THRMO_144
+#define RET_POTFIT_THRMO_144 if(nconfigs==144) return ThermoDynamics(POTFIT_THRMO_144); RET_POTFIT_THRMO_145
+#define RET_POTFIT_THRMO_145 if(nconfigs==145) return ThermoDynamics(POTFIT_THRMO_145); RET_POTFIT_THRMO_146
+#define RET_POTFIT_THRMO_146 if(nconfigs==146) return ThermoDynamics(POTFIT_THRMO_146); RET_POTFIT_THRMO_147
+#define RET_POTFIT_THRMO_147 if(nconfigs==147) return ThermoDynamics(POTFIT_THRMO_147); RET_POTFIT_THRMO_148
+#define RET_POTFIT_THRMO_148 if(nconfigs==148) return ThermoDynamics(POTFIT_THRMO_148); RET_POTFIT_THRMO_149
+#define RET_POTFIT_THRMO_149 if(nconfigs==149) return ThermoDynamics(POTFIT_THRMO_149); RET_POTFIT_THRMO_150
+#define RET_POTFIT_THRMO_150 if(nconfigs==150) return ThermoDynamics(POTFIT_THRMO_150); RET_POTFIT_THRMO_151
+#define RET_POTFIT_THRMO_151 if(nconfigs==151) return ThermoDynamics(POTFIT_THRMO_151); RET_POTFIT_THRMO_152
+#define RET_POTFIT_THRMO_152 if(nconfigs==152) return ThermoDynamics(POTFIT_THRMO_152); RET_POTFIT_THRMO_153
+#define RET_POTFIT_THRMO_153 if(nconfigs==153) return ThermoDynamics(POTFIT_THRMO_153); RET_POTFIT_THRMO_154
+#define RET_POTFIT_THRMO_154 if(nconfigs==154) return ThermoDynamics(POTFIT_THRMO_154); RET_POTFIT_THRMO_155
+#define RET_POTFIT_THRMO_155 if(nconfigs==155) return ThermoDynamics(POTFIT_THRMO_155); RET_POTFIT_THRMO_156
+#define RET_POTFIT_THRMO_156 if(nconfigs==156) return ThermoDynamics(POTFIT_THRMO_156); RET_POTFIT_THRMO_157
+#define RET_POTFIT_THRMO_157 if(nconfigs==157) return ThermoDynamics(POTFIT_THRMO_157); RET_POTFIT_THRMO_158
+#define RET_POTFIT_THRMO_158 if(nconfigs==158) return ThermoDynamics(POTFIT_THRMO_158); RET_POTFIT_THRMO_159
+#define RET_POTFIT_THRMO_159 if(nconfigs==159) return ThermoDynamics(POTFIT_THRMO_159); RET_POTFIT_THRMO_160
+#define RET_POTFIT_THRMO_160 if(nconfigs==160) return ThermoDynamics(POTFIT_THRMO_160); RET_POTFIT_THRMO_161
+#define RET_POTFIT_THRMO_161 if(nconfigs==161) return ThermoDynamics(POTFIT_THRMO_161); RET_POTFIT_THRMO_162
+#define RET_POTFIT_THRMO_162 if(nconfigs==162) return ThermoDynamics(POTFIT_THRMO_162); RET_POTFIT_THRMO_163
+#define RET_POTFIT_THRMO_163 if(nconfigs==163) return ThermoDynamics(POTFIT_THRMO_163); RET_POTFIT_THRMO_164
+#define RET_POTFIT_THRMO_164 if(nconfigs==164) return ThermoDynamics(POTFIT_THRMO_164); RET_POTFIT_THRMO_165
+#define RET_POTFIT_THRMO_165 if(nconfigs==165) return ThermoDynamics(POTFIT_THRMO_165); RET_POTFIT_THRMO_166
+#define RET_POTFIT_THRMO_166 if(nconfigs==166) return ThermoDynamics(POTFIT_THRMO_166); RET_POTFIT_THRMO_167
+#define RET_POTFIT_THRMO_167 if(nconfigs==167) return ThermoDynamics(POTFIT_THRMO_167); RET_POTFIT_THRMO_168
+#define RET_POTFIT_THRMO_168 if(nconfigs==168) return ThermoDynamics(POTFIT_THRMO_168); RET_POTFIT_THRMO_169
+#define RET_POTFIT_THRMO_169 if(nconfigs==169) return ThermoDynamics(POTFIT_THRMO_169); RET_POTFIT_THRMO_170
+#define RET_POTFIT_THRMO_170 if(nconfigs==170) return ThermoDynamics(POTFIT_THRMO_170); RET_POTFIT_THRMO_171
+#define RET_POTFIT_THRMO_171 if(nconfigs==171) return ThermoDynamics(POTFIT_THRMO_171); RET_POTFIT_THRMO_172
+#define RET_POTFIT_THRMO_172 if(nconfigs==172) return ThermoDynamics(POTFIT_THRMO_172); RET_POTFIT_THRMO_173
+#define RET_POTFIT_THRMO_173 if(nconfigs==173) return ThermoDynamics(POTFIT_THRMO_173); RET_POTFIT_THRMO_174
+#define RET_POTFIT_THRMO_174 if(nconfigs==174) return ThermoDynamics(POTFIT_THRMO_174); RET_POTFIT_THRMO_175
+#define RET_POTFIT_THRMO_175 if(nconfigs==175) return ThermoDynamics(POTFIT_THRMO_175); RET_POTFIT_THRMO_176
+#define RET_POTFIT_THRMO_176 if(nconfigs==176) return ThermoDynamics(POTFIT_THRMO_176); RET_POTFIT_THRMO_177
+#define RET_POTFIT_THRMO_177 if(nconfigs==177) return ThermoDynamics(POTFIT_THRMO_177); RET_POTFIT_THRMO_178
+#define RET_POTFIT_THRMO_178 if(nconfigs==178) return ThermoDynamics(POTFIT_THRMO_178); RET_POTFIT_THRMO_179
+#define RET_POTFIT_THRMO_179 if(nconfigs==179) return ThermoDynamics(POTFIT_THRMO_179); RET_POTFIT_THRMO_180
+#define RET_POTFIT_THRMO_180 if(nconfigs==180) return ThermoDynamics(POTFIT_THRMO_180); RET_POTFIT_THRMO_181
+#define RET_POTFIT_THRMO_181 if(nconfigs==181) return ThermoDynamics(POTFIT_THRMO_181); RET_POTFIT_THRMO_182
+#define RET_POTFIT_THRMO_182 if(nconfigs==182) return ThermoDynamics(POTFIT_THRMO_182); RET_POTFIT_THRMO_183
+#define RET_POTFIT_THRMO_183 if(nconfigs==183) return ThermoDynamics(POTFIT_THRMO_183); RET_POTFIT_THRMO_184
+#define RET_POTFIT_THRMO_184 if(nconfigs==184) return ThermoDynamics(POTFIT_THRMO_184); RET_POTFIT_THRMO_185
+#define RET_POTFIT_THRMO_185 if(nconfigs==185) return ThermoDynamics(POTFIT_THRMO_185); RET_POTFIT_THRMO_186
+#define RET_POTFIT_THRMO_186 if(nconfigs==186) return ThermoDynamics(POTFIT_THRMO_186); RET_POTFIT_THRMO_187
+#define RET_POTFIT_THRMO_187 if(nconfigs==187) return ThermoDynamics(POTFIT_THRMO_187); RET_POTFIT_THRMO_188
+#define RET_POTFIT_THRMO_188 if(nconfigs==188) return ThermoDynamics(POTFIT_THRMO_188); RET_POTFIT_THRMO_189
+#define RET_POTFIT_THRMO_189 if(nconfigs==189) return ThermoDynamics(POTFIT_THRMO_189); RET_POTFIT_THRMO_190
+#define RET_POTFIT_THRMO_190 if(nconfigs==190) return ThermoDynamics(POTFIT_THRMO_190); RET_POTFIT_THRMO_191
+#define RET_POTFIT_THRMO_191 if(nconfigs==191) return ThermoDynamics(POTFIT_THRMO_191); RET_POTFIT_THRMO_192
+#define RET_POTFIT_THRMO_192 if(nconfigs==192) return ThermoDynamics(POTFIT_THRMO_192); RET_POTFIT_THRMO_193
+#define RET_POTFIT_THRMO_193 if(nconfigs==193) return ThermoDynamics(POTFIT_THRMO_193); RET_POTFIT_THRMO_194
+#define RET_POTFIT_THRMO_194 if(nconfigs==194) return ThermoDynamics(POTFIT_THRMO_194); RET_POTFIT_THRMO_195
+#define RET_POTFIT_THRMO_195 if(nconfigs==195) return ThermoDynamics(POTFIT_THRMO_195); RET_POTFIT_THRMO_196
+#define RET_POTFIT_THRMO_196 if(nconfigs==196) return ThermoDynamics(POTFIT_THRMO_196); RET_POTFIT_THRMO_197
+#define RET_POTFIT_THRMO_197 if(nconfigs==197) return ThermoDynamics(POTFIT_THRMO_197); RET_POTFIT_THRMO_198
+#define RET_POTFIT_THRMO_198 if(nconfigs==198) return ThermoDynamics(POTFIT_THRMO_198); RET_POTFIT_THRMO_199
+#define RET_POTFIT_THRMO_199 if(nconfigs==199) return ThermoDynamics(POTFIT_THRMO_199); RET_POTFIT_THRMO_200
+#define RET_POTFIT_THRMO_200 if(nconfigs==200) return ThermoDynamics(POTFIT_THRMO_200); RET_POTFIT_THRMO_201
+#define RET_POTFIT_THRMO_201 if(nconfigs==201) return ThermoDynamics(POTFIT_THRMO_201); RET_POTFIT_THRMO_202
+#define RET_POTFIT_THRMO_202 if(nconfigs==202) return ThermoDynamics(POTFIT_THRMO_202); RET_POTFIT_THRMO_203
+#define RET_POTFIT_THRMO_203 if(nconfigs==203) return ThermoDynamics(POTFIT_THRMO_203); RET_POTFIT_THRMO_204
+#define RET_POTFIT_THRMO_204 if(nconfigs==204) return ThermoDynamics(POTFIT_THRMO_204); RET_POTFIT_THRMO_205
+#define RET_POTFIT_THRMO_205 if(nconfigs==205) return ThermoDynamics(POTFIT_THRMO_205); RET_POTFIT_THRMO_206
+#define RET_POTFIT_THRMO_206 if(nconfigs==206) return ThermoDynamics(POTFIT_THRMO_206); RET_POTFIT_THRMO_207
+#define RET_POTFIT_THRMO_207 if(nconfigs==207) return ThermoDynamics(POTFIT_THRMO_207); RET_POTFIT_THRMO_208
+#define RET_POTFIT_THRMO_208 if(nconfigs==208) return ThermoDynamics(POTFIT_THRMO_208); RET_POTFIT_THRMO_209
+#define RET_POTFIT_THRMO_209 if(nconfigs==209) return ThermoDynamics(POTFIT_THRMO_209); RET_POTFIT_THRMO_210
+#define RET_POTFIT_THRMO_210 if(nconfigs==210) return ThermoDynamics(POTFIT_THRMO_210); RET_POTFIT_THRMO_211
+#define RET_POTFIT_THRMO_211 if(nconfigs==211) return ThermoDynamics(POTFIT_THRMO_211); RET_POTFIT_THRMO_212
+#define RET_POTFIT_THRMO_212 if(nconfigs==212) return ThermoDynamics(POTFIT_THRMO_212); RET_POTFIT_THRMO_213
+#define RET_POTFIT_THRMO_213 if(nconfigs==213) return ThermoDynamics(POTFIT_THRMO_213); RET_POTFIT_THRMO_214
+#define RET_POTFIT_THRMO_214 if(nconfigs==214) return ThermoDynamics(POTFIT_THRMO_214); RET_POTFIT_THRMO_215
+#define RET_POTFIT_THRMO_215 if(nconfigs==215) return ThermoDynamics(POTFIT_THRMO_215); RET_POTFIT_THRMO_216
+#define RET_POTFIT_THRMO_216 if(nconfigs==216) return ThermoDynamics(POTFIT_THRMO_216); RET_POTFIT_THRMO_217
+#define RET_POTFIT_THRMO_217 if(nconfigs==217) return ThermoDynamics(POTFIT_THRMO_217); RET_POTFIT_THRMO_218
+#define RET_POTFIT_THRMO_218 if(nconfigs==218) return ThermoDynamics(POTFIT_THRMO_218); RET_POTFIT_THRMO_219
+#define RET_POTFIT_THRMO_219 if(nconfigs==219) return ThermoDynamics(POTFIT_THRMO_219); RET_POTFIT_THRMO_220
+#define RET_POTFIT_THRMO_220 if(nconfigs==220) return ThermoDynamics(POTFIT_THRMO_220); RET_POTFIT_THRMO_221
+#define RET_POTFIT_THRMO_221 if(nconfigs==221) return ThermoDynamics(POTFIT_THRMO_221); RET_POTFIT_THRMO_222
+#define RET_POTFIT_THRMO_222 if(nconfigs==222) return ThermoDynamics(POTFIT_THRMO_222); RET_POTFIT_THRMO_223
+#define RET_POTFIT_THRMO_223 if(nconfigs==223) return ThermoDynamics(POTFIT_THRMO_223); RET_POTFIT_THRMO_224
+#define RET_POTFIT_THRMO_224 if(nconfigs==224) return ThermoDynamics(POTFIT_THRMO_224); RET_POTFIT_THRMO_225
+#define RET_POTFIT_THRMO_225 if(nconfigs==225) return ThermoDynamics(POTFIT_THRMO_225); RET_POTFIT_THRMO_226
+#define RET_POTFIT_THRMO_226 if(nconfigs==226) return ThermoDynamics(POTFIT_THRMO_226); RET_POTFIT_THRMO_227
+#define RET_POTFIT_THRMO_227 if(nconfigs==227) return ThermoDynamics(POTFIT_THRMO_227); RET_POTFIT_THRMO_228
+#define RET_POTFIT_THRMO_228 if(nconfigs==228) return ThermoDynamics(POTFIT_THRMO_228); RET_POTFIT_THRMO_229
+#define RET_POTFIT_THRMO_229 if(nconfigs==229) return ThermoDynamics(POTFIT_THRMO_229); RET_POTFIT_THRMO_230
+#define RET_POTFIT_THRMO_230 if(nconfigs==230) return ThermoDynamics(POTFIT_THRMO_230); RET_POTFIT_THRMO_231
+#define RET_POTFIT_THRMO_231 if(nconfigs==231) return ThermoDynamics(POTFIT_THRMO_231); RET_POTFIT_THRMO_232
+#define RET_POTFIT_THRMO_232 if(nconfigs==232) return ThermoDynamics(POTFIT_THRMO_232); RET_POTFIT_THRMO_233
+#define RET_POTFIT_THRMO_233 if(nconfigs==233) return ThermoDynamics(POTFIT_THRMO_233); RET_POTFIT_THRMO_234
+#define RET_POTFIT_THRMO_234 if(nconfigs==234) return ThermoDynamics(POTFIT_THRMO_234); RET_POTFIT_THRMO_235
+#define RET_POTFIT_THRMO_235 if(nconfigs==235) return ThermoDynamics(POTFIT_THRMO_235); RET_POTFIT_THRMO_236
+#define RET_POTFIT_THRMO_236 if(nconfigs==236) return ThermoDynamics(POTFIT_THRMO_236); RET_POTFIT_THRMO_237
+#define RET_POTFIT_THRMO_237 if(nconfigs==237) return ThermoDynamics(POTFIT_THRMO_237); RET_POTFIT_THRMO_238
+#define RET_POTFIT_THRMO_238 if(nconfigs==238) return ThermoDynamics(POTFIT_THRMO_238); RET_POTFIT_THRMO_239
+#define RET_POTFIT_THRMO_239 if(nconfigs==239) return ThermoDynamics(POTFIT_THRMO_239); RET_POTFIT_THRMO_240
+#define RET_POTFIT_THRMO_240 if(nconfigs==240) return ThermoDynamics(POTFIT_THRMO_240); RET_POTFIT_THRMO_241
+#define RET_POTFIT_THRMO_241 if(nconfigs==241) return ThermoDynamics(POTFIT_THRMO_241); RET_POTFIT_THRMO_242
+#define RET_POTFIT_THRMO_242 if(nconfigs==242) return ThermoDynamics(POTFIT_THRMO_242); RET_POTFIT_THRMO_243
+#define RET_POTFIT_THRMO_243 if(nconfigs==243) return ThermoDynamics(POTFIT_THRMO_243); RET_POTFIT_THRMO_244
+#define RET_POTFIT_THRMO_244 if(nconfigs==244) return ThermoDynamics(POTFIT_THRMO_244); RET_POTFIT_THRMO_245
+#define RET_POTFIT_THRMO_245 if(nconfigs==245) return ThermoDynamics(POTFIT_THRMO_245); RET_POTFIT_THRMO_246
+#define RET_POTFIT_THRMO_246 if(nconfigs==246) return ThermoDynamics(POTFIT_THRMO_246); RET_POTFIT_THRMO_247
+#define RET_POTFIT_THRMO_247 if(nconfigs==247) return ThermoDynamics(POTFIT_THRMO_247); RET_POTFIT_THRMO_248
+#define RET_POTFIT_THRMO_248 if(nconfigs==248) return ThermoDynamics(POTFIT_THRMO_248); RET_POTFIT_THRMO_249
+#define RET_POTFIT_THRMO_249 if(nconfigs==249) return ThermoDynamics(POTFIT_THRMO_249); RET_POTFIT_THRMO_250
+#define RET_POTFIT_THRMO_250 if(nconfigs==250) return ThermoDynamics(POTFIT_THRMO_250); RET_POTFIT_THRMO_251
+#define RET_POTFIT_THRMO_251 if(nconfigs==251) return ThermoDynamics(POTFIT_THRMO_251); RET_POTFIT_THRMO_252
+#define RET_POTFIT_THRMO_252 if(nconfigs==252) return ThermoDynamics(POTFIT_THRMO_252); RET_POTFIT_THRMO_253
+#define RET_POTFIT_THRMO_253 if(nconfigs==253) return ThermoDynamics(POTFIT_THRMO_253); RET_POTFIT_THRMO_254
+#define RET_POTFIT_THRMO_254 if(nconfigs==254) return ThermoDynamics(POTFIT_THRMO_254); RET_POTFIT_THRMO_255
+#define RET_POTFIT_THRMO_255 if(nconfigs==255) return ThermoDynamics(POTFIT_THRMO_255); RET_POTFIT_THRMO_256
+#define RET_POTFIT_THRMO_256 return ThermoDynamics(POTFIT_THRMO_256);
+#define RET_POTFIT_THRMO RET_POTFIT_THRMO_0

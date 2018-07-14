@@ -159,7 +159,9 @@ PyObject* Elements::get_dict()
     if(nelems==0) Py_RETURN_NONE;
     PyObject* dict= PyDict_New();
     for(size_t i=0;i<nelems;i++)
-        PyDict_SetItemString(dict,names[i].c_str(),PyInt_FromSize_t(i));
+        PyDict_SetItemString(dict,names[i].c_str(),PyLong_FromSize_t(i));
+
+
     return dict;
 }
 /*--------------------------------------------

@@ -3,6 +3,10 @@
 #define MIN(A,B) (A<B?A:B)
 #define MAX(A,B) (A>B?A:B)
 
+/*thermo dynamics delimeter and line character*/
+#define THERMO_DLMTR "|"
+#define THERMO_LINE "-"
+
 #define RESTRICT __restrict__
 
 #define GET_WRAPPER_DOC(type,func) \

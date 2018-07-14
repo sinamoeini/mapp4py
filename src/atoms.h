@@ -956,7 +956,7 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
     try{
         for(size_t i=0;i<co_nvars;i++)
         {
-            char* var_name=PyString_AsString(PyTuple_GetItem(co_varnames,i));
+            const char* var_name=__PyString_AsString(PyTuple_GetItem(co_varnames,i));
             find(i,var_name,ss...);
         }
     }

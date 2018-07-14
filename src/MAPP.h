@@ -4,6 +4,7 @@
 struct _object;
 typedef _object PyObject;
 typedef struct PyMethodDef PyMethodDef;
+typedef struct PyModuleDef PyModuleDef;
 namespace MAPP_NS
 {
     class MAPP
@@ -13,7 +14,8 @@ namespace MAPP_NS
         static int glbl_rank;
     protected:
     public:
-        static void init_module(void);
+        static PyModuleDef module;
+        static PyObject* init_module(void);
         
         static FILE* __stdout__;
         static FILE* __stderr__;
@@ -33,6 +35,7 @@ namespace MAPP_NS
         private:
         protected:
         public:
+            static PyModuleDef module;
             static PyObject* init_module(void);
             static PyMethodDef methods[];
             static void setup_methods();
@@ -43,6 +46,7 @@ namespace MAPP_NS
         private:
         protected:
         public:
+            static PyModuleDef module;
             static PyObject* init_module(void);
             static PyMethodDef methods[];
             static void setup_methods();

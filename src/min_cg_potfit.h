@@ -1,5 +1,5 @@
-#ifndef __MAPP__min_cg_fit__
-#define __MAPP__min_cg_fit__
+#ifndef __MAPP__min_cg_potfit__
+#define __MAPP__min_cg_potfit__
 #include "min.h"
 #include "min_vec.h"
 #include "ff_md.h"
@@ -8,7 +8,7 @@
 #include "MAPP.h"
 namespace MAPP_NS
 {
-    class MinCGFit:public Min
+    class MinCGPotFit:public Min
     {
     private:
     protected:
@@ -28,8 +28,8 @@ namespace MAPP_NS
         
         
     public:
-        MinCGFit(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*,vec*,vec*);
-        ~MinCGFit();
+        MinCGPotFit(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*,vec*,vec*);
+        ~MinCGPotFit();
         virtual void run(int);
         template<class C>
         void run(C*,int);
@@ -43,7 +43,8 @@ namespace MAPP_NS
         void ls_prep(type0&,type0&,type0&);
         void F_reset();
 
-        
+        void get_H_dof(bool(&)[__dim__][__dim__]);
+        void set_H_dof(bool(&)[__dim__][__dim__]);
         
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
@@ -53,7 +54,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            MinCGFit* min;
+            MinCGPotFit* min;
             LineSearch::Object* ls;
             ExportMD::Object* xprt;
         }Object;
@@ -83,7 +84,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<class C>
-void MinCGFit::run(C* ls,int nsteps)
+void MinCGPotFit::run(C* ls,int nsteps)
 {
     int step=atoms->step;
     

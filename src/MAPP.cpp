@@ -1,4 +1,5 @@
 #include <Python.h>
+#include "py_compat.h"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
 #include <numpy/arrayobject.h>
@@ -17,7 +18,6 @@
 #include "potfit.h"
 #include "potfit_o.h"
 #endif
-#define GET_FILE(file_name) reinterpret_cast<PyFileObject*>(PySys_GetObject((char*)#file_name))->f_fp
 using namespace MAPP_NS;
 /*--------------------------------------------*/
 PyMethodDef MAPP::methods[]=EmptyPyMethodDef(3);
@@ -83,8 +83,8 @@ PyObject* MAPP::pause_out(PyObject*)
     if(!glbl_rank) Py_RETURN_NONE;
     if(!__devnull__) __devnull__=fopen(devnull_path,"w");
 
-    GET_FILE(stdout)=__devnull__;
-    GET_FILE(stderr)=__devnull__;
+    GET_FILE_FROM_PY(stdout)=__devnull__;
+    GET_FILE_FROM_PY(stderr)=__devnull__;
     mapp_out=__devnull__;
     mapp_err=__devnull__;
     Py_RETURN_NONE;
@@ -95,8 +95,8 @@ PyObject* MAPP::pause_out(PyObject*)
 PyObject* MAPP::resume_out(PyObject*)
 {
     MPI_Barrier(MPI_COMM_WORLD);
-    GET_FILE(stdout)=__stdout__;
-    GET_FILE(stderr)=__stderr__;
+    GET_FILE_FROM_PY(stdout)=__stdout__;
+    GET_FILE_FROM_PY(stderr)=__stderr__;
     mapp_out=__stdout__;
     mapp_err=__stderr__;
     if(__devnull__)
@@ -114,11 +114,12 @@ FILE* MAPP_NS::MAPP::__stdout__(NULL);
 FILE* MAPP_NS::MAPP::__stderr__(NULL);
 FILE* MAPP_NS::MAPP::mapp_out(NULL);
 FILE* MAPP_NS::MAPP::mapp_err(NULL);
+#ifdef IS_PY3K
+PyModuleDef MAPP::module=EmptyModule;
+#endif
+MOD_INIT(mapp,MAPP_NS::MAPP::init_module())
 /*--------------------------------------------*/
-PyMODINIT_FUNC initmapp(void)
-{return MAPP_NS::MAPP::init_module();}
-
-void MAPP::init_module(void)
+PyObject* MAPP::init_module(void)
 {
     int mpi_initialized;
     MPI_Initialized(&mpi_initialized);
@@ -131,60 +132,74 @@ void MAPP::init_module(void)
     
     PyObject* posixpath=PyImport_ImportModule("posixpath");
     PyObject* devnull_path_op=PyObject_GetAttrString(posixpath,"devnull");
-    devnull_path=PyString_AsString(devnull_path_op);
+    devnull_path=__PyString_AsString(devnull_path_op);
     Py_DECREF(devnull_path_op);
     Py_DECREF(posixpath);
     glbl_rank=Communication::get_rank();
     
-    mapp_out=__stdout__=GET_FILE(stdout);
-    mapp_err=__stderr__=GET_FILE(stderr);
+    mapp_out=__stdout__=GET_FILE_FROM_PY(stdout);
+    mapp_err=__stderr__=GET_FILE_FROM_PY(stderr);
     
-    import_array();
+    import_array2("mapp was unable to import numpy.core.multiarray", NULL)
     setup_methods();
-    PyObject* module=Py_InitModule3("mapp",methods,"MIT Atomistic Parallel Package");
-    if(module==NULL) return;
+#ifdef IS_PY3K
+    module.m_name="mapp";
+    module.m_doc="MIT Atomistic Parallel Package";
+    module.m_methods=methods;
+    PyObject* module_ob=PyModule_Create(&module);
+#else
+    PyObject* module_ob=Py_InitModule3("mapp",methods,"MIT Atomistic Parallel Package");
+#endif
+
+    
+    if(module_ob==NULL) return NULL;
     
     MAPP_MPI::setup_tp();
-    if(PyType_Ready(&MAPP_MPI::TypeObject)<0) return;
+    if(PyType_Ready(&MAPP_MPI::TypeObject)<0) return NULL;
     Py_INCREF(&MAPP_MPI::TypeObject);
-    PyModule_AddObject(module,"mpi",reinterpret_cast<PyObject*>(&MAPP_MPI::TypeObject));
+    PyModule_AddObject(module_ob,"mpi",reinterpret_cast<PyObject*>(&MAPP_MPI::TypeObject));
     
     
-    if(LineSearch::setup_tp()<0) return;
-    PyModule_AddObject(module,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
+    if(LineSearch::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"ls",reinterpret_cast<PyObject*>(&LineSearch::TypeObject));
     
     
-    if(LineSearchGoldenSection::setup_tp()<0) return;
-    PyModule_AddObject(module,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
+    if(LineSearchGoldenSection::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"ls_golden",reinterpret_cast<PyObject*>(&LineSearchGoldenSection::TypeObject));
     
     
-    if(LineSearchBrent::setup_tp()<0) return;
-    PyModule_AddObject(module,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
+    if(LineSearchBrent::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"ls_brent",reinterpret_cast<PyObject*>(&LineSearchBrent::TypeObject));
     
     
-    if(LineSearchBackTrack::setup_tp()<0) return;
-    PyModule_AddObject(module,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
+    if(LineSearchBackTrack::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
 
 #ifdef POTFIT
 
     
-    if(PotFitO::setup_tp()<0) return;
-    PyModule_AddObject(module,"potfit_o",reinterpret_cast<PyObject*>(&PotFitO::TypeObject));
+    if(PotFitO::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"potfit_o",reinterpret_cast<PyObject*>(&PotFitO::TypeObject));
     
-    if(PotFit<ForceFieldEAMPotFitAckOgata,2>::setup_tp()<0) return;
-    PyModule_AddObject(module,"potfit",reinterpret_cast<PyObject*>(&PotFit<ForceFieldEAMPotFitAckOgata,2>::TypeObject));
+    if(PotFit<ForceFieldEAMPotFitAckOgata,2>::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"potfit",reinterpret_cast<PyObject*>(&PotFit<ForceFieldEAMPotFitAckOgata,2>::TypeObject));
 #endif
     
     PyObject* md=MAPP::MD::init_module();
-    if(md==NULL) return;
-    PyModule_AddObject(module,"md",md);
+    if(md==NULL) return NULL;
+    PyModule_AddObject(module_ob,"md",md);
     
     
     PyObject* dmd=MAPP::DMD::init_module();
-    if(dmd==NULL) return;
-    PyModule_AddObject(module,"dmd",dmd);
+    if(dmd==NULL) return NULL;
+    PyModule_AddObject(module_ob,"dmd",dmd);
     
     pause_out(NULL);
+#ifdef IS_PY3K
+    return module_ob;
+#else
+    return NULL;
+#endif
 }
 /*--------------------------------------------*/
 PyMethodDef MAPP::MD::methods[]=EmptyPyMethodDef(1);
@@ -196,48 +211,57 @@ void MAPP::MD::setup_methods()
     ExamplePython::ml_phonon_1d(methods[1]);
     ExamplePython::ml_phonon_1dd(methods[2]);*/
 }
-/*--------------------------------------------
- 
- --------------------------------------------*/
+/*--------------------------------------------*/
+#ifdef IS_PY3K
+PyModuleDef MAPP::MD::module=EmptyModule;
+#endif
+/*--------------------------------------------*/
 PyObject* MAPP::MD::init_module(void)
 {
     setup_methods();
-    PyObject* module=Py_InitModule3("mapp.md",methods,"Molecular Dynamics (MD) module");
-    if(module==NULL) return NULL;
+#ifdef IS_PY3K
+    module.m_name="mapp.md";
+    module.m_doc="Molecular Dynamics (MD) module";
+    module.m_methods=methods;
+    PyObject* module_ob=PyModule_Create(&module);
+#else
+    PyObject* module_ob=Py_InitModule3("mapp.md",methods,"Molecular Dynamics (MD) module");
+#endif
+    if(module_ob==NULL) return NULL;
     
     
     if(AtomsMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsMD::TypeObject));
+    PyModule_AddObject(module_ob,"atoms",reinterpret_cast<PyObject*>(&AtomsMD::TypeObject));
     
     if(MDNVT::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"nvt",reinterpret_cast<PyObject*>(&MDNVT::TypeObject));
+    PyModule_AddObject(module_ob,"nvt",reinterpret_cast<PyObject*>(&MDNVT::TypeObject));
     
     
     if(MDNST::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"nst",reinterpret_cast<PyObject*>(&MDNST::TypeObject));
+    PyModule_AddObject(module_ob,"nst",reinterpret_cast<PyObject*>(&MDNST::TypeObject));
     
     
     if(MDMuVT::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
+    PyModule_AddObject(module_ob,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
     
     
     if(MinCG::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
+    PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
     
     
     if(MinLBFGS::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
+    PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
     
     
     if(ExportMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportMD::TypeObject));
+    PyModule_AddObject(module_ob,"export",reinterpret_cast<PyObject*>(&ExportMD::TypeObject));
     
     
     if(ExportCFGMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGMD::TypeObject));
+    PyModule_AddObject(module_ob,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGMD::TypeObject));
     
     
-    return module;
+    return module_ob;
 }
 /*--------------------------------------------*/
 PyMethodDef MAPP::DMD::methods[]=EmptyPyMethodDef(4);
@@ -254,40 +278,49 @@ void MAPP::DMD::setup_methods()
     ExamplePython::ml_delta_c(methods[3]);
      */
 }
-/*--------------------------------------------
- 
- --------------------------------------------*/
+/*--------------------------------------------*/
+#ifdef IS_PY3K
+PyModuleDef MAPP::DMD::module=EmptyModule;
+#endif
+/*--------------------------------------------*/
 PyObject* MAPP::DMD::init_module(void)
 {
     setup_methods();
-    PyObject* module=Py_InitModule3("mapp.dmd",methods,"Diffusive Molecular Dynamics (DMD) module");
-    if(module==NULL) return NULL;
+#ifdef IS_PY3K
+    module.m_name="mapp.dmd";
+    module.m_doc="Diffusive Molecular Dynamics (MD) module";
+    module.m_methods=methods;
+    PyObject* module_ob=PyModule_Create(&module);
+#else
+    PyObject* module_ob=Py_InitModule3("mapp.dmd",methods,"Diffusive Molecular Dynamics (DMD) module");
+#endif
+    if(module_ob==NULL) return NULL;
     
     
     if(AtomsDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
+    PyModule_AddObject(module_ob,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
     
     
     if(MinCGDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
+    PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
     
     
     if(MinLBFGSDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMD::TypeObject));
+    PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMD::TypeObject));
     
     
     if(DAEBDF::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
+    PyModule_AddObject(module_ob,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
     
     if(NewtonGMRES::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"newton_gmres",reinterpret_cast<PyObject*>(&NewtonGMRES::TypeObject));
+    PyModule_AddObject(module_ob,"newton_gmres",reinterpret_cast<PyObject*>(&NewtonGMRES::TypeObject));
     
     if(ExportDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"export",reinterpret_cast<PyObject*>(&ExportDMD::TypeObject));
+    PyModule_AddObject(module_ob,"export",reinterpret_cast<PyObject*>(&ExportDMD::TypeObject));
     
     if(ExportCFGDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGDMD::TypeObject));
+    PyModule_AddObject(module_ob,"export_cfg",reinterpret_cast<PyObject*>(&ExportCFGDMD::TypeObject));
     
     
-    return module;
+    return module_ob;
 }

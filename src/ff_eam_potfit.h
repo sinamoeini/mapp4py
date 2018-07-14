@@ -73,6 +73,7 @@ namespace MAPP_NS
         void fin_xchng(){};
         void energy_gradient();
         void force_gradient();
+        type0 mean_rho(elem_type);
         
         size_t nvs;
         type0* vs;
@@ -585,6 +586,27 @@ template<size_t NELEMS>
 type0 ForceFieldEAMPotFit<NELEMS>::phi_calc(elem_type ielem,elem_type jelem,type0 r)
 {
     return phi_ptr[ielem][jelem]->F(r);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<size_t NELEMS>
+type0 ForceFieldEAMPotFit<NELEMS>::mean_rho(elem_type ielem)
+{
+    elem_type* evec=atoms->elem->begin();
+    type0* rho=rho_vec_ptr->begin();
+    const int natms_lcl=atoms->natms_lcl;
+    type0 __tmp_lcl[2]={0.0,0.0};
+    type0 __tmp[2]={0.0,0.0};
+    for(int i=0;i<natms_lcl;i++)
+        if(evec[i]==ielem)
+        {
+            __tmp_lcl[0]+=rho[i];
+            __tmp_lcl[1]++;
+        }
+    MPI_Allreduce(__tmp_lcl,__tmp,2,Vec<type0>::MPI_T,MPI_SUM,world);
+    if(__tmp[1]==0.0) return 0.0;
+    return __tmp[0]/__tmp[1];
 }
 /*--------------------------------------------
  

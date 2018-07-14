@@ -1,11 +1,11 @@
-#include "min_cg_fit.h"
+#include "min_cg_potfit.h"
 #include "potfit.h"
 #include <stdlib.h>
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCGFit::MinCGFit(type0 __e_tol,
+MinCGPotFit::MinCGPotFit(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls,vec* __ext_vec_0,vec* __ext_vec_1):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
 atoms(NULL),
@@ -18,7 +18,7 @@ ext_vec_1(__ext_vec_1)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinCGFit::~MinCGFit()
+MinCGPotFit::~MinCGPotFit()
 {
     ext_vec_0=ext_vec_1=NULL;
     atoms=NULL;
@@ -27,7 +27,7 @@ MinCGFit::~MinCGFit()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGFit::force_calc()
+void MinCGPotFit::force_calc()
 {
     ff->derivative_timer();
     /*
@@ -53,7 +53,7 @@ void MinCGFit::force_calc()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGFit::prep()
+void MinCGPotFit::prep()
 {
     if(chng_box)
     {
@@ -89,7 +89,7 @@ void MinCGFit::prep()
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinCGFit::init()
+void MinCGPotFit::init()
 {
     x.~VecTens();
     new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
@@ -124,7 +124,7 @@ void MinCGFit::init()
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
-void MinCGFit::fin()
+void MinCGPotFit::fin()
 {
     if(xprt)
     {
@@ -146,7 +146,7 @@ void MinCGFit::fin()
 /*--------------------------------------------
  min
  --------------------------------------------*/
-void MinCGFit::run(int nsteps)
+void MinCGPotFit::run(int nsteps)
 {
     if(dynamic_cast<LineSearchGoldenSection*>(ls))
         return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
@@ -160,7 +160,7 @@ void MinCGFit::run(int nsteps)
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 MinCGFit::F(type0 alpha)
+type0 MinCGPotFit::F(type0 alpha)
 {
     x=x0+alpha*x_d;
     if(chng_box)
@@ -172,7 +172,7 @@ type0 MinCGFit::F(type0 alpha)
 /*--------------------------------------------
  inner product of f and h
  --------------------------------------------*/
-type0 MinCGFit::dF(type0 alpha,type0& drev)
+type0 MinCGPotFit::dF(type0 alpha,type0& drev)
 {
     x=x0+alpha*x_d;
     if(chng_box)
@@ -192,7 +192,7 @@ type0 MinCGFit::dF(type0 alpha,type0& drev)
  (x-x0)/alpha=sqrt(eps)/alpha
 
  --------------------------------------------*/
-void MinCGFit::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
+void MinCGPotFit::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 {
     
     h_norm=h*h;
@@ -229,10 +229,23 @@ void MinCGFit::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 /*--------------------------------------------
  reset to initial position
  --------------------------------------------*/
-void MinCGFit::F_reset()
+void MinCGPotFit::F_reset()
 {
     x=x0;
     if(chng_box) atoms->update_H();
     dynamic->update(atoms->x);
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCGPotFit::get_H_dof(bool (& __H_dof)[__dim__][__dim__])
+{
+    memcpy(&__H_dof[0][0],&H_dof[0][0],__dim__*__dim__*sizeof(bool));
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCGPotFit::set_H_dof(bool (& __H_dof)[__dim__][__dim__])
+{
+    memcpy(&H_dof[0][0],&__H_dof[0][0],__dim__*__dim__*sizeof(bool));
+}

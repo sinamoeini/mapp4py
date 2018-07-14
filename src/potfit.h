@@ -2,7 +2,7 @@
 #define __MAPP__potfit__
 #include "ff_eam_potfit.h"
 #include "atoms_md.h"
-#include "min_cg_fit.h"
+#include "min_cg_potfit.h"
 #include "ff_eam_fit.h"
 #include "thermo_dynamics.h"
 #include "import_cfg.h"
@@ -25,12 +25,14 @@ namespace MAPP_NS
         type0* get_en_coefs();
         type0* get_f_coefs();
         type0* get_S_coefs();
+        bool* get_H_dofs();
+        type0* get_mean_rho(elem_type);
         Random* random;
     protected:
     public:
         ForceFieldEAMPotFit<NELEMS>* ff;
         AtomsMD* atoms;
-        MinCGFit* min;
+        MinCGPotFit* min;
         LineSearchBrent* min_ls;
         
         int nconfigs;
@@ -78,7 +80,8 @@ namespace MAPP_NS
         void F_reset();
         
         
-        ThermoDynamics get_thermo();
+        
+        ThermoDynamics get_thermo(){RET_POTFIT_THRMO};
         
         typedef struct
         {
@@ -114,6 +117,7 @@ namespace MAPP_NS
         static void getset_en_coefs(PyGetSetDef&);
         static void getset_f_coefs(PyGetSetDef&);
         static void getset_S_coefs(PyGetSetDef&);
+        static void getset_H_dofs(PyGetSetDef&);
         static void getset_errs(PyGetSetDef&);
         static void getset_err(PyGetSetDef&);
         
@@ -122,6 +126,7 @@ namespace MAPP_NS
         static void setup_tp_methods();
         static void ml_min_cg(PyMethodDef&);
         static void ml_min_sa(PyMethodDef&);
+        static void ml_mean_rho(PyMethodDef&);
         static void ml_test_A_phi(PyMethodDef&);
         static void ml_test_A_rho(PyMethodDef&);
         static void ml_test_A_F(PyMethodDef&);
@@ -218,7 +223,7 @@ world(__world)
     new (&X0) VecTens<type0,1>(atoms,true,__dim__);
     
     min_ls=new LineSearchBrent();
-    min=new MinCGFit(0.0,H_dof,false,0.4,min_ls,Xorig.vecs[0],X0.vecs[0]);
+    min=new MinCGPotFit(0.0,H_dof,false,0.4,min_ls,Xorig.vecs[0],X0.vecs[0]);
     min->atoms=atoms;
     min->ff=ff;
     
@@ -641,116 +646,6 @@ void PotFit<FF,NELEMS>::full_reset()
  
  --------------------------------------------*/
 template<class FF,size_t NELEMS>
-ThermoDynamics PotFit<FF,NELEMS>::get_thermo()
-{
-#define THRMO_0 2,"ERR",err
-#define THRMO_1 THRMO_0,names[0],errs[0]
-#define THRMO_2 THRMO_1,names[1],errs[1]
-#define THRMO_3 THRMO_2,names[2],errs[2]
-#define THRMO_4 THRMO_3,names[3],errs[3]
-#define THRMO_5 THRMO_4,names[4],errs[4]
-#define THRMO_6 THRMO_5,names[5],errs[5]
-#define THRMO_7 THRMO_6,names[6],errs[6]
-#define THRMO_8 THRMO_7,names[7],errs[7]
-#define THRMO_9 THRMO_8,names[8],errs[8]
-#define THRMO_10 THRMO_9,names[9],errs[9]
-#define THRMO_11 THRMO_10,names[10],errs[10]
-#define THRMO_12 THRMO_11,names[11],errs[11]
-#define THRMO_13 THRMO_12,names[12],errs[12]
-#define THRMO_14 THRMO_13,names[13],errs[13]
-#define THRMO_15 THRMO_14,names[14],errs[14]
-#define THRMO_16 THRMO_15,names[15],errs[15]
-#define THRMO_17 THRMO_16,names[16],errs[16]
-#define THRMO_18 THRMO_17,names[17],errs[17]
-#define THRMO_19 THRMO_18,names[18],errs[18]
-#define THRMO_20 THRMO_19,names[19],errs[19]
-#define THRMO_21 THRMO_20,names[20],errs[20]
-#define THRMO_22 THRMO_21,names[21],errs[21]
-#define THRMO_23 THRMO_22,names[22],errs[22]
-#define THRMO_24 THRMO_23,names[23],errs[23]
-#define THRMO_25 THRMO_24,names[24],errs[24]
-#define THRMO_26 THRMO_25,names[25],errs[25]
-#define THRMO_27 THRMO_26,names[26],errs[26]
-#define THRMO_28 THRMO_27,names[27],errs[27]
-#define THRMO_29 THRMO_28,names[28],errs[28]
-#define THRMO_30 THRMO_29,names[29],errs[29]
-#define THRMO_31 THRMO_30,names[30],errs[30]
-#define THRMO_32 THRMO_31,names[31],errs[31]
-#define THRMO_33 THRMO_32,names[32],errs[32]
-#define THRMO_34 THRMO_33,names[33],errs[33]
-#define THRMO_35 THRMO_34,names[34],errs[34]
-#define THRMO_36 THRMO_35,names[35],errs[35]
-#define THRMO_37 THRMO_36,names[36],errs[36]
-#define THRMO_38 THRMO_37,names[37],errs[37]
-#define THRMO_39 THRMO_38,names[38],errs[38]
-#define THRMO_40 THRMO_39,names[39],errs[39]
-#define THRMO_41 THRMO_40,names[40],errs[40]
-#define THRMO_42 THRMO_41,names[41],errs[41]
-#define THRMO_43 THRMO_42,names[42],errs[42]
-#define THRMO_44 THRMO_43,names[43],errs[43]
-#define THRMO_45 THRMO_44,names[44],errs[44]
-#define THRMO_46 THRMO_45,names[45],errs[45]
-#define THRMO_47 THRMO_46,names[46],errs[46]
-#define THRMO_48 THRMO_47,names[47],errs[47]
-#define THRMO_49 THRMO_48,names[48],errs[48]
-#define THRMO_50 THRMO_49,names[49],errs[49]
-    
-    
-    if(nconfigs==1) return ThermoDynamics(THRMO_1);
-    if(nconfigs==2) return ThermoDynamics(THRMO_2);
-    if(nconfigs==3) return ThermoDynamics(THRMO_3);
-    if(nconfigs==4) return ThermoDynamics(THRMO_4);
-    if(nconfigs==5) return ThermoDynamics(THRMO_5);
-    if(nconfigs==6) return ThermoDynamics(THRMO_6);
-    if(nconfigs==7) return ThermoDynamics(THRMO_7);
-    if(nconfigs==8) return ThermoDynamics(THRMO_8);
-    if(nconfigs==9) return ThermoDynamics(THRMO_9);
-    if(nconfigs==10) return ThermoDynamics(THRMO_10);
-    if(nconfigs==11) return ThermoDynamics(THRMO_11);
-    if(nconfigs==12) return ThermoDynamics(THRMO_12);
-    if(nconfigs==13) return ThermoDynamics(THRMO_13);
-    if(nconfigs==14) return ThermoDynamics(THRMO_14);
-    if(nconfigs==15) return ThermoDynamics(THRMO_15);
-    if(nconfigs==16) return ThermoDynamics(THRMO_16);
-    if(nconfigs==17) return ThermoDynamics(THRMO_17);
-    if(nconfigs==18) return ThermoDynamics(THRMO_18);
-    if(nconfigs==19) return ThermoDynamics(THRMO_19);
-    if(nconfigs==20) return ThermoDynamics(THRMO_20);
-    if(nconfigs==21) return ThermoDynamics(THRMO_21);
-    if(nconfigs==22) return ThermoDynamics(THRMO_22);
-    if(nconfigs==23) return ThermoDynamics(THRMO_23);
-    if(nconfigs==24) return ThermoDynamics(THRMO_24);
-    if(nconfigs==25) return ThermoDynamics(THRMO_25);
-    if(nconfigs==26) return ThermoDynamics(THRMO_26);
-    if(nconfigs==27) return ThermoDynamics(THRMO_27);
-    if(nconfigs==28) return ThermoDynamics(THRMO_28);
-    if(nconfigs==29) return ThermoDynamics(THRMO_29);
-    if(nconfigs==30) return ThermoDynamics(THRMO_30);
-    if(nconfigs==31) return ThermoDynamics(THRMO_31);
-    if(nconfigs==32) return ThermoDynamics(THRMO_32);
-    if(nconfigs==33) return ThermoDynamics(THRMO_33);
-    if(nconfigs==34) return ThermoDynamics(THRMO_34);
-    if(nconfigs==35) return ThermoDynamics(THRMO_35);
-    if(nconfigs==36) return ThermoDynamics(THRMO_36);
-    if(nconfigs==37) return ThermoDynamics(THRMO_37);
-    if(nconfigs==38) return ThermoDynamics(THRMO_38);
-    if(nconfigs==39) return ThermoDynamics(THRMO_39);
-    if(nconfigs==40) return ThermoDynamics(THRMO_40);
-    if(nconfigs==41) return ThermoDynamics(THRMO_41);
-    if(nconfigs==42) return ThermoDynamics(THRMO_42);
-    if(nconfigs==43) return ThermoDynamics(THRMO_43);
-    if(nconfigs==44) return ThermoDynamics(THRMO_44);
-    if(nconfigs==45) return ThermoDynamics(THRMO_45);
-    if(nconfigs==46) return ThermoDynamics(THRMO_46);
-    if(nconfigs==47) return ThermoDynamics(THRMO_47);
-    if(nconfigs==48) return ThermoDynamics(THRMO_48);
-    return ThermoDynamics(THRMO_49);
-    
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<class FF,size_t NELEMS>
 type0* PotFit<FF,NELEMS>::get_en_coefs()
 {
     type0* __en_coefs=NULL;
@@ -792,6 +687,35 @@ type0* PotFit<FF,NELEMS>::get_S_coefs()
         MPI_Bcast(&__S_coefs[i][0][0],__dim__*__dim__,Vec<type0>::MPI_T,roots[i],world);
     
     return &__S_coefs[0][0][0];
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+bool* PotFit<FF,NELEMS>::get_H_dofs()
+{
+    bool(* __H_dofs)[__dim__][__dim__]=NULL;
+    Memory::alloc(__H_dofs,nconfigs);
+    min->get_H_dof(__H_dofs[my_conf]);
+    for(int i=0;i<nconfigs;i++)
+        MPI_Bcast(&__H_dofs[i][0][0],__dim__*__dim__,Vec<bool>::MPI_T,roots[i],world);
+    
+    return &__H_dofs[0][0][0];
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+type0* PotFit<FF,NELEMS>::get_mean_rho(elem_type ielem)
+{
+    type0* __mean_rhos=NULL;
+    
+    Memory::alloc(__mean_rhos,nconfigs);
+    __mean_rhos[my_conf]=ff->mean_rho(ielem);
+    for(int i=0;i<nconfigs;i++)
+        MPI_Bcast(&__mean_rhos[i],1,Vec<type0>::MPI_T,roots[i],world);
+    
+    return __mean_rhos;
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -896,8 +820,8 @@ template<class FF,size_t NELEMS>
 PyObject* PotFit<FF,NELEMS>::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
-    __self->ob_type=type;
-    __self->ob_refcnt=1;
+    Py_TYPE(__self)=type;
+    Py_REFCNT(__self)=1;
     __self->potfit=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
@@ -947,7 +871,7 @@ int PotFit<FF,NELEMS>::setup_tp()
 }
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
-PyGetSetDef PotFit<FF,NELEMS>::getset[]=EmptyPyGetSetDef(19);
+PyGetSetDef PotFit<FF,NELEMS>::getset[]=EmptyPyGetSetDef(20);
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::setup_tp_getset()
@@ -970,8 +894,9 @@ void PotFit<FF,NELEMS>::setup_tp_getset()
     getset_en_coefs(getset[13]);
     getset_f_coefs(getset[14]);
     getset_S_coefs(getset[15]);
-    getset_errs(getset[16]);
-    getset_err(getset[17]);
+    getset_H_dofs(getset[16]);
+    getset_errs(getset[17]);
+    getset_err(getset[18]);
 }
 /*--------------------------------------------
  
@@ -1600,57 +1525,70 @@ void PotFit<FF,NELEMS>::getset_S_coefs(PyGetSetDef& getset)
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
-
+        VarAPI<symm<type0[__dim__][__dim__]>*> var("S_coefs");
+        if(var.set(val)!=0) return -1;
         PotFit<FF,NELEMS>* potfit=reinterpret_cast<Object*>(self)->potfit;
-        VarAPI<OB<PyListObject,PyList_Type>>var0("S_coefs");
-        if(var0.set(val)!=0) return -1;
-        if(PyList_Size(var0.val)!=static_cast<size_t>(potfit->nconfigs))
+        if(var.__var__.size!=static_cast<size_t>(potfit->nconfigs))
         {
             PyErr_SetString(PyExc_TypeError,"size mismatch");
             return -1;
         }
-        PyObject* op=var0.val;
-        type0 (*__S_coefs)[__dim__][__dim__];
-        Memory::alloc(__S_coefs,potfit->nconfigs);
-        for(size_t i=0;i<static_cast<size_t>(potfit->nconfigs);i++)
-        {
-            std::string __name=std::string("S_coefs[")+Print::to_string(i)+std::string("]");
-            VarAPI<symm<type0[__dim__][__dim__]>> var(__name.c_str());
-            if(var.set(PyList_GET_ITEM(op,i))!=0)
-            {
-                Memory::dealloc(__S_coefs);
-                return -1;
-            }
-            memcpy(&__S_coefs[i][0][0],&(var.val[0][0]),__dim__*__dim__*sizeof(type0));
-        }
-        
-        
         int __my_conf=potfit->my_conf;
-        Algebra::MSY_2_DyadicV(__S_coefs[__my_conf],potfit->coef+1);
-        Memory::dealloc(__S_coefs);
-
+        Algebra::MSY_2_DyadicV(var.val[__my_conf],potfit->coef+1);
         
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+void PotFit<FF,NELEMS>::getset_H_dofs(PyGetSetDef& getset)
+{
+    getset.name=(char*)"H_dofs";
+    getset.doc=(char*)"";
+    
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        PotFit<FF,NELEMS>* potfit=reinterpret_cast<Object*>(self)->potfit;
+        size_t sz;
+        size_t* szp=&sz;
+        sz=potfit->nconfigs;
+        bool(* v)[__dim__][__dim__]=reinterpret_cast<bool(*)[__dim__][__dim__]>(potfit->get_H_dofs());
         
-        /*
-         VarAPI<symm<type0[__dim__][__dim__]>*> var("S_coefs");
-         if(var.set(val)!=0) return -1;
-        */
-
+        PyObject* op=var<bool(*)[__dim__][__dim__]>::build(v,&szp);
+        Memory::dealloc(v);
+        return op;
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        VarAPI<symm<bool[__dim__][__dim__]>*> var("H_dofs");
+        if(var.set(val)!=0) return -1;
+        PotFit<FF,NELEMS>* potfit=reinterpret_cast<Object*>(self)->potfit;
+        if(var.__var__.size!=static_cast<size_t>(potfit->nconfigs))
+        {
+            PyErr_SetString(PyExc_TypeError,"size mismatch");
+            return -1;
+        }
+        int __my_conf=potfit->my_conf;
+        potfit->min->set_H_dof(var.val[__my_conf]);
+        
         return 0;
     };
 }
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
-PyMethodDef PotFit<FF,NELEMS>::methods[]=EmptyPyMethodDef(6);
+PyMethodDef PotFit<FF,NELEMS>::methods[]=EmptyPyMethodDef(7);
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::setup_tp_methods()
 {
     ml_min_cg(methods[0]);
     ml_min_sa(methods[1]);
-    ml_test_A_phi(methods[2]);
-    ml_test_A_rho(methods[3]);
-    ml_test_A_F(methods[4]);
+    ml_mean_rho(methods[2]);
+    ml_test_A_phi(methods[3]);
+    ml_test_A_rho(methods[4]);
+    ml_test_A_F(methods[5]);
 }
 /*--------------------------------------------
 
@@ -1694,6 +1632,39 @@ void PotFit<FF,NELEMS>::ml_min_sa(PyMethodDef& tp_methods)
         f.val<2>(),f.val<3>(),f.val<4>());
 
         Py_RETURN_NONE;
+    });
+
+
+    tp_methods.ml_doc=(char*)"";
+}
+/*--------------------------------------------
+
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+void PotFit<FF,NELEMS>::ml_mean_rho(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="mean_rho";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+
+        FuncAPI<elem_type>f("mean_rho",{"ielem"});
+        if(f(args,kwds)) return NULL;
+        PotFit<FF,NELEMS>* potfit=reinterpret_cast<Object*>(self)->potfit;
+        
+        size_t sz;
+        size_t* szp=&sz;
+        sz=potfit->nconfigs;
+        
+        potfit->init();
+        potfit->ff->derivative_timer();
+        type0* v=potfit->get_mean_rho(f.val<0>());
+        potfit->fin();
+        
+        PyObject* op=var<type0*>::build(v,&szp);
+        Memory::dealloc(v);
+        return op;
     });
 
 

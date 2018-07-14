@@ -267,8 +267,8 @@ int NewtonGMRES::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 PyObject* NewtonGMRES::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
-    __self->ob_type=type;
-    __self->ob_refcnt=1;
+    Py_TYPE(__self)=type;
+    Py_REFCNT(__self)=1;
     __self->ngmres=NULL;
     __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);

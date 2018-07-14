@@ -1,4 +1,4 @@
-#include <Python.h>
+#include "api.h"
 #include "example.h"
 #include <structmember.h>
 #include "global.h"
@@ -91,7 +91,7 @@ int ExamplePython::tp_init(PyObject *self_, PyObject *args, PyObject *kwds)
 void ExamplePython::tp_dealloc(PyObject* self_)
 {
     Object* self=(Object*)self_;
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 /*--------------------------------------------
  
@@ -128,14 +128,27 @@ int ExamplePython::setup_tp()
     return ichk;
 }
 
-
-PyMODINIT_FUNC initxmpl(void)
+/*--------------------------------------------*/
+#ifdef IS_PY3K
+PyModuleDef ExamplePython::module=EmptyModule;
+#endif
+MOD_INIT(xmpl,MAPP_NS::ExamplePython::init_module())
+/*--------------------------------------------*/
+PyObject* ExamplePython::init_module(void)
 {
-    PyObject* module=Py_InitModule3("xmpl",NULL,"MIT Atomistic Parallel Package");
+#ifdef IS_PY3K
+    ExamplePython::module.m_name="xmpl";
+    ExamplePython::module.m_doc="MIT Atomistic Parallel Package";
+    ExamplePython::module.m_methods=NULL;
+    PyObject* module_ob=PyModule_Create(&ExamplePython::module);
+#else
+    PyObject* module_ob=Py_InitModule3("xmpl",NULL,"MIT Atomistic Parallel Package");
+#endif
     ExamplePython::setup_tp();
-    if(PyType_Ready(&ExamplePython::TypeObject)<0) return;
+    if(PyType_Ready(&ExamplePython::TypeObject)<0) return NULL;
     Py_INCREF(&ExamplePython::TypeObject);
-    PyModule_AddObject(module,"obj",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
+    PyModule_AddObject(module_ob,"obj",reinterpret_cast<PyObject*>(&ExamplePython::TypeObject));
+    return module_ob;
 }
 /*--------------------------------------------
  

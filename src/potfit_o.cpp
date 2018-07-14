@@ -118,7 +118,7 @@ world(__world)
     new (&X0) VecTens<type0,1>(atoms,true,__dim__);
     
     min_ls=new LineSearchBrent();
-    min=new MinCGFit(0.0,H_dof,false,0.4,min_ls,Xorig.vecs[0],X0.vecs[0]);
+    min=new MinCGPotFit(0.0,H_dof,false,0.4,min_ls,Xorig.vecs[0],X0.vecs[0]);
     min->atoms=atoms;
     min->ff=ff;
     
@@ -692,8 +692,8 @@ int PotFitO::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 PyObject* PotFitO::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
-    __self->ob_type=type;
-    __self->ob_refcnt=1;
+    Py_TYPE(__self)=type;
+    Py_REFCNT(__self)=1;
     __self->potfit=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }

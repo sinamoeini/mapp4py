@@ -17,7 +17,7 @@ namespace MAPP_NS
     private:
     protected:
     public:
-        typedef typename remove_matrix_attr<T>::type S;
+        typedef typename cpp_type<T>::type S;
         S val;
         var<T> __var__;
         Logics logics[var<T>::get_rank()+1];
@@ -497,19 +497,18 @@ int FuncAPI<T,Ts...>::operator()(PyObject* args,PyObject* kwds)
         {
             try
             {
-                func.match_kwd(PyString_AsString(PyList_GetItem(keys,i)),PyList_GetItem(vals,i));
+                func.match_kwd(__PyString_AsString(PyList_GetItem(keys,i)),PyList_GetItem(vals,i));
             }
             catch (int __err)
             {
                 if(__err)
                     PyErr_Format(PyExc_TypeError,"%s got an unexpected keyword "
                     "argument keyword argument '%s'",name.c_str(),
-                    PyString_AsString(PyList_GetItem(keys,i)));
+                    __PyString_AsString(PyList_GetItem(keys,i)));
                 else
                     PyErr_Format(PyExc_TypeError,"%s got multiple values for "
                     "keyword argument '%s'",name.c_str(),
-                    PyString_AsString(PyList_GetItem(keys,i)));
-                
+                    __PyString_AsString(PyList_GetItem(keys,i)));
                 func.reset();
                 Py_DECREF(keys);
                 Py_DECREF(vals);

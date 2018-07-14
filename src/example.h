@@ -21,7 +21,10 @@ namespace MAPP_NS
         static void tp_dealloc(PyObject*);
         
         static PyObject* test_func(PyObject*,PyObject*,PyObject*);
-        
+#ifdef IS_PY3K
+        static PyModuleDef module;
+#endif
+        static PyObject* init_module(void);
         
         static PyMemberDef tp_members[];
         static void setup_tp_members();

@@ -27,11 +27,11 @@ void ExportCFGDMD::write_header(FILE* fp)
     if(atoms->comm_rank) return;
     
     fprintf(fp,"Number of particles = %d\n",atoms->natms);
-    fprintf(fp,"A = %lf Angstrom (basic length-scale)\n",1.0);
+    fprintf(fp,"A = %.16lf Angstrom (basic length-scale)\n",1.0);
     
     for(int i=0;i<__dim__;i++)
         for(int j=0;j<__dim__;j++)
-            fprintf(fp,"H0(%d,%d) = %lf A\n",i+1,j+1,atoms->H[i][j]);
+            fprintf(fp,"H0(%d,%d) = %.16lf A\n",i+1,j+1,atoms->H[i][j]);
     
     fprintf(fp,".NO_VELOCITY.\n");
     int nelems=static_cast<int>(atoms->elements.nelems);
@@ -304,8 +304,8 @@ int ExportCFGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 PyObject* ExportCFGDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
-    __self->ob_type=type;
-    __self->ob_refcnt=1;
+    Py_TYPE(__self)=type;
+    Py_REFCNT(__self)=1;
     __self->xprt=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }

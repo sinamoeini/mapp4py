@@ -134,7 +134,9 @@ namespace MAPP_NS
         void split_sing();
         void split_mult();
         /*---------------------------------------------------------------------*/
-
+        
+        // added new parameter for the new criterion of acceptance and rejectance
+        type0 vol_lcl;
     protected:
         void ins_succ();
         void del_succ();

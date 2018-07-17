@@ -95,8 +95,8 @@ void SGCMC::init()
 {
     dof_empty=atoms->dof->is_empty();
     GCMC::init();
-    MPI_Scan(&ngas,&ngas_before,1,MPI_INT,MPI_SUM,world);
-    ngas_before-=ngas;
+    MPI_Scan(&ngas_lcl,&ngas_before,1,MPI_INT,MPI_SUM,world);
+    ngas_before-=ngas_lcl;
     box_setup();
     vars=new type0[ff->gcmc_n_vars];
     lcl_vars=new type0[ff->gcmc_n_vars];
@@ -195,13 +195,13 @@ void SGCMC::xchng(bool chng_box,int nattmpts)
     for(int i=0;i<atoms->ndynamic_vecs;i++)
         atoms->dynamic_vecs[i]->resize(natms_lcl);
         
-    ngas=0;
+    ngas_lcl=0;
     elem_type* elem=atoms->elem->begin();
     for(int i=0;i<natms_lcl;i++)
-        if(elem[i]==gas_type) ngas++;
-    MPI_Scan(&ngas,&ngas_before,1,MPI_INT,MPI_SUM,world);
-    MPI_Allreduce(&ngas,&tot_ngas,1,MPI_INT,MPI_SUM,world);
-    ngas_before-=ngas;
+        if(elem[i]==gas_type) ngas_lcl++;
+    MPI_Scan(&ngas_lcl,&ngas_before,1,MPI_INT,MPI_SUM,world);
+    MPI_Allreduce(&ngas_lcl,&ngas,1,MPI_INT,MPI_SUM,world);
+    ngas_before-=ngas_lcl;
     
 
     next_jatm_p=&SGCMC::next_jatm_reg;
@@ -267,13 +267,13 @@ void SGCMC::attmpt()
     }
     else
     {
-        if(tot_ngas==0)
+        if(ngas==0)
             return;
         xchng_mode=DEL_MODE;
-        igas=static_cast<int>(tot_ngas*random->uniform());
+        igas=static_cast<int>(ngas*random->uniform());
         int iproc=-1;
         im_root=false;
-        if(ngas_before<=igas && igas<ngas_before+ngas)
+        if(ngas_before<=igas && igas<ngas_before+ngas_lcl)
         {
             im_root=true;
             iproc=atoms->comm_rank;
@@ -304,7 +304,7 @@ void SGCMC::attmpt()
     root_succ=false;
     if(xchng_mode==INS_MODE)
     {
-        fac=z_fac*vol/((static_cast<type0>(tot_ngas)+1.0)*exp(beta*delta_u));
+        fac=z_fac*vol/((static_cast<type0>(ngas)+1.0)*exp(beta*delta_u));
         if(random->uniform()<fac)
         {
             root_succ=true;
@@ -314,7 +314,7 @@ void SGCMC::attmpt()
     }
     else
     {
-        fac=static_cast<type0>(tot_ngas)*exp(beta*delta_u)/(z_fac*vol);
+        fac=static_cast<type0>(ngas)*exp(beta*delta_u)/(z_fac*vol);
         if(random->uniform()<fac)
         {
             root_succ=true;
@@ -360,7 +360,7 @@ void SGCMC::ins_succ()
             nxt_p=next_vec_p->begin()+*nxt_p;
         *nxt_p=natms_lcl-1;
         next_vec_p->begin()[natms_lcl-1]=-1;
-        ngas++;
+        ngas_lcl++;
     }
     else
     {
@@ -369,7 +369,7 @@ void SGCMC::ins_succ()
     }
     
     dof_diff+=__dim__;
-    tot_ngas++;
+    ngas++;
     atoms->natms++;    
 }
 /*--------------------------------------------
@@ -427,7 +427,7 @@ void SGCMC::del_succ()
         
         
         atoms->del(del_idx);
-        ngas--;
+        ngas_lcl--;
     }
     else
     {
@@ -435,7 +435,7 @@ void SGCMC::del_succ()
             ngas_before--;
     }
     dof_diff-=__dim__;
-    tot_ngas--;
+    ngas--;
     atoms->natms--;
 }
 /*--------------------------------------------

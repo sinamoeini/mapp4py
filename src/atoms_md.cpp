@@ -55,7 +55,7 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
  --------------------------------------------*/
 void AtomsMD::x_d2s_d_dump()
 {
-    Algebra::X2S<__dim__>(__b,natms,x_d->begin_dump());
+    Algebra::X2S_NOCORR<__dim__>(__b,natms,x_d->begin_dump());
 }
 /*--------------------------------------------
  

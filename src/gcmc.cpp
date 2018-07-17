@@ -108,11 +108,11 @@ void GCMC::init()
     for(int i=0;i<del_ids_sz;i++)
         max_id=MAX(max_id,del_ids[i]);
         
-    ngas=0;
+    ngas_lcl=0;
     elem_type* elem=atoms->elem->begin();
     for(int i=0;i<natms_lcl;i++)
-        if(elem[i]==gas_type) ngas++;
-    MPI_Allreduce(&ngas,&tot_ngas,1,MPI_INT,MPI_SUM,world);
+        if(elem[i]==gas_type) ngas_lcl++;
+    MPI_Allreduce(&ngas_lcl,&ngas,1,MPI_INT,MPI_SUM,world);
 }
 /*--------------------------------------------
  

@@ -257,7 +257,7 @@ void MDMuVT::run(int nsteps)
     
     PGCMC gcmc(atoms,ff,dynamic,1,atoms->elements.find(gas_elem_name.c_str()),mu,T,seed);
     gcmc.init();
-    type0 gas_frac=static_cast<type0>(gcmc.tot_ngas)/static_cast<type0>(atoms->natms);
+    type0 gas_frac=static_cast<type0>(gcmc.ngas)/static_cast<type0>(atoms->natms);
 #ifdef GCMCDEBUG
     type0 delta_u=0.0;
     FILE* fp_debug=NULL;
@@ -312,7 +312,7 @@ void MDMuVT::run(int nsteps)
             delta_u=atoms->pe;
 #endif
             gcmc.xchng(false,nattempts);
-            gas_frac=static_cast<type0>(gcmc.tot_ngas)/static_cast<type0>(atoms->natms);
+            gas_frac=static_cast<type0>(gcmc.ngas)/static_cast<type0>(atoms->natms);
             ndof_part+=static_cast<type0>(gcmc.dof_diff);
             Algebra::Do<__nvoigt__>::func([this,&gcmc](const int i){mvv[i]+=gcmc.mvv[i];});
             T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);

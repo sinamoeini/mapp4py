@@ -36,7 +36,7 @@ void ExportCFGMD::write_header(FILE* fp)
     
     
     if(x_d_inc)
-        fprintf(fp,"R = 1.0");
+        fprintf(fp,"R = 1.0\n");
     else
         fprintf(fp,".NO_VELOCITY.\n");
     

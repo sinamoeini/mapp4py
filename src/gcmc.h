@@ -8,7 +8,7 @@
 #include <mpi.h>
 namespace MAPP_NS
 {
-    enum{NOEX_MODE,INS_MODE,DEL_MODE};
+    enum{NOEX_MODE,DEL_MODE,INS_MODE};
     enum{MINE_FLAG,INTERACT_FLAG,NONEINTERACT_FLAG};
     /*--------------------------------------------
      allocation for this constructor has 3 levels:
@@ -54,7 +54,7 @@ namespace MAPP_NS
     protected:
         
                 
-        int igas,gas_id,ngas;
+        int igas,gas_id,ngas_lcl;
         elem_type gas_type;
         type0 vol;
         //constants
@@ -141,7 +141,7 @@ namespace MAPP_NS
         type0 rsq;
         int xchng_mode;
         int dof_diff;
-        int tot_ngas;
+        int ngas;
         bool im_root;
 
         Vec<int>* tag_vec_p;

@@ -348,8 +348,8 @@ void ForceFieldEAM::pre_xchng_energy(GCMC* gcmc)
     for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
     {
         c0=1.0;
-        if(gcmc->xchng_mode==DEL_MODE)
-            c0=-1.0;
+        if(gcmc->xchng_mode==DEL_MODE) c0=-1.0;
+        else if(gcmc->xchng_mode==NOEX_MODE) continue;
         
         en=rho_iatm_lcl=0.0;
         for(gcmc->reset_iatm();iatm!=-1;gcmc->next_iatm())
@@ -425,6 +425,7 @@ type0 ForceFieldEAM::xchng_energy(GCMC* gcmc)
     {
         //restart the comms
         gcmc->reset_icomm();
+        if(gcmc->xchng_mode==NOEX_MODE) return 0.0;
         type0 rho_iatm,en;
         size_t m;
         type0* coef;

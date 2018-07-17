@@ -2891,6 +2891,28 @@ namespace MAPP_NS
             }
         };
         
+        template<const int dim>
+        class __X2S_NOCORR
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT b,T* RESTRICT x)
+            {
+                *x=__V_mul_V<dim>::func(b,x);
+                __X2S_NOCORR<dim-1>::func(b+dim,x+1);
+            }
+        };
+        
+        template<>
+        class __X2S_NOCORR<1>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT b,T* RESTRICT x)
+            {
+                *x*=*b;
+            }
+        };
         
         
         class __opt_comm_grid
@@ -3279,6 +3301,16 @@ namespace MAPP_NS
             for(int i=0;i<N;i++)
             {
                 __X2S<dim>::func(b,x);
+                x+=dim;
+            }
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void X2S_NOCORR(T* RESTRICT b,int N,T* RESTRICT x)
+        {
+            for(int i=0;i<N;i++)
+            {
+                __X2S_NOCORR<dim>::func(b,x);
                 x+=dim;
             }
         }

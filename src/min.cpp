@@ -5,15 +5,24 @@
 using namespace MAPP_NS;
 const char* Min::err_msgs[]=
 {
-    [LS_S]="",
-    [LS_F_DOWNHILL]="line search failed: not downhill direction\n",
-    [LS_F_GRAD0]="line search failed: gradient is zero\n",
-    [LS_MIN_ALPHA]="line search failed: minimum alpha reached\n",
-    [MIN_S_TOLERANCE]="minimization finished: energy tolerance reached\n",
-    [MIN_F_MAX_ITER]="minimization finished: maximum iteration reached\n",
-    [B_S]="",
-    [B_F_MAX_ALPHA]="bracketing failed: maximum alpha reached\n",
-    [B_F_DOWNHILL]="bracketing failed: not downhill direction\n"
+    //[LS_S]=
+    "",
+    //[LS_F_DOWNHILL]=
+    "line search failed: not downhill direction\n",
+    //[LS_F_GRAD0]=
+    "line search failed: gradient is zero\n",
+    //[LS_MIN_ALPHA]=
+    "line search failed: minimum alpha reached\n",
+    //[MIN_S_TOLERANCE]=
+    "minimization finished: energy tolerance reached\n",
+    //[MIN_F_MAX_ITER]=
+    "minimization finished: maximum iteration reached\n",
+    //[B_S]=
+    "",
+    //[B_F_MAX_ALPHA]=
+    "bracketing failed: maximum alpha reached\n",
+    //[B_F_DOWNHILL]=
+    "bracketing failed: not downhill direction\n"
     
 };
 /*--------------------------------------------

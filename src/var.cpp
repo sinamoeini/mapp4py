@@ -250,7 +250,7 @@ size_t Var::is_triangular()
 size_t** Var::size_list()
 {
     if(!rank) return NULL;
-    size_t nelem[rank];
+    size_t* nelem=(rank==0) ? NULL:new size_t[rank];
     for(int i=0;i<rank;i++) nelem[i]=0;
     size_list(nelem);
     size_t tot=0;
@@ -260,9 +260,11 @@ size_t** Var::size_list()
     *sz_lst=new size_t[tot];
     for(int i=1;i<rank;i++)
         sz_lst[i]=sz_lst[i-1]+nelem[i-1];
-    size_t* sh[rank];
+    size_t** sh=(rank==0) ? NULL:new size_t*[rank];
     for(int i=1;i<rank;i++) sh[i]=sz_lst[i];
     size_list(sh);
+    delete [] sh;
+    delete [] nelem;
     return sz_lst;
 }
 /*--------------------------------------------

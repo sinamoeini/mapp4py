@@ -380,12 +380,12 @@ vars(NULL)
     {
         PyArrayObject* arr=(PyArrayObject*)__arr__;
         npy_intp* dims=PyArray_DIMS(arr);
-        size_t sz[rank+1];
+        size_t sz[get_rank()+1];
         for(int i=0;i<rank;i++)
             sz[i]=dims[i];
-        sz[rank]=0;
+        sz[get_rank()]=0;
         
-        if(std::is_same<T_BASE,std::string>::value) sz[rank]=PyArray_DESCR(arr)->elsize;
+        if(std::is_same<T_BASE,std::string>::value) sz[get_rank()]=PyArray_DESCR(arr)->elsize;
         
         void* data=PyArray_DATA(arr);
         this->~py_var<T*>();
@@ -1738,7 +1738,7 @@ ptr(&v)
 {
     assert(sizeof...(____dsizes__)==get_rank());
     size=0;
-    __dsizes__=new var<size_t>*[rank];
+    __dsizes__=new var<size_t>*[get_rank()];
     for(int i=0;i<rank;i++) __dsizes__[i]=NULL;
     Var::assign_dynamic_size(__dsizes__,____dsizes__...);
 }*/
@@ -1821,7 +1821,7 @@ __dsizes__(NULL)
 {
     if(r.__dsizes__)
     {
-        __dsizes__=new var<size_t>*[rank];
+        __dsizes__=new var<size_t>*[get_rank()];
         memcpy(__dsizes__,r.__dsizes__,rank*sizeof(var<size_t>*));
     }
     for(size_t i=0;i<size;i++)
@@ -1961,10 +1961,10 @@ void var<T[N]>::set(py_var<T_EQUIV>& pv)
     size=pv.size;
     
     deallocate(*ptr);
-    size_t sz[rank];
+    size_t sz[get_rank()];
     for(int i=0;i<rank;i++) sz[i]=0;
     accum_size(pv,sz);
-    void* data_ptr[rank];
+    void* data_ptr[get_rank()];
     for(int i=0;i<rank;i++) data_ptr[i]=NULL;
     allocate(data_ptr,*ptr,sz);
     for(size_t i=0;i<size;i++)
@@ -1998,7 +1998,7 @@ void  var<T[N]>::dynamic_size(Ts&&... ____dsizes__)
     assert(root);
     assert(sizeof...(____dsizes__)==get_rank());
     delete [] __dsizes__;
-    __dsizes__=new var<size_t>*[rank];
+    __dsizes__=new var<size_t>*[get_rank()];
     for(int i=0;i<rank;i++) __dsizes__[i]=NULL;
     Var::assign_dynamic_size(__dsizes__,____dsizes__...);
 }
@@ -2209,7 +2209,7 @@ ptr(&v)
     assert(sizeof...(____dsizes__)==get_rank());
     size=0;
     v=NULL;
-    __dsizes__=new var<size_t>*[rank];
+    __dsizes__=new var<size_t>*[get_rank()];
     for(int i=0;i<rank;i++) __dsizes__[i]=NULL;
     Var::assign_dynamic_size(__dsizes__,____dsizes__...);
         
@@ -2324,7 +2324,7 @@ __dsizes__(NULL)
 {
     if(r.__dsizes__)
     {
-        __dsizes__=new var<size_t>*[rank];
+        __dsizes__=new var<size_t>*[get_rank()];
         memcpy(__dsizes__,r.__dsizes__,rank*sizeof(var<size_t>*));
     }
     vars=new var<T>[r.size];
@@ -2478,10 +2478,10 @@ void var<T*>::set(py_var<T_EQUIV>& pv)
     if(size) vars=new var<T>[size];
     
     deallocate(*ptr);
-    size_t sz[rank];
+    size_t sz[get_rank()];
     for(int i=0;i<rank;i++) sz[i]=0;
     accum_size(pv,sz);
-    void* data_ptr[rank];
+    void* data_ptr[get_rank()];
     for(int i=0;i<rank;i++) data_ptr[i]=NULL;
     allocate(data_ptr,*ptr,sz);
     for(size_t i=0;i<size;i++)
@@ -2503,10 +2503,10 @@ void var<T*>::reset_n_remap(const size_t* map,const size_t map_sz)
     var<T>* __vars=vars;
     vars=NULL;
     
-    size_t sz[rank];
+    size_t sz[get_rank()];
     sz[0]=map_sz;
     for(int i=1;i<rank;i++) sz[i]=map_sz*sz[i-1];
-    void* data_ptr[rank];
+    void* data_ptr[get_rank()];
     for(int i=0;i<rank;i++) data_ptr[i]=NULL;
     allocate(data_ptr,*ptr,sz);
 
@@ -2550,7 +2550,7 @@ void  var<T*>::dynamic_size(Ts&&... ____dsizes__)
     assert(root);
     assert(sizeof...(____dsizes__)==get_rank());
     delete [] __dsizes__;
-    __dsizes__=new var<size_t>*[rank];
+    __dsizes__=new var<size_t>*[get_rank()];
     for(int i=0;i<rank;i++) __dsizes__[i]=NULL;
     Var::assign_dynamic_size(__dsizes__,____dsizes__...);
 }

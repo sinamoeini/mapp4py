@@ -1,5 +1,5 @@
-#ifndef __MAPP__rand_engine__
-#define __MAPP__rand_engine__
+#ifndef __MAPP__random__
+#define __MAPP__random__
 #include "global.h"
 namespace MAPP_NS
 {

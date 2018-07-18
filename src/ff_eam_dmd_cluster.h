@@ -1,5 +1,5 @@
-#ifndef __MAPP__ff_eam__dmd_cluster__
-#define __MAPP__ff_eam__dmd_cluster__
+#ifndef __MAPP__ff_eam_dmd_cluster__
+#define __MAPP__ff_eam_dmd_cluster__
 #include "ff_dmd.h"
 namespace MAPP_NS
 {

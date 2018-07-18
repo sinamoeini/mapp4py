@@ -1,5 +1,5 @@
-#ifndef __MAPP__ff_eam__dmd__
-#define __MAPP__ff_eam__dmd__
+#ifndef __MAPP__ff_eam_dmd__
+#define __MAPP__ff_eam_dmd__
 #include "ff_dmd.h"
 namespace MAPP_NS
 {

@@ -1,5 +1,5 @@
-#ifndef __MAPP__MinLBFGS__
-#define __MAPP__MinLBFGS__
+#ifndef __MAPP__min_l_bfgs_md__
+#define __MAPP__min_l_bfgs_md__
 #include "min_cg.h"
 namespace MAPP_NS
 {

@@ -1,5 +1,5 @@
-#ifndef __MAPP__dea__
-#define __MAPP__dea__
+#ifndef __MAPP__dae__
+#define __MAPP__dae__
 #include "api.h"
 #include "export_styles.h"
 namespace MAPP_NS

@@ -1,3 +1,46 @@
+
+/*
+//the code that was used to generate the following bullshit macros:
+ 
+#include<stdio.h>
+int main()
+{
+ 
+    int max_n=256;
+    for(int i=1;i<max_n+1;i++)
+    {
+ 
+        if(i==1)
+        {
+            printf("#define DESIG_1(v) v\n");
+            printf("#define DESIG__1(n,v) {DESIG_##n(v)}\n");
+            printf("#define EmptyPyGetSetDef_1 {NULL,NULL,NULL,NULL,NULL}\n");
+            printf("#define EmptyPyMethodDef_1 {NULL,NULL,0,NULL}\n");
+            printf("#define EmptyPyMemberDef_1 {NULL,0,0,0,NULL}\n");
+        }
+        else
+        {
+            printf("#define DESIG_%d(v) DESIG_%d(v),v\n",i,i-1);
+            printf("#define DESIG__%d(n,v) DESIG__%d(n,v),{DESIG_##n(v)}\n",i,i-1);
+            printf("#define EmptyPyGetSetDef_%d EmptyPyGetSetDef_%d,{NULL,NULL,NULL,NULL,NULL}\n",i,i-1);
+            printf("#define EmptyPyMethodDef_%d EmptyPyMethodDef_%d,{NULL,NULL,0,NULL}\n",i,i-1);
+            printf("#define EmptyPyMemberDef_%d EmptyPyMemberDef_%d,{NULL,0,0,0,NULL}\n",i,i-1);
+        }
+ 
+
+    }
+    printf("#define DESIG(m,v) DESIG_##m(v)\n");
+    printf("#define DESIG2(m,n,v) DESIG__##m(n,v)\n");
+    printf("#define EmptyPyGetSetDef(m) {EmptyPyGetSetDef_##m}\n");
+    printf("#define EmptyPyMethodDef(m) {EmptyPyMethodDef_##m}\n");
+    printf("#define EmptyPyMemberDef(m) {EmptyPyMemberDef_##m}\n");
+
+ 
+    return 0;
+}
+
+ */
+
 #define DESIG_1(v) v
 #define DESIG__1(n,v) {DESIG_##n(v)}
 #define EmptyPyGetSetDef_1 {NULL,NULL,NULL,NULL,NULL}

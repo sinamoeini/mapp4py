@@ -239,7 +239,7 @@ void DAE::min_error()
     }
     
     //printf("%d res %e %e\n",istep,a0,a1);
-    //printf("res %e\n",res);
+    //if(atoms->comm_rank==0 && res/a_tol_sqrt_nc_dofs>1.0) printf("res %e\n",res/a_tol_sqrt_nc_dofs);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

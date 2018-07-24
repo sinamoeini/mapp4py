@@ -901,7 +901,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
                I[i]=static_cast<type0>(no/P[i]);
                 no=no%P[i];
             });
-            did=static_cast<unsigned int>(i)*max_id;
+            did=static_cast<unsigned int>(i)*(max_id+1);
             Algebra::V_mul_MLT(I,H,dx);
             for(int j=0;j<natms_lcl;j++)
             {

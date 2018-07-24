@@ -215,20 +215,21 @@ void AtomsDMD::setup_tp_getset()
 /*--------------------------------------------*/
 
 #ifdef SC_DMD
-PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(15);
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(16);
 #else
-PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(6);
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(7);
 #endif
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
     ml_strain(methods[0]);
-    ImportCFGDMD::ml_import(methods[1]);
-    ForceFieldEAMDMD::ml_new(methods[2],methods[3],methods[4]);
+    ml_mul(methods[1]);
+    ImportCFGDMD::ml_import(methods[2]);
+    ForceFieldEAMDMD::ml_new(methods[3],methods[4],methods[5]);
 #ifdef SC_DMD
-    ForceFieldEAMDMDSC::ml_new(methods[5],methods[6],methods[7]);
-    ForceFieldEAMDMDSCC::ml_new(methods[8],methods[9],methods[10]);
-    ForceFieldEAMDMDCLUSTER::ml_new(methods[11],methods[12],methods[13]);
+    ForceFieldEAMDMDSC::ml_new(methods[6],methods[7],methods[8]);
+    ForceFieldEAMDMDSCC::ml_new(methods[9],methods[10],methods[11]);
+    ForceFieldEAMDMDCLUSTER::ml_new(methods[12],methods[13],methods[14]);
 #endif
 }
 /*--------------------------------------------

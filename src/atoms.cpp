@@ -852,59 +852,90 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<int[__dim__]> f("mul",{"n"});
+        FuncAPI<int[__dim__]> f("mul",{"N"});
         
         f.get<0>().logics[0]=VLogics("ge",1);
         if(f(args,kwds)) return NULL;
-        type0 n[__dim__];
-        Algebra::Do<__dim__>::func([&n,&f](int i){n[i]=static_cast<type0>(f.val<0>()[i]);});
-        /*
+        Atoms* atoms=reinterpret_cast<Atoms::Object*>(self)->atoms;
+        int N[__dim__];
+        Algebra::V_eq<__dim__>(f.val<0>(),N);
+        int n=1;
+        Algebra::Do<__dim__>::func([&n,&N](int i){n*=N[i];});
         
-        Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
+        unsigned int* __id=atoms->id->begin();
+        int natms_lcl=atoms->natms_lcl;
+        unsigned int max_id_lcl=0;
+        unsigned int max_id;
+        for(int i=0;i<natms_lcl;i++) max_id_lcl=MAX(max_id_lcl,__id[i]);
+        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<unsigned int>::MPI_T,MPI_MAX,atoms->world);
         
-        type0 H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        type0 B[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        Algebra::DoLT<__dim__>::func([&H,&B,&__self](int i,int j)
+        
+        
+        int nvecs=atoms->nvecs;
+        vec** vecs=atoms->vecs;
+        for(int i=0;i<nvecs;i++)
+            vecs[i]->replicate(n);
+        
+        
+        type0 dx[__dim__];
+        type0 I[__dim__];
+        int P[__dim__]{DESIG(__dim__,1)};
+        Algebra::DoLT<__dim__-1>::func([&P,&N](int i,int j)
         {
-            H[i][j]=__self->atoms->H[i][j];
-            B[i][j]=__self->atoms->B[i][j];
+            P[__dim__-2-i]*=N[__dim__-1-j];
         });
         
-        type0 (&strain)[__dim__][__dim__]=f.val<0>();
         
-        Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
-        type0 F[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        type0 __H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        Algebra::MLT_mul_MSQ(H,strain,__H);
+        int no;
+        unsigned int did;
+        type0* __x=atoms->x->begin()+natms_lcl*__dim__;
+        __id=atoms->id->begin()+natms_lcl;
+        type0 (&H)[__dim__][__dim__]=atoms->H;
+        for(int i=1;i<n;i++)
+        {
+            no=i;
+            Algebra::zero<__dim__>(I);
+            Algebra::zero<__dim__>(dx);
+            Algebra::Do<__dim__>::func([&I,&P,&no](int i)
+            {
+               I[i]=static_cast<type0>(no/P[i]);
+                no=no%P[i];
+            });
+            did=static_cast<unsigned int>(i)*max_id;
+            Algebra::V_mul_MLT(I,H,dx);
+            for(int j=0;j<natms_lcl;j++)
+            {
+                Algebra::V_add<__dim__>(dx,__x);
+                *__id+=did;
+                __x+=__dim__;
+                ++__id;
+            }
+                
+            
+        }
         
-        Algebra::MSQ_2_MLT(__H,H);
-        Algebra::MLT_mul_MLT(B,H,F);
-        if(Algebra::MLT_det(F)<=0.0)
-        PyErr_SetString(PyExc_TypeError,"strain should result in transformation tensor with positive determinant");
-        Algebra::MLT_inv(H,B);
-        
-        Algebra::V_eq<__dim__*__dim__>(&H[0][0],&(__self->atoms->H[0][0]));
-        __self->atoms->update_H();
-        
-        
-        type0* x=__self->atoms->x->begin();
-        int x_dim=__self->atoms->x->dim;
-        int natms_lcl=__self->atoms->natms_lcl;
-        for(int i=0;i<natms_lcl;i++,x+=x_dim)
-            Algebra::V_mul_MLT(x,F,x);*/
+        Algebra::DoLT<__dim__>::func([&atoms,&N](int i,int j)
+        {
+            atoms->H[i][j]*=static_cast<type0>(N[i]);
+        });
+        atoms->update_H();
+        atoms->natms_lcl*=n;
+        atoms->natms*=n;
+        atoms->reset_domain();
+
         
         Py_RETURN_NONE;
     });
     
     tp_methods.ml_doc=R"---(
-    strain(E)
+    mul(N)
     
-    Strain the system
+    Replicates the box in each dimension according to the given values by the vector
         
     Parameters
     ----------
-    E : double[dim][dim]
-       Strain tensor, here dim is the dimension of simulation
+    N : int[dim]
+       Number of replications in all dimensions, here dim is the dimension of simulation
     
     Returns
     -------

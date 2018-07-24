@@ -31,11 +31,14 @@ ForceFieldEAMPotFit<ForceFieldEAMPotFitAckOgata::nelems>* ForceFieldEAMPotFitAck
     PotFitPairFunc* __rho_ptr[nelems][nelems];
     PotFitEmbFunc* __F_ptr[nelems];
     __phi_ptr[0][0]=new PotFitPhiSpl("phi_FeFe");
-    __phi_ptr[1][0]=__phi_ptr[0][1]=new PotFitPhiSpl("phi_FeH");
+    __phi_ptr[1][0]=new PotFitPhiSpl("phi_FeH");
+    __phi_ptr[0][1]=__phi_ptr[1][0];
     __phi_ptr[1][1]=new PotFitPhiSpl("phi_HH");
     
-    __rho_ptr[0][1]=__rho_ptr[0][0]=new PotFitRhoSpl("rho_Fe");
-    __rho_ptr[1][1]=__rho_ptr[1][0]=new PotFitRhoAng("rho_H");
+    __rho_ptr[0][0]=new PotFitRhoSpl("rho_Fe");
+    __rho_ptr[1][0]=new PotFitRhoAng("rho_H");
+    __rho_ptr[0][1]=__rho_ptr[0][0];
+    __rho_ptr[1][1]=__rho_ptr[1][0];
     
     __F_ptr[0]=new PotFitEmbAck("F_Fe");
     __F_ptr[1]=new PotFitEmbAng("F_H");

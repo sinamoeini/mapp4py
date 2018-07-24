@@ -358,6 +358,8 @@ int LineSearchGoldenSection::min(Func* func,type0& nrgy
     if(dfa>=0.0)
         return LS_F_DOWNHILL;
     
+    if(max_a==0.0) return LS_MIN_ALPHA;
+    
     a=0.0;
     fa=nrgy;
     
@@ -546,6 +548,8 @@ int LineSearchBrent::min(Func* func,type0& nrgy
     if(dfa>=0.0)
         return LS_F_DOWNHILL;
     
+    if(max_a==0.0) return LS_MIN_ALPHA;
+    
     a=0.0;
     fa=nrgy;
     
@@ -727,6 +731,8 @@ int LineSearchBackTrack::min(Func* func,type0& nrgy
     
     if(dfa>=0.0)
         return LS_F_DOWNHILL;
+    
+    if(max_a==0.0) return LS_MIN_ALPHA;
     
     if(init_flag==0)
     {

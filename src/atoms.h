@@ -48,6 +48,7 @@ namespace MAPP_NS
         void reserve(int);
         void resize(int);
         void shrink_to_fit();
+        void replicate(int);
         void rearrange(int*,int*,int,int);
         void pst_to(byte*&,int);
         
@@ -72,7 +73,6 @@ namespace MAPP_NS
         virtual void init_dump();
         virtual void fin_dump();
         virtual void print(FILE*,int)=0;
-        
     };
 }
 #include <cstring>
@@ -147,6 +147,20 @@ inline void vec::shrink_to_fit()
     delete [] data;
     data=__data;
     vec_cpcty=vec_sz;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+inline void vec::replicate(int n)
+{
+    if(__is_empty__) return;
+    
+    int old_vec_sz=vec_sz;
+    resize(n*vec_sz);
+    byte* __data=data+old_vec_sz*byte_sz;
+    for(int i=1;i<n;i++,__data+=old_vec_sz*byte_sz)
+        memcpy(__data,data,old_vec_sz*byte_sz);
+        
 }
 /*--------------------------------------------
  
@@ -980,6 +994,15 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
         
         // DO THE FUNCTION HERE AND FIND OUT IF THERE IS A PROBLEM
         ans=PyEval_CallObject(op,tuple);
+        if(PyErr_Occurred()!=NULL)
+        {
+            err_lcl=1;
+            err_msg=std::string("An error occured in the provided function");
+            if(ans) Py_DECREF(ans);
+            PyErr_Clear();
+            continue;
+        }
+        
         if(Py_None!=ans)
         {
             Py_DECREF(ans);
@@ -989,13 +1012,7 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
         }
         
         Py_DECREF(ans);
-        if(PyErr_Occurred()!=NULL)
-        {
-            err_lcl=1;
-            err_msg=std::string("An error occured in the provided function");
-            PyErr_Clear();
-            continue;
-        }
+
 
         // NO ERROR CHECK YET
         

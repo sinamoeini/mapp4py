@@ -494,6 +494,15 @@ template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 {
     
+    //fix this shit
+    max_a=std::numeric_limits<type0>::infinity();
+    for(size_t i=0;i<ff->nuniq_phi_ptrs;i++)
+    ff->uniq_phi_ptr[i]->find_max_alpha(max_a);
+    for(size_t i=0;i<ff->nuniq_F_ptrs;i++)
+    ff->uniq_F_ptr[i]->find_max_alpha(max_a);
+    for(size_t i=0;i<ff->nuniq_rho_ptrs;i++)
+    ff->uniq_rho_ptr[i]->find_max_alpha(max_a);
+    
     h_norm=0.0;
     for(size_t i=0;i<nvars;i++) h_norm+=h[i]*h[i];
     
@@ -516,16 +525,6 @@ void PotFit<FF,NELEMS>::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     }
     
     h_norm=sqrt(h_norm);
-    
-    
-    //fix this shit
-    max_a=std::numeric_limits<type0>::infinity();
-    for(size_t i=0;i<ff->nuniq_phi_ptrs;i++)
-        ff->uniq_phi_ptr[i]->find_max_alpha(max_a);
-    for(size_t i=0;i<ff->nuniq_F_ptrs;i++)
-        ff->uniq_F_ptr[i]->find_max_alpha(max_a);
-    for(size_t i=0;i<ff->nuniq_rho_ptrs;i++)
-        ff->uniq_rho_ptr[i]->find_max_alpha(max_a);
     
 }
 /*--------------------------------------------

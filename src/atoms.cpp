@@ -32,12 +32,12 @@ template<> const char* Vec<long int>::print_format="%ld ";
 template<> const char* Vec<long long>::print_format="%lld ";
 template<> const char* Vec<unsigned char>::print_format="%c ";
 template<> const char* Vec<unsigned short>::print_format="%d ";
-template<> const char* Vec<unsigned int>::print_format="%ud ";
-template<> const char* Vec<unsigned long int>::print_format="%uld ";
-template<> const char* Vec<unsigned long long>::print_format="%ulld ";
-template<> const char* Vec<float>::print_format="%e ";
+template<> const char* Vec<unsigned int>::print_format="%u ";
+template<> const char* Vec<unsigned long int>::print_format="%lu ";
+template<> const char* Vec<unsigned long long>::print_format="%llu ";
+template<> const char* Vec<float>::print_format="%.16f ";
 template<> const char* Vec<double>::print_format="%.16lf ";
-template<> const char* Vec<long double>::print_format="%Le ";
+template<> const char* Vec<long double>::print_format="%.16Lf ";
 
 /*---------------------------------------------------------------------------
       ___   _____   _____       ___  ___   _____

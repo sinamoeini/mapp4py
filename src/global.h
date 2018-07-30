@@ -6,6 +6,8 @@
 /*thermo dynamics delimeter and line character*/
 #define THERMO_DLMTR "|"
 #define THERMO_LINE "-"
+//#define THERMO_DLMTR ""
+//#define THERMO_LINE ""
 
 #define RESTRICT __restrict__
 

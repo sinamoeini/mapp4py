@@ -2,6 +2,7 @@
 #include "ls.h"
 #include "ff_styles.h"
 #include "xmath.h"
+#include "MAPP.h"
 using namespace MAPP_NS;
 const char* Min::err_msgs[]=
 {
@@ -91,13 +92,22 @@ void Min::pre_run_chk(Atoms* atoms,ForceField* ff)
             for(int j=i;j<__dim__;j++)
                 if(H_dof[i][j] && __dof[i])
                 {
+                    /*
                     if(!err_msg.empty()) err_msg+="\n";
                     err_msg+="cannot impose stress component ["+Print::to_string(i)+"]["+Print::to_string(j)
                     +"] while any of the atoms do not have degree freedom in "+Print::to_string(i)
                     +" direction";
+                    */
+                    err_msg+="\nyou have atoms that do not have degree freedom in "+Print::to_string(i)
+                    +" direction they will be deformed affinely due to defined degrees of freedom H_dof["+Print::to_string(i)+"]["+Print::to_string(j)+"]";
                 }
         
-        if(!err_msg.empty()) throw err_msg;
+        //if(!err_msg.empty()) throw err_msg;
+        if(!err_msg.empty() && ntally)
+        {
+            err_msg="Warning:"+err_msg+"\n";
+            fprintf(MAPP::mapp_out,"%s",err_msg.c_str());
+        }
     }
 }
 /*------------------------------------------------------------------------------------------------------------------------------------

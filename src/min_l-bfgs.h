@@ -113,7 +113,7 @@ void MinLBFGS::run(C* ls,int nsteps)
             k=0;
             f_h=f*f;
         }
-        if(affine) prepare_affine_h();
+        prep();
         err=ls->min(this,e_curr,alpha_m,0);
         
         if(err!=LS_S)

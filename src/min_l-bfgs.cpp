@@ -56,6 +56,8 @@ void MinLBFGS::init()
     new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
     x0.~VecTens();
     new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x_d.~VecTens();
+    new (&x_d) VecTens<type0,1>(atoms,chng_box,__dim__);
     f0.~VecTens();
     new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
     
@@ -123,6 +125,7 @@ void MinLBFGS::fin()
     s=y=NULL;
     
     f0.~VecTens();
+    x_d.~VecTens();
     x0.~VecTens();
     h.~VecTens();
     f.~VecTens();

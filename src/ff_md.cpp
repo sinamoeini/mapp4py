@@ -135,74 +135,74 @@ type0* ForceFieldMD::derivative_timer()
 /*--------------------------------------------
  this does not sound right hs to be check later
  --------------------------------------------*/
-void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
-{
-    reset();
-    force_calc();
-    type0* fvec=f->begin();
-    type0* xvec=atoms->x->begin();
-    if(dof_empty)
-    {
-        const int natms_lcl=atoms->natms_lcl;
-        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
-            Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
-    }
-    else
-    {
-        bool* dof=atoms->dof->begin();
-        const int natms_lcl=atoms->natms_lcl;
-        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__,dof+=__dim__)
-        {
-            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
-            Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
-        }
-    }
-    
-    
-    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
-    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
-    Algebra::NONAME_DyadicV_mul_MLT(__vec+1,atoms->B,S);
-    const type0 vol=atoms->vol;
-    Algebra::Do<__nvoigt__>::func([this,&vol](int i){__vec[i+1]/=-vol;});
-    atoms->pe=__vec[0];
-    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_pe);
-}
+//void ForceFieldMD::derivative_timer(type0(*&S)[__dim__])
+//{
+//    reset();
+//    force_calc();
+//    type0* fvec=f->begin();
+//    type0* xvec=atoms->x->begin();
+//    if(dof_empty)
+//    {
+//        const int natms_lcl=atoms->natms_lcl;
+//        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
+//            Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
+//    }
+//    else
+//    {
+//        bool* dof=atoms->dof->begin();
+//        const int natms_lcl=atoms->natms_lcl;
+//        for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__,dof+=__dim__)
+//        {
+//            Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
+//            Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
+//        }
+//    }
+//
+//
+//    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
+//    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
+//    Algebra::NONAME_DyadicV_mul_MLT(__vec+1,atoms->B,S);
+//    const type0 vol=atoms->vol;
+//    Algebra::Do<__nvoigt__>::func([this,&vol](int i){__vec[i+1]/=-vol;});
+//    atoms->pe=__vec[0];
+//    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_pe);
+//}
 /*--------------------------------------------
  this does not sound right hs to be check later
  --------------------------------------------*/
-void ForceFieldMD::derivative_timer(bool affine,type0(*&S)[__dim__])
-{
-    reset();
-    force_calc();
-    if(!affine)
-    {
-        type0* fvec=f->begin();
-        type0* xvec=atoms->x->begin();
-        if(dof_empty)
-        {
-            const int natms_lcl=atoms->natms_lcl;
-            for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
-                Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
-        }
-        else
-        {
-            bool* dof=atoms->dof->begin();
-            const int natms_lcl=atoms->natms_lcl;
-            for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__,dof+=__dim__)
-            {
-                Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
-                Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
-            }
-        }
-    }
-    
-    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
-    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
-    Algebra::NONAME_DyadicV_mul_MLT(__vec+1,atoms->B,S);
-    const type0 vol=atoms->vol;
-    Algebra::Do<__nvoigt__>::func([this,&vol](int i){__vec[i+1]/=-vol;});
-    atoms->pe=__vec[0];
-    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_pe);
+//void ForceFieldMD::derivative_timer(bool affine,type0(*&S)[__dim__])
+//{
+//    reset();
+//    force_calc();
+//    if(!affine)
+//    {
+//        type0* fvec=f->begin();
+//        type0* xvec=atoms->x->begin();
+//        if(dof_empty)
+//        {
+//            const int natms_lcl=atoms->natms_lcl;
+//            for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__)
+//                Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
+//        }
+//        else
+//        {
+//            bool* dof=atoms->dof->begin();
+//            const int natms_lcl=atoms->natms_lcl;
+//            for(int i=0;i<natms_lcl;i++,fvec+=__dim__,xvec+=__dim__,dof+=__dim__)
+//            {
+//                Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
+//                Algebra::DyadicV<__dim__>(xvec,fvec,__vec_lcl+1);
+//            }
+//        }
+//    }
+//    
+//    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
+//    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
+//    Algebra::NONAME_DyadicV_mul_MLT(__vec+1,atoms->B,S);
+//    const type0 vol=atoms->vol;
+//    Algebra::Do<__nvoigt__>::func([this,&vol](int i){__vec[i+1]/=-vol;});
+//    atoms->pe=__vec[0];
+//    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_pe);
 
 }
 

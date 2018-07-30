@@ -1,9 +1,11 @@
 #include "ff_eam_func.h"
+#include "mapp_func.h"
 #include "neighbor_md.h"
 #include "atoms_md.h"
 #include "elements.h"
 #include "memory.h"
 #include "dynamic_md.h"
+#include "gcmc.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  This is for my personal and fitting of iron
@@ -11,36 +13,102 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 /*--------------------------------------------
  constructor
- Fe: 0 H: 1
- list of inputs
-    2x2
-    for electron density:
-        size_t nrho_ij: number of spilines
-        type0** ARrho_ij: {a,r0}x n
-    2
-    for phi_00 phi_01
-        size_t nphi_ij: number of spilines
-        type0** ARphi_ij: {a,r0}x n
-    2
-    for embedded functions
- 
- 
  --------------------------------------------*/
-ForceFieldEAMFunc::ForceFieldEAMFunc(AtomsMD* __atoms):
-ForceFieldMD(__atoms)
+ForceFieldEAMFunc::ForceFieldEAMFunc(AtomsMD* __atoms,
+EAMFunc* __eam_func,
+elem_type*&& __elem_map):
+ForceFieldMD(__atoms),
+eam_func(__eam_func),
+elem_map(__elem_map)
 {
+    gcmc_n_cutoff=2;
+    gcmc_n_vars=2;
+    gcmc_tag_enabled=true;
+    
+    __elem_map=NULL;
+    for(size_t i=0;i<nelems;i++)
+        for(size_t j=0;j<i+1;j++)
+        {
+            cut[i][j]=cut[j][i]=eam_func->rc[elem_map[i]][elem_map[j]];
+            cut_sq[i][j]=cut_sq[j][i]=cut[i][j]*cut[i][j];
+        }
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
 ForceFieldEAMFunc::~ForceFieldEAMFunc()
 {
+    delete [] elem_map;
+    delete eam_func;
 }
 /*--------------------------------------------
  force and energy calculation
  --------------------------------------------*/
 void ForceFieldEAMFunc::force_calc()
 {
+    const type0* x=atoms->x->begin();
+    elem_type* evec=atoms->elem->begin();
+    type0* rho=rho_ptr->begin();
+    elem_type ielem,jelem;
+    type0 rsq,r,phi,fpair;
+    
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    
+    type0 dx_ij[__dim__];
+    const int natms_lcl=atoms->natms_lcl;
+    for(int iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=0.0;
+    for(int iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=elem_map[evec[iatm]];
+        const int list_size=neighbor_list_size[iatm];
+        for(int j=0,jatm;j<list_size;j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=elem_map[evec[jatm]];
+            rsq=Algebra::RSQ<__dim__>(x+iatm*__dim__,x+jatm*__dim__);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            phi=eam_func->phi(ielem,jelem,r);
+            rho[iatm]+=eam_func->rho(jelem,ielem,r);
+            
+            if(jatm<natms_lcl)
+                rho[jatm]+=eam_func->rho(ielem,jelem,r);
+            else
+                phi*=0.5;
+            __vec_lcl[0]+=phi;
+        }
+        __vec_lcl[0]+=eam_func->F(ielem,rho[iatm]);
+    }
+    
+    dynamic->update(rho_ptr);
+    
+    type0* fvec=f->begin();
+    for(int iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=elem_map[evec[iatm]];
+        const int list_size=neighbor_list_size[iatm];
+        for(int j=0,jatm;j<list_size;j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=elem_map[evec[jatm]];
+            rsq=Algebra::DX_RSQ(x+iatm*__dim__,x+jatm*__dim__,dx_ij);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            fpair=eam_func->fpair(ielem,jelem,rho[iatm],rho[jatm],r);
+            
+            
+            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,fvec+iatm*__dim__);
+            if(jatm<natms_lcl)
+                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+jatm*__dim__);
+            else
+                fpair*=0.5;
+            
+            Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
+            
+        }
+    }
+    
 }
 /*--------------------------------------------
  only energy calculation this is useful for
@@ -49,7 +117,40 @@ void ForceFieldEAMFunc::force_calc()
  --------------------------------------------*/
 void ForceFieldEAMFunc::energy_calc()
 {
+    const type0* x=atoms->x->begin();
+    elem_type* evec=atoms->elem->begin();
+    type0* rho=rho_ptr->begin();
+    elem_type ielem,jelem;
+    type0 rsq,r,phi;
     
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    
+
+    const int natms_lcl=atoms->natms_lcl;
+    for(int iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=0.0;
+    for(int iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=elem_map[evec[iatm]];
+        const int list_size=neighbor_list_size[iatm];
+        for(int j=0,jatm;j<list_size;j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=elem_map[evec[jatm]];
+            rsq=Algebra::RSQ<__dim__>(x+iatm*__dim__,x+jatm*__dim__);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            phi=eam_func->phi(ielem,jelem,r);
+            rho[iatm]+=eam_func->rho(jelem,ielem,r);
+            
+            if(jatm<natms_lcl)
+                rho[jatm]+=eam_func->rho(ielem,jelem,r);
+            else
+                phi*=0.5;
+            __vec_lcl[0]+=phi;
+        }
+        __vec_lcl[0]+=eam_func->F(ielem,rho[iatm]);
+    }
 }
 /*--------------------------------------------
  initiate before a run
@@ -57,6 +158,7 @@ void ForceFieldEAMFunc::energy_calc()
 void ForceFieldEAMFunc::init()
 {
     pre_init();
+    rho_ptr=new Vec<type0>(atoms,1,"rho");
     
 }
 /*--------------------------------------------
@@ -64,7 +166,7 @@ void ForceFieldEAMFunc::init()
  --------------------------------------------*/
 void ForceFieldEAMFunc::fin()
 {
-    
+    delete rho_ptr;
     post_fin();
 }
 /*--------------------------------------------
@@ -72,37 +174,176 @@ void ForceFieldEAMFunc::fin()
  --------------------------------------------*/
 void ForceFieldEAMFunc::init_xchng()
 {
+    F_ptr=new Vec<type0>(atoms,1);
+    rho_xchng_ptr=new Vec<type0>(atoms,1);
+    F_xchng_ptr=new Vec<type0>(atoms,1);
+    
+    const type0* x=atoms->x->begin();
+    type0* rho=rho_ptr->begin();
+    type0* F=F_ptr->begin();
+    type0* rho_xchng=rho_xchng_ptr->begin();
+    type0* F_xchng=F_xchng_ptr->begin();
+    elem_type* evec=atoms->elem->begin();
+    type0 rsq,r;
+
+    elem_type ielem,jelem;
+
+    
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    const int natms_lcl=atoms->natms_lcl;
+    for(int iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=rho_xchng[iatm]=F_xchng[iatm]=0.0;
+    
+    for(int iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=elem_map[evec[iatm]];
+        const int list_size=neighbor_list_size[iatm];
+        for(int j=0,jatm;j<list_size;j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=elem_map[evec[jatm]];
+            rsq=Algebra::RSQ<__dim__>(x+iatm*__dim__,x+jatm*__dim__);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            
+            rho[iatm]+=eam_func->rho(jelem,ielem,r);
+            
+            if(jatm<natms_lcl)
+                rho[jatm]+=eam_func->rho(ielem,jelem,r);
+        }
+        F[iatm]=eam_func->F(ielem,rho[iatm]);
+    }
 }
 /*--------------------------------------------
  fin xchng
  --------------------------------------------*/
 void ForceFieldEAMFunc::fin_xchng()
 {
+    delete F_xchng_ptr;
+    delete rho_xchng_ptr;
+    delete F_ptr;
 }
 /*--------------------------------------------
  pre xchng energy
  --------------------------------------------*/
-void ForceFieldEAMFunc::pre_xchng_energy(GCMC*)
+void ForceFieldEAMFunc::pre_xchng_energy(GCMC* gcmc)
 {
+    int& icomm=gcmc->icomm;
+    type0 en;
+    type0 rho_iatm_lcl;
+    
+    int& iatm=gcmc->iatm;
+    elem_type& ielem=gcmc->ielem;
+    
+    int& jatm=gcmc->jatm;
+    elem_type& jelem=gcmc->jelem;
+    
+    
+    type0&rsq=gcmc->rsq;
+    
+    type0 r;
+    type0 c0=1.0,en0=0.0;
+    
+    type0* rho=rho_ptr->begin();
+    type0* rho_xchng=rho_xchng_ptr->begin();
+    int* tag=gcmc->tag_vec_p->begin();
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
+        rho_xchng[i]=rho[i];
+    
+    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+    {
+        c0=1.0;
+        if(gcmc->xchng_mode==DEL_MODE) c0=-1.0;
+        else if(gcmc->xchng_mode==NOEX_MODE) continue;
+        
+        en=rho_iatm_lcl=0.0;
+        for(gcmc->reset_iatm();iatm!=-1;gcmc->next_iatm())
+            for(gcmc->reset_jatm();jatm!=-1;gcmc->next_jatm())
+            {
+                r=sqrt(rsq);
+
+                if(jatm<natms_lcl)
+                {
+                    en+=eam_func->phi(elem_map[ielem],elem_map[jelem],r);
+                    rho_xchng[jatm]+=c0*eam_func->rho(elem_map[ielem],elem_map[jelem],r);
+                }
+                else
+                    en+=0.5*eam_func->phi(elem_map[ielem],elem_map[jelem],r);
+                
+                rho_iatm_lcl+=eam_func->rho(elem_map[jelem],elem_map[ielem],r);
+            }
+        
+        
+        
+        type0* F=F_ptr->begin();
+        type0* F_xchng=F_xchng_ptr->begin();
+        elem_type* evec=atoms->elem->begin();
+        
+        type0 tmp0;
+        en0=0.0;
+        for(int i=0;i<natms_lcl;i++)
+            if(tag[i]==icomm)
+            {
+                tmp0=rho_xchng[i];
+                F_xchng[i]=eam_func->F(elem_map[evec[i]],rho_xchng[i]);
+                en0+=F_xchng[i]-F[i];
+            }
+        
+        en+=en0*c0;
+        
+        gcmc->lcl_vars[0]=en;
+        gcmc->lcl_vars[1]=rho_iatm_lcl;
+        
+    }
 }
 /*--------------------------------------------
  xchng energy
  --------------------------------------------*/
-type0 ForceFieldEAMFunc::xchng_energy(GCMC*)
+type0 ForceFieldEAMFunc::xchng_energy(GCMC* gcmc)
 {
+    int& icomm=gcmc->icomm;
+    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+        MPI_Reduce(gcmc->lcl_vars,gcmc->vars,2,Vec<type0>::MPI_T,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
+ 
+    
+    if(gcmc->im_root)
+    {
+        //restart the comms
+        gcmc->reset_icomm();
+        if(gcmc->xchng_mode==NOEX_MODE) return 0.0;
+        return eam_func->F(elem_map[gcmc->ielem],gcmc->vars[1])+gcmc->vars[0];
+    }
     return 0.0;
 }
 /*--------------------------------------------
  post xchng energy
  --------------------------------------------*/
-void ForceFieldEAMFunc::post_xchng_energy(GCMC*)
+void ForceFieldEAMFunc::post_xchng_energy(GCMC* gcmc)
 {
+    int* tag=gcmc->tag_vec_p->begin();
+    type0* rho=rho_ptr->begin();
+    type0* F=F_ptr->begin();
+    
+    type0* rho_xchng=rho_xchng_ptr->begin();
+    type0* F_xchng=F_xchng_ptr->begin();
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
+        if(tag[i]==0)
+        {
+            rho[i]=rho_xchng[i];
+            F[i]=F_xchng[i];
+        }
+    
+    if(gcmc->im_root && gcmc->xchng_mode==INS_MODE && gcmc->root_succ)
+    {
+        rho[natms_lcl-1]=gcmc->vars[1];
+        F[natms_lcl-1]=eam_func->F(elem_map[gcmc->ielem],rho[natms_lcl-1]);
+    }
 }
 /*--------------------------------------------
  python constructor
  --------------------------------------------*/
-
-
 #include <dlfcn.h>
 void ForceFieldEAMFunc::ml_new(PyMethodDef& tp_methods)
 {
@@ -115,100 +356,27 @@ void ForceFieldEAMFunc::ml_new(PyMethodDef& tp_methods)
         
         FuncAPI<std::string> f("ff_eam_func",{"so_file"});
         if(f(args,kwds)) return NULL;
-        
-        
-        
-        void* so=dlopen(f.val<0>().c_str(),RTLD_NOW);
-        int nelem=*reinterpret_cast<int*>( dlsym(so,"nelem"));
-        const char** elems=reinterpret_cast<const char **>( dlsym(so,"elems"));
-        
-        double(*fff)(double)=reinterpret_cast<double(*)(double)>(dlsym(so,"phi"));
-        
-        for(int i=0;i<nelem;i++)
-            printf("%s\n",elems[i]);
-        
-        printf("%lf\n",fff(12.0));
-        
-        
 
+        void* so=dlopen(f.val<0>().c_str(),RTLD_NOW);
+        create_eam_ff_t* ff_eam=reinterpret_cast<create_eam_ff_t*>( dlsym(so,"create_eam_ff"));
+        EAMFunc* ff_eam_func=ff_eam();
+        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
+        elem_type* __elem_map=NULL;
+        try
+        {
+            __elem_map=ff_eam_func->remap(__self->atoms->elements.names,__self->atoms->elements.__nelems);
+        }
+        catch(std::string& err_msg)
+        {
+            delete ff_eam_func;
+            PyErr_SetString(PyExc_TypeError,err_msg.c_str());
+            return NULL;
+        }
+                
+        delete __self->ff;
+        __self->ff=new ForceFieldEAMFunc(__self->atoms,ff_eam_func,std::move(__elem_map));
         Py_RETURN_NONE;
     });
     
-    tp_methods.ml_doc=(char*)R"---(
-    ff_fs(A,t1,t2,k1,k2,k3,r_c_phi,r_c_rho,elems=None)
-   
-    Finnis-Sinclair EAM
-    
-    Assigns Finnis-Sinclair EAM force field to system. For explanation of the parameter see the Notes section.
-    
-    Parameters
-    ----------
-    A : double[nelems]
-        :math:`A`
-    t1 : double[nelems][nelems]
-        :math:`t_1`
-    t2 : double[nelems][nelems]
-        :math:`t_2`
-    k1 : symmetric double[nelems][nelems]
-        :math:`k_1`
-    k2 : symmetric double[nelems][nelems]
-        :math:`k_2`
-    k3 : symmetric double[nelems][nelems]
-        :math:`k_3`
-    r_c_phi : symmetric double[nelems][nelems]
-        :math:`r_{c,\phi}`
-    r_c_rho : symmetric double[nelems][nelems]
-        :math:`r_{c,\rho}`
-    elems : string[nelems]
-        mapping elements
-    
-    Returns
-    -------
-    None
-   
-    Notes
-    -----
-    This is the analytical form of Finnis-Sinclair Embedded Atom Method (EAM) potential
-    
-    .. math::
-        U=\sum_{i}\left( -A_{\alpha}\sqrt{\sum_{j\neq i} \rho_{\beta\alpha}(r_{ij})}  + \frac{1}{2}\sum_{j\neq i} \phi_{\beta\alpha}(r_{ij}) \right),
-    
-    where
-    
-    .. math::
-        \rho_{\beta\alpha}(r)=
-        \left\{\begin{array}{ll}
-        t^{\alpha\beta}_1(r-r^{\alpha\beta}_{c,\rho})^2+t^{\alpha\beta}_2(r-r^{\alpha\beta}_{c,\rho})^3, \quad & r<r^{\alpha\beta}_{c,\rho}\\
-        0 & r>r^{\alpha\beta}_{c,\rho}\
-        \end{array}\right.
-
-            
-    and
-        
-    .. math::
-        \phi_{\beta\alpha}(r)=
-        \left\{\begin{array}{ll}
-        (r-r^{\alpha\beta}_{c,\phi})^2(k^{\alpha\beta}_1+k^{\alpha\beta}_2 r+k^{\alpha\beta}_3 r^2), \quad & r<r^{\alpha\beta}_{c,\phi}\\
-        0 & r>r^{\alpha\beta}_{c,\phi}\
-        \end{array}\right.
-
-    
-    Examples
-    --------
-    Iron Carbon mixture
-    ::
-     
-        >>> from mapp import md
-        >>> sim=md.cfg("configs/Cementite.cfg")
-        >>> sim.ff_fs(A=[1.8289905,2.9588787],
-                      t1=[[1.0,10.024001],[10.482408,0.0]],
-                      t2=[[0.504238,1.638980],[3.782595,-7.329211]],
-                      k1=[[1.237115],[8.972488,22.061824]],
-                      k2=[[-0.35921],[-4.086410,-17.468518]],
-                      k3=[[-0.038560],[1.483233,4.812639]],
-                      r_c_phi=[[3.40],[2.468801,2.875598]],
-                      r_c_rho=[[3.569745],[2.545937,2.892070]],
-                      elems=['Fe','C'])
-
-    )---";
+    tp_methods.ml_doc=(char*)"";
 }

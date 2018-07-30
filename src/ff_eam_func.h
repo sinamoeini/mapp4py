@@ -6,7 +6,12 @@ namespace MAPP_NS
     class ForceFieldEAMFunc: public ForceFieldMD
     {
     private:        
-        
+        class EAMFunc* eam_func;
+        Vec<type0>* rho_ptr;
+        Vec<type0>* F_ptr;
+        Vec<type0>* rho_xchng_ptr;
+        Vec<type0>* F_xchng_ptr;
+        elem_type* elem_map;
     protected:
         void force_calc();
         void energy_calc();
@@ -14,7 +19,7 @@ namespace MAPP_NS
         type0 xchng_energy(GCMC*);
         void post_xchng_energy(GCMC*);
     public:
-        ForceFieldEAMFunc(class AtomsMD*);
+        ForceFieldEAMFunc(class AtomsMD*,class EAMFunc*,elem_type*&&);
         ~ForceFieldEAMFunc();
         
         static void ml_new(PyMethodDef&);
@@ -29,10 +34,4 @@ namespace MAPP_NS
     
 }
 
-class Foo{
-public:
-    void bar(){
-        std::cout << "Hello" << std::endl;
-    }
-};
 #endif

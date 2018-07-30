@@ -14,20 +14,24 @@ namespace MAPP_NS
     private:
     protected:
         
-        void prepare_affine_h();
+        void prep();
         type0 calc_ndofs();
         type0 ndofs;
         
         VecTens<type0,1> h;
         VecTens<type0,1> x;
         VecTens<type0,1> x0;
+        VecTens<type0,1> x_d;
         VecTens<type0,1> f;
         VecTens<type0,1> f0;
+        
+        type0 S_tmp[__dim__][__dim__];
         
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
         class DynamicMD* dynamic;
         class ExportMD* xprt;
+        
     public:
         MinCG(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
         ~MinCG();
@@ -36,7 +40,7 @@ namespace MAPP_NS
         void run(C*,int);
         virtual void init();
         virtual void fin();
-        
+        void ff_test(int,type0,type0,int);
         void force_calc();
         
         type0 F(type0);
@@ -62,6 +66,7 @@ namespace MAPP_NS
         static PyMethodDef methods[];
         static void setup_tp_methods();
         static void ml_run(PyMethodDef&);
+        static void ml_ff_test(PyMethodDef&);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
@@ -126,7 +131,7 @@ void MinCG::run(C* ls,int nsteps)
             h=f;
             f_h=f0_f0;
         }
-        if(affine) prepare_affine_h();
+        prep();
         err=ls->min(this,e_curr,alpha,1);
         
         if(err!=LS_S)

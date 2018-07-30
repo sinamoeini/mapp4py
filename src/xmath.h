@@ -2993,30 +2993,14 @@ namespace MAPP_NS
             __MLT_mul_V<dim,dim> ::func(&MLT[dim-1][0],V,&MLTV[dim-1]);
         }
         /*==========================================================================*/
-        template<typename T,const int dim>
-        void V_mul_MLT(T*& V,T(&MLT)[dim][dim],T*& VMLT)
+        template<const int dim,typename T>
+        void V_mul_MLT(T* V,T (*MLT)[dim],T* VMLT)
         {
             __V_mul_MLT<dim,dim> ::func(V,&MLT[0][0],VMLT);
         }
-        template<typename T,const int dim>
-        void V_mul_MLT(T*& V,T(&MLT)[dim][dim],T(&VMLT)[dim])
-        {
-            __V_mul_MLT<dim,dim> ::func(V,&MLT[0][0],VMLT);
-        }
-        template<typename T,const int dim>
-        void V_mul_MLT(T (&V)[dim],T(&MLT)[dim][dim],T(&VMLT)[dim])
-        {
-            __V_mul_MLT<dim,dim> ::func(V,&MLT[0][0],VMLT);
-        }
-
         /*==========================================================================*/
         template<typename T,const int dim>
-        void V_mul_MLT_add_in(T*& V,T(&MLT)[dim][dim],T*& VMLT)
-        {
-            __V_mul_MLT<dim,dim>::add_in(V,&MLT[0][0],VMLT);
-        }
-        template<typename T,const int dim>
-        void V_mul_MLT_add_in(T*& V,T(&MLT)[dim][dim],T(&VMLT)[dim])
+        void V_mul_MLT_add_in(T* V,T (*MLT)[dim],T* VMLT)
         {
             __V_mul_MLT<dim,dim>::add_in(V,&MLT[0][0],VMLT);
         }
@@ -3050,22 +3034,7 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<const int dim,typename T>
-        void MLT_mul_MLT(T(&MLTL)[dim][dim],T(&MLTR)[dim][dim],T(&MLT)[dim][dim])
-        {
-            __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
-        }
-        template<const int dim,typename T>
-        void MLT_mul_MLT(T(&MLTL)[dim][dim],T(*&MLTR)[dim],T(&MLT)[dim][dim])
-        {
-            __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
-        }
-        template<const int dim,typename T>
-        void MLT_mul_MLT(T(*&MLTL)[dim],T(&MLTR)[dim][dim],T(&MLT)[dim][dim])
-        {
-            __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
-        }
-        template<const int dim,typename T>
-        void MLT_mul_MLT(T(&MLTL)[dim][dim],T(&MLTR)[dim][dim],T(*&MLT)[dim])
+        void MLT_mul_MLT(T(*MLTL)[dim],T(*MLTR)[dim],T(*MLT)[dim])
         {
             __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
         }

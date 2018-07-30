@@ -782,7 +782,7 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<type0[__dim__][__dim__]> f("strain",{"E"});
+        FuncAPI<type0[__dim__][__dim__]> f("strain",{"eps"});
         if(f(args,kwds)) return NULL;
         
         Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
@@ -827,13 +827,14 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
     });
     
     tp_methods.ml_doc=R"---(
-    strain(E)
+    strain(eps)
     
-    Strain the system
+    Strain the system (NEED MORE EXPLANATION TBCMPLTD)
+    
         
     Parameters
     ----------
-    E : double[dim][dim]
+    eps : double[dim][dim]
        Strain tensor, here dim is the dimension of simulation
     
     Returns

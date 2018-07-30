@@ -3,6 +3,8 @@
 
 #include "ff_fs.h"
 #include "ff_eam_dmd.h"
+
+#include "ff_eam_func.h"
 #ifdef SC_DMD
 #include "ff_eam_dmd_sc.h"
 #include "ff_eam_dmd_scc.h"

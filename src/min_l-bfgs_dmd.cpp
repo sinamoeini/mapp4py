@@ -38,6 +38,8 @@ void MinLBFGSDMD::init()
     new (&h) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     x0.~VecTens();
     new (&x0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+    x_d.~VecTens();
+    new (&x_d) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     f0.~VecTens();
     new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     if(m)
@@ -54,7 +56,7 @@ void MinLBFGSDMD::init()
     }
     
     dynamic=new DynamicDMD(atoms,ff,chng_box,{},
-    {atoms->dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],f0.vecs[0],f0.vecs[1]},{});
+    {atoms->dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
     
     for(int i=0;i<m;i++)
     {
@@ -113,6 +115,7 @@ void MinLBFGSDMD::fin()
     s=y=NULL;
  
     f0.~VecTens();
+    x_d.~VecTens();
     x0.~VecTens();
     h.~VecTens();
     f.~VecTens();

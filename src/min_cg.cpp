@@ -23,38 +23,54 @@ MinCG::~MinCG()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::force_calc()
-{
-    if(chng_box)
-    {
-        ff->derivative_timer(affine,f.A);
-        Algebra::DoLT<__dim__>::func([this](int i,int j)
-        {
-            f.A[i][j]*=H_dof[i][j];
-        });
-    }
-    else
-        ff->derivative_timer();
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCG::prepare_affine_h()
-{
-    const int natms_lcl=atoms->natms_lcl;
-    type0 MLT[__dim__][__dim__];
-    Algebra::MLT_mul_MLT(atoms->B,h.A,MLT);
-    type0* xvec=x0.vecs[0]->begin();
-    type0* hvec=h.vecs[0]->begin();
-    for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,hvec+=__dim__)
-        Algebra::V_mul_MLT(xvec,MLT,hvec);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 type0 MinCG::calc_ndofs()
 {
     return 0.0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCG::force_calc()
+{
+    ff->derivative_timer();
+
+    if(chng_box)
+    {
+        type0 (&S_pe)[__dim__][__dim__]=atoms->S_pe;
+        type0 neg_v=-atoms->vol;
+        Algebra::DoLT<__dim__>::func([this,&S_pe,&neg_v](int i,int j)
+        {f.A[i][j]=H_dof[i][j] ? S_pe[i][j]*neg_v:0.0;});
+        
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCG::prep()
+{
+    x_d=h;
+    if(!chng_box) return;
+    
+    const int natms_lcl=atoms->natms_lcl;
+    type0* xvec=x0.vecs[0]->begin();
+    type0* hvec=h.vecs[0]->begin();
+    type0* x_dvec=x_d.vecs[0]->begin();
+    Algebra::MLT_mul_MLT(atoms->H,h.A,x_d.A);
+    
+    
+    if(affine)
+    {
+        for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,x_dvec+=__dim__)
+            Algebra::V_mul_MLT(xvec,h.A,x_dvec);
+    }
+    else
+    {
+        for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,x_dvec+=__dim__,hvec+=__dim__)
+            Algebra::V_mul_MLT_add_in(xvec,h.A,x_dvec);
+    }
+    
+        
+    
 }
 /*--------------------------------------------
  init before a run
@@ -69,10 +85,12 @@ void MinCG::init()
     new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
     x0.~VecTens();
     new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x_d.~VecTens();
+    new (&x_d) VecTens<type0,1>(atoms,chng_box,__dim__);
     f0.~VecTens();
     new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
     
-    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],x_d.vecs[0],f0.vecs[0]},{atoms->x_d});
     dynamic->init();
     
     if(xprt)
@@ -105,10 +123,89 @@ void MinCG::fin()
     dynamic=NULL;
     
     f0.~VecTens();
+    x_d.~VecTens();
     x0.~VecTens();
     h.~VecTens();
     f.~VecTens();
     x.~VecTens();
+}
+/*--------------------------------------------
+ ff_test
+ --------------------------------------------*/
+#include "random.h"
+void MinCG::ff_test(int seed,type0 __max_dx,type0 __max_st,int __n_desc)
+{
+    
+    bool __chng_box=chng_box;
+    chng_box=true;
+    bool __H_dof[__dim__][__dim__];
+    Algebra::V_eq<__dim__*__dim__>(&H_dof[0][0],&__H_dof[0][0]);
+    Algebra::DoLT<__dim__>::func([this](int i,int j)
+    {H_dof[i][j]=H_dof[j][i]=true;});
+    
+    x.~VecTens();
+    new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
+    f.~VecTens();
+    new (&f) VecTens<type0,1>(atoms,chng_box,ff->f);
+    h.~VecTens();
+    new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x0.~VecTens();
+    new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x_d.~VecTens();
+    new (&x_d) VecTens<type0,1>(atoms,chng_box,__dim__);
+    
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],x_d.vecs[0]},{atoms->x_d});
+    dynamic->init();
+    
+    
+    
+    /* creating random h*/
+    Random rand(seed+atoms->comm_rank);
+    
+    int natms_lcl=atoms->natms_lcl;
+    type0* __h=h.vecs[0]->begin();
+    for(int i=0;i<__dim__*natms_lcl;i++)
+        __h[i]=(2.0*rand.uniform()-1.0)*__max_dx;
+    
+    Algebra::DoLT<__dim__>::func([this,&rand,&__max_st](int i,int j)
+    {h.A[i][j]=(2.0*rand.uniform()-1.0)*__max_st;});
+    
+    
+    x0=x;
+    force_calc();
+    f_h=f*h;
+    
+    
+    prep();
+    type0 alpha=0.0;
+    type0 dalpha=1.0/static_cast<type0>(__n_desc);
+    
+    type0 u0=F(alpha);
+    type0 du=0.0;
+    type0 du_alpha=0.0;
+    
+    ThermoDynamics thermo(12,"alpha",alpha,"delta_U",du,"dU*alpha",du_alpha);
+    thermo.init();
+    for(int i=0;i<__n_desc+1;i++)
+    {
+        du=F(alpha)-u0;
+        du_alpha=-alpha*f_h;
+        thermo.print(i);
+        alpha+=dalpha;
+    }
+    thermo.fin();
+    
+    dynamic->fin();
+    delete dynamic;
+    dynamic=NULL;
+
+    x_d.~VecTens();
+    x0.~VecTens();
+    h.~VecTens();
+    f.~VecTens();
+    x.~VecTens();
+    Algebra::V_eq<__dim__*__dim__>(&__H_dof[0][0],&H_dof[0][0]);
+    chng_box=__chng_box;
 }
 /*--------------------------------------------
  min
@@ -129,9 +226,9 @@ void MinCG::run(int nsteps)
  --------------------------------------------*/
 type0 MinCG::F(type0 alpha)
 {
-    x=x0+alpha*h;
+    x=x0+alpha*x_d;
     if(chng_box)
-        atoms->update_H();
+    atoms->update_H();
     
     dynamic->update(atoms->x);
     return ff->value_timer();
@@ -141,7 +238,7 @@ type0 MinCG::F(type0 alpha)
  --------------------------------------------*/
 type0 MinCG::dF(type0 alpha,type0& drev)
 {
-    x=x0+alpha*h;
+    x=x0+alpha*x_d;
     if(chng_box)
         atoms->update_H();
     
@@ -182,16 +279,15 @@ void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     
     h_norm=sqrt(h_norm);
     
-    //type0 max_a_lcl=max_dx;
-    type0 max_h_lcl=0.0;
-    type0 max_h;
-    type0* hvec=h.vecs[0]->begin();
+    type0 max_x_d_lcl=0.0;
+    type0 max_x_d;
+    type0* x_dvec=x_d.vecs[0]->begin();
     const int n=atoms->natms_lcl*__dim__;
     for(int i=0;i<n;i++)
-        max_h_lcl=MAX(max_h_lcl,fabs(hvec[i]));
+    max_x_d_lcl=MAX(max_x_d_lcl,fabs(x_dvec[i]));
     
-    MPI_Allreduce(&max_h_lcl,&max_h,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-    max_a=fabs(max_dx/max_h);
+    MPI_Allreduce(&max_x_d_lcl,&max_x_d,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+    max_a=fabs(max_dx/max_x_d);
     
 }
 /*--------------------------------------------
@@ -200,8 +296,7 @@ void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 void MinCG::F_reset()
 {
     x=x0;
-    if(chng_box)
-        atoms->update_H();
+    if(chng_box) atoms->update_H();
     dynamic->update(atoms->x);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
@@ -349,11 +444,12 @@ void MinCG::setup_tp_getset()
     getset_export(getset[6]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCG::methods[]=EmptyPyMethodDef(2);
+PyMethodDef MinCG::methods[]=EmptyPyMethodDef(3);
 /*--------------------------------------------*/
 void MinCG::setup_tp_methods()
 {
     ml_run(methods[0]);
+    ml_ff_test(methods[1]);
 }
 /*--------------------------------------------
  
@@ -447,6 +543,59 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
     Execute minimization
     
     This method starts the energy minimization for a given atoms object and maximum number of steps.
+    
+    Parameters
+    ----------
+    atoms : mapp.md.atoms
+        System of interest
+    max_nsteps : int
+        Maximum number of steps to achieve energy minimization
+        
+    Returns
+    -------
+    None
+
+    )---";
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCG::ml_ff_test(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="ff_test";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        Object* __self=reinterpret_cast<Object*>(self);
+        FuncAPI<OP<AtomsMD>,int,type0,type0,int> f("ff_test",{"atoms","seed","max_dx","max_strain","N"});
+        f.logics<1>()[0]=VLogics("ge",0);
+        f.logics<2>()[0]=VLogics("ge",0.0);
+        f.logics<3>()[0]=VLogics("ge",0.0);
+        f.logics<4>()[0]=VLogics("gt",0);
+        if(f(args,kwds)) return NULL;
+        
+        AtomsMD* __atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
+        ForceFieldMD* __ff=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->ff;
+        
+        __self->min->atoms=__atoms;
+        __self->min->ff=__ff;
+        
+        __self->min->ff_test(f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>());
+        
+        
+        
+        __self->min->ff=NULL;
+        __self->min->atoms=NULL;
+        
+        Py_RETURN_NONE;
+    });
+
+
+    tp_methods.ml_doc=(char*)R"---(
+    ff_test,(atoms,seed,max_dx,max_strain,N)
+   
+    for the purpose of testing
     
     Parameters
     ----------

@@ -15,13 +15,14 @@ namespace MAPP_NS
     protected:
         type0 max_dalpha;
         
-        void prepare_affine_h();
+        void prep();
         type0 calc_ndofs();
         type0 ndofs;
         
         VecTens<type0,2> h;
         VecTens<type0,2> x;
         VecTens<type0,2> x0;
+        VecTens<type0,2> x_d;
         VecTens<type0,2> f;
         VecTens<type0,2> f0;
         
@@ -135,7 +136,7 @@ void MinCGDMD::run(C* ls,int nsteps)
             h=f;
             f_h=f0_f0;
         }
-        if(affine) prepare_affine_h();
+        prep();
         err=ls->min(this,e_curr,alpha,1);
         
         if(err!=LS_S)

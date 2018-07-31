@@ -726,12 +726,13 @@ namespace MAPP_NS
         Vec<T>* vec;
         
         VecPy(Vec<T>*,F&);
-        ~VecPy();
+        virtual ~VecPy();
         
         void init();
         void fin();
-        void pre_iter();
-        void post_iter();
+        virtual void setup_arr_data();
+        virtual void pre_iter();
+        virtual void post_iter();
         //bool iter();
         
     };
@@ -757,6 +758,15 @@ ipos(0)
  
  --------------------------------------------*/
 template<typename T,class F>
+void VecPy<T,F>::setup_arr_data()
+{
+    arr_data=new T[dim];
+    npy_dim=static_cast<std::remove_pointer<npy_intp>::type>(dim);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T,class F>
 void VecPy<T,F>::init()
 {
     int natms_lcl=vec->atoms->natms_lcl;
@@ -774,9 +784,21 @@ void VecPy<T,F>::init()
         memcpy(data,vec->begin(),natms_lcl*dim*sizeof(T));
     }
     
-    arr_data=new T[dim];
-    npy_dim=static_cast<std::remove_pointer<npy_intp>::type>(dim);
+    setup_arr_data();
+//    if(npy_dim==1)
+//    {
+//        op=PyArray_SimpleNewFromData(0,&npy_dim,cpp_type2type_num<T>::type_num(),arr_data);
+//        std::cout<< "ptr before "<< op << " CNT " << Py_REFCNT(op)<<std::endl;
+//        op=PyArray_Return((PyArrayObject* )op);
+//
+//        std::cout<< "ptr after "<< op << " CNT " << Py_REFCNT(op)<<std::endl;
+//        std::cout<<"SIZE  SCALAR  " << PyArray_DescrFromScalar(op)->elsize << " VS " <<sizeof(T) <<std::endl;
+//    }
+//    else
     op=PyArray_SimpleNewFromData(1,&npy_dim,cpp_type2type_num<T>::type_num(),arr_data);
+    
+    //op=PyArray_SimpleNewFromData(1,&npy_dim,cpp_type2type_num<T>::type_num(),arr_data);
+    
     head=data;
 }
 /*--------------------------------------------
@@ -793,6 +815,9 @@ void VecPy<T,F>::pre_iter()
 template<typename T,class F>
 void VecPy<T,F>::post_iter()
 {
+//    if(npy_dim==1)
+//        PyArray_ScalarAsCtype(op,arr_data);
+    
     try
     {
         func(head,arr_data);
@@ -856,7 +881,14 @@ void VecPy<T,F>::fin()
 template<typename T,class F>
 VecPy<T,F>::~VecPy()
 {
+    if(op)
+    {
+        Py_DECREF(op);
+        op=NULL;
+    }
     
+    delete [] arr_data;
+    delete [] data;
 }
 
 /*------------------------------------------------------------------------------------------------

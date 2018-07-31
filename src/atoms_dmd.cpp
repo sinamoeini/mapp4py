@@ -19,7 +19,7 @@ s(NAN)
     alpha=new DMDVec<type0>(this,0.0,"alpha");
     c=new DMDVec<type0>(this,-1.0,"c");
     dof_alpha=new DMDVec<bool>(this,true,"dof_alpha");
-    dof_c=new DMDVec<bool>(this,true,"c_dof");
+    dof_c=new DMDVec<bool>(this,true,"dof_c");
 
     dof_alpha->empty(true);
     dof_c->empty(true);
@@ -109,6 +109,98 @@ type0 AtomsDMD::vac_msd()
     });
 
     return cv_vals[__dim__]-Algebra::V_mul_V<__dim__>(cv_vals,cv_vals);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::DO(PyObject* op)
+{
+    class Func_id
+    {
+    public:
+        void operator()(unsigned int* old_val,unsigned int* new_val)
+        {
+            if(*old_val!=*new_val)
+                throw std::string("id of atoms cannot be changed");
+        };
+    };
+    Func_id func_id;
+    VecPy<unsigned int,Func_id> id_vec_py(id,func_id);
+    
+    class Func_x
+    {
+    public:
+        void operator()(type0*,type0*)
+        {};
+    };
+    Func_x func_x;
+    VecPy<type0,Func_x> x_vec_py(x,func_x);
+    
+    class Func_dof
+    {
+    public:
+        void operator()(bool*,bool*)
+        {
+        };
+    };
+    Func_dof func_dof;
+    VecPy<bool,Func_dof> dof_vec_py(dof,func_dof);
+    
+    
+    class Func_alpha
+    {
+    public:
+        int c_dim;
+        Func_alpha(int __c_dim):c_dim(__c_dim){}
+        void operator()(type0* old_val,type0* new_val)
+        {
+            for(int i=0;i<c_dim;i++)
+                if(new_val[i]<=0.0 && new_val[i]!=old_val[i])
+                    throw std::string("all values of alpha corresponding to present elements (i.e. c!=-1.0) should be greater than 0.0");
+        };
+    };
+    Func_alpha func_alpha(c_dim);
+    DMDVecPy<type0,Func_alpha> alpha_vec_py(alpha,func_alpha);
+    
+    
+    
+    class Func_c
+    {
+    public:
+        int c_dim;
+        Func_c(int __c_dim):c_dim(__c_dim){}
+        void operator()(type0* old_val,type0* new_val)
+        {
+            type0 sum_c=0.0;
+            for(int i=0;i<c_dim;i++)
+            {
+                if(new_val[i]!=-1.0 && (new_val[i]<0.0 || new_val[i]>1.0))
+                    throw std::string("all values of c should be greater or equal to 0.0 and less than or equal to 1.0, or equal to -1.0");
+                if(new_val[i]!=-1.0) sum_c+=new_val[i];
+                
+            }
+            if(sum_c>1.0)
+                throw std::string("sum of present elements of one site should not exceed 1.0");
+        };
+    };
+    Func_c func_c(c_dim);
+    DMDVecPy<type0,Func_c> c_vec_py(c,func_c);
+    
+    
+    
+    DMDVecPy<bool,Func_dof> c_dof_vec_py(dof_c,func_dof);
+    DMDVecPy<bool,Func_dof> alpha_dof_vec_py(dof_alpha,func_dof);
+    try
+    {
+        VecPyFunc::Do(this,op,id_vec_py,x_vec_py,alpha_vec_py,c_vec_py,dof_vec_py,c_dof_vec_py,alpha_dof_vec_py);
+    }
+    catch(std::string& err_msg)
+    {
+        throw err_msg;
+    }
+    
+    if(x_vec_py.inc) this->reset_domain();
+    
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
@@ -215,21 +307,22 @@ void AtomsDMD::setup_tp_getset()
 /*--------------------------------------------*/
 
 #ifdef SC_DMD
-PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(16);
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(17);
 #else
-PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(7);
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(8);
 #endif
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
-    ml_strain(methods[0]);
-    ml_mul(methods[1]);
-    ImportCFGDMD::ml_import(methods[2]);
-    ForceFieldEAMDMD::ml_new(methods[3],methods[4],methods[5]);
+    ml_do(methods[0]);
+    ml_strain(methods[1]);
+    ml_mul(methods[2]);
+    ImportCFGDMD::ml_import(methods[3]);
+    ForceFieldEAMDMD::ml_new(methods[4],methods[5],methods[6]);
 #ifdef SC_DMD
-    ForceFieldEAMDMDSC::ml_new(methods[6],methods[7],methods[8]);
-    ForceFieldEAMDMDSCC::ml_new(methods[9],methods[10],methods[11]);
-    ForceFieldEAMDMDCLUSTER::ml_new(methods[12],methods[13],methods[14]);
+    ForceFieldEAMDMDSC::ml_new(methods[7],methods[8],methods[9]);
+    ForceFieldEAMDMDSCC::ml_new(methods[10],methods[11],methods[12]);
+    ForceFieldEAMDMDCLUSTER::ml_new(methods[13],methods[14],methods[15]);
 #endif
 }
 /*--------------------------------------------

@@ -203,8 +203,7 @@ type0* ForceFieldMD::derivative_timer()
 //    Algebra::Do<__nvoigt__>::func([this,&vol](int i){__vec[i+1]/=-vol;});
 //    atoms->pe=__vec[0];
 //    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_pe);
-
-}
+//}
 
 
 

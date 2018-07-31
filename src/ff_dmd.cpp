@@ -50,6 +50,39 @@ void ForceFieldDMD::reset()
 /*--------------------------------------------
  
  --------------------------------------------*/
+void ForceFieldDMD::impose_dof(type0* __f,type0* __f_alpha)
+{
+    if(!dof_empty)
+    {
+        bool* dof=atoms->dof->begin();
+        const int n=atoms->natms_lcl*__dim__;
+        for(int i=0;i<n;i++) __f[i]=dof[i] ? __f[i]:0.0;
+    }
+    
+    if(!dof_alpha_empty)
+    {
+        bool* dof=atoms->dof_alpha->begin();
+        const int n=atoms->natms_lcl*c_dim;
+        for(int i=0;i<n;i++) __f_alpha[i]=dof[i] ? __f_alpha[i]:0.0;
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 ForceFieldDMD::norm_sq(type0* __f,type0* __f_alpha)
+{
+    type0 err_lcl=0.0,err;
+    int n=atoms->natms_lcl*__dim__;
+    for(int i=0;i<n;i++) err_lcl+=__f[i]*__f[i];
+    n=atoms->natms_lcl*c_dim;
+    for(int i=0;i<n;i++) err_lcl+=__f_alpha[i]*__f_alpha[i];
+    
+    MPI_Allreduce(&err_lcl,&err,1,Vec<type0>::MPI_T,MPI_SUM,world);
+    return err;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void ForceFieldDMD::reset_c_d()
 {
     type0* __c_d=c_d->begin();
@@ -231,6 +264,22 @@ void ForceFieldDMD::force_calc_static_timer()
 {
     reset();
     force_calc_static();
+    if(!dof_empty)
+    {
+        type0* fvec=f->begin();
+        bool* dof=atoms->dof->begin();
+        const int n=atoms->natms_lcl*__dim__;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
+    
+    if(!dof_alpha_empty)
+    {
+        type0* fvec=f_alpha->begin();
+        bool* dof=atoms->dof_alpha->begin();
+        const int n=atoms->natms_lcl*c_dim;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
+    
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+2,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]/=atoms->vol;});
     
@@ -305,6 +354,22 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f,type0 (&S)[__dim__][__dim__]
 {
     Algebra::zero<__nvoigt__+2>(__vec_lcl);
     type0 err_sq=prep(f);
+    if(!dof_empty)
+    {
+        type0* fvec=f.vecs[0]->begin();
+        bool* dof=atoms->dof->begin();
+        const int n=atoms->natms_lcl*__dim__;
+        for(int i=0;i<n;i++) if(!dof[i]) {fvec[i]=0.0; }
+    }
+    
+    if(!dof_alpha_empty)
+    {
+        type0* fvec=f.vecs[0]->begin();
+        bool* dof=atoms->dof_alpha->begin();
+        const int n=atoms->natms_lcl*c_dim;
+        for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
+    }
+    
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     type0 vol=atoms->vol;
     Algebra::DoLT<__dim__>::func([&S,&err_sq,&f,this,&vol](int i,int j)

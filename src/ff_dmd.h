@@ -23,6 +23,8 @@ namespace MAPP_NS
         virtual void J(Vec<type0>*,Vec<type0>*)=0;
         void pre_init();
         void post_fin();
+        void impose_dof(type0*,type0*);
+        type0 norm_sq(type0*,type0*);
     public:
         bool dof_empty,dof_alpha_empty,dof_c_empty;
         

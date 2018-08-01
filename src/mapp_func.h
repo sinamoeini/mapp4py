@@ -1,5 +1,6 @@
 #include "global.h"
 #include <stddef.h>
+#include <string.h>
 #include <string>
 #ifndef __MAPP__mapp_func__
 #define __MAPP__mapp_func__

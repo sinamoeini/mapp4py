@@ -364,7 +364,7 @@ void ForceFieldEAMDMD::force_calc()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
+void ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
 {
     if(max_pairs<neighbor->no_pairs || ddrho_phi_drdr==NULL)
     {
@@ -610,7 +610,7 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
     type0 dx_ij[__dim__];
-    type0 norm_sq_lcl=0.0,fpair,apair;
+    type0 fpair,apair;
     istart=0;
     for(int i=0;i<n;i++)
     {
@@ -650,19 +650,10 @@ type0 ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
         
         f_alpha_i-=3.0*kbT/alpha_i;
         f_alphavec[i]+=f_alpha_i;
-        norm_sq_lcl+=f_alphavec[i]*f_alphavec[i];
         
         if((i+1)%c_dim==0)
-        {
             Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
-            norm_sq_lcl+=Algebra::V_mul_V<__dim__>(fvec+__dim__*(i/c_dim),fvec+__dim__*(i/c_dim));
-        }
     }
-    
-    
-    type0 norm;
-    MPI_Allreduce(&norm_sq_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    return norm;
 }
 /*--------------------------------------------
  
@@ -1433,6 +1424,14 @@ void ForceFieldEAMDMD::c_d_calc()
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=4)
         {
             j=neighbor_list[i][__j];
+            if(!dof_c_empty && !(atoms->dof_c->begin()[i] && atoms->dof_c->begin()[j]))
+            {
+                M_IJ[istart]=0.0;
+                M_IJ[istart+1]=0.0;
+                M_IJ[istart+2]=0.0;
+                M_IJ[istart+3]=0.0;
+                continue;
+            }
             alpha_j=alpha[j];
             alpha_sq_j=alpha_j*alpha_j;
             rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);

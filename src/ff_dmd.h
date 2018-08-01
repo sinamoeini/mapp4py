@@ -19,7 +19,7 @@ namespace MAPP_NS
         
         virtual void force_calc_static()=0;
         virtual void c_d_calc()=0;
-        virtual type0 prep(VecTens<type0,2>&)=0;
+        virtual void prep(VecTens<type0,2>&)=0;
         virtual void J(Vec<type0>*,Vec<type0>*)=0;
         void pre_init();
         void post_fin();

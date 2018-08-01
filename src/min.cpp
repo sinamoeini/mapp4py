@@ -67,26 +67,26 @@ Min::~Min()
 /*--------------------------------------------
  pre run check it throw excepctions
  --------------------------------------------*/
-void Min::pre_run_chk(Atoms* atoms,ForceField* ff)
+void Min::pre_run_chk(Atoms* __atoms,ForceField* __ff)
 {
     //check if configuration is loaded
-    if(!atoms)
+    if(!__atoms)
         throw std::string("cannot start minimization without initial conditions");
     
     //check if force field is loaded
-    if(!ff)
+    if(!__ff)
         throw std::string("cannot start minimization without governing equations (force field)");
     
     //check to see if the H_dof components are consistent with stoms->dof
-    if(chng_box && !atoms->dof->is_empty())
+    if(chng_box && !__atoms->dof->is_empty())
     {
-        bool* dof=atoms->dof->begin();
+        bool* dof=__atoms->dof->begin();
         int __dof_lcl[__dim__]{DESIG(__dim__,0)};
-        for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
+        for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
         int __dof[__dim__]{DESIG(__dim__,0)};
-        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
+        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,__atoms->world);
         std::string err_msg=std::string();
         for(int i=0;i<__dim__;i++)
             for(int j=i;j<__dim__;j++)

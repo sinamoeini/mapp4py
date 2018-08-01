@@ -1845,8 +1845,8 @@ void ForceFieldEAMDMDSC::sc_loop_cluster()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-type0 ForceFieldEAMDMDSC::prep(VecTens<type0,2>& f)
-{ return 0.0;}
+void ForceFieldEAMDMDSC::prep(VecTens<type0,2>& f)
+{}
 /*--------------------------------------------
  
  --------------------------------------------*/

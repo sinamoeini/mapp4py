@@ -1,4 +1,5 @@
 #include "dae.h"
+#include "MAPP.h"
 #include "atoms_dmd.h"
 #include "dynamic_dmd.h"
 #include "ff_dmd.h"
@@ -51,7 +52,7 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
     
     //check to see if the H_dof components are consistent with stoms->dof
     
-    if(!__atoms->dof->is_empty())
+    if(chng_box && !__atoms->dof->is_empty())
     {
         bool* dof=__atoms->dof->begin();
         int __dof_lcl[__dim__]{DESIG(__dim__,0)};
@@ -59,20 +60,30 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
         int __dof[__dim__]{DESIG(__dim__,0)};
-        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,atoms->world);
+        MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,__atoms->world);
         std::string err_msg=std::string();
         for(int i=0;i<__dim__;i++)
             for(int j=i;j<__dim__;j++)
                 if(S_dof[i][j] && __dof[i])
                 {
-                    if(!err_msg.empty()) err_msg+="\n";
-                    err_msg+="cannot impose stress component ["+Print::to_string(i)+"]["+Print::to_string(j)
-                    +"] while any of the atoms do not have degree freedom in "+Print::to_string(i)
-                    +" direction";
+                    /*
+                     if(!err_msg.empty()) err_msg+="\n";
+                     err_msg+="cannot impose stress component ["+Print::to_string(i)+"]["+Print::to_string(j)
+                     +"] while any of the atoms do not have degree freedom in "+Print::to_string(i)
+                     +" direction";
+                     */
+                    err_msg+="\nyou have atoms that do not have degree freedom in "+Print::to_string(i)
+                    +" direction they will be deformed affinely due to defined degrees of freedom H_dof["+Print::to_string(i)+"]["+Print::to_string(j)+"]";
                 }
         
-        if(!err_msg.empty()) throw err_msg;
+        //if(!err_msg.empty()) throw err_msg;
+        if(!err_msg.empty() && ntally)
+        {
+            err_msg="Warning:"+err_msg+"\n";
+            fprintf(MAPP::mapp_out,"%s",err_msg.c_str());
+        }
     }
+    
 }
 /*--------------------------------------------
  
@@ -105,6 +116,7 @@ void DAE::init_static()
     //a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
     c=atoms->c->begin();
     c_d=ff->c_d->begin();
+    
 }
 /*--------------------------------------------
  
@@ -121,7 +133,7 @@ void DAE::init()
 {
     c_dim=atoms->c_dim;
     ff->c_d->fill();
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{},{},{});
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->dof_c},{atoms->dof,atoms->dof_alpha},{});
     dynamic->init();
     a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
 }

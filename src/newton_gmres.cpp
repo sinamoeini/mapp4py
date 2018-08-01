@@ -74,7 +74,7 @@ void NewtonGMRES::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
  --------------------------------------------*/
 void NewtonGMRES::init()
 {
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{},{},{});
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{},{atoms->dof,atoms->dof_alpha,atoms->dof_c},{});
     dynamic->init();
     c_dim=atoms->c_dim;
     a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(atoms->natms*(__dim__+c_dim)));

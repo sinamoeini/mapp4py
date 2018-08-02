@@ -78,9 +78,9 @@ void Min::pre_run_chk(Atoms* __atoms,ForceField* __ff)
         throw std::string("cannot start minimization without governing equations (force field)");
     
     //check to see if the H_dof components are consistent with stoms->dof
-    if(chng_box && !__atoms->dof->is_empty())
+    if(chng_box && !__atoms->x_dof->is_empty())
     {
-        bool* dof=__atoms->dof->begin();
+        bool* dof=__atoms->x_dof->begin();
         int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});

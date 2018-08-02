@@ -37,6 +37,42 @@ ForceFieldDMD::~ForceFieldDMD()
 /*--------------------------------------------
  
  --------------------------------------------*/
+void ForceFieldDMD::calc_ndof()
+{
+    nx_dof=atoms->natms*__dim__;
+    if(!atoms->x_dof->is_empty())
+    {
+        const int n=atoms->natms_lcl*__dim__;
+        int nx_dof_lcl=n;
+        bool* x_dof=atoms->x_dof->begin();
+        for(int i=0;i<n;i++) if(!x_dof[i]) nx_dof_lcl--;
+        MPI_Allreduce(&nx_dof_lcl,&nx_dof,1,Vec<int>::MPI_T,MPI_SUM,world);
+    }
+    
+    nalpha_dof=atoms->natms*atoms->c_dim;
+    if(!atoms->alpha_dof->is_empty())
+    {
+        const int n=atoms->natms_lcl*atoms->c_dim;
+        int nalpha_dof_lcl=n;
+        bool* alpha_dof=atoms->alpha_dof->begin();
+        for(int i=0;i<n;i++) if(!alpha_dof[i]) nalpha_dof_lcl--;
+        MPI_Allreduce(&nalpha_dof_lcl,&nalpha_dof,1,Vec<int>::MPI_T,MPI_SUM,world);
+    }
+    
+    
+    nc_dof=atoms->natms*atoms->c_dim;
+    if(!atoms->c_dof->is_empty())
+    {
+        const int n=atoms->natms_lcl*atoms->c_dim;
+        int nc_dof_lcl=n;
+        bool* c_dof=atoms->c_dof->begin();
+        for(int i=0;i<n;i++) if(!c_dof[i]) nc_dof_lcl--;
+        MPI_Allreduce(&nc_dof_lcl,&nc_dof,1,Vec<int>::MPI_T,MPI_SUM,world);
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void ForceFieldDMD::reset()
 {
     type0* __f=f->begin();
@@ -54,14 +90,14 @@ void ForceFieldDMD::impose_dof(type0* __f,type0* __f_alpha)
 {
     if(!dof_empty)
     {
-        bool* dof=atoms->dof->begin();
+        bool* dof=atoms->x_dof->begin();
         const int n=atoms->natms_lcl*__dim__;
         for(int i=0;i<n;i++) __f[i]=dof[i] ? __f[i]:0.0;
     }
     
     if(!dof_alpha_empty)
     {
-        bool* dof=atoms->dof_alpha->begin();
+        bool* dof=atoms->alpha_dof->begin();
         const int n=atoms->natms_lcl*c_dim;
         for(int i=0;i<n;i++) __f_alpha[i]=dof[i] ? __f_alpha[i]:0.0;
     }
@@ -94,9 +130,9 @@ void ForceFieldDMD::reset_c_d()
  --------------------------------------------*/
 void ForceFieldDMD::pre_init()
 {
-    dof_empty=atoms->dof->is_empty();
-    dof_alpha_empty=atoms->dof_alpha->is_empty();
-    dof_c_empty=atoms->dof_c->is_empty();
+    dof_empty=atoms->x_dof->is_empty();
+    dof_alpha_empty=atoms->alpha_dof->is_empty();
+    dof_c_empty=atoms->c_dof->is_empty();
     
     type0 tmp;
     max_cut=0.0;
@@ -268,6 +304,9 @@ void ForceFieldDMD::c_d_calc_timer()
 {
     reset_c_d();
     c_d_calc();
+    
+    impose_dof(f->begin(),f_alpha->begin());
+    err=sqrt(norm_sq(f->begin(),f_alpha->begin()));
 }
 /*--------------------------------------------
  
@@ -316,6 +355,7 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f)
     prep(f);
     impose_dof(f.vecs[0]->begin(),f.vecs[1]->begin());
     type0 err_sq=norm_sq(f.vecs[0]->begin(),f.vecs[1]->begin());
+    err=sqrt(err_sq);
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]/=atoms->vol;});
     
@@ -333,7 +373,7 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f,type0 (&S)[__dim__][__dim__]
     prep(f);
     impose_dof(f.vecs[0]->begin(),f.vecs[1]->begin());
     type0 err_sq=norm_sq(f.vecs[0]->begin(),f.vecs[1]->begin());
-    
+    err=sqrt(err_sq);
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     type0 vol=atoms->vol;
     Algebra::DoLT<__dim__>::func([&S,&err_sq,&f,this,&vol](int i,int j)

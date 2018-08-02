@@ -19,6 +19,7 @@ namespace MAPP_NS
     
         void pre_init();
         void post_fin();
+        
     public:
         int gcmc_n_vars;
         int gcmc_n_cutoff;
@@ -46,6 +47,9 @@ namespace MAPP_NS
         void pre_xchng_energy_timer(class GCMC*);
         type0 xchng_energy_timer(class GCMC*);
         void post_xchng_energy_timer(class GCMC*);
+        
+        void calc_ndof();
+        int nx_dof;
     };
 }
 

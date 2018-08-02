@@ -93,7 +93,7 @@ SGCMC::~SGCMC()
  --------------------------------------------*/
 void SGCMC::init()
 {
-    dof_empty=atoms->dof->is_empty();
+    dof_empty=atoms->x_dof->is_empty();
     GCMC::init();
     MPI_Scan(&ngas_lcl,&ngas_before,1,MPI_INT,MPI_SUM,world);
     ngas_before-=ngas_lcl;
@@ -343,7 +343,7 @@ void SGCMC::ins_succ()
         if(tag_vec_p) tag_vec_p->begin()[natms_lcl-1]=-1;
         if(!dof_empty)
         {
-            bool* dof=atoms->dof->begin()+(natms_lcl-1)*__dim__;
+            bool* dof=atoms->x_dof->begin()+(natms_lcl-1)*__dim__;
             for(int i=0;i<__dim__;i++) dof[i]=true;
         }
         

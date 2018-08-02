@@ -61,7 +61,7 @@ void MDNVT::update_x_d_final_w_dof(type0 fac_x_d)
 {
     const int n=atoms->natms_lcl*__dim__;
     type0* x_d=atoms->x_d->begin();
-    bool* dof=atoms->dof->begin();
+    bool* dof=atoms->x_dof->begin();
     for(int i=0;i<n;i++) if(dof[i]) x_d[i]*=fac_x_d;
 }
 /*--------------------------------------------
@@ -137,7 +137,7 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
     type0 m_i;
     type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
     const int natms0=atoms->natms_lcl;
-    bool* dof=atoms->dof->begin();
+    bool* dof=atoms->x_dof->begin();
     for(int i=0;i<natms0;++i)
     {
         m_i=m[*elem];
@@ -163,7 +163,7 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
     
     Algebra::Do<__dim__>::func([&dx,this](const int i){dx[i]/=Ndof_part[i];});
     x=atoms->x->begin();
-    dof=atoms->dof->begin();
+    dof=atoms->x_dof->begin();
     for(int i=0;i<natms0;++i,x+=__dim__,dof+=__dim__)
         Algebra::Do<__dim__>::func([&dx,&x,&dof](const int j){if(dof[j]) x[j]-=dx[j];});
     
@@ -175,7 +175,7 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
     f=ff->f->begin();
     x_d=atoms->x_d->begin();
     elem=atoms->elem->begin();
-    dof=atoms->dof->begin();
+    dof=atoms->x_dof->begin();
     Algebra::zero<__nvoigt__>(__vec_lcl);
     type0 __x_d[__dim__];
     const int natms1=atoms->natms_lcl;
@@ -222,7 +222,7 @@ void MDNVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
  --------------------------------------------*/
 void MDNVT::pre_init()
 {
-    dof_empty=atoms->dof->is_empty();
+    dof_empty=atoms->x_dof->is_empty();
     kB=atoms->kB;
     /*
      calculating the number of degress of freedom
@@ -234,7 +234,7 @@ void MDNVT::pre_init()
     
     if(!dof_empty)
     {
-        bool* dof=atoms->dof->begin();
+        bool* dof=atoms->x_dof->begin();
         int Ndof_red_lcl[__dim__]={DESIG(__dim__,0)};
         int natms_lcl=atoms->natms_lcl;
         
@@ -281,7 +281,7 @@ void MDNVT::pre_init()
         }
         else
         {
-            bool* dof=atoms->dof->begin();
+            bool* dof=atoms->x_dof->begin();
             type0 __x_d[__dim__];
             for(int i=0;i<natms_lcl;i++)
             {
@@ -307,7 +307,7 @@ void MDNVT::init()
 {
     pre_init();
     
-    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
+    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->x_dof},{});
     dynamic->init();
     
     if(xprt)

@@ -46,9 +46,9 @@ void NewtonGMRES::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
     
     //check to see if the H_dof components are consistent with stoms->dof
     
-    if(!__atoms->dof->is_empty())
+    if(!__atoms->x_dof->is_empty())
     {
-        bool* dof=__atoms->dof->begin();
+        bool* dof=__atoms->x_dof->begin();
         int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
@@ -74,7 +74,7 @@ void NewtonGMRES::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
  --------------------------------------------*/
 void NewtonGMRES::init()
 {
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{},{atoms->dof,atoms->dof_alpha,atoms->dof_c},{});
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{},{atoms->x_dof,atoms->alpha_dof,atoms->c_dof},{});
     dynamic->init();
     c_dim=atoms->c_dim;
     a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(atoms->natms*(__dim__+c_dim)));

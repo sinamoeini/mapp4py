@@ -76,31 +76,24 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
         int nelems=static_cast<int>(atoms->elements.nelems);
         bool* elem_printed=nelems==0 ? NULL:new bool[nelems];
         for(int i=0;i<nelems;i++) elem_printed[i]=false;
-        int curr_elem=-1;
-        int __curr_elem;
         type0* c=atoms->c->begin_dump();
         type0* __c=c;
-        type0 max_c;
         unsigned int iatm;
         
         vec** usr_vecs=vecs+ndef_vecs;
         
+        int curr_elem,__curr_elem;
+        int first_elem=-1;
+        if(natms) first_elem=max_pos(c,nelems);
         for(int i=0;i<nelems;i++)
-            fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
-        
+            if(i!=first_elem) fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        curr_elem=-1;
         for(int i=0;i<natms;i++)
         {
             iatm=id_map[i];
             
             __c=c+iatm*nelems;
-            max_c=*__c;
-            __curr_elem=0;
-            for(int j=1;j<nelems;j++)
-                if(__c[j]>max_c)
-                {
-                    max_c=__c[j];
-                    __curr_elem=j;
-                }
+            __curr_elem=max_pos(__c, nelems);
             
             if(__curr_elem!=curr_elem)
             {
@@ -150,28 +143,21 @@ void ExportCFGDMD::write_body(FILE* fp)
         int nelems=static_cast<int>(atoms->elements.nelems);
         bool* elem_printed=nelems==0 ? NULL:new bool[nelems];
         for(int i=0;i<nelems;i++) elem_printed[i]=false;
-        int curr_elem=-1;
-        int __curr_elem;
         type0* c=atoms->c->begin_dump();
         type0* __c;
-        type0 max_c;
         vec** usr_vecs=vecs+ndef_vecs;
         
+        int curr_elem,__curr_elem;
+        int first_elem=-1;
+        if(natms) first_elem=max_pos(c,nelems);
         for(int i=0;i<nelems;i++)
-            fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+            if(i!=first_elem) fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        curr_elem=-1;
         
         for(int i=0;i<natms;i++)
         {
             __c=c+i*nelems;
-            max_c=*__c;
-            __curr_elem=0;
-            for(int j=1;j<nelems;j++)
-                if(__c[j]>max_c)
-                {
-                    max_c=__c[j];
-                    __curr_elem=j;
-                }
-            
+            __curr_elem=max_pos(__c, nelems);
             
             if(__curr_elem!=curr_elem)
             {

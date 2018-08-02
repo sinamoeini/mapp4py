@@ -157,7 +157,7 @@ bool DAEImplicit::newton()
         }
         type0 F_norm;
         MPI_Allreduce(&F_norm_lcl,&F_norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-        return sqrt(F_norm)/a_tol_sqrt_nc_dofs;
+        return sqrt(F_norm)/a_tol_sqrt_nc_dof;
     };
     
     auto Jacobain_calc=[this](Vec<type0>* x,Vec<type0>* Jx)->void
@@ -172,8 +172,8 @@ bool DAEImplicit::newton()
     
     
     
-    type0 res_tol=0.005*a_tol_sqrt_nc_dofs/err_fac;
-    type0 denom=0.1*a_tol_sqrt_nc_dofs/err_fac;
+    type0 res_tol=0.005*a_tol_sqrt_nc_dof/err_fac;
+    type0 denom=0.1*a_tol_sqrt_nc_dof/err_fac;
     type0 norm=1.0,delta=0.0,delta_prev=0.0,ratio=1.0,R=1.0;
     
     int iter=0;

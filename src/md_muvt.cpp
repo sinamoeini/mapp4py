@@ -95,7 +95,7 @@ void MDMuVT::update_x_d__x_w_dof(type0 fac_x_d)
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    bool* dof=atoms->dof->begin();
+    bool* dof=atoms->x_dof->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
     type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
@@ -134,7 +134,7 @@ void MDMuVT::update_x_d_w_dof()
     type0* f=ff->f->begin();
     type0* x_d=atoms->x_d->begin();
     elem_type* elem=atoms->elem->begin();
-    bool* dof=atoms->dof->begin();
+    bool* dof=atoms->x_dof->begin();
     type0* m=atoms->elements.masses;
     type0 m_i;
     Algebra::zero<__nvoigt__>(__vec_lcl);
@@ -184,9 +184,9 @@ void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     }
     
     
-    if(!atoms->dof->is_empty())
+    if(!atoms->x_dof->is_empty())
     {
-        bool* dof=atoms->dof->begin();
+        bool* dof=atoms->x_dof->begin();
         elem_type* elem=atoms->elem->begin();
         int err_lcl=0;
         for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
@@ -215,7 +215,7 @@ void MDMuVT::init()
 {
     pre_init();
     
-    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->dof},{});
+    dynamic=new DynamicMD(atoms,ff,false,{},{atoms->x_d,atoms->x_dof},{});
     dynamic->init();
     
     if(xprt)

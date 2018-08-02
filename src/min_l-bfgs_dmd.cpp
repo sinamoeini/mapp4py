@@ -56,7 +56,7 @@ void MinLBFGSDMD::init()
     }
     
     dynamic=new DynamicDMD(atoms,ff,chng_box,{},
-    {atoms->dof,atoms->dof_alpha,atoms->dof_c,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
+    {atoms->x_dof,atoms->alpha_dof,atoms->c_dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
     
     for(int i=0;i<m;i++)
     {

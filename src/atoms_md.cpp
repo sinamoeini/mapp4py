@@ -71,9 +71,9 @@ void AtomsMD::create_T(type0 T,int seed)
     type0* m=elements.masses;
     elem_type* __elem=elem->begin();
     type0 fac;
-    if(!dof->is_empty())
+    if(!x_dof->is_empty())
     {
-        bool* __dof=dof->begin();
+        bool* __dof=x_dof->begin();
         for(int i=0;i<natms_lcl;i++)
         {
             fac=sqrt(kB*T/m[*__elem]);
@@ -156,7 +156,7 @@ void AtomsMD::DO(PyObject* op)
         };
     };
     Func_dof func_dof;
-    VecPy<bool,Func_dof> dof_vec_py(dof,func_dof);
+    VecPy<bool,Func_dof> dof_vec_py(x_dof,func_dof);
     try
     {
         VecPyFunc::Do(this,op,id_vec_py,x_vec_py,x_d_vec_py,elem_vec_py,dof_vec_py);

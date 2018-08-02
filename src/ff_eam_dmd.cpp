@@ -1252,7 +1252,7 @@ void ForceFieldEAMDMD::calc_mu()
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
     type0 dx_ij[__dim__];
-    type0 norm_sq_lcl=0.0,fpair,apair;
+    type0 fpair,apair;
     istart=0;
     for(int i=0;i<n;i++)
     {
@@ -1292,22 +1292,14 @@ void ForceFieldEAMDMD::calc_mu()
         
         f_alpha_i-=3.0*kbT/alpha_i;
         falpha[i]+=f_alpha_i;
-        norm_sq_lcl+=falpha[i]*falpha[i];
         
         if((i+1)%c_dim==0)
-        {
             Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
-            norm_sq_lcl+=Algebra::V_mul_V<__dim__>(fvec+__dim__*(i/c_dim),fvec+__dim__*(i/c_dim));
-        }
         
     }
     
     dynamic->update(mu_ptr);
     
-    
-    type0 norm;
-    MPI_Allreduce(&norm_sq_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    err=sqrt(norm);
 }
 /*--------------------------------------------
  force calculation
@@ -1424,7 +1416,7 @@ void ForceFieldEAMDMD::c_d_calc()
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=4)
         {
             j=neighbor_list[i][__j];
-            if(!dof_c_empty && !(atoms->dof_c->begin()[i] && atoms->dof_c->begin()[j]))
+            if(!dof_c_empty && !(atoms->c_dof->begin()[i] && atoms->c_dof->begin()[j]))
             {
                 M_IJ[istart]=0.0;
                 M_IJ[istart+1]=0.0;

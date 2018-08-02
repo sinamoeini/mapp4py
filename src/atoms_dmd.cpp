@@ -18,19 +18,19 @@ s(NAN)
     elem=new Vec<elem_type>(this,c_dim,"elem");
     alpha=new DMDVec<type0>(this,0.0,"alpha");
     c=new DMDVec<type0>(this,-1.0,"c");
-    dof_alpha=new DMDVec<bool>(this,true,"dof_alpha");
-    dof_c=new DMDVec<bool>(this,true,"dof_c");
+    alpha_dof=new DMDVec<bool>(this,true,"alpha_dof");
+    c_dof=new DMDVec<bool>(this,true,"c_dof");
 
-    dof_alpha->empty(true);
-    dof_c->empty(true);
+    alpha_dof->empty(true);
+    c_dof->empty(true);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 AtomsDMD::~AtomsDMD()
 {
-    delete dof_alpha;
-    delete dof_c;
+    delete alpha_dof;
+    delete c_dof;
     delete c;
     delete alpha;
     delete elem;
@@ -144,7 +144,7 @@ void AtomsDMD::DO(PyObject* op)
         };
     };
     Func_dof func_dof;
-    VecPy<bool,Func_dof> dof_vec_py(dof,func_dof);
+    VecPy<bool,Func_dof> dof_vec_py(x_dof,func_dof);
     
     
     class Func_alpha
@@ -188,8 +188,8 @@ void AtomsDMD::DO(PyObject* op)
     
     
     
-    DMDVecPy<bool,Func_dof> c_dof_vec_py(dof_c,func_dof);
-    DMDVecPy<bool,Func_dof> alpha_dof_vec_py(dof_alpha,func_dof);
+    DMDVecPy<bool,Func_dof> c_dof_vec_py(c_dof,func_dof);
+    DMDVecPy<bool,Func_dof> alpha_dof_vec_py(alpha_dof,func_dof);
     try
     {
         VecPyFunc::Do(this,op,id_vec_py,x_vec_py,alpha_vec_py,c_vec_py,dof_vec_py,c_dof_vec_py,alpha_dof_vec_py);

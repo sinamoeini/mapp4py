@@ -123,7 +123,7 @@ PGCMC::~PGCMC()
  --------------------------------------------*/
 void PGCMC::init()
 {
-    dof_empty=atoms->dof->is_empty();
+    dof_empty=atoms->x_dof->is_empty();
     GCMC::init();
     box_setup();
 }
@@ -707,7 +707,7 @@ void PGCMC::ins_succ()
     if(tag_vec_p) tag_vec_p->begin()[natms_lcl-1]=-1;
     if(!dof_empty)
     {
-        bool* dof=atoms->dof->begin()+(natms_lcl-1)*__dim__;
+        bool* dof=atoms->x_dof->begin()+(natms_lcl-1)*__dim__;
         for(int i=0;i<__dim__;i++) dof[i]=true;
     }
     

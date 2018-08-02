@@ -90,7 +90,7 @@ void MinCG::init()
     f0.~VecTens();
     new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
     
-    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],x_d.vecs[0],f0.vecs[0]},{atoms->x_d});
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->x_dof,h.vecs[0],x0.vecs[0],x_d.vecs[0],f0.vecs[0]},{atoms->x_d});
     dynamic->init();
     
     if(xprt)
@@ -154,7 +154,7 @@ void MinCG::ff_test(int seed,type0 __max_dx,type0 __max_st,int __n_desc)
     x_d.~VecTens();
     new (&x_d) VecTens<type0,1>(atoms,chng_box,__dim__);
     
-    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],x_d.vecs[0]},{atoms->x_d});
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->x_dof,h.vecs[0],x0.vecs[0],x_d.vecs[0]},{atoms->x_d});
     dynamic->init();
     
     

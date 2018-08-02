@@ -75,15 +75,15 @@ step(0)
     Algebra::zero<__nvoigt__>(__b);
     x=new Vec<type0>(this,__dim__,"x");
     id= new Vec<unsigned int>(this,1,"id");
-    dof=new Vec<bool>(this,__dim__,"dof");
-    dof->empty(true);
+    x_dof=new Vec<bool>(this,__dim__,"x_dof");
+    x_dof->empty(true);
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
 Atoms::~Atoms()
 {
-    delete dof;
+    delete x_dof;
     delete id;
     delete x;
     delete [] dynamic_vecs;

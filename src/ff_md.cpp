@@ -25,6 +25,21 @@ ForceFieldMD::~ForceFieldMD()
 /*--------------------------------------------
  
  --------------------------------------------*/
+void ForceFieldMD::calc_ndof()
+{
+    nx_dof=atoms->natms*__dim__;
+    if(!atoms->x_dof->is_empty())
+    {
+        const int n=atoms->natms_lcl*__dim__;
+        int nx_dof_lcl=n;
+        bool* x_dof=atoms->x_dof->begin();
+        for(int i=0;i<n;i++) if(!x_dof[i]) nx_dof_lcl--;
+        MPI_Allreduce(&nx_dof_lcl,&nx_dof,1,Vec<int>::MPI_T,MPI_SUM,world);
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void ForceFieldMD::reset()
 {
     type0* __f=f->begin();
@@ -37,7 +52,7 @@ void ForceFieldMD::reset()
  --------------------------------------------*/
 void ForceFieldMD::pre_init()
 {
-    dof_empty=atoms->dof->is_empty();
+    dof_empty=atoms->x_dof->is_empty();
     type0 tmp;
     max_cut=0.0;
     for(size_t i=0;i<nelems;i++)
@@ -88,7 +103,7 @@ void ForceFieldMD::force_calc_timer()
     if(!dof_empty)
     {
         type0* fvec=f->begin();
-        bool* dof=atoms->dof->begin();
+        bool* dof=atoms->x_dof->begin();
         const int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,fvec+=__dim__,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&fvec](int i){fvec[i]=dof[i] ? fvec[i]:0.0;});
@@ -126,7 +141,7 @@ type0* ForceFieldMD::derivative_timer()
     if(!dof_empty)
     {
         type0* fvec=f->begin();
-        bool* dof=atoms->dof->begin();
+        bool* dof=atoms->x_dof->begin();
         const int n=atoms->natms_lcl*__dim__;
         for(int i=0;i<n;i++) fvec[i]=dof[i] ? fvec[i]:0.0;
     }

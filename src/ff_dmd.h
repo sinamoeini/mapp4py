@@ -65,6 +65,9 @@ namespace MAPP_NS
         
         type0 err;
         type0 c_d_norm;
+        
+        void calc_ndof();
+        int nx_dof,nalpha_dof,nc_dof;
     };
 }
 #endif 

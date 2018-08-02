@@ -59,7 +59,10 @@ namespace MAPP_NS
     };
 }
 typedef MAPP_NS::EAMFunc* create_eam_ff_t();
-
+typedef type0 fpair_t(const elem_type,const elem_type,const type0,const type0,const type0);
+typedef type0 phi_t(const elem_type,const elem_type,const type0);
+typedef type0 rho_t(const elem_type,const elem_type,const type0);
+typedef type0 F_t(const elem_type,const type0);
 /*--------------------------------------------
 
  --------------------------------------------*/

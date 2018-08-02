@@ -7,6 +7,19 @@ namespace MAPP_NS
     class ExportCFGDMD:public ExportDMD
     {
     private:
+        int max_pos(type0*& c,const int& nelems)
+        {
+            type0 max_c=*c;
+            int ielem=0;
+            for(int i=1;i<nelems;i++)
+                if(max_c<c[i])
+                {
+                    max_c=c[i];
+                    ielem=i;
+                }
+            
+            return ielem;
+        }
         
         std::string pattern;
         bool sort;

@@ -104,7 +104,7 @@ void MinCGPotFit::init()
     f0.~VecTens();
     new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
     
-    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->dof,h.vecs[0],x0.vecs[0],x_d.vecs[0],f0.vecs[0],ext_vec_0,ext_vec_1},{});
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->x_dof,h.vecs[0],x0.vecs[0],x_d.vecs[0],f0.vecs[0],ext_vec_0,ext_vec_1},{});
     dynamic->init();
     
     if(xprt)

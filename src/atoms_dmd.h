@@ -21,8 +21,8 @@ namespace MAPP_NS
         
         DMDVec<type0>* alpha;
         DMDVec<type0>* c;
-        DMDVec<bool>* dof_c;
-        DMDVec<bool>* dof_alpha;
+        DMDVec<bool>* c_dof;
+        DMDVec<bool>* alpha_dof;
         Vec<elem_type>* elem;
 
         void DO(PyObject*);

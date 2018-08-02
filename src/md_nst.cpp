@@ -154,7 +154,7 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
     type0* RESTRICT x=atoms->x->begin();
     type0* RESTRICT x_d=atoms->x_d->begin();
     elem_type* RESTRICT elem=atoms->elem->begin();
-    bool* RESTRICT dof=atoms->dof->begin();
+    bool* RESTRICT dof=atoms->x_dof->begin();
     
     type0* m=atoms->elements.masses;
     type0 m_i,m_inv;
@@ -201,7 +201,7 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
     f=ff->f->begin();
     x_d=atoms->x_d->begin();
     elem=atoms->elem->begin();
-    dof=atoms->dof->begin();
+    dof=atoms->x_dof->begin();
     Algebra::zero<__nvoigt__>(__vec_lcl);
     const int natms1=atoms->natms_lcl;
     for(int i=0;i<natms1;++i)
@@ -240,9 +240,9 @@ void MDNST::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
     
     //check to see if the H_dof components are consistent with stoms->dof
     
-    if(!atoms->dof->is_empty())
+    if(!atoms->x_dof->is_empty())
     {
-        bool* dof=atoms->dof->begin();
+        bool* dof=atoms->x_dof->begin();
         int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
@@ -334,7 +334,7 @@ void MDNST::update_V_H()
 void MDNST::init()
 {
     pre_init();
-    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->dof},{});
+    dynamic=new DynamicMD(atoms,ff,true,{},{atoms->x_d,atoms->x_dof},{});
     dynamic->init();
     
     if(xprt)

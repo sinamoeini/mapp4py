@@ -52,9 +52,9 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
     
     //check to see if the H_dof components are consistent with stoms->dof
     
-    if(chng_box && !__atoms->dof->is_empty())
+    if(chng_box && !__atoms->x_dof->is_empty())
     {
-        bool* dof=__atoms->dof->begin();
+        bool* dof=__atoms->x_dof->begin();
         int __dof_lcl[__dim__]{DESIG(__dim__,0)};
         for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
@@ -88,27 +88,6 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int DAE::calc_ndofs(AtomsDMD* __atoms)
-{
-    int ndof_lcl=__atoms->c_dim*__atoms->natms_lcl;
-    int n=ndof_lcl;
-    type0* c=__atoms->c->begin();
-    if(!__atoms->dof_c->is_empty())
-    {
-        bool* c_dof=__atoms->dof_c->begin();
-        for(int i=0;i<n;i++)
-            if(!c_dof[i] || c[i]<0.0) ndof_lcl--;
-    }
-    else
-        for(int i=0;i<n;i++)
-            if(c[i]<0.0) ndof_lcl--;
-    int ndof;
-    MPI_Allreduce(&ndof_lcl,&ndof,1,MPI_INT,MPI_SUM,__atoms->world);
-    return ndof;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
 void DAE::init_static()
 {
     //static related
@@ -131,11 +110,15 @@ void DAE::fin_static()
  --------------------------------------------*/
 void DAE::init()
 {
+    nerr_mins=0;
     c_dim=atoms->c_dim;
     ff->c_d->fill();
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->dof_c},{atoms->dof,atoms->dof_alpha},{});
+    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->c_dof},{atoms->x_dof,atoms->alpha_dof},{});
     dynamic->init();
-    a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
+    ff->calc_ndof();
+    a_tol_sqrt_nc_dof=a_tol*sqrt(static_cast<type0>(ff->nc_dof));
+    sqrt_nx_nalpha_dof=sqrt(static_cast<type0>(ff->nx_dof+ff->nalpha_dof));
+    a_tol_sqrt_nx_nalpha_dof=a_tol*sqrt_nx_nalpha_dof;
 }
 /*--------------------------------------------
  
@@ -190,7 +173,7 @@ void DAE::min_error()
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
     type0 r;
     int istep=0;
-    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nc_dofs>1.0;istep++)
+    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_dof>1.0;istep++)
     {
         /*
         if(atoms->comm_rank==0)
@@ -207,7 +190,7 @@ void DAE::min_error()
         if(atoms->comm_rank==0)
             printf("%d | %d  %e | %e | %0.13lf\n",istep,gmres.iter,gmres.res/(0.005*a_tol_sqrt_nc_dofs),res/a_tol_sqrt_nc_dofs,atoms->fe);
          */
-        gmres.solve(J,f,0.005*a_tol_sqrt_nc_dofs,norm,h);
+        gmres.solve(J,f,0.005*a_tol_sqrt_nx_nalpha_dof,norm,h);
         
         
         const int n=atoms->natms_lcl*c_dim;
@@ -249,7 +232,7 @@ void DAE::min_error()
         res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
         
     }
-    
+    nerr_mins++;
     //printf("%d res %e %e\n",istep,a0,a1);
     //if(atoms->comm_rank==0 && res/a_tol_sqrt_nc_dofs>1.0) printf("res %e\n",res/a_tol_sqrt_nc_dofs);
 }

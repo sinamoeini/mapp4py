@@ -114,15 +114,17 @@ void DAEBDF::run(type0 t_tot)
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     
     if(nreset) min_error();
+    type0 prev_err=ff->err;
+    type0 fe_ave_err=ff->err/sqrt_nx_nalpha_dof;
+    
     init_static();
     reset();
     nconst_q=nconst_dt=nnonlin_acc=nnonlin_rej=ninteg_acc=ninteg_rej=nintpol_acc=nintpol_rej=0;
     
-    type0 cv_msd;
     
     ThermoDynamics thermo(6,
     "Time",t_cur,
-    "MSD",cv_msd,
+    "FE_AVE_ERR",fe_ave_err,
     "FE",atoms->fe,
     "S[0][0]",atoms->S_fe[0][0],
     "S[1][1]",atoms->S_fe[1][1],
@@ -134,7 +136,6 @@ void DAEBDF::run(type0 t_tot)
     if(nevery_xprt) xprt->write(step);
     
     if(ntally) thermo.init();
-    cv_msd=atoms->vac_msd();
     if(ntally) thermo.print(step);
     
     type0 dt_prev;
@@ -173,10 +174,11 @@ void DAEBDF::run(type0 t_tot)
         if(q_prev!=q)
             nconst_q=0;
         
-        if((istep+1)%nreset==0 && ff->err/a_tol_sqrt_nc_dofs>100.0)
+        if(((istep+1)%nreset==0 && ff->err/a_tol_sqrt_nx_nalpha_dof>1.0) || ff->err >2.0*prev_err)
         {
             fin_static();
             min_error();
+            prev_err=ff->err;
             init_static();
             
             reset();
@@ -185,7 +187,7 @@ void DAEBDF::run(type0 t_tot)
         
         if(ntally && (istep+1)%ntally==0)
         {
-            cv_msd=atoms->vac_msd();
+            fe_ave_err=ff->err/sqrt_nx_nalpha_dof;
             ff->force_calc_static_timer();
             thermo.print(step+istep+1);
         }
@@ -223,9 +225,10 @@ void DAEBDF::run(type0 t_tot)
     
     if(ntally)
     {
-        fprintf(MAPP::mapp_out,"nonlin: accepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
-        fprintf(MAPP::mapp_out,"intrtp: accepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
-        fprintf(MAPP::mapp_out,"integr: accepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+        fprintf(MAPP::mapp_out,"nonlinear equations:\taccepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
+        fprintf(MAPP::mapp_out,"interpolations:\t\taccepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
+        fprintf(MAPP::mapp_out,"integrations:\t\taccepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+        fprintf(MAPP::mapp_out,"error minimizations:\t%d\n",nerr_mins);
         fprintf(MAPP::mapp_out,"maximum order: %d\n",__max_q);
         fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
         fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
@@ -289,7 +292,7 @@ bool DAEBDF::integrate()
     for(int i=0;i<ncs;i++)
         norm_lcl+=(c[i]-y_0[i])*(c[i]-y_0[i]);
     MPI_Allreduce(&norm_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    err=err_fac*sqrt(norm)/a_tol_sqrt_nc_dofs;
+    err=err_fac*sqrt(norm)/a_tol_sqrt_nc_dof;
     
     //printf("Error: %e\n",err);
     if(err<1.0)
@@ -387,7 +390,7 @@ void DAEBDF::prep_for_next()
         }
         
         MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-        norm=hi_err_fac[0]*sqrt(tmp)/a_tol_sqrt_nc_dofs;
+        norm=hi_err_fac[0]*sqrt(tmp)/a_tol_sqrt_nc_dof;
         eta[2]=pow(0.5/norm,1.0/(iq+2.0));
     }
     
@@ -406,7 +409,7 @@ void DAEBDF::prep_for_next()
             __z+=max_q+1;
         }
         MPI_Allreduce(&norm_lcl,&tmp,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-        norm=lo_err_fac[0]*sqrt(tmp)/a_tol_sqrt_nc_dofs;
+        norm=lo_err_fac[0]*sqrt(tmp)/a_tol_sqrt_nc_dof;
         eta[0]=pow(0.5/norm,1.0/(iq));
     }
     
@@ -580,7 +583,7 @@ void DAEBDF::reset()
     };
     
     // ddc^2
-    type0 norm=ff->c_dd_norm_timer()/a_tol_sqrt_nc_dofs;
+    type0 norm=ff->c_dd_norm_timer()/a_tol_sqrt_nc_dof;
     type0 max_dt_lcl=std::numeric_limits<type0>::infinity();
     type0* __z=z;
     for(int i=0;i<ncs;i++,__z+=max_q+1)

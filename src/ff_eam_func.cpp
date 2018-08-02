@@ -357,7 +357,7 @@ void ForceFieldEAMFunc::ml_new(PyMethodDef& tp_methods)
         FuncAPI<std::string> f("ff_eam_func",{"so_file"});
         if(f(args,kwds)) return NULL;
 
-        void* so=dlopen(f.val<0>().c_str(),RTLD_NOW);
+        void* so=dlopen(f.val<0>().c_str(),RTLD_LAZY);
         create_eam_ff_t* ff_eam=reinterpret_cast<create_eam_ff_t*>( dlsym(so,"create_eam_ff"));
         EAMFunc* ff_eam_func=ff_eam();
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);

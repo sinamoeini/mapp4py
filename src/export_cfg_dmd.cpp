@@ -74,8 +74,6 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
         std::string* elem_names=atoms->elements.names;
         type0* masses=atoms->elements.masses;
         int nelems=static_cast<int>(atoms->elements.nelems);
-        bool* elem_printed=nelems==0 ? NULL:new bool[nelems];
-        for(int i=0;i<nelems;i++) elem_printed[i]=false;
         type0* c=atoms->c->begin_dump();
         type0* __c=c;
         unsigned int iatm;
@@ -98,7 +96,6 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
             if(__curr_elem!=curr_elem)
             {
                 curr_elem=__curr_elem;
-                elem_printed[curr_elem]=true;
                 fprintf(fp,"%lf\n",masses[curr_elem]);
                 fprintf(fp,"%s\n",elem_names[curr_elem].c_str());
             }
@@ -113,14 +110,7 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
             fprintf(fp,"\n");
         }
         
-        for(int i=0;i<nelems;i++)
-            if(!elem_printed[i])
-            {
-                fprintf(fp,"%lf\n",masses[i]);
-                fprintf(fp,"%s\n",elem_names[i].c_str());
-            }
         
-        delete [] elem_printed;
         delete [] id_map;
     }
     
@@ -141,8 +131,6 @@ void ExportCFGDMD::write_body(FILE* fp)
         std::string* elem_names=atoms->elements.names;
         type0* masses=atoms->elements.masses;
         int nelems=static_cast<int>(atoms->elements.nelems);
-        bool* elem_printed=nelems==0 ? NULL:new bool[nelems];
-        for(int i=0;i<nelems;i++) elem_printed[i]=false;
         type0* c=atoms->c->begin_dump();
         type0* __c;
         vec** usr_vecs=vecs+ndef_vecs;
@@ -162,7 +150,6 @@ void ExportCFGDMD::write_body(FILE* fp)
             if(__curr_elem!=curr_elem)
             {
                 curr_elem=__curr_elem;
-                elem_printed[curr_elem]=true;
                 fprintf(fp,"%lf\n",masses[curr_elem]);
                 fprintf(fp,"%s\n",elem_names[curr_elem].c_str());
             }
@@ -176,14 +163,6 @@ void ExportCFGDMD::write_body(FILE* fp)
             fprintf(fp,"\n");
         }
         
-        for(int i=0;i<nelems;i++)
-            if(!elem_printed[i])
-            {
-                fprintf(fp,"%lf\n",masses[i]);
-                fprintf(fp,"%s\n",elem_names[i].c_str());
-            }
-        
-        delete [] elem_printed;
     }
 
     release(vecs,nvecs);

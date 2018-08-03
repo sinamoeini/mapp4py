@@ -171,6 +171,14 @@ void AtomsDMD::DO(PyObject* op)
         Func_c(int __c_dim):c_dim(__c_dim){}
         void operator()(type0* old_val,type0* new_val)
         {
+            
+            volatile type0 c0;
+            for(int i=0;i<c_dim;i++)
+            {
+                c0=new_val[i];
+                --++c0;
+                new_val[i]=c0;
+            }
             type0 sum_c=0.0;
             for(int i=0;i<c_dim;i++)
             {

@@ -61,6 +61,7 @@ void DAEBDF::fin_static()
     ff->neighbor->fin_static();
     Memory::dealloc(dy);
     z=NULL;
+    DAEImplicit::fin_static();
 }
 /*--------------------------------------------
  

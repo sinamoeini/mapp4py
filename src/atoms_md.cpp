@@ -337,12 +337,18 @@ void AtomsMD::ml_create_temp(PyMethodDef& tp_method)
     tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
+        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
+        if(std::isnan(__self->atoms->kB))
+        {
+            PyErr_SetString(PyExc_TypeError,"boltzmann constant should be set prior to create_temp");
+            return NULL;
+        }
+        
         FuncAPI<type0,int> f("create_temp",{"temp","seed"});
         f.logics<0>()[0]=VLogics("gt",0.0);
         f.logics<1>()[0]=VLogics("gt",0);
         if(f(args,kwds)) return NULL;
         
-        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
         __self->atoms->create_T(f.val<0>(),f.val<1>());
         Py_RETURN_NONE;
     });

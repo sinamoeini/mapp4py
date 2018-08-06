@@ -58,6 +58,7 @@ namespace MAPP_NS
         static void getset_S_fe(PyGetSetDef&);
         static void getset_fe(PyGetSetDef&);
         static void getset_s(PyGetSetDef&);
+        static void getset_ave_mu(PyGetSetDef&);
 #ifdef SC_DMD
         static void getset_BB(PyGetSetDef&);
         static void getset_delta(PyGetSetDef&);

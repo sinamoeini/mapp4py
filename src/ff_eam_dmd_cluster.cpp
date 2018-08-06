@@ -40,7 +40,6 @@ vec0(NULL),
 vec1(NULL),
 vec2(NULL),
 vec3(NULL),
-mu_ptr(NULL),
 dE_ptr(NULL),
 rho_ptr(NULL),
 d_ptr(NULL),
@@ -1586,7 +1585,6 @@ void ForceFieldEAMDMDCLUSTER::init()
     set_temp();
     
     
-    mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
     d_ptr=new Vec<type0>(atoms,1);
     b_ptr=new Vec<type0>(atoms,1);
     theta_ptr=new Vec<type0>(atoms,1);
@@ -1613,10 +1611,8 @@ void ForceFieldEAMDMDCLUSTER::fin()
     delete theta_ptr;
     delete b_ptr;
     delete d_ptr;
-    delete mu_ptr;
     
     dE_ptr=rho_ptr=d_ptr=vec0=vec1=vec2=vec3=NULL;
-    mu_ptr=NULL;
     post_fin();
 }
 /*--------------------------------------------

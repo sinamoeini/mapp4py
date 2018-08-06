@@ -283,9 +283,9 @@ int AtomsDMD::setup_tp()
 /*--------------------------------------------*/
 
 #ifdef SC_DMD
-PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(19);
+PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(20);
 #else
-PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(17);
+PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(18);
 #endif
 
 /*--------------------------------------------*/
@@ -307,9 +307,10 @@ void AtomsDMD::setup_tp_getset()
     getset_fe(getset[13]);
     getset_S_fe(getset[14]);
     getset_s(getset[15]);
+    getset_ave_mu(getset[16]);
 #ifdef SC_DMD
-    getset_BB(getset[16]);
-    getset_delta(getset[17]);
+    getset_BB(getset[17]);
+    getset_delta(getset[18]);
 #endif
 }
 /*--------------------------------------------*/
@@ -420,6 +421,50 @@ void AtomsDMD::getset_s(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->s);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_ave_mu(PyGetSetDef& getset)
+{
+    getset.name=(char*)"ave_mu";
+    getset.doc=(char*)R"---(
+    (double[nelems]) average mu per element
+    
+    Average mu per element
+    )---";
+    getset.get=[](PyObject* __self,void*)->PyObject*
+    {
+        ForceFieldDMD* __ff=reinterpret_cast<Object*>(__self)->ff;
+        AtomsDMD* __atoms=reinterpret_cast<Object*>(__self)->atoms;
+        //check if force field is loaded
+        if(!__ff)
+        {
+            PyErr_SetString(PyExc_TypeError,"cannot calculate ave_mu without governing equations (force field)");
+            return NULL;
+        }
+        
+        if(std::isnan(__atoms->kB))
+        {
+            PyErr_SetString(PyExc_TypeError,"boltzmann constant should be set prior to calculation of ave_mu");
+            return NULL;
+        }
+        
+        if(std::isnan(__atoms->hP))
+        {
+            PyErr_SetString(PyExc_TypeError,"planck constant should be set prior to calculation of ave_mu");
+            return NULL;
+        }
+        
+        __ff->calc_thermo();
+        size_t* szp=&(__atoms->elements.nelems);
+        return var<type0*>::build(__ff->ave_mu,&szp);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {

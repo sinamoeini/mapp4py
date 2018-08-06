@@ -10,9 +10,11 @@ using namespace MAPP_NS;
 ForceFieldDMD::ForceFieldDMD(AtomsDMD* __atoms):
 ForceField(__atoms),
 atoms(__atoms),
+ave_mu(NULL),
 rsq_crd(NULL),
 r_crd(NULL)
 {
+    Memory::alloc(ave_mu,nelems);
     Memory::alloc(cut_sk,nelems,nelems);
     Memory::alloc(rsq_crd,nelems);
     Memory::alloc(r_crd,nelems);
@@ -20,12 +22,14 @@ r_crd(NULL)
     f=new Vec<type0>(atoms,__dim__,"f");
     f_alpha=new DMDVec<type0>(atoms,0.0,"f_alpha");
     c_d=new DMDVec<type0>(atoms,0.0,"c_d");
+    mu=new DMDVec<type0>(atoms,0.0,"mu");
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ForceFieldDMD::~ForceFieldDMD()
 {
+    delete mu;
     delete c_d;
     delete f_alpha;
     delete f;
@@ -33,6 +37,7 @@ ForceFieldDMD::~ForceFieldDMD()
     Memory::dealloc(r_crd);
     Memory::dealloc(rsq_crd);
     Memory::dealloc(cut_sk);
+    Memory::dealloc(ave_mu);
 }
 /*--------------------------------------------
  
@@ -187,6 +192,52 @@ type0* ForceFieldDMD::derivative_timer()
     Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
     atoms->s=__vec[1+__nvoigt__];
     return __vec;
+}
+#include "dynamic_dmd.h"
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::calc_thermo()
+{
+    DynamicDMD __dynamic(atoms,this,false,{},{},{});
+    __dynamic.init();
+    calc_ndof();
+    derivative_timer();
+    
+    
+    
+    type0* mu_sum_lcl=NULL;
+    Memory::alloc(mu_sum_lcl,nelems);
+    for(size_t i=0;i<nelems;i++) mu_sum_lcl[i]=ave_mu[i]=0.0;
+    
+    type0* sum_lcl=NULL;
+    type0* sum=NULL;
+    Memory::alloc(sum_lcl,nelems);
+    Memory::alloc(sum,nelems);
+    for(size_t i=0;i<nelems;i++) sum_lcl[i]=sum[i]=0.0;
+    
+    
+    type0* mu_vec=mu->begin();
+    type0 const* c=atoms->c->begin();
+    elem_type const* elem_vec=atoms->elem->begin();
+    const int n=atoms->natms_lcl*c_dim;
+    for(int i=0;i<n;i++)
+    if(c[i]!=-1.0)
+    {
+        mu_sum_lcl[elem_vec[i]]+=mu_vec[i];
+        ++sum_lcl[elem_vec[i]];
+    }
+    MPI_Allreduce(mu_sum_lcl,ave_mu,static_cast<int>(nelems),Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(sum_lcl,sum,static_cast<int>(nelems),Vec<type0>::MPI_T,MPI_SUM,world);
+    for(size_t i=0;i<nelems;i++) if(sum[i]) ave_mu[i]/=sum[i];
+    
+    Memory::dealloc(sum_lcl);
+    Memory::dealloc(sum);
+    Memory::dealloc(mu_sum_lcl);
+    
+    __dynamic.fin();
+
+
 }
 /*--------------------------------------------
  this does not sound right hs to be check later

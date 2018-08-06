@@ -18,7 +18,6 @@ namespace MAPP_NS
         Vec<type0>* E_ptr;
         Vec<type0>* dE_ptr;
         Vec<type0>* rho_ptr;
-        DMDVec<type0>* mu_ptr;
         Vec<type0>* cv_ptr;
         Vec<type0>* p_ptr;
         Vec<type0>* c_tilde_ptr;
@@ -96,7 +95,7 @@ namespace MAPP_NS
         
         void prep(VecTens<type0,2>&);
         void J(VecTens<type0,2>&,VecTens<type0,2>&);
-
+        type0* ave_mu(){return NULL;};
         static void ml_new(PyMethodDef&,PyMethodDef&,PyMethodDef&);
     };
 }

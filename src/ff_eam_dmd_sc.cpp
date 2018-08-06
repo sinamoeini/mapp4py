@@ -39,7 +39,6 @@ vec0(NULL),
 vec1(NULL),
 vec2(NULL),
 vec3(NULL),
-mu_ptr(NULL),
 dE_ptr(NULL),
 rho_ptr(NULL),
 cv_ptr(NULL),
@@ -1860,8 +1859,6 @@ void ForceFieldEAMDMDSC::init()
     pre_init();
     set_temp();
     
-    
-    mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
     cv_ptr=new Vec<type0>(atoms,1);
     p_ptr=new Vec<type0>(atoms,1);
     c_tilde_ptr=new Vec<type0>(atoms,1);
@@ -1887,10 +1884,8 @@ void ForceFieldEAMDMDSC::fin()
     delete c_tilde_ptr;
     delete p_ptr;
     delete cv_ptr;
-    delete mu_ptr;
     
     dE_ptr=rho_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
-    mu_ptr=NULL;
     post_fin();
 }
 /*--------------------------------------------

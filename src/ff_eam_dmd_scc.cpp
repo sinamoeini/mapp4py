@@ -39,7 +39,6 @@ vec0(NULL),
 vec1(NULL),
 vec2(NULL),
 vec3(NULL),
-mu_ptr(NULL),
 dE_ptr(NULL),
 rho_ptr(NULL),
 cv_ptr(NULL),
@@ -725,7 +724,6 @@ void ForceFieldEAMDMDSCC::init()
     set_temp();
     
     
-    mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
     cv_ptr=new Vec<type0>(atoms,1);
     E_ptr=new Vec<type0>(atoms,c_dim);
     dE_ptr=new Vec<type0>(atoms,c_dim);
@@ -747,10 +745,8 @@ void ForceFieldEAMDMDSCC::fin()
     delete dE_ptr;
     delete E_ptr;
     delete cv_ptr;
-    delete mu_ptr;
     
     dE_ptr=rho_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
-    mu_ptr=NULL;
     post_fin();
 }
 /*--------------------------------------------

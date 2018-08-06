@@ -34,9 +34,11 @@ namespace MAPP_NS
         type0* rsq_crd;
         type0* r_crd;
         type0** cut_sk;
+        type0* ave_mu;
         Vec<type0>* f;
         DMDVec<type0>* f_alpha;
         DMDVec<type0>* c_d;
+        DMDVec<type0>* mu;
         
         ForceFieldDMD(class AtomsDMD*);
         virtual ~ForceFieldDMD();
@@ -62,7 +64,7 @@ namespace MAPP_NS
         virtual type0 prep_timer(VecTens<type0,2>&,type0(&)[__dim__][__dim__]);
         virtual void J_timer(VecTens<type0,2>&,VecTens<type0,2>&);
         virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
-        
+        void calc_thermo();
         type0 err;
         type0 c_d_norm;
         

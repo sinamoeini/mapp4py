@@ -18,7 +18,6 @@ namespace MAPP_NS
         Vec<type0>* E_ptr;
         Vec<type0>* dE_ptr;
         Vec<type0>* ddE_ptr;
-        DMDVec<type0>* mu_ptr;
         Vec<type0>* cv_ptr;
         
         Vec<type0>* vec0;
@@ -82,9 +81,7 @@ namespace MAPP_NS
         void fin();
         
         void init_static();
-        void fin_static();
-        
-        
+        void fin_static();        
         void prep(VecTens<type0,2>&);
         void J(VecTens<type0,2>&,VecTens<type0,2>&);
 

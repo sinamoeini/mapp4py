@@ -39,7 +39,6 @@ vec0(NULL),
 vec1(NULL),
 vec2(NULL),
 vec3(NULL),
-mu_ptr(NULL),
 dE_ptr(NULL),
 ddE_ptr(NULL),
 cv_ptr(NULL),
@@ -162,7 +161,7 @@ void ForceFieldEAMDMD::force_calc()
     
     
     type0* dE=dE_ptr->begin();
-    type0* mu=mu_ptr->begin();
+    type0* mu_vec=mu->begin();
     type0* rho=E_ptr->begin();
     const int n=atoms->natms_lcl*c_dim;
     for(int i=0;i<n;i++) rho[i]=0.0;
@@ -284,7 +283,7 @@ void ForceFieldEAMDMD::force_calc()
         
         rho[i]=tmp0;
         dE[i]=tmp1;
-        mu[i]=tmp0;
+        mu_vec[i]=tmp0;
         
         __vec_lcl[0]+=c_i*(tmp0+c_0[elem_i]-3.0*kbT*log(alpha[i]));
         __vec_lcl[1+__nvoigt__]+=calc_ent(c_i);
@@ -332,7 +331,7 @@ void ForceFieldEAMDMD::force_calc()
             fpair=-(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart])*c_i*c[j];
             apair=-(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart])*c_i*c[j];
             mu_i+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
-            if(j<n) mu[j]+=c_i*(rho_phi[istart]+rho_phi[istart+2]*dE_i);
+            if(j<n) mu_vec[j]+=c_i*(rho_phi[istart]+rho_phi[istart+2]*dE_i);
             
             Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
             f_alpha_i+=alpha_i*apair;
@@ -348,7 +347,7 @@ void ForceFieldEAMDMD::force_calc()
         
         f_alpha_i+=3.0*kbT*c_i/alpha_i;
         f_alphavec[i]+=f_alpha_i;
-        mu[i]+=mu_i;
+        mu_vec[i]+=mu_i;
         
         if((i+1)%c_dim==0)
             Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
@@ -558,7 +557,7 @@ void ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
     dynamic->update(dE_ptr);
     
     
-    type0* f_coef=mu_ptr->begin();
+    type0* f_coef=mu->begin();
     if(c_dim!=1)
     {
         type0 c_tot;
@@ -687,7 +686,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
     type0* Adx=ADx.vecs[0]->begin();
     type0* Adalpha=ADx.vecs[1]->begin();
     
-    type0* f_coef=mu_ptr->begin();
+    type0* f_coef=mu->begin();
     
     type0 dx_ij[__dim__];
     type0 ddx_ij[__dim__];
@@ -961,7 +960,6 @@ void ForceFieldEAMDMD::init()
     set_temp();
     
     
-    mu_ptr=new DMDVec<type0>(atoms,0.0,"mu");
     cv_ptr=new Vec<type0>(atoms,1);
     E_ptr=new Vec<type0>(atoms,c_dim);
     dE_ptr=new Vec<type0>(atoms,c_dim);
@@ -987,10 +985,8 @@ void ForceFieldEAMDMD::fin()
     delete dE_ptr;
     delete E_ptr;
     delete cv_ptr;
-    delete mu_ptr;
     
     dE_ptr=ddE_ptr=cv_ptr=vec0=vec1=vec2=vec3=NULL;
-    mu_ptr=NULL;
     post_fin();
 }
 /*--------------------------------------------
@@ -1162,10 +1158,10 @@ void ForceFieldEAMDMD::calc_mu()
      --------------------------------*/
     //internal vecs
     type0* rho=E_ptr->begin();
-    type0* mu=mu_ptr->begin();
+    type0* mu_vec=mu->begin();
     
     int n=atoms->natms_lcl*c_dim;
-    for(int i=0;i<n;i++) mu[i]=rho[i]=0.0;
+    for(int i=0;i<n;i++) mu_vec[i]=rho[i]=0.0;
     
     size_t m;
     type0 p,__E,__dE,__rho;
@@ -1206,7 +1202,7 @@ void ForceFieldEAMDMD::calc_mu()
         
         __vec_lcl[0]+=c[i]*__E;
         rho[i]=__E;
-        mu[i]+=__E;
+        mu_vec[i]+=__E;
         dE[i]=__dE;
     }
     
@@ -1270,7 +1266,7 @@ void ForceFieldEAMDMD::calc_mu()
         for(int j,__j=0;__j<neigh_sz;__j++,istart+=3)
         {
             j=neighbor_list[i][__j];
-            mu[i]+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
+            mu_vec[i]+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
             Algebra::DX<__dim__>(x_i,x+(j/c_dim)*__dim__,dx_ij);
             
             fpair=(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart]);
@@ -1281,7 +1277,7 @@ void ForceFieldEAMDMD::calc_mu()
             
             if(j<n)
             {
-                mu[j]+=c[i]*(rho_phi[istart]+rho_phi[istart+2]*dE[i]);
+                mu_vec[j]+=c[i]*(rho_phi[istart]+rho_phi[istart+2]*dE[i]);
                 Algebra::V_add_x_mul_V<__dim__>(-fpair*c_i*fcoef[j],dx_ij,fvec+(j/c_dim)*__dim__);
                 falpha[j]+=alpha[j]*apair*c_i;
                 __vec_lcl[0]+=c[i]*c[j]*rho_phi[istart];
@@ -1298,7 +1294,7 @@ void ForceFieldEAMDMD::calc_mu()
         
     }
     
-    dynamic->update(mu_ptr);
+    dynamic->update(mu);
     
 }
 /*--------------------------------------------
@@ -1392,7 +1388,7 @@ void ForceFieldEAMDMD::c_d_calc()
     
     //internal vecs
     type0* cv=cv_ptr->begin();
-    type0* mu=mu_ptr->begin();
+    type0* mu_vec=mu->begin();
     
     
     type0 rsq,alpha_i,alpha_j,alpha_sq_i,alpha_sq_j,gamma_i,gamma_j,mu_i,mu_ji;
@@ -1409,7 +1405,7 @@ void ForceFieldEAMDMD::c_d_calc()
         if(c[i]<0.0) continue;
         alpha_i=alpha[i];
         alpha_sq_i=alpha_i*alpha_i;
-        mu_i=mu[i];
+        mu_i=mu_vec[i];
         c_1_ielem=c_1[elem_vec[i]];
         zeta_ielem=zeta[elem_vec[i]];
         const int neigh_sz=neighbor_list_size[i];
@@ -1429,7 +1425,7 @@ void ForceFieldEAMDMD::c_d_calc()
             rsq=Algebra::RSQ<__dim__>(x+(i/c_dim)*__dim__,x+(j/c_dim)*__dim__);
             gamma_i=rsq/(zeta_ielem*alpha_sq_i);
             gamma_j=rsq/(zeta_ielem*alpha_sq_j);
-            mu_ji=beta*(mu[j]-mu_i);
+            mu_ji=beta*(mu_vec[j]-mu_i);
             calc_Q(gamma_i,gamma_j,mu_ji,Q_i,gamma_ij_inv,theta_i);
             
             

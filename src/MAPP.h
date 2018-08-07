@@ -20,6 +20,9 @@ namespace MAPP_NS
         static FILE* __stdout__;
         static FILE* __stderr__;
         static FILE* __devnull__;
+#ifdef MAPP_DEBUG_MODE
+        static FILE* mapp_debug;
+#endif
         
         static FILE* mapp_out;
         static FILE* mapp_err;

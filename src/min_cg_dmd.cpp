@@ -112,10 +112,13 @@ void MinCGDMD::init()
     new (&x_d) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     f0.~VecTens();
     new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
-    
+#ifdef MINCG_W_NEWTON
+    dynamic=new DynamicDMD(atoms,ff,true,{atoms->c_dof},
+    {atoms->x_dof,atoms->alpha_dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
+#else
     dynamic=new DynamicDMD(atoms,ff,chng_box,{},
     {atoms->x_dof,atoms->alpha_dof,atoms->c_dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
-    
+#endif
     dynamic->init();
     
     uvecs[0]=atoms->x;
@@ -350,7 +353,7 @@ void MinCGDMD::F_reset()
         if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
     MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     if(chng_box) atoms->update_H();
-    dynamic->update(atoms->x);
+    dynamic->update(uvecs,2);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

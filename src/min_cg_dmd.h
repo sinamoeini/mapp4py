@@ -11,6 +11,9 @@ namespace MAPP_NS
 {
     class MinCGDMD:public Min
     {
+#ifdef MINCG_W_NEWTON
+    friend class DAE;
+#endif
     private:
     protected:
         type0 max_dalpha;

@@ -4,6 +4,9 @@
 #include "dynamic_dmd.h"
 #include "ff_dmd.h"
 #include "memory.h"
+#ifdef MINCG_W_NEWTON
+#include "min_cg_dmd.h"
+#endif
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -113,8 +116,21 @@ void DAE::init()
     nerr_mins=0;
     c_dim=atoms->c_dim;
     ff->c_d->fill();
+#ifdef MINCG_W_NEWTON
+    ls=new LineSearchBrent();
+    bool __H_dof[__dim__][__dim__];
+    for(int i=0;i<__dim__;i++) for(int j=0;j<__dim__;j++) __H_dof[i][j]=false;
+    min= new MinCGDMD(1.0e-9,__H_dof,false,1.0,0.1,ls);
+    min->atoms=atoms;
+    min->ff=ff;
+    min->init();
+    min->ntally=0;
+    dynamic=min->dynamic;
+#else
     dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->c_dof},{atoms->x_dof,atoms->alpha_dof},{});
     dynamic->init();
+#endif
+    
     ff->calc_ndof();
     a_tol_sqrt_nc_dof=a_tol*sqrt(static_cast<type0>(ff->nc_dof));
     sqrt_nx_nalpha_dof=sqrt(static_cast<type0>(ff->nx_dof+ff->nalpha_dof));
@@ -125,8 +141,18 @@ void DAE::init()
  --------------------------------------------*/
 void DAE::fin()
 {
+#ifdef MINCG_W_NEWTON
+    min->fin();
+    min->ff=NULL;
+    min->atoms=NULL;
+    delete min;
+    min=NULL;
+    delete ls;
+    ls=NULL;
+#else
     dynamic->fin();
     delete dynamic;
+#endif
     dynamic=NULL;
 }
 /*--------------------------------------------
@@ -134,16 +160,21 @@ void DAE::fin()
  --------------------------------------------*/
 void DAE::min_error()
 {
+    
+#ifdef MINCG_W_NEWTON
+    int __step=atoms->step;
+    min->run(10000);
+    atoms->step=__step;
+#endif
+    
     VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
     VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
     VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
     
-
     vec* uvecs[2];
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
     type0 norm,res;
-
     
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
@@ -168,7 +199,6 @@ void DAE::min_error()
             });
         }
     };
-    
     
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
     type0 r;

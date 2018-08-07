@@ -33,7 +33,8 @@ drho_phi_dalpha(NULL),
 ddrho_phi_drdr(NULL),
 ddrho_phi_drdalpha(NULL),
 ddrho_phi_dalphadalpha(NULL),
-max_pairs(0),
+max_pairs0(0),
+max_pairs1(0),
 M_IJ(NULL),
 vec0(NULL),
 vec1(NULL),
@@ -127,20 +128,20 @@ ForceFieldEAMDMD::~ForceFieldEAMDMD()
  --------------------------------------------*/
 void ForceFieldEAMDMD::force_calc()
 {
-    if(max_pairs<neighbor->no_pairs)
+    if(max_pairs0<neighbor->no_pairs)
     {
         delete [] rho_phi;
         delete [] drho_phi_dr;
         delete [] drho_phi_dalpha;
         
-        max_pairs=neighbor->no_pairs;
-        size_t no_0=max_pairs*3;
+        max_pairs0=neighbor->no_pairs;
+        size_t no_0=max_pairs0*3;
         Memory::alloc(rho_phi,no_0);
         Memory::alloc(drho_phi_dr,no_0);
         Memory::alloc(drho_phi_dalpha,no_0);
     }
     
-    for(int i=0;i<max_pairs*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
+    for(int i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
     
     
     
@@ -365,28 +366,34 @@ void ForceFieldEAMDMD::force_calc()
  --------------------------------------------*/
 void ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
 {
-    if(max_pairs<neighbor->no_pairs || ddrho_phi_drdr==NULL)
+    
+    if(max_pairs0<neighbor->no_pairs)
     {
         delete [] rho_phi;
         delete [] drho_phi_dr;
         delete [] drho_phi_dalpha;
-        delete [] ddrho_phi_drdr;
-        delete [] ddrho_phi_dalphadalpha;
-        delete [] ddrho_phi_drdalpha;
         
-        
-        
-        max_pairs=neighbor->no_pairs;
-        size_t no_0=max_pairs*3;
+        max_pairs0=neighbor->no_pairs;
+        size_t no_0=max_pairs0*3;
         Memory::alloc(rho_phi,no_0);
         Memory::alloc(drho_phi_dr,no_0);
         Memory::alloc(drho_phi_dalpha,no_0);
+    }
+    
+    if(max_pairs1<neighbor->no_pairs)
+    {
+        delete [] ddrho_phi_drdr;
+        delete [] ddrho_phi_dalphadalpha;
+        delete [] ddrho_phi_drdalpha;
+        max_pairs1=neighbor->no_pairs;
+        size_t no_0=max_pairs1*3;
         Memory::alloc(ddrho_phi_drdr,no_0);
         Memory::alloc(ddrho_phi_drdalpha,no_0);
         Memory::alloc(ddrho_phi_dalphadalpha,no_0);
     }
     
-    for(int i=0;i<max_pairs*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=ddrho_phi_drdr[i]=ddrho_phi_dalphadalpha[i]=ddrho_phi_drdalpha[i]=0.0;
+    for(int i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
+    for(int i=0;i<max_pairs1*3;i++) ddrho_phi_drdr[i]=ddrho_phi_dalphadalpha[i]=ddrho_phi_drdalpha[i]=0.0;
     
     type0 r,r_inv;
     size_t m;
@@ -979,7 +986,7 @@ void ForceFieldEAMDMD::fin()
     Memory::dealloc(ddrho_phi_drdr);
     Memory::dealloc(ddrho_phi_dalphadalpha);
     Memory::dealloc(ddrho_phi_drdalpha);
-    max_pairs=0;
+    max_pairs0=max_pairs1=0;
     
     delete ddE_ptr;
     delete dE_ptr;

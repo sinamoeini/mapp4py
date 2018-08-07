@@ -114,6 +114,9 @@ FILE* MAPP_NS::MAPP::__stdout__(NULL);
 FILE* MAPP_NS::MAPP::__stderr__(NULL);
 FILE* MAPP_NS::MAPP::mapp_out(NULL);
 FILE* MAPP_NS::MAPP::mapp_err(NULL);
+#ifdef MAPP_DEBUG_MODE
+FILE* MAPP_NS::MAPP::mapp_debug(NULL);
+#endif
 #ifdef IS_PY3K
 PyModuleDef MAPP::module=EmptyModule;
 #endif
@@ -127,8 +130,25 @@ PyObject* MAPP::init_module(void)
     {
         dlopen("libmpi.so.0",RTLD_GLOBAL | RTLD_LAZY);
         MPI_Init(NULL,NULL);
-        Py_AtExit([](){MPI_Finalize();});
     }
+    
+#ifdef MAPP_DEBUG_MODE
+#include <unistd.h>
+#include <iostream>
+    char debug_file [100];
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    sprintf(debug_file, "Debug/debug-%d",rank);
+    mapp_debug=fopen(debug_file,"w");
+    fprintf(mapp_debug,"my pid is %d\n",getpid());
+#endif
+    Py_AtExit([]()
+    {
+#ifdef MAPP_DEBUG_MODE
+        fclose(mapp_debug);
+#endif
+        MPI_Finalize();
+    });
     
     PyObject* posixpath=PyImport_ImportModule("posixpath");
     PyObject* devnull_path_op=PyObject_GetAttrString(posixpath,"devnull");

@@ -23,6 +23,10 @@ namespace MAPP_NS
         class ForceFieldDMD* ff;
         class ExportDMD* xprt;
         class DynamicDMD* dynamic;
+#ifdef MINCG_W_NEWTON
+        class LineSearchBrent* ls;
+        class MinCGDMD* min;
+#endif
     public:
         int max_nnewton_iters;
         int max_ngmres_iters;

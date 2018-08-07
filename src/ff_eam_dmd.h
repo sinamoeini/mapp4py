@@ -40,7 +40,7 @@ namespace MAPP_NS
         type0* ddrho_phi_drdr;
         type0* ddrho_phi_drdalpha;
         type0* ddrho_phi_dalphadalpha;
-        size_t max_pairs;
+        size_t max_pairs0,max_pairs1;
         
         /*--------------------------------------------*/
         

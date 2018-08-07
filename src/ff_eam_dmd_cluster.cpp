@@ -1177,7 +1177,7 @@ void ForceFieldEAMDMDCLUSTER::__sc_loop()
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
     type0 const* c=atoms->c->begin();
-    type0 tt=0.0;
+    //type0 tt=0.0;
     while(en_diff>TOL)
     {
         for(int i=0;i<natms_lcl*c_dim;i++) rho[i]=0.0;

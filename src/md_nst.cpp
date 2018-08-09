@@ -903,19 +903,19 @@ void MDMath::calc(const type0 a,const type0& dt,const type0& dt2,type0(&A)[3][3]
     
     
     type0 f_yz=0.0,f_zx=0.0,f_xy=0.0,__f_yz=0.0,__f_zx=0.0,__f_xy=0.0,g_yz=0.0,g_zx=0.0,g_xy=0.0;
-    if(A[2][1])
+    if(A[2][1]!=0.0)
     {
         f_yz=div_dif_f(y,z,F_A0[1][1],F_A0[2][2]);
         __f_yz=div_dif_f(__y,__z,F_A1[1][1],F_A1[2][2]);
         g_yz=div_dif_exp(y,z,EXP_A[1][1],EXP_A[2][2]);
     }
-    if(A[2][0])
+    if(A[2][0]!=0.0)
     {
         f_zx=div_dif_f(z,x,F_A0[2][2],F_A0[0][0]);
         __f_zx=div_dif_f(__z,__x,F_A1[2][2],F_A1[0][0]);
         g_zx=div_dif_exp(z,x,EXP_A[2][2],EXP_A[0][0]);
     }
-    if(A[1][0])
+    if(A[1][0]!=0.0)
     {
         f_xy=div_dif_f(x,y,F_A0[0][0],F_A0[1][1]);
         __f_xy=div_dif_f(__x,__y,F_A1[0][0],F_A1[1][1]);
@@ -1017,7 +1017,7 @@ void MDMath::calc(const type0 a,const type0& dt,const type0& dt2,type0(&A)[2][2]
     
     
     type0 f_xy=0.0,__f_xy=0.0,g_xy=0.0;
-    if(A[1][0])
+    if(A[1][0]!=0.0)
     {
         f_xy=div_dif_f(x,y,F_A0[0][0],F_A0[1][1]);
         __f_xy=div_dif_f(__x,__y,F_A1[0][0],F_A1[1][1]);
@@ -1077,17 +1077,17 @@ void MDMath::calc(type0& dt,type0(&A)[3][3],type0(&EXP_A)[3][3],type0(&F_A)[3][3
     
     
     type0 f_yz=0.0,f_zx=0.0,f_xy=0.0,g_yz=0.0,g_zx=0.0,g_xy=0.0;
-    if(A[2][1])
+    if(A[2][1]!=0.0)
     {
         f_yz=div_dif_f(dt,A[1][1],A[2][2],F_A[1][1],F_A[2][2]);
         g_yz=div_dif_exp(dt,A[1][1],A[2][2],EXP_A[1][1],EXP_A[2][2]);
     }
-    if(A[2][0])
+    if(A[2][0]!=0.0)
     {
         f_zx=div_dif_f(dt,A[2][2],A[0][0],F_A[2][2],F_A[0][0]);
         g_zx=div_dif_exp(dt,A[2][2],A[0][0],EXP_A[2][2],EXP_A[0][0]);
     }
-    if(A[1][0])
+    if(A[1][0]!=0.0)
     {
         f_xy=div_dif_f(dt,A[0][0],A[1][1],F_A[0][0],F_A[1][1]);
         g_xy=div_dif_exp(dt,A[0][0],A[1][1],EXP_A[0][0],EXP_A[1][1]);
@@ -1170,7 +1170,7 @@ void MDMath::calc(type0& dt,type0(&A)[2][2],type0(&EXP_A)[2][2],type0(&F_A)[2][2
     EXP_A[1][1]=exp(dt*A[1][1]);
     EXP_A[1][0]=0.0;
     
-    if(A[1][0])
+    if(A[1][0]!=0.0)
     {
         F_A[1][0]=A[1][0]*dt*dt*div_dif_f(dt,A[0][0],A[1][1],F_A[0][0],F_A[1][1]);
         EXP_A[1][0]=A[1][0]*div_dif_exp(dt,A[0][0],A[1][1],EXP_A[0][0],EXP_A[1][1]);

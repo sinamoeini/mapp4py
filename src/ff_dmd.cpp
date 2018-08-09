@@ -229,7 +229,7 @@ void ForceFieldDMD::calc_thermo()
     }
     MPI_Allreduce(mu_sum_lcl,ave_mu,static_cast<int>(nelems),Vec<type0>::MPI_T,MPI_SUM,world);
     MPI_Allreduce(sum_lcl,sum,static_cast<int>(nelems),Vec<type0>::MPI_T,MPI_SUM,world);
-    for(size_t i=0;i<nelems;i++) if(sum[i]) ave_mu[i]/=sum[i];
+    for(size_t i=0;i<nelems;i++) if(sum[i]!=0.0) ave_mu[i]/=sum[i];
     
     Memory::dealloc(sum_lcl);
     Memory::dealloc(sum);

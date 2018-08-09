@@ -208,7 +208,7 @@ val(type_attr<std::string>::zero)
  
  --------------------------------------------*/
 template<class T>
-py_var<T>::py_var(int depth,long* sz,PyObject**& objs)
+py_var<T>::py_var(int,long*,PyObject**& objs)
 {
     this->~py_var<T>();
     try
@@ -1013,7 +1013,7 @@ void Var::assign_dynamic_size(T** __dsizes__,size_t& sz,Ts&&...szs)
  
  --------------------------------------------*/
 template<class T,class...Ts>
-void Var::assign_dynamic_size(T** __dsizes__,size_t&& sz,Ts&&...szs)
+void Var::assign_dynamic_size(T** __dsizes__,size_t&&,Ts&&...szs)
 {
     *__dsizes__=NULL;
     assign_dynamic_size(__dsizes__+1,szs...);

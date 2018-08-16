@@ -302,8 +302,65 @@ namespace MAPP_NS
         void self_xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
         
         
-        template<int dim,int idim,int idir,class F0,class F1>
-        void ___list(int last_atm,int& icomm,F0& f0,F1& f1)
+        void update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v)
+        {
+            byte* tmp_snd_buff=snd_buff;
+            __v->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+            
+            MPI_Sendrecv(snd_buff,snd_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__snd_p,0,
+                         __v->end(),rcv_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__rcv_p,0,
+                         world,MPI_STATUS_IGNORE);
+            __v->vec_sz+=rcv_atms_lst_sz[__icomm];
+        }
+        
+        
+        
+        
+        template<class...VS>
+        void update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v,VS*... __vs)
+        {
+            
+        }
+        
+        
+
+        void self_update_var(int& __icomm,int&,int&,int&,vec* __v)
+        {
+            __v->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+        }
+        template<class...VS>
+        void self_update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v,VS*... __vs)
+        {
+            self_update_var(__icomm,__snd_p,__rcv_p,__vecs_byte_sz,__v);
+            self_update_var(__icomm,__snd_p,__rcv_p,__vecs_byte_sz,__vs...);
+        }
+        
+        
+        template<int idim,int idir,class F,class ...VS>
+        void __update_w_x(int& icomm,int& tot_byte_sz,F&& f,VS*... vs)
+        {
+            while(icomm<ncomms[idim][idir])
+            {
+                if(self_comm[idim])
+                    self_update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
+                else
+                    update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
+
+                
+                if(pbc_correction[idim][idir])
+                {
+                    type0* x_vec=x->end()-__dim__;
+                    for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,x_vec-=__dim__)
+                        f(H[idim],x_vec);
+                }
+                icomm++;
+            }
+        }
+        
+        
+        
+        template<int idim,int idir,class F0,class F1>
+        void ___list(int last_atm,int& icomm,F0&& f0,F1&& f1)
         {
             int lo_atm=0;
             int hi_atm=last_atm;
@@ -313,8 +370,8 @@ namespace MAPP_NS
                 
                 snd_buff_sz=0;
                 rcv_atms_lst_sz[icomm]=snd_atms_lst_sz[icomm]=0;
-                x_vec=x->begin()+dim*lo_atm+idim;
-                for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=dim)
+                x_vec=x->begin()+__dim__*lo_atm+idim;
+                for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=__dim__)
                     if(f0(*x_vec,s_bnd[idim][idir]))
                         add_to_snd_lst(icomm,iatm);
                 
@@ -328,8 +385,8 @@ namespace MAPP_NS
                 hi_atm=x->vec_sz;
                 if(pbc_correction[idim][idir])
                 {
-                    x_vec=x->begin()+dim*lo_atm+idim;
-                    for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=dim)
+                    x_vec=x->begin()+__dim__*lo_atm+idim;
+                    for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=__dim__)
                         f1(*x_vec);
                 }
                 max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[icomm]);
@@ -338,20 +395,18 @@ namespace MAPP_NS
             }
             
         }
-        template<int dim,int idim>
+        template<int idim>
         void __list(int& icomm)
         {
             int last_atm=x->vec_sz;
-            ___list<dim,idim,0>(last_atm,icomm,
+            ___list<idim,0>(last_atm,icomm,
             [](const type0& l,const type0& r)->bool{return (l<r);},
                 [](type0& __x){++__x;});
-            ___list<dim,idim,0>(last_atm,icomm,
+            ___list<idim,0>(last_atm,icomm,
             [](const type0& l,const type0& r)->bool{return (l>=r);},
                 [](type0& __x){--__x;});
-            __list<dim,idim+1>(icomm);
+            __list<idim+1>(icomm);
         }
-        
-        
         
     protected:
     public:
@@ -364,5 +419,8 @@ namespace MAPP_NS
         void list();
         void rm_rdndncy();
     };
+    
+    template<>
+    inline void __Update::__list<__dim__>(int&){};
 }
 #endif 

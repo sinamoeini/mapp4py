@@ -1195,59 +1195,9 @@ void __Update::update(vec* updt_vec,type0 (*dH)[__dim__])
 void __Update::list()
 {
     natms_ph=0;
-    type0* x_vec;
-    int x_dim=x->dim;
-    int icurs=0;
-    int icomm=0;
-    int lo_atm,hi_atm;
-    int last_atm;
-    bool dir;
-    type0 inc;
     max_snd_atms_lst_sz=max_rcv_atms_lst_sz=0;
-    
-    for(int idim=0;idim<__dim__;idim++)
-    {
-        
-        last_atm=x->vec_sz;
-        
-        inc=1.0;
-        dir=true;
-        for(int idir=0;idir<2;idir++)
-        {
-            lo_atm=0;
-            hi_atm=last_atm;
-            while(icomm<ncomms[idim][idir])
-            {
-                snd_buff_sz=0;
-                rcv_atms_lst_sz[icomm]=snd_atms_lst_sz[icomm]=0;
-                x_vec=x->begin();
-                for(int iatm=lo_atm;iatm<hi_atm;iatm++)
-                    if((x_vec[iatm*x_dim+idim]<s_bnd[idim][idir])==dir)
-                        add_to_snd_lst(icomm,iatm);
-                
-                if(self_comm[idim])
-                    self_load_unload(icomm,neigh[idim][idir],neigh[idim][1-idir]);
-                else
-                    load_unload(icomm,neigh[idim][idir],neigh[idim][1-idir]);
-                
-                
-                lo_atm=x->vec_sz-rcv_atms_lst_sz[icomm];
-                hi_atm=x->vec_sz;
-                if(pbc_correction[idim][idir])
-                {
-                    x_vec=x->begin();
-                    for(int iatm=lo_atm;iatm<hi_atm;iatm++)
-                        x_vec[iatm*x_dim+idim]+=inc;
-                }
-                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[icomm]);
-                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[icomm]);
-                icomm++;
-            }
-            icurs++;
-            inc-=2.0;
-            dir=!dir;
-        }
-    }
+    int icomm=0;
+    __list<0>(icomm);
     natms_ph=x->vec_sz-natms_lcl;
     for(int ivec=nxchng_vecs;ivec<nvecs;ivec++)
     {
@@ -1480,19 +1430,19 @@ inline void __Update::self_load_unload
  
  --------------------------------------------*/
 inline void __Update::self_update_mult
-(int& __icomm,int&,int&,vec**& vecs
-,int& nvecs,int&)
+(int& __icomm,int&,int&,vec**& __vecs
+,int& __nvecs,int&)
 {
-    for(int ivec=0;ivec<nvecs;ivec++)
-        vecs[ivec]->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+    for(int ivec=0;ivec<__nvecs;ivec++)
+        __vecs[ivec]->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void __Update::self_update_sing
-(int& __icomm,int&,int&,vec*& v)
+(int& __icomm,int&,int&,vec*& __v)
 {
-    v->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+    __v->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
 }
 /*--------------------------------------------
  

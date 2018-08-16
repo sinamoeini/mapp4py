@@ -637,7 +637,11 @@ void PotFit<FF,NELEMS>::restore_x0()
     memcpy(atoms->x->begin(),X0.vecs[0]->begin(),sizeof(type0)*__dim__*atoms->natms_lcl);
     memcpy(&atoms->H[0][0],&X0.A[0][0],sizeof(type0)*__dim__*__dim__);
     atoms->update_H();
+#ifdef NEW_UPDATE
+    min->dynamic->update<true>();
+#else
     min->dynamic->update(atoms->x);
+#endif
 }
 /*--------------------------------------------
  just one test run
@@ -648,7 +652,11 @@ void PotFit<FF,NELEMS>::full_reset()
     memcpy(atoms->x->begin(),Xorig.vecs[0]->begin(),sizeof(type0)*__dim__*atoms->natms_lcl);
     memcpy(&atoms->H[0][0],&Xorig.A[0][0],sizeof(type0)*__dim__*__dim__);
     atoms->update_H();
+#ifdef NEW_UPDATE
+    min->dynamic->update<true>();
+#else
     min->dynamic->update(atoms->x);
+#endif
 }
 /*--------------------------------------------
  

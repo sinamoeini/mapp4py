@@ -303,11 +303,19 @@ void MDMuVT::run(int nsteps)
         update_x_d__x(fac_x_d);
         
         if((istep+1)%nevery)
+#ifdef NEW_UPDATE
+            dynamic->update<true>();
+#else
             dynamic->update(atoms->x);
+#endif
         else
         {
 #ifdef GCMCDEBUG
+#ifdef NEW_UPDATE
+            dynamic->update<true>();
+#else
             dynamic->update(atoms->x);
+#endif
             ff->force_calc_timer();
             delta_u=atoms->pe;
 #endif

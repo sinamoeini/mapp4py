@@ -119,7 +119,11 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     Algebra::MLT_mul_MLT(atoms->H,MLT2,atoms->H);
     atoms->update_H();
     
+#ifdef NEW_UPDATE
+    dynamic->update<true>();
+#else
     dynamic->update(atoms->x);
+#endif
     ff->force_calc_timer();
     
     
@@ -193,8 +197,12 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
     Algebra::Do<__dim__>::func([this](int i){MLT2[i][i]++;});
     Algebra::MLT_mul_MLT(atoms->H,MLT2,atoms->H);
     atoms->update_H();
-    
+
+#ifdef NEW_UPDATE
+    dynamic->update<true>();
+#else
     dynamic->update(atoms->x);
+#endif
     ff->force_calc_timer();
     
     

@@ -231,6 +231,7 @@ namespace MAPP_NS
 \_____/ |_|     |_____/ /_/   |_|   |_|   |_____|
  ------------------------------------------------*/
 #include "atoms.h"
+#include "xmath.h"
 namespace MAPP_NS
 {
     
@@ -286,21 +287,82 @@ namespace MAPP_NS
         int rcv_buff_cpcty;
         static constexpr int rcv_buff_grw=1024;
         
-        void add_to_snd_lst(int&,int&);
-        void reserve_snd_buff(int);
-        void reserve_rcv_buff(int);
+        void add_to_snd_lst(int& icomm,int& iatm)
+        {
+            if(snd_atms_lst_sz[icomm]+1>snd_atms_lst_cpcty[icomm])
+            {
+                int* tmp_lst=new int[snd_atms_lst_sz[icomm]+1+snd_atms_lst_grw];
+                memcpy(tmp_lst,snd_atms_lst[icomm],snd_atms_lst_sz[icomm]*sizeof(int));
+                delete [] snd_atms_lst[icomm];
+                snd_atms_lst[icomm]=tmp_lst;
+                snd_atms_lst_cpcty[icomm]=snd_atms_lst_sz[icomm]+1+snd_atms_lst_grw;
+            }
+            snd_atms_lst[icomm][snd_atms_lst_sz[icomm]]=iatm;
+            snd_atms_lst_sz[icomm]++;
+        }
+        void reserve_rcv_buff(int xtra)
+        {
+            if(rcv_buff_cpcty<xtra+rcv_buff_sz)
+            {
+                delete [] rcv_buff;
+                rcv_buff=new byte[xtra+rcv_buff_sz+rcv_buff_grw];
+                rcv_buff_cpcty=xtra+rcv_buff_sz+rcv_buff_grw;
+            }
+        }
+        void reserve_snd_buff(int xtra)
+        {
+            if(snd_buff_cpcty<xtra+snd_buff_sz)
+            {
+                delete [] snd_buff;
+                snd_buff=new byte[xtra+snd_buff_sz+snd_buff_grw];
+                snd_buff_cpcty=xtra+snd_buff_sz+snd_buff_grw;
+            }
+        }
         
         
-        
-        void load_unload(int&,int&,int&);
-        void update_mult(int&,int&,int&,vec**&,int&,int&);
-        void update_sing(int&,int&,int&,vec*&);
         void xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
-        void self_load_unload(int&,int&,int&);
-        void self_update_mult(int&,int&,int&,vec**&,int&,int&);
-        void self_update_sing(int&,int&,int&,vec*&);
         void self_xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
         
+        
+        void load_unload
+        (int& __icomm,int& __snd_p,int& __rcv_p)
+        {
+            snd_buff_sz=snd_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
+            if(snd_buff_cpcty<snd_buff_sz)
+            {
+                delete [] snd_buff;
+                snd_buff=new byte[snd_buff_sz+snd_buff_grw];
+                snd_buff_cpcty=snd_buff_sz+snd_buff_grw;
+            }
+            
+            byte* tmp_snd_buff=snd_buff;
+            for(int ivec=0;ivec<nupdt_vecs;ivec++)
+                vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+            
+            MPI_Sendrecv(&snd_atms_lst_sz[__icomm],1,MPI_INT,__snd_p,0,
+                         &rcv_atms_lst_sz[__icomm],1,MPI_INT,__rcv_p,0,
+                         world,MPI_STATUS_IGNORE);
+            
+            rcv_buff_sz=rcv_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
+            if(rcv_buff_cpcty<rcv_buff_sz)
+            {
+                delete [] rcv_buff;
+                rcv_buff=new byte[rcv_buff_sz+rcv_buff_grw];
+                rcv_buff_cpcty=rcv_atms_lst_sz[__icomm]*tot_updt_vecs_sz+rcv_buff_grw;
+            }
+            
+            MPI_Sendrecv(snd_buff,snd_buff_sz,MPI_BYTE,__snd_p,0,
+                         rcv_buff,rcv_buff_sz,MPI_BYTE,__rcv_p,0,
+                         world,MPI_STATUS_IGNORE);
+            
+            
+            byte* tmp_rcv_buff=rcv_buff;
+            for(int ivec=0;ivec<nupdt_vecs;ivec++)
+            {
+                vecs[ivec]->reserve(rcv_atms_lst_sz[__icomm]);
+                vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[__icomm]);
+            }
+        }
         
         void update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v)
         {
@@ -313,13 +375,52 @@ namespace MAPP_NS
             __v->vec_sz+=rcv_atms_lst_sz[__icomm];
         }
         
+        void self_load_unload
+        (int& __icomm,int&,int&)
+        {
+            rcv_atms_lst_sz[__icomm]=snd_atms_lst_sz[__icomm];
+            
+            for(int ivec=0;ivec<nupdt_vecs;ivec++)
+            {
+                vecs[ivec]->reserve(rcv_atms_lst_sz[__icomm]);
+                vecs[ivec]->cpy_pst(snd_atms_lst[__icomm],rcv_atms_lst_sz[__icomm]);
+            }
+        }
         
+        void update_var_cpy(int& __icomm,byte*& __snd_buff,vec* __v)
+        {
+            __v->cpy(__snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+        }
+        template<class...VS>
+        void update_var_cpy(int& __icomm,byte*& __snd_buff,vec* __v,VS*... __vs)
+        {
+            update_var_cpy(__icomm,__snd_buff,__v);
+            update_var_cpy(__icomm,__snd_buff,__vs...);
+        }
         
+        void update_var_pst(int& __icomm,byte*& __rcv_buff,vec* __v)
+        {
+            __v->pst(__rcv_buff,rcv_atms_lst_sz[__icomm]);
+        }
+        
+        template<class...VS>
+        void update_var_pst(int& __icomm,byte*& __rcv_buff,vec* __v,VS* ... __vs)
+        {
+            update_var_pst(__icomm,__rcv_buff,__v);
+            update_var_pst(__icomm,__rcv_buff,__vs...);
+        }
         
         template<class...VS>
         void update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v,VS*... __vs)
         {
+            byte* __snd_buff=snd_buff;
+            update_var_cpy(__icomm,__snd_buff,__v,__vs...);
+            MPI_Sendrecv(snd_buff,snd_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__snd_p,0,
+                         rcv_buff,rcv_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__rcv_p,0,
+                         world,MPI_STATUS_IGNORE);
             
+            byte* __rcv_buff=rcv_buff;
+            update_var_pst(__icomm,__rcv_buff,__v,__vs...);
         }
         
         
@@ -353,6 +454,19 @@ namespace MAPP_NS
                     for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,x_vec-=__dim__)
                         f(H[idim],x_vec);
                 }
+                icomm++;
+            }
+        }
+        
+        template<int idim,int idir,class ...VS>
+        void __update_w_o_x(int& icomm,int& tot_byte_sz,VS*... vs)
+        {
+            while(icomm<ncomms[idim][idir])
+            {
+                if(self_comm[idim])
+                    self_update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
+                else
+                    update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
                 icomm++;
             }
         }
@@ -399,28 +513,93 @@ namespace MAPP_NS
         void __list(int& icomm)
         {
             int last_atm=x->vec_sz;
-            ___list<idim,0>(last_atm,icomm,
-            [](const type0& l,const type0& r)->bool{return (l<r);},
-                [](type0& __x){++__x;});
-            ___list<idim,0>(last_atm,icomm,
-            [](const type0& l,const type0& r)->bool{return (l>=r);},
-                [](type0& __x){--__x;});
+            ___list<idim,0>(last_atm,icomm,[](const type0& l,const type0& r)->bool{return (l<r);},[](type0& __x){++__x;});
+            ___list<idim,1>(last_atm,icomm,[](const type0& l,const type0& r)->bool{return (l>=r);},[](type0& __x){--__x;});
             __list<idim+1>(icomm);
         }
+        
+        
+        template<int idim>
+        class UpdateHelper
+        {
+        public:
+            template<class... VS>
+            static void update_w_x(__Update& update,int& icomm,int& tot_byte_sz,VS*... vs)
+            {
+                update.__update_w_x<idim,0>(icomm,tot_byte_sz,Algebra::V_add<idim+1,type0>,vs...);
+                update.__update_w_x<idim,1>(icomm,tot_byte_sz,Algebra::V_sub<idim+1,type0>,vs...);
+                UpdateHelper<idim+1>::update_w_x(update,icomm,tot_byte_sz,vs...);
+            }
+            template<class... VS>
+            static void update_w_o_x(__Update& update,int& icomm,int& tot_byte_sz,VS*... vs)
+            {
+                update.__update_w_o_x<idim,0>(icomm,tot_byte_sz,vs...);
+                update.__update_w_o_x<idim,1>(icomm,tot_byte_sz,vs...);
+                UpdateHelper<idim+1>::update_w_o_x(update,icomm,tot_byte_sz,vs...);
+            }
+        };
+        
+        
+        
+        
+        int reset_vs(vec* __v)
+        {
+            __v->vec_sz=natms_lcl;
+            return __v->byte_sz;
+        }
+        template<class ...VS>
+        int reset_vs(vec* __v,VS*... __vs)
+        {
+            return reset_vs(__v)+reset_vs(__vs...);
+        }
+
         
     protected:
     public:
         __Update(Atoms*,int&,int&);
         ~__Update();
         void reset();
-        void update(vec*,bool);
-        void update(vec*,type0 (*)[__dim__]);
-        void update(vec**,int,bool);
         void list();
         void rm_rdndncy();
+        
+        template<class ...VS>
+        void update_w_x(VS*... __vs)
+        {
+            int tot_byte_sz=reset_vs(__vs...);
+            snd_buff_sz=rcv_buff_sz=0;
+            reserve_snd_buff(tot_byte_sz*max_snd_atms_lst_sz);
+            reserve_rcv_buff(tot_byte_sz*max_rcv_atms_lst_sz);
+            int icomm=0;
+            UpdateHelper<0>::update_w_x(*this,icomm,tot_byte_sz,__vs...);
+            
+        }
+        
+        template<class ...VS>
+        void update_w_o_x(VS*... __vs)
+        {
+            int tot_byte_sz=reset_vs(__vs...);
+            snd_buff_sz=rcv_buff_sz=0;
+            reserve_snd_buff(tot_byte_sz*max_snd_atms_lst_sz);
+            reserve_rcv_buff(tot_byte_sz*max_rcv_atms_lst_sz);
+            int icomm=0;
+            UpdateHelper<0>::update_w_o_x(*this,icomm,tot_byte_sz,__vs...);
+            
+        }
     };
     
     template<>
     inline void __Update::__list<__dim__>(int&){};
+    template<>
+    class __Update::UpdateHelper<__dim__>
+    {
+    public:
+        template<class... VS>
+        static void update_w_x(__Update&,int&,int&,VS*...)
+        {
+        }
+        template<class... VS>
+        static void update_w_o_x(__Update&,int&,int&,VS*...)
+        {}
+    };
 }
 #endif 

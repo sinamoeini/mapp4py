@@ -33,15 +33,8 @@ type0 MinCG::calc_ndofs()
 void MinCG::force_calc()
 {
     ff->derivative_timer();
-
     if(chng_box)
-    {
-        type0 (&S_pe)[__dim__][__dim__]=atoms->S_pe;
-        type0 neg_v=-atoms->vol;
-        Algebra::DoLT<__dim__>::func([this,&S_pe,&neg_v](int i,int j)
-        {f.A[i][j]=H_dof[i][j] ? S_pe[i][j]*neg_v:0.0;});
-        
-    }
+        Algebra::DoLT<__dim__>::func([this](int i,int j){f.A[i][j]=H_dof[i][j] ? f.A[i][j]:0.0;});
 }
 /*--------------------------------------------
  
@@ -80,7 +73,7 @@ void MinCG::init()
     x.~VecTens();
     new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
     f.~VecTens();
-    new (&f) VecTens<type0,1>(atoms,chng_box,ff->f);
+    new (&f) VecTens<type0,1>(atoms,chng_box,ff->F_H,ff->f);
     h.~VecTens();
     new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
     x0.~VecTens();
@@ -146,7 +139,7 @@ void MinCG::ff_test(int seed,type0 __max_dx,type0 __max_st,int __n_desc)
     x.~VecTens();
     new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
     f.~VecTens();
-    new (&f) VecTens<type0,1>(atoms,chng_box,ff->f);
+    new (&f) VecTens<type0,1>(atoms,chng_box,ff->F_H,ff->f);
     h.~VecTens();
     new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
     x0.~VecTens();

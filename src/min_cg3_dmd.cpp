@@ -1,10 +1,10 @@
-#include "min_cg_dmd.h"
+#include "min_cg3_dmd.h"
 #include <stdlib.h>
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCGDMD::MinCGDMD(type0 __e_tol,
+MinCG3DMD::MinCG3DMD(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
 atoms(NULL),
@@ -16,7 +16,7 @@ xprt(NULL)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinCGDMD::~MinCGDMD()
+MinCG3DMD::~MinCG3DMD()
 {
     atoms=NULL;
     ff=NULL;
@@ -24,7 +24,7 @@ MinCGDMD::~MinCGDMD()
 /*--------------------------------------------
  pre run check it throw excepctions
  --------------------------------------------*/
-void MinCGDMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
+void MinCG3DMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
 {
     try
     {
@@ -44,14 +44,60 @@ void MinCGDMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
     
     if(std::isnan(atoms->temp))
         throw std::string("temperature should be set prior to minimizatiom");
+    
+    const int c_dim=atoms->c_dim;
+    type0* c=atoms->c->begin();
+    int natms_lcl=atoms->natms_lcl;
+    bool chk=true;
+    type0 cv;
+    for(int i=0;i<natms_lcl && chk;i++,c+=c_dim)
+    {
+        cv=1.0;
+        for(int j=0;j<c_dim;j++)
+        {
+            if(c[j]<0.0) continue;
+            if(c[j]==0.0) chk=false;
+            cv-=c[j];
+        }
+        if(cv<=0.0) chk=false;
+    }
+    
+    int err_lcl=chk ? 0:1;
+    int err;
+    MPI_Allreduce(&err_lcl,&err,1,Vec<int>::MPI_T,MPI_MAX,atoms->world);
+    if(err)
+        throw std::string("yuor initial c sucks");
+    
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::force_calc()
+void MinCG3DMD::force_calc()
 {
     ff->derivative_timer();
-
+    const int c_dim=atoms->c_dim;
+    int natms_lcl=atoms->natms_lcl;
+    type0* c=atoms->c->begin();
+    type0* mu=ff->mu->begin();
+    type0 cv;
+    type0 logcv;
+    type0 kBT=atoms->temp*atoms->kB;
+    for(int i=0;i<natms_lcl;i++,c+=c_dim,mu+=c_dim)
+    {
+        cv=1.0;
+        for(int j=0;j<c_dim;j++)
+        {
+            if(c[j]>=0.0)
+                cv-=c[j];
+        }
+        logcv=log(cv);
+        for(int j=0;j<c_dim;j++)
+        {
+            if(c[j]>=0.0)
+                mu[j]=-mu[j]-kBT*(log(c[j])-logcv);
+        }
+    }
+    
     if(chng_box)
     {
         type0 (&S_fe)[__dim__][__dim__]=atoms->S_fe;
@@ -64,7 +110,7 @@ void MinCGDMD::force_calc()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::prep()
+void MinCG3DMD::prep()
 {
     x_d=h;
     if(!chng_box) return;
@@ -90,39 +136,44 @@ void MinCGDMD::prep()
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 MinCGDMD::calc_ndofs()
+type0 MinCG3DMD::calc_ndofs()
 {
     return 0.0;
 }
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinCGDMD::init()
+void MinCG3DMD::init()
 {
     const int c_dim=atoms->c->dim;
     x.~VecTens();
-    new (&x) VecTens<type0,2>(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
+    new (&x) VecTens<type0,3>(atoms,chng_box,atoms->H,atoms->x,atoms->alpha,atoms->c);
     f.~VecTens();
-    new (&f) VecTens<type0,2>(atoms,chng_box,ff->F_H,ff->f,ff->f_alpha);
+    new (&f) VecTens<type0,3>(atoms,chng_box,ff->F_H,ff->f,ff->f_alpha,ff->mu);
     h.~VecTens();
-    new (&h) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+    new (&h) MinDMDMan<true,true,true,true>::VECTENS1(atoms,chng_box,__dim__,c_dim,c_dim);
     x0.~VecTens();
-    new (&x0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+    new (&x0) VecTens<type0,3>(atoms,chng_box,__dim__,c_dim,c_dim);
     x_d.~VecTens();
-    new (&x_d) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
+    new (&x_d) VecTens<type0,3>(atoms,chng_box,__dim__,c_dim,c_dim);
     f0.~VecTens();
-    new (&f0) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
-#ifdef MINCG_W_NEWTON
-    dynamic=new DynamicDMD(atoms,ff,true,{atoms->c_dof},
-    {atoms->x_dof,atoms->alpha_dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
-#else
+    new (&f0) VecTens<type0,3>(atoms,chng_box,__dim__,c_dim,c_dim);
     dynamic=new DynamicDMD(atoms,ff,chng_box,{},
-    {atoms->x_dof,atoms->alpha_dof,atoms->c_dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
-#endif
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],h.vecs[2],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2],
+        x_d.vecs[0],x_d.vecs[1],x_d.vecs[2],
+        f0.vecs[0],f0.vecs[1],f0.vecs[2]
+        
+    },{});
     dynamic->init();
     
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
+    uvecs[2]=atoms->c;
     
     if(xprt)
     {
@@ -141,7 +192,7 @@ void MinCGDMD::init()
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
-void MinCGDMD::fin()
+void MinCG3DMD::fin()
 {
     if(xprt)
     {
@@ -149,6 +200,7 @@ void MinCGDMD::fin()
         xprt->atoms=NULL;
     }
     
+    uvecs[2]=NULL;
     uvecs[1]=NULL;
     uvecs[0]=NULL;
     
@@ -166,7 +218,7 @@ void MinCGDMD::fin()
 /*--------------------------------------------
  min
  --------------------------------------------*/
-void MinCGDMD::run(int nsteps)
+void MinCG3DMD::run(int nsteps)
 {
     if(dynamic_cast<LineSearchGoldenSection*>(ls))
         return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
@@ -181,107 +233,61 @@ void MinCGDMD::run(int nsteps)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::refine(int n,int nsteps)
-{
-    const int c_dim=atoms->c->dim;
-    
-    
-    x.~VecTens();
-    new (&x) VecTens<type0,2>(atoms,false,atoms->H,atoms->x,atoms->alpha);
-    f.~VecTens();
-    new (&f) VecTens<type0,2>(atoms,false,ff->f,ff->f_alpha);
-    h.~VecTens();
-    new (&h) VecTens<type0,2>(atoms,false,__dim__,c_dim);
-    
-    dynamic=new DynamicDMD(atoms,ff,false,{atoms->x_dof,atoms->alpha_dof,atoms->c_dof},{},{});
-    dynamic->init();
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-    type0 norm,res;
-    
-    
-    
-    __GMRES__<VecTens<type0,2>> gmres(n,atoms,false,__dim__,c_dim);
-    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
-    {
-        ff->J(x,Jx);
-    };
-    
-    
-    res=ff->prep_timer(f);
-    for(int istep=0;istep<nsteps && res>1.0e-8;istep++)
-    {
-        printf("res %e\n",res);
-        gmres.solve(J,f,e_tol,norm,h);
-        
-        
-        //printf("-h.f %e\n",-(h*f));
-        
-        x+=h;
-        
-        type0 max_alpha_lcl=0.0;
-        const int n=atoms->natms_lcl*atoms->alpha->dim;
-        type0* alpha_vec=atoms->alpha->begin();
-        type0* c_vec=atoms->c->begin();
-        for(int i=0;i<n;i++)
-            if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-        
-        dynamic->update(uvecs,2);
-        res=ff->prep_timer(f);
-        
-    }
-    
-    
-    uvecs[1]=NULL;
-    uvecs[0]=NULL;
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    
-    h.~VecTens();
-    f.~VecTens();
-    x.~VecTens();
-}
+void MinCG3DMD::refine(int n,int nsteps)
+{}
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 MinCGDMD::F(type0 alpha)
+type0 MinCG3DMD::F(type0 alpha)
 {
     x=x0+alpha*x_d;
     type0 max_alpha_lcl=0.0;
     const int n=atoms->natms_lcl*atoms->alpha->dim;
     type0* alpha_vec=atoms->alpha->begin();
     type0* c_vec=atoms->c->begin();
+    type0 volatile cj;
     for(int i=0;i<n;i++)
-        if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+        if(c_vec[i]>=0.0)
+        {
+            max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+            cj=c_vec[i];
+            --++cj;
+            c_vec[i]=cj;
+        }
+    
     MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     
     if(chng_box)
         atoms->update_H();
 
-    dynamic->update(uvecs,2);
+    dynamic->update(uvecs,3);
     return ff->value_timer();
 }
 /*--------------------------------------------
  inner product of f and h
  --------------------------------------------*/
-type0 MinCGDMD::dF(type0 alpha,type0& drev)
+type0 MinCG3DMD::dF(type0 alpha,type0& drev)
 {
     x=x0+alpha*h;
     type0 max_alpha_lcl=0.0;
     const int n=atoms->natms_lcl*atoms->alpha->dim;
     type0* alpha_vec=atoms->alpha->begin();
     type0* c_vec=atoms->c->begin();
+    type0 volatile cj;
     for(int i=0;i<n;i++)
-        if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+        if(c_vec[i]>=0.0)
+        {
+            max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+            cj=c_vec[i];
+            --++cj;
+            c_vec[i]=cj;
+        }
     MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     
     if(chng_box)
         atoms->update_H();
     
-    dynamic->update(uvecs,2);
+    dynamic->update(uvecs,3);
     force_calc();
     
     drev=-(f*h);
@@ -290,7 +296,7 @@ type0 MinCGDMD::dF(type0 alpha,type0& drev)
 /*--------------------------------------------
  find maximum h
  --------------------------------------------*/
-void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
+void MinCG3DMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 {
     
     h_norm=h*h;
@@ -325,7 +331,7 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     type0 max_alpha_ratio=std::numeric_limits<type0>::infinity();
     type0* x_d_alphavec=x_d.vecs[1]->begin();
     type0* alphavec=x.vecs[1]->begin();
-    n=natms_lcl*atoms->alpha->dim;
+    n=natms_lcl*atoms->c_dim;
     type0 max_x_d_alpha_lcl=0.0;
     for(int i=0;i<n;i++)
     {
@@ -336,29 +342,95 @@ void MinCGDMD::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
     type0 max_a_lcl=MIN(fabs(max_dx/max_x_d_lcl),max_alpha_ratio);
     max_a_lcl=MIN(max_a_lcl,fabs(max_dalpha/max_x_d_alpha_lcl));
 
-    MPI_Allreduce(&max_a_lcl,&max_a,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
     
+    
+    
+    
+    
+    
+    
+    
+    
+    type0 max_c_ratio=max_a_lcl,dc_i=0.0,dh_i=0.0;
+    type0* x_d_cvec=x_d.vecs[2]->begin();
+    int c_dim=atoms->c_dim;
+    type0* cvec=x.vecs[2]->begin();
+    type0 x_d_cv,cv;
+    type0 lo=1.0+std::numeric_limits<type0>::epsilon();
+    type0 volatile cj;
+    for(int i=0;i<natms_lcl;i++,x_d_cvec+=c_dim,cvec+=c_dim)
+    {
+        x_d_cv=0.0;
+        cv=1.0;
+        for(int j=0;j<c_dim;j++)
+        {
+            //printf("%.16lf %.16lf\n",cvec[j],x_d_cvec[j]);
+            if(cvec[j]<0.0) continue;
+            x_d_cv-=x_d_cvec[j];
+            cv-=cvec[j];
+            cj=1.0+cvec[j];
+            if(x_d_cvec[j]<0.0 && cj+(max_c_ratio*x_d_cvec[j])<lo)
+            {
+                max_c_ratio=(cj-lo)/(-x_d_cvec[j]);
+                dc_i=cj-lo;
+                dh_i=-x_d_cvec[j];
+            }
+        }
+        
+        //printf("%.16lf %.16lf\n",cv,x_d_cv);
+        cj=1.0+cv;
+        if(x_d_cv<0.0 && cj+(max_c_ratio*x_d_cv)<lo)
+        {
+            max_c_ratio=(cj-lo)/(-x_d_cv);
+            dc_i=cj-lo;
+            dh_i=-x_d_cv;
+        }
+        
+        bool chk=false;
+        
+        while(!chk)
+        {
+            chk=true;
+            cv=1.0;
+            for(int j=0;j<c_dim && chk;j++)
+            {
+                if(cvec[j]<0.0) continue;
+                cj=1.0+cvec[j];
+                cj+=(max_c_ratio*x_d_cvec[j]);
+                //printf("%.52lf\n",cj);
+                if(cj<lo) chk=false;
+                --cj;
+                cv-=cj;
+            }
+            cj=1.0+cv;
+            if(cj<lo) chk=false;
+            if(chk) continue;
+            dc_i-=std::numeric_limits<type0>::epsilon();
+            max_c_ratio=dc_i/dh_i;
+        }
+    }
+    
+
+    max_a_lcl=MIN(max_a_lcl,max_c_ratio);
+    
+    
+    MPI_Allreduce(&max_a_lcl,&max_a,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
 }
 /*--------------------------------------------
  reset to initial position
  --------------------------------------------*/
-void MinCGDMD::F_reset()
+void MinCG3DMD::F_reset()
 {
     x=x0;
-    const int n=atoms->natms_lcl*atoms->alpha->dim;
-    type0 max_alpha_lcl=0.0;
-    type0* alpha_vec=atoms->alpha->begin();
-    type0* c_vec=atoms->c->begin();
-    for(int i=0;i<n;i++)
-        if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-    MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
+
+    atoms->update_max_alpha();
     if(chng_box) atoms->update_H();
-    dynamic->update(uvecs,2);
+    dynamic->update(uvecs,3);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinCGDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinCG3DMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -367,7 +439,7 @@ PyObject* MinCGDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","max_dalpha","ls"});
     f.noptionals=6;
@@ -397,7 +469,7 @@ int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<5>().ob);
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
-    __self->min=new MinCGDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
+    __self->min=new MinCG3DMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;
@@ -405,7 +477,7 @@ int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinCGDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinCG3DMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -418,7 +490,7 @@ PyObject* MinCGDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::__dealloc__(PyObject* self)
+void MinCG3DMD::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -430,9 +502,9 @@ void MinCGDMD::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinCGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinCG3DMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int MinCGDMD::setup_tp()
+int MinCG3DMD::setup_tp()
 {
     TypeObject.tp_name="mapp.dmd.min_cg";
     TypeObject.tp_doc=R"---(
@@ -480,9 +552,9 @@ int MinCGDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCGDMD::getset[]=EmptyPyGetSetDef(9);
+PyGetSetDef MinCG3DMD::getset[]=EmptyPyGetSetDef(9);
 /*--------------------------------------------*/
-void MinCGDMD::setup_tp_getset()
+void MinCG3DMD::setup_tp_getset()
 {
     getset_e_tol(getset[0]);
     getset_H_dof(getset[1]);
@@ -494,9 +566,9 @@ void MinCGDMD::setup_tp_getset()
     getset_export(getset[7]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCGDMD::methods[]=EmptyPyMethodDef(3);
+PyMethodDef MinCG3DMD::methods[]=EmptyPyMethodDef(3);
 /*--------------------------------------------*/
-void MinCGDMD::setup_tp_methods()
+void MinCG3DMD::setup_tp_methods()
 {
     ml_run(methods[0]);
     ml_refine(methods[1]);
@@ -504,7 +576,7 @@ void MinCGDMD::setup_tp_methods()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
+void MinCG3DMD::getset_max_dalpha(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dalpha";
     getset.doc=(char*)R"---(
@@ -529,7 +601,7 @@ void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::getset_export(PyGetSetDef& getset)
+void MinCG3DMD::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
@@ -558,7 +630,7 @@ void MinCGDMD::getset_export(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::ml_run(PyMethodDef& tp_methods)
+void MinCG3DMD::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";
@@ -638,7 +710,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCGDMD::ml_refine(PyMethodDef& tp_methods)
+void MinCG3DMD::ml_refine(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="refine";
@@ -691,3 +763,275 @@ void MinCGDMD::ml_refine(PyMethodDef& tp_methods)
 
     )---";
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,true,true,true>::init()
+{
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    uvecs[2]=atoms->c;
+    
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,true,ff->F_H,ff->f,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,true,atoms->H,atoms->x,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,true,__dim__,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,true,__dim__,h.vecs[1],h.vecs[2]);
+    
+    dynamic=new DynamicDMD(atoms,ff,true,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],h.vecs[2],
+        f0.vecs[0],f0.vecs[1],f0.vecs[2],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2],
+        x_d.vecs[0]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,true,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+    dynamic->add_xchng(v.vecs[2]);
+}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,true,true,true>::init()
+{
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    uvecs[2]=atoms->c;
+    
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,false,ff->F_H,ff->f,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,false,atoms->H,atoms->x,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,false,__dim__,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,false,h.vecs[0],h.vecs[1],h.vecs[2]);
+    
+    dynamic=new DynamicDMD(atoms,ff,false,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],h.vecs[2],
+        f0.vecs[0],f0.vecs[1],f0.vecs[2],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,true,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+    dynamic->add_xchng(v.vecs[2]);
+}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,false,true,true>::init()
+{
+    uvecs[0]=atoms->x;
+    uvecs[1]=atoms->alpha;
+    uvecs[2]=atoms->c;
+    
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,true,ff->F_H,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,true,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,true,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,true,atoms->H,atoms->x,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,true,__dim__,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,true,__dim__,h.vecs[0],h.vecs[1]);
+    
+    dynamic=new DynamicDMD(atoms,ff,true,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],
+        f0.vecs[0],f0.vecs[1],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2],
+        x_d.vecs[0]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,false,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,true,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,false,true,true>::init()
+{
+    uvecs[0]=atoms->alpha;
+    uvecs[1]=atoms->c;
+    
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,false,ff->F_H,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,false,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,false,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,false,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,false,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,false,h.vecs[0],h.vecs[1]);
+    
+    dynamic=new DynamicDMD(atoms,ff,true,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],
+        f0.vecs[0],f0.vecs[1],
+        x0.vecs[0],x0.vecs[1]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,false,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,false,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+}
+
+
+template<> void MinDMDMan<true,true,true,true>::prep(){prep_x_d();};
+template<> void MinDMDMan<false,true,true,true>::prep(){};
+template<> void MinDMDMan<true,false,true,true>::prep(){prep_x_d_affine();};
+template<> void MinDMDMan<false,false,true,true>::prep(){};
+template<> void MinDMDMan<true,true,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
+template<> void MinDMDMan<false,true,true,true>::force_calc(){post_force_calc_c();}
+template<> void MinDMDMan<true,false,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
+template<> void MinDMDMan<false,false,true,true>::force_calc(){post_force_calc_c();}
+
+
+template<> type0 MinDMDMan<true,true,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    atoms->update_H();
+    //dynamic->__update__x_alpha(atoms->c);
+    return ff->value_timer();
+}
+template<> type0 MinDMDMan<false,true,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    //dynamic->__update__x_alpha(atoms->c);
+    return ff->value_timer();
+}
+template<> type0 MinDMDMan<true,false,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    atoms->update_H();
+    //dynamic->__update__x_alpha(atoms->c);
+    return ff->value_timer();
+}
+template<> type0 MinDMDMan<false,false,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    //dynamic->__update__alpha(atoms->c);
+    return ff->value_timer();
+}
+
+
+
+
+
+

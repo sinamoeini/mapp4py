@@ -97,6 +97,19 @@ void AtomsMD::create_T(type0 T,int seed)
 /*--------------------------------------------
  
  --------------------------------------------*/
+int AtomsMD::count_elem(elem_type ielem)
+{
+    elem_type* __elem=elem->begin();
+    int n_lcl=0;
+    for(int i=0;i<natms_lcl;i++)
+        if(__elem[i]==ielem) n_lcl++;
+    int n=0;
+    MPI_Allreduce(&n_lcl,&n,1,Vec<int>::MPI_T,MPI_SUM,world);
+    return n;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void AtomsMD::DO(PyObject* op)
 {   
     class Func_x

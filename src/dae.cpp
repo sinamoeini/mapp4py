@@ -133,8 +133,11 @@ void DAE::init()
     
     ff->calc_ndof();
     a_tol_sqrt_nc_dof=a_tol*sqrt(static_cast<type0>(ff->nc_dof));
-    sqrt_nx_nalpha_dof=sqrt(static_cast<type0>(ff->nx_dof+ff->nalpha_dof));
-    a_tol_sqrt_nx_nalpha_dof=a_tol*sqrt_nx_nalpha_dof;
+    int n=ff->nx_dof+ff->nalpha_dof;
+    Algebra::DoLT<__dim__>::func([this,&n](int i,int j)
+    {if(!std::isnan(S[i][j])) ++n;});
+    sqrt_nx_nalpha_nS_dof=sqrt(static_cast<type0>(n));
+    a_tol_sqrt_nx_nalpha_nS_dof=a_tol*sqrt_nx_nalpha_nS_dof;
 }
 /*--------------------------------------------
  
@@ -158,6 +161,20 @@ void DAE::fin()
 /*--------------------------------------------
  
  --------------------------------------------*/
+type0 DAE::calc_err()
+{
+    if(!chng_box) return ff->err/sqrt_nx_nalpha_nS_dof;
+    type0 err_sq=0.0;
+    type0 (&S_fe)[__dim__][__dim__]=atoms->S_fe;
+    Algebra::DoLT<__dim__>::func([&S_fe,&err_sq,this](int i,int j)
+    {if(!std::isnan(S[i][j])) err_sq+=(S[i][j]-S_fe[i][j])*(S[i][j]-S_fe[i][j]);});
+    err_sq*=(atoms->vol)*(atoms->vol);
+    err_sq+=(ff->err)*(ff->err);
+    return sqrt(err_sq)/sqrt_nx_nalpha_nS_dof;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void DAE::min_error()
 {
     
@@ -168,7 +185,7 @@ void DAE::min_error()
 #endif
     
     VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
-    VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
+    VecTens<type0,2> f(atoms,chng_box,ff->F_H,ff->f,ff->f_alpha);
     VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
     
     vec* uvecs[2];
@@ -203,7 +220,7 @@ void DAE::min_error()
     res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
     type0 r;
     int istep=0;
-    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_dof>1.0;istep++)
+    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_nS_dof>1.0;istep++)
     {
         /*
         if(atoms->comm_rank==0)
@@ -220,7 +237,7 @@ void DAE::min_error()
         if(atoms->comm_rank==0)
             printf("%d | %d  %e | %e | %0.13lf\n",istep,gmres.iter,gmres.res/(0.005*a_tol_sqrt_nc_dofs),res/a_tol_sqrt_nc_dofs,atoms->fe);
          */
-        gmres.solve(J,f,0.005*a_tol_sqrt_nx_nalpha_dof,norm,h);
+        gmres.solve(J,f,0.005*a_tol_sqrt_nx_nalpha_nS_dof,norm,h);
         
         
         const int n=atoms->natms_lcl*c_dim;
@@ -262,7 +279,7 @@ void DAE::min_error()
         res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
         
     }
-    nerr_mins++;
+    if(istep) nerr_mins++;
     //printf("%d res %e %e\n",istep,a0,a1);
     //if(atoms->comm_rank==0 && res/a_tol_sqrt_nc_dofs>1.0) printf("res %e\n",res/a_tol_sqrt_nc_dofs);
 }

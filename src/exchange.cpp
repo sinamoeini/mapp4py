@@ -402,8 +402,6 @@ inline void Update::reserve_snd_buff(int xtra)
  --------------------------------------------*/
 void Update::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
 {
-    type0* x_vec=x->begin();
-    int x_dim=x->dim;
     int tot_byte_sz=0;
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
     {
@@ -430,17 +428,19 @@ void Update::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
                 
                 if(x_xst && pbc_correction[idim][idir])
                 {
+                    type0* __x_vec=x->end()-__dim__;
                     if(idir)
                     {
-                        for(int iatm=x->vec_sz-1;iatm>x->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                        for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__x_vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                x_vec[iatm*x_dim+jdim]-=H[idim][jdim];
+                                __x_vec[jdim]-=H[idim][jdim];
+                        
                     }
                     else
                     {
-                        for(int iatm=x->vec_sz-1;iatm>x->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                        for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__x_vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                x_vec[iatm*x_dim+jdim]+=H[idim][jdim];
+                                __x_vec[jdim]+=H[idim][jdim];
                     }
                 }
                 icomm++;
@@ -454,8 +454,6 @@ void Update::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
  --------------------------------------------*/
 void Update::update(vec* updt_vec,bool x_xst)
 {
-    type0* x_vec=x->begin();
-    int x_dim=x->dim;
     snd_buff_sz=0;
     reserve_snd_buff(updt_vec->byte_sz*max_snd_atms_lst_sz);
     updt_vec->vec_sz=natms_lcl;
@@ -475,18 +473,21 @@ void Update::update(vec* updt_vec,bool x_xst)
                 
                 if(x_xst && pbc_correction[idim][idir])
                 {
+                    type0* __x_vec=x->end()-__dim__;
                     if(idir)
                     {
-                        for(int iatm=x->vec_sz-1;iatm>x->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                        for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__x_vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                x_vec[iatm*x_dim+jdim]-=H[idim][jdim];
+                                __x_vec[jdim]-=H[idim][jdim];
+                        
                     }
                     else
                     {
-                        for(int iatm=x->vec_sz-1;iatm>x->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                        for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__x_vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                x_vec[iatm*x_dim+jdim]+=H[idim][jdim];
+                                __x_vec[jdim]+=H[idim][jdim];
                     }
+                    
                 }
                 icomm++;
             }
@@ -500,7 +501,6 @@ void Update::update(vec* updt_vec,bool x_xst)
 void Update::update(vec* updt_vec,type0 (*dH)[__dim__])
 {
     
-    type0* vec=static_cast<type0*>(updt_vec->begin());
     snd_buff_sz=0;
     reserve_snd_buff(updt_vec->byte_sz*max_snd_atms_lst_sz);
     updt_vec->vec_sz=natms_lcl;
@@ -520,17 +520,20 @@ void Update::update(vec* updt_vec,type0 (*dH)[__dim__])
                 
                 if(pbc_correction[idim][idir])
                 {
+                    
+                    type0* __vec=static_cast<type0*>(updt_vec->end())-__dim__;
+
                     if(idir)
                     {
-                        for(int iatm=updt_vec->vec_sz-1;iatm>updt_vec->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                        for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                vec[iatm*__dim__+jdim]-=dH[idim][jdim];
+                                __vec[jdim]-=H[idim][jdim];
                     }
                     else
                     {
-                        for(int iatm=updt_vec->vec_sz-1;iatm>updt_vec->vec_sz-rcv_atms_lst_sz[icomm]-1;iatm--)
+                        for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                vec[iatm*__dim__+jdim]+=dH[idim][jdim];
+                                __vec[jdim]+=H[idim][jdim];
                     }
                 }
                 icomm++;
@@ -727,30 +730,30 @@ void Update::rm_rdndncy()
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
 Update::LoadUnLoadUpdateComm::
-LoadUnLoadUpdateComm(Update* updt,MPI_Comm& world_):
+LoadUnLoadUpdateComm(Update* __updt,MPI_Comm& __world):
 LoadUnLoadUpdate(),
-world(world_),
-snd_atms_lst(updt->snd_atms_lst),
-snd_atms_lst_sz(updt->snd_atms_lst_sz),
-rcv_atms_lst_sz(updt->rcv_atms_lst_sz),
-snd_buff(updt->snd_buff),
-snd_buff_sz(updt->snd_buff_sz),
-snd_buff_cpcty(updt->snd_buff_cpcty),
-rcv_buff(updt->rcv_buff),
-rcv_buff_sz(updt->rcv_buff_sz),
-rcv_buff_cpcty(updt->rcv_buff_cpcty),
-vecs(updt->vecs),
-nupdt_vecs(updt->nupdt_vecs),
-tot_updt_vecs_sz(updt->tot_updt_vecs_sz)
+world(__world),
+snd_atms_lst(__updt->snd_atms_lst),
+snd_atms_lst_sz(__updt->snd_atms_lst_sz),
+rcv_atms_lst_sz(__updt->rcv_atms_lst_sz),
+snd_buff(__updt->snd_buff),
+snd_buff_sz(__updt->snd_buff_sz),
+snd_buff_cpcty(__updt->snd_buff_cpcty),
+rcv_buff(__updt->rcv_buff),
+rcv_buff_sz(__updt->rcv_buff_sz),
+rcv_buff_cpcty(__updt->rcv_buff_cpcty),
+vecs(__updt->vecs),
+nupdt_vecs(__updt->nupdt_vecs),
+tot_updt_vecs_sz(__updt->tot_updt_vecs_sz)
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateComm::load_unload
-(int& icomm,int& snd_p,int& rcv_p)
+(int& __icomm,int& __snd_p,int& __rcv_p)
 {
-    snd_buff_sz=snd_atms_lst_sz[icomm]*tot_updt_vecs_sz;
+    snd_buff_sz=snd_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
     if(snd_buff_cpcty<snd_buff_sz)
     {
         delete [] snd_buff;
@@ -760,129 +763,127 @@ inline void Update::LoadUnLoadUpdateComm::load_unload
     
     byte* tmp_snd_buff=snd_buff;
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
-        vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[icomm],snd_atms_lst_sz[icomm]);
+        vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
     
-    MPI_Sendrecv(&snd_atms_lst_sz[icomm],1,MPI_INT,snd_p,0,
-                 &rcv_atms_lst_sz[icomm],1,MPI_INT,rcv_p,0,
+    MPI_Sendrecv(&snd_atms_lst_sz[__icomm],1,MPI_INT,__snd_p,0,
+                 &rcv_atms_lst_sz[__icomm],1,MPI_INT,__rcv_p,0,
                  world,MPI_STATUS_IGNORE);
     
-    rcv_buff_sz=rcv_atms_lst_sz[icomm]*tot_updt_vecs_sz;
+    rcv_buff_sz=rcv_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
     if(rcv_buff_cpcty<rcv_buff_sz)
     {
         delete [] rcv_buff;
         rcv_buff=new byte[rcv_buff_sz+rcv_buff_grw];
-        rcv_buff_cpcty=rcv_atms_lst_sz[icomm]*tot_updt_vecs_sz+rcv_buff_grw;
+        rcv_buff_cpcty=rcv_atms_lst_sz[__icomm]*tot_updt_vecs_sz+rcv_buff_grw;
     }
 
-    MPI_Sendrecv(snd_buff,snd_buff_sz,MPI_BYTE,snd_p,0,
-                 rcv_buff,rcv_buff_sz,MPI_BYTE,rcv_p,0,
+    MPI_Sendrecv(snd_buff,snd_buff_sz,MPI_BYTE,__snd_p,0,
+                 rcv_buff,rcv_buff_sz,MPI_BYTE,__rcv_p,0,
                  world,MPI_STATUS_IGNORE);
 
     
     byte* tmp_rcv_buff=rcv_buff;
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
     {
-        vecs[ivec]->reserve(rcv_atms_lst_sz[icomm]);
-        vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[icomm]);
+        vecs[ivec]->reserve(rcv_atms_lst_sz[__icomm]);
+        vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[__icomm]);
     }
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateComm::update_mult
-(int& icomm,int& snd_p,int& rcv_p,vec**& vecs
-,int& nvecs,int& vecs_byte_sz)
+(int& __icomm,int& __snd_p,int& __rcv_p,vec**& __vecs
+,int& __nvecs,int& __vecs_byte_sz)
 {
     byte* tmp_snd_buff=snd_buff;
-    for(int ivec=0;ivec<nvecs;ivec++)
-        vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[icomm],snd_atms_lst_sz[icomm]);
+    for(int ivec=0;ivec<__nvecs;ivec++)
+        __vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
 
-    MPI_Sendrecv(snd_buff,snd_atms_lst_sz[icomm]*vecs_byte_sz,MPI_BYTE,snd_p,0,
-                 rcv_buff,rcv_atms_lst_sz[icomm]*vecs_byte_sz,MPI_BYTE,rcv_p,0,
+    MPI_Sendrecv(snd_buff,snd_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__snd_p,0,
+                 rcv_buff,rcv_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__rcv_p,0,
                  world,MPI_STATUS_IGNORE);
 
     byte* tmp_rcv_buff=rcv_buff;
-    for(int ivec=0;ivec<nvecs;ivec++)
-        vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[icomm]);
+    for(int ivec=0;ivec<__nvecs;ivec++)
+        __vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[__icomm]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateComm::update_sing
-(int& icomm,int& snd_p,int& rcv_p,vec*& v)
+(int& __icomm,int& __snd_p,int& __rcv_p,vec*& __v)
 {
     byte* tmp_snd_buff=snd_buff;
-    v->cpy(tmp_snd_buff,snd_atms_lst[icomm],snd_atms_lst_sz[icomm]);
+    __v->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
 
-    MPI_Sendrecv(snd_buff,snd_atms_lst_sz[icomm]*v->byte_sz,MPI_BYTE,snd_p,0,
-                 v->end(),rcv_atms_lst_sz[icomm]*v->byte_sz,MPI_BYTE,rcv_p,0,
+    MPI_Sendrecv(snd_buff,snd_atms_lst_sz[__icomm]*__v->byte_sz,MPI_BYTE,__snd_p,0,
+                 __v->end(),rcv_atms_lst_sz[__icomm]*__v->byte_sz,MPI_BYTE,__rcv_p,0,
                  world,MPI_STATUS_IGNORE);
-    v->vec_sz+=rcv_atms_lst_sz[icomm];
+    __v->vec_sz+=rcv_atms_lst_sz[__icomm];
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateComm::xchng_buff
-(int& snd_p,int& snd_buff_sz_,byte*& snd_buff_
-,int& rcv_p,int& rcv_buff_sz_,byte*& rcv_buff_)
+(int& __snd_p,int& __snd_buff_sz,byte*& __snd_buff
+,int& __rcv_p,int& __rcv_buff_sz,byte*& __rcv_buff)
 {
-    MPI_Sendrecv(snd_buff_,snd_buff_sz_,MPI_BYTE,snd_p,0,
-                 rcv_buff_,rcv_buff_sz_,MPI_BYTE,rcv_p,0,
+    MPI_Sendrecv(__snd_buff,__snd_buff_sz,MPI_BYTE,__snd_p,0,
+                 __rcv_buff,__rcv_buff_sz,MPI_BYTE,__rcv_p,0,
                  world,MPI_STATUS_IGNORE);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
 Update::LoadUnLoadUpdateSelfComm::
-LoadUnLoadUpdateSelfComm(Update* updt):
+LoadUnLoadUpdateSelfComm(Update* __updt):
 LoadUnLoadUpdate(),
-snd_atms_lst(updt->snd_atms_lst),
-snd_atms_lst_sz(updt->snd_atms_lst_sz),
-rcv_atms_lst_sz(updt->rcv_atms_lst_sz),
-vecs(updt->vecs),
-nupdt_vecs(updt->nupdt_vecs)
+snd_atms_lst(__updt->snd_atms_lst),
+snd_atms_lst_sz(__updt->snd_atms_lst_sz),
+rcv_atms_lst_sz(__updt->rcv_atms_lst_sz),
+vecs(__updt->vecs),
+nupdt_vecs(__updt->nupdt_vecs)
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateSelfComm::load_unload
-(int& icomm,int&,int&)
+(int& __icomm,int&,int&)
 {
-    rcv_atms_lst_sz[icomm]=snd_atms_lst_sz[icomm];
+    rcv_atms_lst_sz[__icomm]=snd_atms_lst_sz[__icomm];
     
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
     {
-        vecs[ivec]->reserve(rcv_atms_lst_sz[icomm]);
-        vecs[ivec]->cpy_pst(snd_atms_lst[icomm],rcv_atms_lst_sz[icomm]);
+        vecs[ivec]->reserve(rcv_atms_lst_sz[__icomm]);
+        vecs[ivec]->cpy_pst(snd_atms_lst[__icomm],rcv_atms_lst_sz[__icomm]);
     }
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateSelfComm::update_mult
-(int& icomm,int&,int&,vec**& vecs
+(int& __icomm,int&,int&,vec**& vecs
 ,int& nvecs,int&)
 {
     for(int ivec=0;ivec<nvecs;ivec++)
-        vecs[ivec]->cpy_pst(snd_atms_lst[icomm],snd_atms_lst_sz[icomm]);
+        vecs[ivec]->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateSelfComm::update_sing
-(int& icomm,int&,int&,vec*& v)
+(int& __icomm,int&,int&,vec*& v)
 {
-    v->cpy_pst(snd_atms_lst[icomm],snd_atms_lst_sz[icomm]);
+    v->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 inline void Update::LoadUnLoadUpdateSelfComm::xchng_buff
-(int&,int& snd_buff_sz_,byte*& snd_buff_
-,int&,int& rcv_buff_sz_,byte*& rcv_buff_)
+(int&,int& __snd_buff_sz,byte*& __snd_buff
+,int&,int& __rcv_buff_sz,byte*& __rcv_buff)
 {
-    memcpy(rcv_buff_,snd_buff_,rcv_buff_sz_);
+    memcpy(__rcv_buff,__snd_buff,__rcv_buff_sz);
 }
-
-

@@ -9,8 +9,9 @@ namespace MAPP_NS
     {
     private:
     protected:
-        type0 a_tol_sqrt_nc_dof,a_tol_sqrt_nx_nalpha_dof,sqrt_nx_nalpha_dof;
+        type0 a_tol_sqrt_nc_dof,a_tol_sqrt_nx_nalpha_nS_dof,sqrt_nx_nalpha_nS_dof;
         void pre_run_chk(class AtomsDMD*,class ForceFieldDMD*);
+        type0 calc_err();
         int c_dim;
         int ncs;
         int nerr_mins;

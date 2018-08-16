@@ -39,6 +39,18 @@ AtomsDMD::~AtomsDMD()
     delete [] xi;
 }
 /*--------------------------------------------
+ use this function after changing H
+ --------------------------------------------*/
+void AtomsDMD::update_max_alpha()
+{
+    int n=natms*c_dim;
+    type0 max_alpha_lcl=0.0;
+    type0* alpha_vec=alpha->begin();
+    for(int i=0;i<n;i++)
+        max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
+    MPI_Allreduce(&max_alpha_lcl,&max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,world);
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
 #include "elements.h"

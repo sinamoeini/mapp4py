@@ -28,6 +28,7 @@ namespace MAPP_NS
         void DO(PyObject*);
         AtomsDMD(MPI_Comm&,int,int);
         ~AtomsDMD();
+        void update_max_alpha();
         AtomsDMD& operator=(const Atoms&);
         
         type0 vac_msd();

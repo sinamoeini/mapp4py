@@ -30,24 +30,8 @@ MinCGPotFit::~MinCGPotFit()
 void MinCGPotFit::force_calc()
 {
     ff->derivative_timer();
-    /*
     if(chng_box)
-    {
-        Algebra::MLT_mul_MLT(atoms->S_pe,atoms->B,f.A);
-        type0 neg_v=-atoms->vol;
-        Algebra::DoLT<__dim__>::func([this,&neg_v](int i,int j)
-        {f.A[i][j]=H_dof[i][j] ? f.A[i][j]*neg_v:0.0;});
-    }*/
-    
-    
-    if(chng_box)
-    {
-        type0 (&S_pe)[__dim__][__dim__]=atoms->S_pe;
-        type0 neg_v=-atoms->vol;
-        Algebra::DoLT<__dim__>::func([this,&S_pe,&neg_v](int i,int j)
-        {S_tmp[i][j]=H_dof[i][j] ? S_pe[i][j]*neg_v:0.0;});
-        Algebra::MLT_mul_MLT(S_tmp,atoms->B,f.A);
-    }
+        Algebra::DoLT<__dim__>::func([this](int i,int j){f.A[i][j]=H_dof[i][j] ? f.A[i][j]:0.0;});
     
 }
 /*--------------------------------------------
@@ -94,7 +78,7 @@ void MinCGPotFit::init()
     x.~VecTens();
     new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
     f.~VecTens();
-    new (&f) VecTens<type0,1>(atoms,chng_box,ff->f);
+    new (&f) VecTens<type0,1>(atoms,chng_box,ff->F_H,ff->f);
     h.~VecTens();
     new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
     x0.~VecTens();

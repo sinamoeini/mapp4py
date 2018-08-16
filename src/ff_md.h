@@ -29,6 +29,7 @@ namespace MAPP_NS
         type0 max_cut;
         class NeighborMD* neighbor;
         Vec<type0>* f;
+        type0 F_H[__dim__][__dim__];
         
         ForceFieldMD(class AtomsMD*);
         virtual ~ForceFieldMD();

@@ -14,7 +14,7 @@ namespace MAPP_NS
         Vec<type0>* x_d;
         Vec<elem_type>* elem;
         void create_T(type0,int);
-
+        int count_elem(elem_type);
         void DO(PyObject*);
         AtomsMD(MPI_Comm&);
         ~AtomsMD();

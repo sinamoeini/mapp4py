@@ -115,8 +115,8 @@ void DAEBDF::run(type0 t_tot)
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     
     if(nreset) min_error();
-    type0 prev_err=ff->err;
-    type0 fe_ave_err=ff->err/sqrt_nx_nalpha_dof;
+    type0 fe_ave_err,prev_fe_ave_err;
+    fe_ave_err=prev_fe_ave_err=calc_err();
     
     init_static();
     reset();
@@ -174,12 +174,13 @@ void DAEBDF::run(type0 t_tot)
             nconst_dt=0;
         if(q_prev!=q)
             nconst_q=0;
-        
-        if(((istep+1)%nreset==0 && ff->err/a_tol_sqrt_nx_nalpha_dof>1.0) || ff->err >2.0*prev_err)
+        fe_ave_err=calc_err();
+        if(((istep+1)%nreset==0 && fe_ave_err/a_tol>1.0) || fe_ave_err >2.0*prev_fe_ave_err)
         {
             fin_static();
             min_error();
-            prev_err=ff->err;
+            fe_ave_err=calc_err();
+            prev_fe_ave_err=fe_ave_err;
             init_static();
             
             reset();
@@ -188,7 +189,6 @@ void DAEBDF::run(type0 t_tot)
         
         if(ntally && (istep+1)%ntally==0)
         {
-            fe_ave_err=ff->err/sqrt_nx_nalpha_dof;
             ff->force_calc_static_timer();
             thermo.print(step+istep+1);
         }

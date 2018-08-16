@@ -39,6 +39,8 @@ namespace MAPP_NS
         DMDVec<type0>* f_alpha;
         DMDVec<type0>* c_d;
         DMDVec<type0>* mu;
+        type0 F_H[__dim__][__dim__];
+
         
         ForceFieldDMD(class AtomsDMD*);
         virtual ~ForceFieldDMD();

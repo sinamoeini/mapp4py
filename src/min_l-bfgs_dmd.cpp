@@ -33,7 +33,7 @@ void MinLBFGSDMD::init()
     x.~VecTens();
     new (&x) VecTens<type0,2>(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
     f.~VecTens();
-    new (&f) VecTens<type0,2>(atoms,chng_box,ff->f,ff->f_alpha);
+    new (&f) VecTens<type0,2>(atoms,chng_box,ff->F_H,ff->f,ff->f_alpha);
     h.~VecTens();
     new (&h) VecTens<type0,2>(atoms,chng_box,__dim__,c_dim);
     x0.~VecTens();

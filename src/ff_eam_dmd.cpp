@@ -680,7 +680,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
     int** neighbor_list=neighbor->neighbor_list;
     int* neighbor_list_size=neighbor->neighbor_list_size;
     
-    if(ADx.chng_box)
+    if(ADx.A_dof)
         dynamic->update(Dx.vecs[0],Dx.A);
     else
         dynamic->update(Dx.vecs[0]);

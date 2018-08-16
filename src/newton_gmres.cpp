@@ -145,7 +145,7 @@ void NewtonGMRES::run(int nsteps)
     
     __GMRES__<VecTens<type0,2>> gmres(m,max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
     VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
-    VecTens<type0,2> f(atoms,chng_box,ff->f,ff->f_alpha);
+    VecTens<type0,2> f(atoms,chng_box,ff->F_H,ff->f,ff->f_alpha);
     
     
     VecTens<type0,1> f_x(atoms,false,ff->f);

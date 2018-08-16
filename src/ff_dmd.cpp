@@ -183,14 +183,15 @@ type0* ForceFieldDMD::derivative_timer()
     reset();
     force_calc();
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+2,Vec<type0>::MPI_T,MPI_SUM,world);
-    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]/=atoms->vol;});
-    impose_dof(f->begin(),f_alpha->begin());
-
-    
-    
+    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
+    Algebra::DyadicV_2_MSY(__vec+1,F_H);
     atoms->fe=__vec[0];
+    type0 vol_neg=-atoms->vol;
+    Algebra::Do<__nvoigt__>::func([this,&vol_neg](int i){__vec[i+1]/=vol_neg;});
     Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
     atoms->s=__vec[1+__nvoigt__];
+
+    impose_dof(f->begin(),f_alpha->begin());
     return __vec;
 }
 #include "dynamic_dmd.h"
@@ -338,15 +339,16 @@ void ForceFieldDMD::force_calc_static_timer()
 {
     reset();
     force_calc_static();
-    if(!dof_empty)
-    impose_dof(f->begin(),f_alpha->begin());
-    
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+2,Vec<type0>::MPI_T,MPI_SUM,world);
-    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]/=atoms->vol;});
-    
+    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
+    Algebra::DyadicV_2_MSY(__vec+1,F_H);
     atoms->fe=__vec[0];
+    type0 vol_neg=-atoms->vol;
+    Algebra::Do<__nvoigt__>::func([this,&vol_neg](int i){__vec[i+1]/=vol_neg;});
     Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
     atoms->s=__vec[1+__nvoigt__];
+    
+    impose_dof(f->begin(),f_alpha->begin());
 }
 /*--------------------------------------------
  
@@ -391,7 +393,7 @@ void ForceFieldDMD::J_timer(VecTens<type0,2>& x,VecTens<type0,2>& Jx)
     Algebra::zero<__nvoigt__+2>(__vec_lcl);
     J(x,Jx);
     impose_dof(Jx.vecs[0]->begin(),Jx.vecs[1]->begin());
-    if(x.chng_box)
+    if(x.A_dof)
     {
         MPI_Allreduce(__vec_lcl,__vec,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
         Algebra::DyadicV_2_MLT(__vec,Jx.A);
@@ -404,15 +406,18 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f)
 {
     Algebra::zero<__nvoigt__+2>(__vec_lcl);
     prep(f);
+    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+2,Vec<type0>::MPI_T,MPI_SUM,world);
+    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
+    Algebra::DyadicV_2_MSY(__vec+1,F_H);
+    atoms->fe=__vec[0];
+    type0 vol_neg=-atoms->vol;
+    Algebra::Do<__nvoigt__>::func([this,&vol_neg](int i){__vec[i+1]/=vol_neg;});
+    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
+    atoms->s=__vec[1+__nvoigt__];
+    
     impose_dof(f.vecs[0]->begin(),f.vecs[1]->begin());
     type0 err_sq=norm_sq(f.vecs[0]->begin(),f.vecs[1]->begin());
     err=sqrt(err_sq);
-    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
-    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]/=atoms->vol;});
-    
-    atoms->fe=__vec[0];
-    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
-    atoms->s=__vec[1+__nvoigt__];
     return sqrt(err_sq);
 }
 /*--------------------------------------------
@@ -422,31 +427,31 @@ type0 ForceFieldDMD::prep_timer(VecTens<type0,2>& f,type0 (&S)[__dim__][__dim__]
 {
     Algebra::zero<__nvoigt__+2>(__vec_lcl);
     prep(f);
+    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+2,Vec<type0>::MPI_T,MPI_SUM,world);
+    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
+    Algebra::DyadicV_2_MSY(__vec+1,F_H);
+    atoms->fe=__vec[0];
+    type0 vol_neg=-atoms->vol;
+    Algebra::Do<__nvoigt__>::func([this,&vol_neg](int i){__vec[i+1]/=vol_neg;});
+    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
+    atoms->s=__vec[1+__nvoigt__];
+    
     impose_dof(f.vecs[0]->begin(),f.vecs[1]->begin());
     type0 err_sq=norm_sq(f.vecs[0]->begin(),f.vecs[1]->begin());
     err=sqrt(err_sq);
-    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
-    type0 vol=atoms->vol;
-    Algebra::DoLT<__dim__>::func([&S,&err_sq,&f,this,&vol](int i,int j)
+    
+    Algebra::DoLT<__dim__>::func([&S,&err_sq,&f,this,&vol_neg](int i,int j)
     {
-        
-        int k=j*(__dim__-1)-j*(j-1)/2+i+1;
-        
         if(!std::isnan(S[i][j]))
         {
-            f.A[i][j]=S[i][j]*vol-__vec[k];
+            f.A[i][j]=F_H[i][j]-S[i][j]*vol_neg;
             err_sq+=f.A[i][j]*f.A[i][j];
         }
         else
             f.A[i][j]=0.0;
-        
-        __vec[k]/=vol;
-        
     });
     
-    atoms->fe=__vec[0];
-    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
-    atoms->s=__vec[1+__nvoigt__];
+    
     return sqrt(err_sq);
 }
 

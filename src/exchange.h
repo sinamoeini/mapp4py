@@ -222,5 +222,147 @@ namespace MAPP_NS
         void xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
     };
 }
+/*------------------------------------------------
+ _   _   _____   _____       ___   _____   _____
+| | | | |  _  \ |  _  \     /   | |_   _| | ____|
+| | | | | |_| | | | | |    / /| |   | |   | |__
+| | | | |  ___/ | | | |   / / | |   | |   |  __|
+| |_| | | |     | |_| |  / /  | |   | |   | |___
+\_____/ |_|     |_____/ /_/   |_|   |_|   |_____|
+ ------------------------------------------------*/
+#include "atoms.h"
+namespace MAPP_NS
+{
+    
+    class __Update
+    {
+    private:
+        /*things that reference cannot be removed*/
+        MPI_Comm& world;
+        int& natms_lcl;
+        int& natms_ph;
+        
+        /*things that reference can be removed*/
+        type0 (&H)[__dim__][__dim__];
+        type0 (&depth_inv)[__dim__];
+        type0 (&s_lo)[__dim__];
+        type0 (&s_hi)[__dim__];
+        const type0& max_cut;
+        
+        type0 max_cut_s[__dim__];
+        const int rank;
+        int neigh[__dim__][2];
+        
+        Vec<type0>*& x;
+        
+        vec**& vecs;
+        int& nvecs;
+        int& nxchng_vecs;
+        int& nupdt_vecs;
+        int tot_updt_vecs_sz;
+        
+        int tot_ncomms;
+        int ncomms[__dim__][2];
+        bool pbc_correction[__dim__][2];
+        bool self_comm[__dim__];
+        type0 s_bnd[__dim__][2];
+        
+        int** snd_atms_lst;
+        int* snd_atms_lst_sz;
+        int* snd_atms_lst_cpcty;
+        int max_snd_atms_lst_sz;
+        static constexpr int snd_atms_lst_grw=8;
 
+        int* rcv_atms_lst_sz;
+        int max_rcv_atms_lst_sz;
+
+        byte* snd_buff;
+        int snd_buff_sz;
+        int snd_buff_cpcty;
+        static constexpr int snd_buff_grw=1024;
+
+        byte* rcv_buff;
+        int rcv_buff_sz;
+        int rcv_buff_cpcty;
+        static constexpr int rcv_buff_grw=1024;
+        
+        void add_to_snd_lst(int&,int&);
+        void reserve_snd_buff(int);
+        void reserve_rcv_buff(int);
+        
+        
+        
+        void load_unload(int&,int&,int&);
+        void update_mult(int&,int&,int&,vec**&,int&,int&);
+        void update_sing(int&,int&,int&,vec*&);
+        void xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
+        void self_load_unload(int&,int&,int&);
+        void self_update_mult(int&,int&,int&,vec**&,int&,int&);
+        void self_update_sing(int&,int&,int&,vec*&);
+        void self_xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
+        
+        
+        template<int dim,int idim,int idir,class F0,class F1>
+        void ___list(int last_atm,int& icomm,F0& f0,F1& f1)
+        {
+            int lo_atm=0;
+            int hi_atm=last_atm;
+            type0* x_vec;
+            while(icomm<ncomms[idim][idir])
+            {
+                
+                snd_buff_sz=0;
+                rcv_atms_lst_sz[icomm]=snd_atms_lst_sz[icomm]=0;
+                x_vec=x->begin()+dim*lo_atm+idim;
+                for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=dim)
+                    if(f0(*x_vec,s_bnd[idim][idir]))
+                        add_to_snd_lst(icomm,iatm);
+                
+                if(self_comm[idim])
+                    self_load_unload(icomm,neigh[idim][idir],neigh[idim][1-idir]);
+                else
+                    load_unload(icomm,neigh[idim][idir],neigh[idim][1-idir]);
+                
+                
+                lo_atm=x->vec_sz-rcv_atms_lst_sz[icomm];
+                hi_atm=x->vec_sz;
+                if(pbc_correction[idim][idir])
+                {
+                    x_vec=x->begin()+dim*lo_atm+idim;
+                    for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=dim)
+                        f1(*x_vec);
+                }
+                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[icomm]);
+                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[icomm]);
+                icomm++;
+            }
+            
+        }
+        template<int dim,int idim>
+        void __list(int& icomm)
+        {
+            int last_atm=x->vec_sz;
+            ___list<dim,idim,0>(last_atm,icomm,
+            [](const type0& l,const type0& r)->bool{return (l<r);},
+                [](type0& __x){++__x;});
+            ___list<dim,idim,0>(last_atm,icomm,
+            [](const type0& l,const type0& r)->bool{return (l>=r);},
+                [](type0& __x){--__x;});
+            __list<dim,idim+1>(icomm);
+        }
+        
+        
+        
+    protected:
+    public:
+        __Update(Atoms*,int&,int&);
+        ~__Update();
+        void reset();
+        void update(vec*,bool);
+        void update(vec*,type0 (*)[__dim__]);
+        void update(vec**,int,bool);
+        void list();
+        void rm_rdndncy();
+    };
+}
 #endif 

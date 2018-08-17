@@ -268,13 +268,13 @@ namespace MAPP_NS
         bool self_comm[__dim__];
         type0 s_bnd[__dim__][2];
         
-        int** snd_atms_lst;
-        int* snd_atms_lst_sz;
-        int* snd_atms_lst_cpcty;
+        int** snd_atms_lst[__dim__][2];
+        int* snd_atms_lst_sz[__dim__][2];
+        int* snd_atms_lst_cpcty[__dim__][2];
         int max_snd_atms_lst_sz;
         static constexpr int snd_atms_lst_grw=8;
 
-        int* rcv_atms_lst_sz;
+        int* rcv_atms_lst_sz[__dim__][2];
         int max_rcv_atms_lst_sz;
 
         byte* snd_buff;
@@ -287,19 +287,93 @@ namespace MAPP_NS
         int rcv_buff_cpcty;
         static constexpr int rcv_buff_grw=1024;
         
-        void add_to_snd_lst(int& icomm,int& iatm)
+        
+        template<int idim>
+        void start(int (*__neigh)[2],int* __dims,int* __coords)
         {
-            if(snd_atms_lst_sz[icomm]+1>snd_atms_lst_cpcty[icomm])
-            {
-                int* tmp_lst=new int[snd_atms_lst_sz[icomm]+1+snd_atms_lst_grw];
-                memcpy(tmp_lst,snd_atms_lst[icomm],snd_atms_lst_sz[icomm]*sizeof(int));
-                delete [] snd_atms_lst[icomm];
-                snd_atms_lst[icomm]=tmp_lst;
-                snd_atms_lst_cpcty[icomm]=snd_atms_lst_sz[icomm]+1+snd_atms_lst_grw;
-            }
-            snd_atms_lst[icomm][snd_atms_lst_sz[icomm]]=iatm;
-            snd_atms_lst_sz[icomm]++;
+            self_comm[idim]=(rank==(*__neigh)[0] && rank==(*__neigh)[1]);
+            
+            // snd_to_bhnd && rcv_fm_frnt
+            pbc_correction[idim][0]=(*__coords==*__dims-1);
+            neigh[idim][0]=(*__neigh)[0];
+            ncomms[idim][0]=0;
+            snd_atms_lst[idim][0]=NULL;
+            snd_atms_lst_sz[idim][0]=NULL;
+            snd_atms_lst_cpcty[idim][0]=NULL;
+            rcv_atms_lst_sz[idim][0]=NULL;
+            
+            // snd_to_frnt && rcv_fm_bhnd
+            pbc_correction[idim][1]=(*__coords==0);
+            ncomms[idim][1]=0;
+            neigh[idim][1]=(*__neigh)[1];
+            snd_atms_lst[idim][1]=NULL;
+            snd_atms_lst_sz[idim][1]=NULL;
+            snd_atms_lst_cpcty[idim][1]=NULL;
+            rcv_atms_lst_sz[idim][1]=NULL;
+            
+            start<idim+1>(__neigh+1,__dims+1,__coords+1);
         }
+
+        template<int idim,int idir>
+        void dealloc()
+        {
+            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
+                delete [] snd_atms_lst[idim][idir][icomm];
+            delete [] snd_atms_lst[idim][idir];
+            delete [] snd_atms_lst_sz[idim][idir];
+            delete [] snd_atms_lst_cpcty[idim][idir];
+            delete [] rcv_atms_lst_sz[idim][idir];
+        }
+        template<int idim,int idir>
+        void dealloc_all()
+        {
+            dealloc<idim,idir>();
+            dealloc_all<idim+idir,1-idir>();
+        }
+        
+        
+        template<int idim,int idir>
+        void realloc(int __ncomms)
+        {
+            snd_atms_lst[idim][idir]=new int*[__ncomms];
+            snd_atms_lst_sz[idim][idir]=new int[__ncomms];
+            snd_atms_lst_cpcty[idim][idir]=new int[__ncomms];
+            rcv_atms_lst_sz[idim][idir]=new int[__ncomms];
+            for(int icomm=0;icomm<__ncomms;icomm++)
+            {
+                snd_atms_lst[idim][idir][icomm]=NULL;
+                snd_atms_lst_cpcty[idim][idir][icomm]=0;
+            }
+            ncomms[idim][idir]=__ncomms;
+        }
+        template<int idim>
+        void __reset(int& __tot_ncomms)
+        {
+            max_cut_s[idim]=max_cut*depth_inv[idim];
+            
+            int __ncomms;
+            
+            s_bnd[idim][0]=s_lo[idim]+max_cut_s[idim];
+            __ncomms=static_cast<int>(max_cut_s[idim]/(s_hi[idim]-s_lo[idim]))+1;
+            __tot_ncomms+=__ncomms;
+            if(__ncomms!=ncomms[idim][0])
+            {
+                dealloc<idim,0>();
+                realloc<idim,0>(__ncomms);
+            }
+            
+            s_bnd[idim][1]=s_hi[idim]-max_cut_s[idim];
+            __ncomms=static_cast<int>(max_cut_s[idim]/(s_hi[idim]-s_lo[idim]))+1;
+            __tot_ncomms+=__ncomms;
+            if(__ncomms!=ncomms[idim][1])
+            {
+                dealloc<idim,1>();
+                realloc<idim,1>(__ncomms);
+            }
+            __reset<idim+1>(__tot_ncomms);
+        }
+        
+
         void reserve_rcv_buff(int xtra)
         {
             if(rcv_buff_cpcty<xtra+rcv_buff_sz)
@@ -319,11 +393,28 @@ namespace MAPP_NS
             }
         }
         
-        
-        void load_unload
-        (int& __icomm,int& __snd_p,int& __rcv_p)
+        template<int idim,int idir>
+        void add_to_snd_lst(int& __icomm,int& iatm)
         {
-            snd_buff_sz=snd_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
+            if(snd_atms_lst_sz[idim][idir][__icomm]+1>snd_atms_lst_cpcty[idim][idir][__icomm])
+            {
+                int* tmp_lst=new int[snd_atms_lst_sz[idim][idir][__icomm]+1+snd_atms_lst_grw];
+                memcpy(tmp_lst,snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]*sizeof(int));
+                delete [] snd_atms_lst[idim][idir][__icomm];
+                snd_atms_lst[idim][idir][__icomm]=tmp_lst;
+                snd_atms_lst_cpcty[idim][idir][__icomm]=snd_atms_lst_sz[idim][idir][__icomm]+1+snd_atms_lst_grw;
+            }
+            snd_atms_lst[idim][idir][__icomm][snd_atms_lst_sz[idim][idir][__icomm]]=iatm;
+            snd_atms_lst_sz[idim][idir][__icomm]++;
+        }
+
+        
+
+        template<int idim,int idir>
+        void load_unload
+        (int& __icomm)
+        {
+            snd_buff_sz=snd_atms_lst_sz[idim][idir][__icomm]*tot_updt_vecs_sz;
             if(snd_buff_cpcty<snd_buff_sz)
             {
                 delete [] snd_buff;
@@ -333,165 +424,170 @@ namespace MAPP_NS
             
             byte* tmp_snd_buff=snd_buff;
             for(int ivec=0;ivec<nupdt_vecs;ivec++)
-                vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+                vecs[ivec]->cpy(tmp_snd_buff,snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
             
-            MPI_Sendrecv(&snd_atms_lst_sz[__icomm],1,MPI_INT,__snd_p,0,
-                         &rcv_atms_lst_sz[__icomm],1,MPI_INT,__rcv_p,0,
+            MPI_Sendrecv(&snd_atms_lst_sz[idim][idir][__icomm],1,MPI_INT,neigh[idim][idir],0,
+                         &rcv_atms_lst_sz[idim][idir][__icomm],1,MPI_INT,neigh[idim][1-idir],0,
                          world,MPI_STATUS_IGNORE);
             
-            rcv_buff_sz=rcv_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
+            rcv_buff_sz=rcv_atms_lst_sz[idim][idir][__icomm]*tot_updt_vecs_sz;
             if(rcv_buff_cpcty<rcv_buff_sz)
             {
                 delete [] rcv_buff;
                 rcv_buff=new byte[rcv_buff_sz+rcv_buff_grw];
-                rcv_buff_cpcty=rcv_atms_lst_sz[__icomm]*tot_updt_vecs_sz+rcv_buff_grw;
+                rcv_buff_cpcty=rcv_atms_lst_sz[idim][idir][__icomm]*tot_updt_vecs_sz+rcv_buff_grw;
             }
             
-            MPI_Sendrecv(snd_buff,snd_buff_sz,MPI_BYTE,__snd_p,0,
-                         rcv_buff,rcv_buff_sz,MPI_BYTE,__rcv_p,0,
+            MPI_Sendrecv(snd_buff,snd_buff_sz,MPI_BYTE,neigh[idim][idir],0,
+                         rcv_buff,rcv_buff_sz,MPI_BYTE,neigh[idim][1-idir],0,
                          world,MPI_STATUS_IGNORE);
             
             
             byte* tmp_rcv_buff=rcv_buff;
             for(int ivec=0;ivec<nupdt_vecs;ivec++)
             {
-                vecs[ivec]->reserve(rcv_atms_lst_sz[__icomm]);
-                vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[__icomm]);
+                vecs[ivec]->reserve(rcv_atms_lst_sz[idim][idir][__icomm]);
+                vecs[ivec]->pst(tmp_rcv_buff,rcv_atms_lst_sz[idim][idir][__icomm]);
             }
         }
+
         
-        void update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v)
-        {
-            byte* tmp_snd_buff=snd_buff;
-            __v->cpy(tmp_snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
-            
-            MPI_Sendrecv(snd_buff,snd_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__snd_p,0,
-                         __v->end(),rcv_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__rcv_p,0,
-                         world,MPI_STATUS_IGNORE);
-            __v->vec_sz+=rcv_atms_lst_sz[__icomm];
-        }
         
+        template<int idim,int idir>
         void self_load_unload
-        (int& __icomm,int&,int&)
+        (int& __icomm)
         {
-            rcv_atms_lst_sz[__icomm]=snd_atms_lst_sz[__icomm];
+            rcv_atms_lst_sz[idim][idir][__icomm]=snd_atms_lst_sz[idim][idir][__icomm];
             
             for(int ivec=0;ivec<nupdt_vecs;ivec++)
             {
-                vecs[ivec]->reserve(rcv_atms_lst_sz[__icomm]);
-                vecs[ivec]->cpy_pst(snd_atms_lst[__icomm],rcv_atms_lst_sz[__icomm]);
+                vecs[ivec]->reserve(rcv_atms_lst_sz[idim][idir][__icomm]);
+                vecs[ivec]->cpy_pst(snd_atms_lst[idim][idir][__icomm],rcv_atms_lst_sz[idim][idir][__icomm]);
             }
         }
         
+        template<int idim,int idir>
         void update_var_cpy(int& __icomm,byte*& __snd_buff,vec* __v)
         {
-            __v->cpy(__snd_buff,snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+            __v->cpy(__snd_buff,snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
         }
-        template<class...VS>
+        template<int idim,int idir,class...VS>
         void update_var_cpy(int& __icomm,byte*& __snd_buff,vec* __v,VS*... __vs)
         {
-            update_var_cpy(__icomm,__snd_buff,__v);
-            update_var_cpy(__icomm,__snd_buff,__vs...);
+            update_var_cpy<idim,idir>(__icomm,__snd_buff,__v);
+            update_var_cpy<idim,idir>(__icomm,__snd_buff,__vs...);
         }
         
+        template<int idim,int idir>
         void update_var_pst(int& __icomm,byte*& __rcv_buff,vec* __v)
         {
-            __v->pst(__rcv_buff,rcv_atms_lst_sz[__icomm]);
+            __v->pst(__rcv_buff,rcv_atms_lst_sz[idim][idir][__icomm]);
         }
         
-        template<class...VS>
+        template<int idim,int idir,class...VS>
         void update_var_pst(int& __icomm,byte*& __rcv_buff,vec* __v,VS* ... __vs)
         {
-            update_var_pst(__icomm,__rcv_buff,__v);
-            update_var_pst(__icomm,__rcv_buff,__vs...);
+            update_var_pst<idim,idir>(__icomm,__rcv_buff,__v);
+            update_var_pst<idim,idir>(__icomm,__rcv_buff,__vs...);
         }
         
-        template<class...VS>
-        void update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v,VS*... __vs)
+        
+        template<int idim,int idir>
+        void update_var(int& __icomm,int& __vecs_byte_sz,vec* __v)
+        {
+            byte* tmp_snd_buff=snd_buff;
+            __v->cpy(tmp_snd_buff,snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
+            
+            MPI_Sendrecv(snd_buff,snd_atms_lst_sz[idim][idir][__icomm]*__v->byte_sz,MPI_BYTE,neigh[idim][idir],0,
+                         __v->end(),rcv_atms_lst_sz[idim][idir][__icomm]*__v->byte_sz,MPI_BYTE,neigh[idim][1-idir],0,
+                         world,MPI_STATUS_IGNORE);
+            __v->vec_sz+=rcv_atms_lst_sz[idim][idir][__icomm];
+
+        }
+        template<int idim,int idir,class...VS>
+        void update_var(int& __icomm,int& __vecs_byte_sz,vec* __v,VS*... __vs)
         {
             byte* __snd_buff=snd_buff;
-            update_var_cpy(__icomm,__snd_buff,__v,__vs...);
-            MPI_Sendrecv(snd_buff,snd_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__snd_p,0,
-                         rcv_buff,rcv_atms_lst_sz[__icomm]*__vecs_byte_sz,MPI_BYTE,__rcv_p,0,
+            update_var_cpy<idim,idir>(__icomm,__snd_buff,__v,__vs...);
+            MPI_Sendrecv(snd_buff,snd_atms_lst_sz[idim][idir][__icomm]*__vecs_byte_sz,MPI_BYTE,neigh[idim][idir],0,
+                         rcv_buff,rcv_atms_lst_sz[idim][idir][__icomm]*__vecs_byte_sz,MPI_BYTE,neigh[idim][1-idir],0,
                          world,MPI_STATUS_IGNORE);
             
             byte* __rcv_buff=rcv_buff;
-            update_var_pst(__icomm,__rcv_buff,__v,__vs...);
+            update_var_pst<idim,idir>(__icomm,__rcv_buff,__v,__vs...);
         }
         
         
-
-        void self_update_var(int& __icomm,int&,int&,int&,vec* __v)
+        template<int idim,int idir>
+        void self_update_var(int& __icomm,int&,vec* __v)
         {
-            __v->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
+            __v->cpy_pst(snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
         }
-        template<class...VS>
-        void self_update_var(int& __icomm,int& __snd_p,int& __rcv_p,int& __vecs_byte_sz,vec* __v,VS*... __vs)
+        template<int idim,int idir,class...VS>
+        void self_update_var(int& __icomm,int& __vecs_byte_sz,vec* __v,VS*... __vs)
         {
-            self_update_var(__icomm,__snd_p,__rcv_p,__vecs_byte_sz,__v);
-            self_update_var(__icomm,__snd_p,__rcv_p,__vecs_byte_sz,__vs...);
+            self_update_var<idim,idir>(__icomm,__vecs_byte_sz,__v);
+            self_update_var<idim,idir>(__icomm,__vecs_byte_sz,__vs...);
         }
         
         
         template<int idim,int idir,class F,class ...VS>
-        void __update_w_x(int& icomm,int& tot_byte_sz,F&& f,VS*... vs)
+        void __update_w_x(int& tot_byte_sz,F&& f,VS*... vs)
         {
-            while(icomm<ncomms[idim][idir])
+            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
             {
                 if(self_comm[idim])
-                    self_update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
+                    self_update_var<idim,idir>(icomm,tot_byte_sz,vs...);
                 else
-                    update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
+                    update_var<idim,idir>(icomm,tot_byte_sz,vs...);
 
                 
                 if(pbc_correction[idim][idir])
                 {
                     type0* x_vec=x->end()-__dim__;
-                    for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,x_vec-=__dim__)
+                    for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,x_vec-=__dim__)
                         f(H[idim],x_vec);
                 }
-                icomm++;
             }
         }
         
         template<int idim,int idir,class ...VS>
-        void __update_w_o_x(int& icomm,int& tot_byte_sz,VS*... vs)
+        void __update_w_o_x(int& tot_byte_sz,VS*... vs)
         {
-            while(icomm<ncomms[idim][idir])
+            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
             {
                 if(self_comm[idim])
-                    self_update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
+                    self_update_var<idim,idir>(icomm,tot_byte_sz,vs...);
                 else
-                    update_var(icomm,neigh[idim][idir],neigh[idim][1-idir],tot_byte_sz,vs...);
-                icomm++;
+                    update_var<idim,idir>(icomm,tot_byte_sz,vs...);
             }
         }
         
         
         
         template<int idim,int idir,class F0,class F1>
-        void ___list(int last_atm,int& icomm,F0&& f0,F1&& f1)
+        void ___list(int last_atm,F0&& f0,F1&& f1)
         {
             int lo_atm=0;
             int hi_atm=last_atm;
             type0* x_vec;
-            while(icomm<ncomms[idim][idir])
+            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
             {
                 
                 snd_buff_sz=0;
-                rcv_atms_lst_sz[icomm]=snd_atms_lst_sz[icomm]=0;
+                rcv_atms_lst_sz[idim][idir][icomm]=snd_atms_lst_sz[idim][idir][icomm]=0;
                 x_vec=x->begin()+__dim__*lo_atm+idim;
                 for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=__dim__)
                     if(f0(*x_vec,s_bnd[idim][idir]))
-                        add_to_snd_lst(icomm,iatm);
+                        add_to_snd_lst<idim,idir>(icomm,iatm);
                 
                 if(self_comm[idim])
-                    self_load_unload(icomm,neigh[idim][idir],neigh[idim][1-idir]);
+                    self_load_unload<idim,idir>(icomm);
                 else
-                    load_unload(icomm,neigh[idim][idir],neigh[idim][1-idir]);
+                    load_unload<idim,idir>(icomm);
                 
                 
-                lo_atm=x->vec_sz-rcv_atms_lst_sz[icomm];
+                lo_atm=x->vec_sz-rcv_atms_lst_sz[idim][idir][icomm];
                 hi_atm=x->vec_sz;
                 if(pbc_correction[idim][idir])
                 {
@@ -499,39 +595,38 @@ namespace MAPP_NS
                     for(int iatm=lo_atm;iatm<hi_atm;iatm++,x_vec+=__dim__)
                         f1(*x_vec);
                 }
-                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[icomm]);
-                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[icomm]);
-                icomm++;
+                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[idim][idir][icomm]);
+                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[idim][idir][icomm]);
             }
             
         }
         template<int idim>
-        void __list(int& icomm)
+        void __list()
         {
             int last_atm=x->vec_sz;
-            ___list<idim,0>(last_atm,icomm,[](const type0& l,const type0& r)->bool{return (l<r);},[](type0& __x){++__x;});
-            ___list<idim,1>(last_atm,icomm,[](const type0& l,const type0& r)->bool{return (l>=r);},[](type0& __x){--__x;});
-            __list<idim+1>(icomm);
+            ___list<idim,0>(last_atm,[](const type0& l,const type0& r)->bool{return (l<r);},[](type0& __x){++__x;});
+            ___list<idim,1>(last_atm,[](const type0& l,const type0& r)->bool{return (l>=r);},[](type0& __x){--__x;});
+            __list<idim+1>();
         }
         
         
         template<int idim>
-        class UpdateHelper
+        class Helper
         {
         public:
             template<class... VS>
-            static void update_w_x(__Update& update,int& icomm,int& tot_byte_sz,VS*... vs)
+            static void update_w_x(__Update& update,int& tot_byte_sz,VS*... vs)
             {
-                update.__update_w_x<idim,0>(icomm,tot_byte_sz,Algebra::V_add<idim+1,type0>,vs...);
-                update.__update_w_x<idim,1>(icomm,tot_byte_sz,Algebra::V_sub<idim+1,type0>,vs...);
-                UpdateHelper<idim+1>::update_w_x(update,icomm,tot_byte_sz,vs...);
+                update.__update_w_x<idim,0>(tot_byte_sz,Algebra::V_add<idim+1,type0>,vs...);
+                update.__update_w_x<idim,1>(tot_byte_sz,Algebra::V_sub<idim+1,type0>,vs...);
+                Helper<idim+1>::update_w_x(update,tot_byte_sz,vs...);
             }
             template<class... VS>
-            static void update_w_o_x(__Update& update,int& icomm,int& tot_byte_sz,VS*... vs)
+            static void update_w_o_x(__Update& update,int& tot_byte_sz,VS*... vs)
             {
-                update.__update_w_o_x<idim,0>(icomm,tot_byte_sz,vs...);
-                update.__update_w_o_x<idim,1>(icomm,tot_byte_sz,vs...);
-                UpdateHelper<idim+1>::update_w_o_x(update,icomm,tot_byte_sz,vs...);
+                update.__update_w_o_x<idim,0>(tot_byte_sz,vs...);
+                update.__update_w_o_x<idim,1>(tot_byte_sz,vs...);
+                Helper<idim+1>::update_w_o_x(update,tot_byte_sz,vs...);
             }
         };
         
@@ -549,13 +644,95 @@ namespace MAPP_NS
             return reset_vs(__v)+reset_vs(__vs...);
         }
 
+        template<int idim,int idir>
+        void xchng_buff
+        (int& __icomm,byte*& __snd_buff,byte*& __rcv_buff)
+        {
+            MPI_Sendrecv(__snd_buff,rcv_atms_lst_sz[idim][idir][__icomm],MPI_BYTE,neigh[idim][1-idir],0,
+                         __rcv_buff,snd_atms_lst_sz[idim][idir][__icomm],MPI_BYTE,neigh[idim][idir],0,
+                         world,MPI_STATUS_IGNORE);
+        }
+        template<int idim,int idir>
+        void self_xchng_buff
+        (int& __icomm,byte*& __snd_buff,byte*& __rcv_buff)
+        {
+           memcpy(__rcv_buff,__snd_buff,snd_atms_lst_sz[idim][idir][__icomm]);
+        }
+        
+        
+        template<int idim,int idir>
+        void __rm_rdndncy(byte* mark,byte*& __mark,int* __snd_atms_lst)
+        {
+            int __snd_atms_lst_sz,__rcv_atms_lst_sz;
+            for(int icomm=ncomms[idim][idir];icomm>-1;icomm--)
+            {
+                __mark-=rcv_atms_lst_sz[idim][idir][icomm];
+                if(self_comm[idim])
+                    self_xchng_buff<idim,idir>(icomm,__mark,rcv_buff);
+                else
+                    xchng_buff<idim,idir>(icomm,__mark,rcv_buff);
+                __snd_atms_lst_sz=0;
+                for(int i=0; i<snd_atms_lst_sz[idim][idir][icomm];i++)
+                {
+                    if(rcv_buff[i]=='1')
+                    {
+                        if(snd_atms_lst[idim][idir][icomm][i]>=natms_lcl)
+                            mark[snd_atms_lst[idim][idir][icomm][i]-natms_lcl]='1';
+                        __snd_atms_lst[__snd_atms_lst_sz++]=snd_atms_lst[idim][idir][icomm][i];
+                    }
+                }
+                memcpy(snd_atms_lst[idim][idir][icomm],__snd_atms_lst,__snd_atms_lst_sz*sizeof(int));
+                snd_atms_lst_sz[idim][idir][icomm]=__snd_atms_lst_sz;
+                
+                __rcv_atms_lst_sz=0;
+                for(int i=0; i<rcv_atms_lst_sz[idim][idir][icomm];i++)
+                    if(__mark[i]=='1')
+                        __rcv_atms_lst_sz++;
+                rcv_atms_lst_sz[idim][idir][icomm]=__rcv_atms_lst_sz;
+                
+                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[idim][idir][icomm]);
+                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[idim][idir][icomm]);
+            }
+            
+            __rm_rdndncy<idim+idir-1,1-idir>(mark,__mark,__snd_atms_lst);
+        }
+
+        template<int idim,int idir>
+        void __rm_rdndncy_old_2_new(int* old_2_new)
+        {
+            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
+                for(int i=0; i<snd_atms_lst_sz[idim][idir][icomm];i++)
+                    snd_atms_lst[idim][idir][icomm][i]=old_2_new[snd_atms_lst[idim][idir][icomm][i]];
+            __rm_rdndncy_old_2_new<idim+idir,1-idir>(old_2_new);
+        }
         
     protected:
     public:
         __Update(Atoms*,int&,int&);
-        ~__Update();
-        void reset();
-        void list();
+        ~__Update()
+        {
+            delete [] rcv_buff;
+            delete [] snd_buff;
+            dealloc_all<0,0>();
+        }
+        void reset()
+        {
+            int __tot_ncomms=0;
+            __reset<0>(__tot_ncomms);
+            tot_ncomms=__tot_ncomms;
+        }
+        void list()
+        {
+            natms_ph=0;
+            max_snd_atms_lst_sz=max_rcv_atms_lst_sz=0;
+            __list<0>();
+            natms_ph=x->vec_sz-natms_lcl;
+            for(int ivec=nxchng_vecs;ivec<nvecs;ivec++)
+            {
+                vecs[ivec]->vec_sz=0;
+                vecs[ivec]->resize(x->vec_sz);
+            }
+        }
         
         template<class ...VS>
         void update_w_x(VS*... __vs)
@@ -564,8 +741,7 @@ namespace MAPP_NS
             snd_buff_sz=rcv_buff_sz=0;
             reserve_snd_buff(tot_byte_sz*max_snd_atms_lst_sz);
             reserve_rcv_buff(tot_byte_sz*max_rcv_atms_lst_sz);
-            int icomm=0;
-            UpdateHelper<0>::update_w_x(*this,icomm,tot_byte_sz,__vs...);
+            Helper<0>::update_w_x(*this,tot_byte_sz,__vs...);
             
         }
         
@@ -576,24 +752,34 @@ namespace MAPP_NS
             snd_buff_sz=rcv_buff_sz=0;
             reserve_snd_buff(tot_byte_sz*max_snd_atms_lst_sz);
             reserve_rcv_buff(tot_byte_sz*max_rcv_atms_lst_sz);
-            int icomm=0;
-            UpdateHelper<0>::update_w_o_x(*this,icomm,tot_byte_sz,__vs...);
+            Helper<0>::update_w_o_x(*this,tot_byte_sz,__vs...);
             
         }
+        void rm_rdndncy();
     };
     
     template<>
-    inline void __Update::__list<__dim__>(int&){};
+    inline void __Update::start<__dim__>(int (*)[2],int*,int*){};
     template<>
-    class __Update::UpdateHelper<__dim__>
+    inline void __Update::__list<__dim__>(){};
+    template<>
+    inline void __Update::__reset<__dim__>(int&){};
+    template<>
+    inline void __Update::dealloc_all<__dim__,0>(){};
+    template<>
+    inline void __Update::__rm_rdndncy<-1,1>(byte*,byte*&,int*){}
+    template<>
+    inline void __Update::__rm_rdndncy_old_2_new<__dim__,0>(int*){}
+    template<>
+    class __Update::Helper<__dim__>
     {
     public:
         template<class... VS>
-        static void update_w_x(__Update&,int&,int&,VS*...)
+        static void update_w_x(__Update&,int&,VS*...)
         {
         }
         template<class... VS>
-        static void update_w_o_x(__Update&,int&,int&,VS*...)
+        static void update_w_o_x(__Update&,int&,VS*...)
         {}
     };
 }

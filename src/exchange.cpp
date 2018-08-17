@@ -619,16 +619,16 @@ void Update::rm_rdndncy()
     /*-------temp_remove-------
     forcefield->neighbor->mark_redndnt_ph(mark);
     */
-    int rcv_atms_lst_sz_;
-    int snd_atms_lst_sz_=0;
-    int snd_atms_lst_cpcty_=max_snd_atms_lst_sz;
-    int* snd_atms_lst_=NULL;
-    if(snd_atms_lst_cpcty_) snd_atms_lst_=new int[snd_atms_lst_cpcty_];
+    int __rcv_atms_lst_sz;
+    int __snd_atms_lst_sz=0;
+    int __snd_atms_lst_cpcty=max_snd_atms_lst_sz;
+    int* __snd_atms_lst=NULL;
+    if(__snd_atms_lst_cpcty) __snd_atms_lst=new int[__snd_atms_lst_cpcty];
     
     int nlocomm;
-    byte* mark_=mark+natms_ph;
+    byte* __mark=mark+natms_ph;
     int icurs=2*__dim__-1;
-    int jcomm=tot_ncomms-1;
+    int __icomm=tot_ncomms-1;
     max_snd_atms_lst_sz=max_rcv_atms_lst_sz=0;
     for(int idim=__dim__-1;idim>-1;idim--)
     {
@@ -639,42 +639,42 @@ void Update::rm_rdndncy()
             else
                 nlocomm=0;
             
-            while(jcomm>nlocomm-1)
+            while(__icomm>nlocomm-1)
             {
-                mark_-=rcv_atms_lst_sz[jcomm];
+                __mark-=rcv_atms_lst_sz[__icomm];
                 comm_manager[idim]->xchng_buff(
-                neigh[idim][1-idir],rcv_atms_lst_sz[jcomm],mark_,
-                neigh[idim][idir],snd_atms_lst_sz[jcomm],rcv_buff);
+                neigh[idim][1-idir],rcv_atms_lst_sz[__icomm],__mark,
+                neigh[idim][idir],snd_atms_lst_sz[__icomm],rcv_buff);
                 
-                snd_atms_lst_sz_=0;
-                for(int i=0; i<snd_atms_lst_sz[jcomm];i++)
+                __snd_atms_lst_sz=0;
+                for(int i=0; i<snd_atms_lst_sz[__icomm];i++)
                 {
                     if(rcv_buff[i]=='1')
                     {
-                        if(snd_atms_lst[jcomm][i]>=natms_lcl)
-                            mark[snd_atms_lst[jcomm][i]-natms_lcl]='1';
-                        snd_atms_lst_[snd_atms_lst_sz_++]=snd_atms_lst[jcomm][i];
+                        if(snd_atms_lst[__icomm][i]>=natms_lcl)
+                            mark[snd_atms_lst[__icomm][i]-natms_lcl]='1';
+                        __snd_atms_lst[__snd_atms_lst_sz++]=snd_atms_lst[__icomm][i];
                     }
                 }
-                memcpy(snd_atms_lst[jcomm],snd_atms_lst_,snd_atms_lst_sz_*sizeof(int));
-                snd_atms_lst_sz[jcomm]=snd_atms_lst_sz_;
+                memcpy(snd_atms_lst[__icomm],__snd_atms_lst,__snd_atms_lst_sz*sizeof(int));
+                snd_atms_lst_sz[__icomm]=__snd_atms_lst_sz;
                 
-                rcv_atms_lst_sz_=0;
-                for(int i=0; i<rcv_atms_lst_sz[jcomm];i++)
-                    if(mark_[i]=='1')
-                        rcv_atms_lst_sz_++;
-                rcv_atms_lst_sz[jcomm]=rcv_atms_lst_sz_;
+                __rcv_atms_lst_sz=0;
+                for(int i=0; i<rcv_atms_lst_sz[__icomm];i++)
+                    if(__mark[i]=='1')
+                        __rcv_atms_lst_sz++;
+                rcv_atms_lst_sz[__icomm]=__rcv_atms_lst_sz;
                 
-                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[jcomm]);
-                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[jcomm]);
+                max_snd_atms_lst_sz=MAX(max_snd_atms_lst_sz,snd_atms_lst_sz[__icomm]);
+                max_rcv_atms_lst_sz=MAX(max_rcv_atms_lst_sz,rcv_atms_lst_sz[__icomm]);
                 
-                jcomm--;
+                __icomm--;
             }
             icurs--;
         }
     }
     
-    delete [] snd_atms_lst_;
+    delete [] __snd_atms_lst;
     
     int old_2_new_cpcty=natms_lcl+natms_ph;
     int* old_2_new=NULL;
@@ -706,12 +706,12 @@ void Update::rm_rdndncy()
      */
     delete [] old_2_new;
     
-    int* list_=list;
+    int* __list=list;
     
     int vec_sz=natms_lcl;
-    while(*list_==natms_lcl+icurs)
+    while(*__list==natms_lcl+icurs)
     {
-        list_++;
+        __list++;
         vec_sz++;
         list_sz--;
     }
@@ -719,7 +719,7 @@ void Update::rm_rdndncy()
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
     {
         vecs[ivec]->vec_sz=vec_sz;
-        vecs[ivec]->cpy_pst(list_,list_sz);
+        vecs[ivec]->cpy_pst(__list,list_sz);
     }
     
     delete [] list;
@@ -910,113 +910,86 @@ nvecs(atoms->ndynamic_vecs),
 nupdt_vecs(nupdt_vecs_),
 nxchng_vecs(nxchng_vecs_)
 {
-
-    Algebra::V_eq<__dim__*2>(&(atoms->comm.neigh[0][0]),&(neigh[0][0]));
+    start<0>(atoms->comm.neigh,atoms->comm.dims,atoms->comm.coords);
     snd_buff=NULL;
     snd_buff_cpcty=0;
     
     rcv_buff=NULL;
     rcv_buff_cpcty=0;
-
     
+    tot_ncomms=0;
     tot_updt_vecs_sz=0;
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
         tot_updt_vecs_sz+=vecs[ivec]->byte_sz;
     
-    int icurs=0;
-    for(int idim=0;idim<__dim__;idim++)
-    {
-        self_comm[idim]=(rank==neigh[idim][0] && rank==neigh[idim][1]);
-        
-        // snd_to_bhnd && rcv_fm_frnt
-        pbc_correction[idim][0]=(atoms->comm.coords[idim]==atoms->comm.dims[idim]-1);
-        icurs++;
-        
-        // snd_to_frnt && rcv_fm_bhnd
-        pbc_correction[idim][1]=(atoms->comm.coords[idim]==0);
-        icurs++;
-    }
-
-    tot_ncomms=0;
-    snd_atms_lst=NULL;
-    snd_atms_lst_cpcty=snd_atms_lst_sz=rcv_atms_lst_sz=NULL;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-__Update::~__Update()
+void __Update::rm_rdndncy()
 {
-    delete [] rcv_buff;
-    delete [] snd_buff;
+    snd_buff_sz=rcv_buff_sz=0;
+    reserve_rcv_buff(max_snd_atms_lst_sz);
+    reserve_snd_buff(natms_ph);
     
-    for(int i=0;i<tot_ncomms;i++)
-        delete [] snd_atms_lst[i];
+    byte* mark=snd_buff;
+    /*-------temp_remove-------
+    forcefield->neighbor->mark_redndnt_ph(mark);
+    */
+    int __snd_atms_lst_cpcty=max_snd_atms_lst_sz;
+    int* __snd_atms_lst=NULL;
+    if(__snd_atms_lst_cpcty) __snd_atms_lst=new int[__snd_atms_lst_cpcty];
     
-    delete [] snd_atms_lst;
-    delete [] snd_atms_lst_cpcty;
-    delete [] snd_atms_lst_sz;
-    delete [] rcv_atms_lst_sz;
-    
-    
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void __Update::reset()
-{
-    for(int idim=0;idim<__dim__;idim++)
-        max_cut_s[idim]=max_cut*depth_inv[idim];
-    
-    int __tot_ncomms=0;
-    for(int idim=0;idim<__dim__;idim++)
-    {
-        // snd_to_bhnd && rcv_fm_frnt
-        s_bnd[idim][0]=s_lo[idim]+max_cut_s[idim];
-        __tot_ncomms+=static_cast<int>(max_cut_s[idim]/(s_hi[idim]-s_lo[idim]))+1;
-        ncomms[idim][0]=__tot_ncomms;
-        
-        // snd_to_frnt && rcv_fm_bhnd
-        s_bnd[idim][1]=s_hi[idim]-max_cut_s[idim];
-        __tot_ncomms+=static_cast<int>(max_cut_s[idim]/(s_hi[idim]-s_lo[idim]))+1;
-        ncomms[idim][1]=__tot_ncomms;
-    }
-    
-    if(__tot_ncomms==tot_ncomms)
-        return;
-    
-    for(int i=0;i<tot_ncomms;i++)
-        delete [] snd_atms_lst[i];
-    delete [] snd_atms_lst;
-    delete [] snd_atms_lst_cpcty;
-    delete [] snd_atms_lst_sz;
-    delete [] rcv_atms_lst_sz;
-    
-    tot_ncomms=__tot_ncomms;
-    snd_atms_lst=new int*[tot_ncomms];
-    snd_atms_lst_cpcty=new int[tot_ncomms];
-    snd_atms_lst_sz=new int[tot_ncomms];
-    rcv_atms_lst_sz=new int[tot_ncomms];
-    for(int i=0;i<tot_ncomms;i++)
-    {
-        snd_atms_lst_cpcty[i]=0;
-        snd_atms_lst[i]=NULL;
-    }
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void __Update::list()
-{
-    natms_ph=0;
+    byte* __mark=mark+natms_ph;
     max_snd_atms_lst_sz=max_rcv_atms_lst_sz=0;
-    int icomm=0;
-    __list<0>(icomm);
-    natms_ph=x->vec_sz-natms_lcl;
-    for(int ivec=nxchng_vecs;ivec<nvecs;ivec++)
+    __rm_rdndncy<__dim__-1,1>(mark,__mark,__snd_atms_lst);
+    delete [] __snd_atms_lst;
+    
+    int old_2_new_cpcty=natms_lcl+natms_ph;
+    int* old_2_new=NULL;
+    if(old_2_new_cpcty) old_2_new=new int[old_2_new_cpcty];
+    
+    int list_sz=0;
+    int list_cpcty=natms_ph;
+    int* list=NULL;
+    if(list_cpcty) list=new int[list_cpcty];
+    
+    for(int iatm=0;iatm<natms_lcl;iatm++)
+        old_2_new[iatm]=iatm;
+    
+    int icurs=natms_lcl;
+    for(int iatm=natms_lcl;iatm<natms_lcl+natms_ph;iatm++)
+        if(mark[iatm-natms_lcl]=='1')
+        {
+            old_2_new[iatm]=icurs++;
+            list[list_sz++]=iatm;
+        }
+    
+    int new_natms_ph=list_sz;
+    __rm_rdndncy_old_2_new<0,0>(old_2_new);
+
+    /*-------temp_remove-------
+    forcefield->neighbor->rename_atoms(old_2_new);
+     */
+    delete [] old_2_new;
+    
+    int* __list=list;
+    
+    int vec_sz=natms_lcl;
+    while(*__list==natms_lcl+icurs)
     {
-        vecs[ivec]->vec_sz=0;
-        vecs[ivec]->resize(x->vec_sz);
+        __list++;
+        vec_sz++;
+        list_sz--;
     }
+    
+    for(int ivec=0;ivec<nupdt_vecs;ivec++)
+    {
+        vecs[ivec]->vec_sz=vec_sz;
+        vecs[ivec]->cpy_pst(__list,list_sz);
+    }
+    
+    delete [] list;
+    
+    natms_ph=new_natms_ph;
 }
-
-

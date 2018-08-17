@@ -97,7 +97,7 @@ namespace MAPP_NS
         }
         
         template<bool X>
-        class DynamicMDHelper
+        class Helper
         {
         public:
             template<class...VS>
@@ -112,7 +112,7 @@ namespace MAPP_NS
         template<bool X=false,class...VS>
         void update(VS* ...__vs)
         {
-            DynamicMDHelper<X>::update(*this,__vs...);
+            Helper<X>::update(*this,__vs...);
         }
         
         
@@ -123,7 +123,7 @@ namespace MAPP_NS
     };
 #ifdef NEW_UPDATE
     template<>
-    class DynamicMD::DynamicMDHelper<false>
+    class DynamicMD::Helper<false>
     {
     public:
         template<class...VS>

@@ -320,10 +320,6 @@ namespace MAPP_NS
         }
         
         
-        void xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
-        void self_xchng_buff(int&,int&,byte*&,int&,int&,byte*&);
-        
-        
         void load_unload
         (int& __icomm,int& __snd_p,int& __rcv_p)
         {
@@ -560,7 +556,6 @@ namespace MAPP_NS
         ~__Update();
         void reset();
         void list();
-        void rm_rdndncy();
         
         template<class ...VS>
         void update_w_x(VS*... __vs)

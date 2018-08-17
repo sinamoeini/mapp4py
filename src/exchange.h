@@ -552,7 +552,7 @@ namespace MAPP_NS
         }
         
         template<int idim,int idir,class F>
-        void __update(F&& f,Vec<type0>* __v,type0* __dH)
+        void __update(F&& f,Vec<type0>* __v,type0 (*__dH)[__dim__])
         {
             for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
             {
@@ -569,7 +569,7 @@ namespace MAPP_NS
                     // gotta check later
                     /*
                     for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
-                        f(H[idim],__dH,__vec);
+                        f(H[idim],__dH[idim],__vec);
                      */
                     for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
                         f(H[idim],__vec);
@@ -665,10 +665,10 @@ namespace MAPP_NS
                 update.__update<idim,0>(Algebra::V_add2<idim+1,type0>,__v,*__dH);
                 update.__update<idim,1>(Algebra::V_sub2<idim+1,type0>,__v,*__dH);
                 */
-                update.__update<idim,0>(Algebra::V_add<idim+1,type0>,__v,*__dH);
-                update.__update<idim,1>(Algebra::V_sub<idim+1,type0>,__v,*__dH);
+                update.__update<idim,0>(Algebra::V_add<idim+1,type0>,__v,__dH);
+                update.__update<idim,1>(Algebra::V_sub<idim+1,type0>,__v,__dH);
                 
-                Helper<idim+1>::update_w_x_w_dH(update,__v,__dH+1);
+                Helper<idim+1>::update_w_x_w_dH(update,__v,__dH);
             }
         };
         
@@ -831,10 +831,25 @@ namespace MAPP_NS
             
         }
         
+        
+        void update_wo_x(vec* __v)
+        {
+            __v->vec_sz=natms_lcl;
+            snd_buff_sz=0;
+            int tot_byte_sz=__v->byte_sz;
+            reserve_snd_buff(tot_byte_sz*max_snd_atms_lst_sz);
+            Helper<0>::update_wo_x(*this,tot_byte_sz,__v);
+            
+        }
+        
         void update_w_x_w_dH(Vec<type0>*__v,type0 (*__dH)[__dim__])
         {
+            __v->vec_sz=natms_lcl;
+            snd_buff_sz=0;
+            reserve_snd_buff(__v->byte_sz*max_snd_atms_lst_sz);
             Helper<0>::update_w_x_w_dH(*this,__v,__dH);
         }
+
         
         void rm_rdndncy();
     };

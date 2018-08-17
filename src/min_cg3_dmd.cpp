@@ -807,247 +807,232 @@ void MinCG3DMD::ml_refine(PyMethodDef& tp_methods)
 
 
 
-///*----------------------------------------------------------------------------------------
-// 
-// ----------------------------------------------------------------------------------------*/
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<true,true,true,true>::init()
-//{
-//    uvecs[0]=atoms->x;
-//    uvecs[1]=atoms->alpha;
-//    uvecs[2]=atoms->c;
-//    
-//    f.~VECTENS1();
-//    new (&f) VECTENS1(atoms,true,ff->F_H,ff->f,ff->f_alpha,ff->mu);
-//    f0.~VECTENS1();
-//    new (&f0) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
-//    h.~VECTENS1();
-//    new (&h) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
-//    
-//    x.~VECTENS0();
-//    new (&x) VECTENS0(atoms,true,atoms->H,atoms->x,atoms->alpha,atoms->c);
-//    x0.~VECTENS0();
-//    new (&x0) VECTENS0(atoms,true,__dim__,c_dim,c_dim);
-//    x_d.~VECTENS0();
-//    new (&x_d) VECTENS0(atoms,true,__dim__,h.vecs[1],h.vecs[2]);
-//    
-//    dynamic=new DynamicDMD(atoms,ff,true,{},
-//    {
-//        atoms->x_dof,
-//        atoms->alpha_dof,
-//        atoms->c_dof,
-//        h.vecs[0],h.vecs[1],h.vecs[2],
-//        f0.vecs[0],f0.vecs[1],f0.vecs[2],
-//        x0.vecs[0],x0.vecs[1],x0.vecs[2],
-//        x_d.vecs[0]
-//    },{});
-//}
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<true,true,true,true>::add_extra_vec(VECTENS1& v)
-//{
-//    v.~VECTENS1();
-//    new (&v) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
-//    dynamic->add_xchng(v.vecs[0]);
-//    dynamic->add_xchng(v.vecs[1]);
-//    dynamic->add_xchng(v.vecs[2]);
-//}
-///*----------------------------------------------------------------------------------------
-// 
-// ----------------------------------------------------------------------------------------*/
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<false,true,true,true>::init()
-//{
-//    uvecs[0]=atoms->x;
-//    uvecs[1]=atoms->alpha;
-//    uvecs[2]=atoms->c;
-//    
-//    f.~VECTENS1();
-//    new (&f) VECTENS1(atoms,false,ff->F_H,ff->f,ff->f_alpha,ff->mu);
-//    f0.~VECTENS1();
-//    new (&f0) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
-//    h.~VECTENS1();
-//    new (&h) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
-//    
-//    x.~VECTENS0();
-//    new (&x) VECTENS0(atoms,false,atoms->H,atoms->x,atoms->alpha,atoms->c);
-//    x0.~VECTENS0();
-//    new (&x0) VECTENS0(atoms,false,__dim__,c_dim,c_dim);
-//    x_d.~VECTENS0();
-//    new (&x_d) VECTENS0(atoms,false,h.vecs[0],h.vecs[1],h.vecs[2]);
-//    
-//    dynamic=new DynamicDMD(atoms,ff,false,{},
-//    {
-//        atoms->x_dof,
-//        atoms->alpha_dof,
-//        atoms->c_dof,
-//        h.vecs[0],h.vecs[1],h.vecs[2],
-//        f0.vecs[0],f0.vecs[1],f0.vecs[2],
-//        x0.vecs[0],x0.vecs[1],x0.vecs[2]
-//    },{});
-//}
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<false,true,true,true>::add_extra_vec(VECTENS1& v)
-//{
-//    v.~VECTENS1();
-//    new (&v) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
-//    dynamic->add_xchng(v.vecs[0]);
-//    dynamic->add_xchng(v.vecs[1]);
-//    dynamic->add_xchng(v.vecs[2]);
-//}
-///*----------------------------------------------------------------------------------------
-// 
-// ----------------------------------------------------------------------------------------*/
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<true,false,true,true>::init()
-//{
-//    uvecs[0]=atoms->x;
-//    uvecs[1]=atoms->alpha;
-//    uvecs[2]=atoms->c;
-//    
-//    f.~VECTENS1();
-//    new (&f) VECTENS1(atoms,true,ff->F_H,ff->f_alpha,ff->mu);
-//    f0.~VECTENS1();
-//    new (&f0) VECTENS1(atoms,true,c_dim,c_dim);
-//    h.~VECTENS1();
-//    new (&h) VECTENS1(atoms,true,c_dim,c_dim);
-//    
-//    x.~VECTENS0();
-//    new (&x) VECTENS0(atoms,true,atoms->H,atoms->x,atoms->alpha,atoms->c);
-//    x0.~VECTENS0();
-//    new (&x0) VECTENS0(atoms,true,__dim__,c_dim,c_dim);
-//    x_d.~VECTENS0();
-//    new (&x_d) VECTENS0(atoms,true,__dim__,h.vecs[0],h.vecs[1]);
-//    
-//    dynamic=new DynamicDMD(atoms,ff,true,{},
-//    {
-//        atoms->x_dof,
-//        atoms->alpha_dof,
-//        atoms->c_dof,
-//        h.vecs[0],h.vecs[1],
-//        f0.vecs[0],f0.vecs[1],
-//        x0.vecs[0],x0.vecs[1],x0.vecs[2],
-//        x_d.vecs[0]
-//    },{});
-//}
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<true,false,true,true>::add_extra_vec(VECTENS1& v)
-//{
-//    v.~VECTENS1();
-//    new (&v) VECTENS1(atoms,true,c_dim,c_dim);
-//    dynamic->add_xchng(v.vecs[0]);
-//    dynamic->add_xchng(v.vecs[1]);
-//}
-///*----------------------------------------------------------------------------------------
-// 
-// ----------------------------------------------------------------------------------------*/
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<false,false,true,true>::init()
-//{
-//    uvecs[0]=atoms->alpha;
-//    uvecs[1]=atoms->c;
-//    
-//    f.~VECTENS1();
-//    new (&f) VECTENS1(atoms,false,ff->F_H,ff->f_alpha,ff->mu);
-//    f0.~VECTENS1();
-//    new (&f0) VECTENS1(atoms,false,c_dim,c_dim);
-//    h.~VECTENS1();
-//    new (&h) VECTENS1(atoms,false,c_dim,c_dim);
-//    
-//    x.~VECTENS0();
-//    new (&x) VECTENS0(atoms,false,atoms->alpha,atoms->c);
-//    x0.~VECTENS0();
-//    new (&x0) VECTENS0(atoms,false,c_dim,c_dim);
-//    x_d.~VECTENS0();
-//    new (&x_d) VECTENS0(atoms,false,h.vecs[0],h.vecs[1]);
-//    
-//    dynamic=new DynamicDMD(atoms,ff,true,{},
-//    {
-//        atoms->x_dof,
-//        atoms->alpha_dof,
-//        atoms->c_dof,
-//        h.vecs[0],h.vecs[1],
-//        f0.vecs[0],f0.vecs[1],
-//        x0.vecs[0],x0.vecs[1]
-//    },{});
-//}
-///*--------------------------------------------
-// 
-// --------------------------------------------*/
-//template<>
-//void MinDMDMan<false,false,true,true>::add_extra_vec(VECTENS1& v)
-//{
-//    v.~VECTENS1();
-//    new (&v) VECTENS1(atoms,false,c_dim,c_dim);
-//    dynamic->add_xchng(v.vecs[0]);
-//    dynamic->add_xchng(v.vecs[1]);
-//}
-//
-//
-//template<> void MinDMDMan<true,true,true,true>::prep(){prep_x_d();};
-//template<> void MinDMDMan<false,true,true,true>::prep(){};
-//template<> void MinDMDMan<true,false,true,true>::prep(){prep_x_d_affine();};
-//template<> void MinDMDMan<false,false,true,true>::prep(){};
-//template<> void MinDMDMan<true,true,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
-//template<> void MinDMDMan<false,true,true,true>::force_calc(){post_force_calc_c();}
-//template<> void MinDMDMan<true,false,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
-//template<> void MinDMDMan<false,false,true,true>::force_calc(){post_force_calc_c();}
-//
-//
-//template<> type0 MinDMDMan<true,true,true,true>::F(type0 alpha)
-//{
-//    x=x0+alpha*x_d;
-//    aprop_c();
-//    atoms->update_max_alpha();
-//    atoms->update_H();
-//    //dynamic->__update__x_alpha(atoms->c);
-//    return ff->value_timer();
-//}
-//template<> type0 MinDMDMan<false,true,true,true>::F(type0 alpha)
-//{
-//    x=x0+alpha*x_d;
-//    aprop_c();
-//    atoms->update_max_alpha();
-//    //dynamic->__update__x_alpha(atoms->c);
-//    return ff->value_timer();
-//}
-//template<> type0 MinDMDMan<true,false,true,true>::F(type0 alpha)
-//{
-//    x=x0+alpha*x_d;
-//    aprop_c();
-//    atoms->update_max_alpha();
-//    atoms->update_H();
-//    //dynamic->__update__x_alpha(atoms->c);
-//    return ff->value_timer();
-//}
-//template<> type0 MinDMDMan<false,false,true,true>::F(type0 alpha)
-//{
-//    x=x0+alpha*x_d;
-//    aprop_c();
-//    atoms->update_max_alpha();
-//    //dynamic->__update__alpha(atoms->c);
-//    return ff->value_timer();
-//}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,true,true,true>::init()
+{
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,true,ff->F_H,ff->f,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,true,atoms->H,atoms->x,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,true,__dim__,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,true,__dim__,h.vecs[1],h.vecs[2]);
+    
+    dynamic=new DynamicDMD(atoms,ff,true,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],h.vecs[2],
+        f0.vecs[0],f0.vecs[1],f0.vecs[2],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2],
+        x_d.vecs[0]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,true,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,true,__dim__,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+    dynamic->add_xchng(v.vecs[2]);
+}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,true,true,true>::init()
+{
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,false,ff->F_H,ff->f,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,false,atoms->H,atoms->x,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,false,__dim__,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,false,h.vecs[0],h.vecs[1],h.vecs[2]);
+    
+    dynamic=new DynamicDMD(atoms,ff,false,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],h.vecs[2],
+        f0.vecs[0],f0.vecs[1],f0.vecs[2],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,true,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,false,__dim__,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+    dynamic->add_xchng(v.vecs[2]);
+}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,false,true,true>::init()
+{
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,true,ff->F_H,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,true,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,true,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,true,atoms->H,atoms->x,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,true,__dim__,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,true,__dim__,h.vecs[0],h.vecs[1]);
+    
+    dynamic=new DynamicDMD(atoms,ff,true,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],
+        f0.vecs[0],f0.vecs[1],
+        x0.vecs[0],x0.vecs[1],x0.vecs[2],
+        x_d.vecs[0]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<true,false,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,true,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+}
+/*----------------------------------------------------------------------------------------
+ 
+ ----------------------------------------------------------------------------------------*/
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,false,true,true>::init()
+{
+    f.~VECTENS1();
+    new (&f) VECTENS1(atoms,false,ff->F_H,ff->f_alpha,ff->mu);
+    f0.~VECTENS1();
+    new (&f0) VECTENS1(atoms,false,c_dim,c_dim);
+    h.~VECTENS1();
+    new (&h) VECTENS1(atoms,false,c_dim,c_dim);
+    
+    x.~VECTENS0();
+    new (&x) VECTENS0(atoms,false,atoms->alpha,atoms->c);
+    x0.~VECTENS0();
+    new (&x0) VECTENS0(atoms,false,c_dim,c_dim);
+    x_d.~VECTENS0();
+    new (&x_d) VECTENS0(atoms,false,h.vecs[0],h.vecs[1]);
+    
+    dynamic=new DynamicDMD(atoms,ff,true,{},
+    {
+        atoms->x_dof,
+        atoms->alpha_dof,
+        atoms->c_dof,
+        h.vecs[0],h.vecs[1],
+        f0.vecs[0],f0.vecs[1],
+        x0.vecs[0],x0.vecs[1]
+    },{});
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void MinDMDMan<false,false,true,true>::add_extra_vec(VECTENS1& v)
+{
+    v.~VECTENS1();
+    new (&v) VECTENS1(atoms,false,c_dim,c_dim);
+    dynamic->add_xchng(v.vecs[0]);
+    dynamic->add_xchng(v.vecs[1]);
+}
+
+
+template<> void MinDMDMan<true,true,true,true>::prep(){prep_x_d();};
+template<> void MinDMDMan<false,true,true,true>::prep(){};
+template<> void MinDMDMan<true,false,true,true>::prep(){prep_x_d_affine();};
+template<> void MinDMDMan<false,false,true,true>::prep(){};
+template<> void MinDMDMan<true,true,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
+template<> void MinDMDMan<false,true,true,true>::force_calc(){post_force_calc_c();}
+template<> void MinDMDMan<true,false,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
+template<> void MinDMDMan<false,false,true,true>::force_calc(){post_force_calc_c();}
+
+
+template<> type0 MinDMDMan<true,true,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    atoms->update_H();
+    dynamic->update<true,true>(atoms->c);
+    return ff->value_timer();
+}
+template<> type0 MinDMDMan<false,true,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    dynamic->update<true,true>(atoms->c);
+    return ff->value_timer();
+}
+template<> type0 MinDMDMan<true,false,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    atoms->update_H();
+    dynamic->update<true,true>(atoms->c);
+    return ff->value_timer();
+}
+template<> type0 MinDMDMan<false,false,true,true>::F(type0 alpha)
+{
+    x=x0+alpha*x_d;
+    aprop_c();
+    atoms->update_max_alpha();
+    dynamic->update<false,true>(atoms->c);
+    return ff->value_timer();
+}
 
 
 

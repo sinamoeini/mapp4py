@@ -152,10 +152,12 @@ void NewtonGMRES::run(int nsteps)
     VecTens<type0,1> f_alpha(atoms,false,ff->f_alpha);
     VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
 
-    
+#ifdef NEW_UPDATE
+#else
     vec* uvecs[2];
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
+#endif
     type0 norm,err,err_x,err_alpha;
     
     err=(chng_box ? ff->prep_timer(f,S):ff->prep_timer(f))/a_tol_sqrt_nc_dofs;
@@ -204,9 +206,11 @@ void NewtonGMRES::run(int nsteps)
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
         if(chng_box) atoms->update_H();
-        
+#ifdef NEW_UPDATE
+        dynamic->update<true,true>();
+#else
         dynamic->update(uvecs,2);
-        
+#endif
         err_prev=err;
         err=(chng_box ? ff->prep_timer(f,S):ff->prep_timer(f))/a_tol_sqrt_nc_dofs;
         err_alpha=sqrt(f_alpha*f_alpha)/a_tol_sqrt_nc_dofs;

@@ -187,10 +187,12 @@ void DAE::min_error()
     VecTens<type0,2> x(atoms,chng_box,atoms->H,atoms->x,atoms->alpha);
     VecTens<type0,2> f(atoms,chng_box,ff->F_H,ff->f,ff->f_alpha);
     VecTens<type0,2> h(atoms,chng_box,__dim__,c_dim);
-    
+
+#ifndef NEW_UPDTAE
     vec* uvecs[2];
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
+#endif
     type0 norm,res;
     
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
@@ -273,9 +275,11 @@ void DAE::min_error()
         
         if(chng_box)
             atoms->update_H();
-        
+#ifdef NEW_UPDATE
+        dynamic->update<true,true>();
+#else
         dynamic->update(uvecs,2);
-        
+#endif
         res=chng_box ? ff->prep_timer(f,S):ff->prep_timer(f);
         
     }

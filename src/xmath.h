@@ -1243,6 +1243,12 @@ namespace MAPP_NS
                 *dst+=*src;
                 __V_add<dim-1>::func(src+1,dst+1);
             }
+            template<typename T>
+            static inline void func2(T const * src0,T const * src1,T* dst)
+            {
+                *dst+=(*src0+*src1);
+                __V_add<dim-1>::func2(src0+1,src1+1,dst+1);
+            }
         };
         
         template<>
@@ -1253,6 +1259,11 @@ namespace MAPP_NS
             static inline void func(T const * src,T* dst)
             {
                 *dst+=*src;
+            }
+            template<typename T>
+            static inline void func2(T const * src0,T const * src1,T* dst)
+            {
+                *dst+=(*src0+*src1);
             }
         };
         
@@ -1266,6 +1277,12 @@ namespace MAPP_NS
                 *dst-=*src;
                 __V_sub<dim-1>::func(src+1,dst+1);
             }
+            template<typename T>
+            static inline void func2(T const * src0,T const * src1,T* dst)
+            {
+                *dst-=(*src0+*src1);
+                __V_sub<dim-1>::func2(src0+1,src1+1,dst+1);
+            }
         };
         
         template<>
@@ -1276,6 +1293,11 @@ namespace MAPP_NS
             static inline void func(T const * src,T* dst)
             {
                 *dst-=*src;
+            }
+            template<typename T>
+            static inline void func2(T const * src0,T const * src1,T* dst)
+            {
+                *dst-=(*src0+*src1);
             }
         };
         
@@ -3239,11 +3261,21 @@ namespace MAPP_NS
         {
             __V_add<dim>::func(src,dst);
         }
+        template<const int dim,typename T>
+        void V_add2(T const * src0,T const * src1,T* dst)
+        {
+            __V_add<dim>::func2(src0,src1,dst);
+        }
         /*==========================================================================*/
         template<const int dim,typename T>
         void V_sub(T const * src,T* dst)
         {
             __V_sub<dim>::func(src,dst);
+        }
+        template<const int dim,typename T>
+        void V_sub2(T const * src0,T const * src1,T* dst)
+        {
+            __V_sub<dim>::func2(src0,src1,dst);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

@@ -39,7 +39,11 @@ namespace MAPP_NS
         
         MPI_Comm& world;
         Exchange* xchng;
+#ifdef NEW_UPDATE
         Update* updt;
+#else
+        OldUpdate* updt;
+#endif
         const type0 skin;
         
     public:

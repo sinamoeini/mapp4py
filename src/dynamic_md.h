@@ -14,31 +14,10 @@ namespace MAPP_NS
     {
     private:
         void store_x0();
-        
-#ifdef NEW_UPDATE
-        bool decide()
-        {
-            type0 skin_sq=0.25*skin*skin;
-            int succ,succ_lcl=1;
-            type0* x_vec=atoms->x->begin();
-            type0* x0_vec=x0->begin();
-            int last_atm=atoms->natms_lcl;
-            if(chng_box) last_atm+=atoms->natms_ph;
-            for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,x0_vec+=__dim__,x_vec+=__dim__)
-                if(Algebra::RSQ<__dim__>(x0_vec,x_vec)>skin_sq)
-                    succ_lcl=0;
-            
-            MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
-            if(succ) return true;
-            return false;
-        }
-#else
         bool decide();
-#endif
         class ForceFieldMD* ff;
         class AtomsMD* atoms;
 #ifdef NEW_UPDATE
-        class __Update* __updt;
         void neighboring();
 #endif
     protected:
@@ -57,24 +36,24 @@ namespace MAPP_NS
         
         
         template<class...VS>
-        void update_w_o_x(VS* ...__vs)
+        void update_wo_x(VS* ...__vs)
         {
-            __updt->update_w_o_x(__vs...);
+            updt->update_wo_x(__vs...);
         }
         template<class...VS>
         void update_w_x(VS* ...__vs)
         {
             if(chng_box)
             {
-                __updt->update_w_x(atoms->x,__vs...);
+                updt->update_w_x(atoms->x,__vs...);
                 
                 if(decide()) return;
                 
                 atoms->x2s_lcl();
                 xchng->full_xchng();
                 
-                __updt->reset();
-                __updt->list();
+                updt->reset();
+                updt->list();
                 neighboring();
                 store_x0();
             }
@@ -82,14 +61,14 @@ namespace MAPP_NS
             {
                 if(decide())
                 {
-                    __updt->update_w_x(atoms->x,__vs...);
+                    updt->update_w_x(atoms->x,__vs...);
                     return;
                 }
                 
                 atoms->x2s_lcl();
                 xchng->full_xchng();
                 
-                __updt->list();
+                updt->list();
                 neighboring();
                 
                 store_x0();
@@ -129,7 +108,7 @@ namespace MAPP_NS
         template<class...VS>
         static void update(DynamicMD& dynamic,VS* ...__vs)
         {
-            dynamic.update_w_o_x(__vs...);
+            dynamic.update_wo_x(__vs...);
         }
         
     };

@@ -69,7 +69,7 @@ using namespace MAPP_NS;
 namespace MAPP_NS
 {
     
-    class Update
+    class OldUpdate
     {
     private:
         /*things that reference cannot be removed*/
@@ -130,8 +130,8 @@ namespace MAPP_NS
         
     protected:
     public:
-        Update(Atoms*,int&,int&);
-        ~Update();
+        OldUpdate(Atoms*,int&,int&);
+        ~OldUpdate();
         void reset();
         void update(vec*,bool);
         void update(vec*,type0 (*)[__dim__]);
@@ -145,7 +145,7 @@ namespace MAPP_NS
  ----------------------------------------------------------------------------------------*/
 namespace MAPP_NS
 {
-    class Update::LoadUnLoadUpdate
+    class OldUpdate::LoadUnLoadUpdate
     {
     private:
     protected:
@@ -163,8 +163,8 @@ namespace MAPP_NS
  ----------------------------------------------------------------------------------------*/
 namespace MAPP_NS
 {
-    class Update::LoadUnLoadUpdateComm:
-    public Update::LoadUnLoadUpdate
+    class OldUpdate::LoadUnLoadUpdateComm:
+    public OldUpdate::LoadUnLoadUpdate
     {
     private:
         
@@ -190,7 +190,7 @@ namespace MAPP_NS
         
     protected:
     public:
-        LoadUnLoadUpdateComm(Update*,MPI_Comm&);
+        LoadUnLoadUpdateComm(OldUpdate*,MPI_Comm&);
         void load_unload(int&,int&,int&);
         void update_mult(int&,int&,int&,vec**&,int&,int&);
         void update_sing(int&,int&,int&,vec*&);
@@ -202,8 +202,8 @@ namespace MAPP_NS
  ----------------------------------------------------------------------------------------*/
 namespace MAPP_NS
 {
-    class Update::LoadUnLoadUpdateSelfComm:
-    public Update::LoadUnLoadUpdate
+    class OldUpdate::LoadUnLoadUpdateSelfComm:
+    public OldUpdate::LoadUnLoadUpdate
     {
     private:
         int**& snd_atms_lst;
@@ -215,7 +215,7 @@ namespace MAPP_NS
         int& nupdt_vecs;
     protected:
     public:
-        LoadUnLoadUpdateSelfComm(Update*);
+        LoadUnLoadUpdateSelfComm(OldUpdate*);
         void load_unload(int&,int&,int&);
         void update_mult(int&,int&,int&,vec**&,int&,int&);
         void update_sing(int&,int&,int&,vec*&);
@@ -235,7 +235,7 @@ namespace MAPP_NS
 namespace MAPP_NS
 {
     
-    class __Update
+    class Update
     {
     private:
         /*things that reference cannot be removed*/
@@ -532,7 +532,7 @@ namespace MAPP_NS
         
         
         template<int idim,int idir,class F,class ...VS>
-        void __update_w_x(int& tot_byte_sz,F&& f,VS*... vs)
+        void __update(F&& f,int& tot_byte_sz,VS*... vs)
         {
             for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
             {
@@ -551,8 +551,35 @@ namespace MAPP_NS
             }
         }
         
+        template<int idim,int idir,class F>
+        void __update(F&& f,Vec<type0>* __v,type0* __dH)
+        {
+            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
+            {
+                if(self_comm[idim])
+                    self_update_var<idim,idir>(icomm,__v->byte_sz,__v);
+                else
+                    update_var<idim,idir>(icomm,__v->byte_sz,__v);
+                
+                
+                if(pbc_correction[idim][idir])
+                {
+                    type0* __vec=__v->end()-__dim__;
+                    // I think this is what it is suppose to be but older version says the one after
+                    // gotta check later
+                    /*
+                    for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
+                        f(H[idim],__dH,__vec);
+                     */
+                    for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
+                        f(H[idim],__vec);
+                }
+            }
+        }
+        
+        
         template<int idim,int idir,class ...VS>
-        void __update_w_o_x(int& tot_byte_sz,VS*... vs)
+        void __update(int& tot_byte_sz,VS*... vs)
         {
             for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
             {
@@ -615,18 +642,33 @@ namespace MAPP_NS
         {
         public:
             template<class... VS>
-            static void update_w_x(__Update& update,int& tot_byte_sz,VS*... vs)
+            static void update_w_x(Update& update,int& tot_byte_sz,VS*... vs)
             {
-                update.__update_w_x<idim,0>(tot_byte_sz,Algebra::V_add<idim+1,type0>,vs...);
-                update.__update_w_x<idim,1>(tot_byte_sz,Algebra::V_sub<idim+1,type0>,vs...);
+                update.__update<idim,0>(Algebra::V_add<idim+1,type0>,tot_byte_sz,vs...);
+                update.__update<idim,1>(Algebra::V_sub<idim+1,type0>,tot_byte_sz,vs...);
                 Helper<idim+1>::update_w_x(update,tot_byte_sz,vs...);
             }
             template<class... VS>
-            static void update_w_o_x(__Update& update,int& tot_byte_sz,VS*... vs)
+            static void update_wo_x(Update& update,int& tot_byte_sz,VS*... vs)
             {
-                update.__update_w_o_x<idim,0>(tot_byte_sz,vs...);
-                update.__update_w_o_x<idim,1>(tot_byte_sz,vs...);
-                Helper<idim+1>::update_w_o_x(update,tot_byte_sz,vs...);
+                update.__update<idim,0>(tot_byte_sz,vs...);
+                update.__update<idim,1>(tot_byte_sz,vs...);
+                Helper<idim+1>::update_wo_x(update,tot_byte_sz,vs...);
+            }
+            
+            
+            static void update_w_x_w_dH(Update& update,Vec<type0>* __v,type0 (*__dH)[__dim__])
+            {
+                // I think this is what it is suppose to be but older version says the one after
+                // gotta check later
+                /*
+                update.__update<idim,0>(Algebra::V_add2<idim+1,type0>,__v,*__dH);
+                update.__update<idim,1>(Algebra::V_sub2<idim+1,type0>,__v,*__dH);
+                */
+                update.__update<idim,0>(Algebra::V_add<idim+1,type0>,__v,*__dH);
+                update.__update<idim,1>(Algebra::V_sub<idim+1,type0>,__v,*__dH);
+                
+                Helper<idim+1>::update_w_x_w_dH(update,__v,__dH+1);
             }
         };
         
@@ -708,8 +750,41 @@ namespace MAPP_NS
         
     protected:
     public:
-        __Update(Atoms*,int&,int&);
-        ~__Update()
+        Update(Atoms* atoms,
+        int& __nupdt_vecs,int& __nxchng_vecs):
+        world(atoms->world),
+        natms_lcl(atoms->natms_lcl),
+        natms_ph(atoms->natms_ph),
+        H(atoms->H),
+        depth_inv(atoms->depth_inv),
+        
+        rank(atoms->comm.rank),
+        s_lo(atoms->comm.s_lo),
+        s_hi(atoms->comm.s_hi),
+        
+        max_cut(atoms->max_cut),
+        x(atoms->x),
+        
+        vecs(atoms->dynamic_vecs),
+        nvecs(atoms->ndynamic_vecs),
+        nupdt_vecs(__nupdt_vecs),
+        nxchng_vecs(__nxchng_vecs)
+        {
+            start<0>(atoms->comm.neigh,atoms->comm.dims,atoms->comm.coords);
+            snd_buff=NULL;
+            snd_buff_cpcty=0;
+            
+            rcv_buff=NULL;
+            rcv_buff_cpcty=0;
+            
+            tot_ncomms=0;
+            tot_updt_vecs_sz=0;
+            for(int ivec=0;ivec<nupdt_vecs;ivec++)
+                tot_updt_vecs_sz+=vecs[ivec]->byte_sz;
+            
+        }
+        
+        ~Update()
         {
             delete [] rcv_buff;
             delete [] snd_buff;
@@ -746,41 +821,45 @@ namespace MAPP_NS
         }
         
         template<class ...VS>
-        void update_w_o_x(VS*... __vs)
+        void update_wo_x(VS*... __vs)
         {
             int tot_byte_sz=reset_vs(__vs...);
             snd_buff_sz=rcv_buff_sz=0;
             reserve_snd_buff(tot_byte_sz*max_snd_atms_lst_sz);
             reserve_rcv_buff(tot_byte_sz*max_rcv_atms_lst_sz);
-            Helper<0>::update_w_o_x(*this,tot_byte_sz,__vs...);
+            Helper<0>::update_wo_x(*this,tot_byte_sz,__vs...);
             
         }
+        
+        void update_w_x_w_dH(Vec<type0>*__v,type0 (*__dH)[__dim__])
+        {
+            Helper<0>::update_w_x_w_dH(*this,__v,__dH);
+        }
+        
         void rm_rdndncy();
     };
     
     template<>
-    inline void __Update::start<__dim__>(int (*)[2],int*,int*){};
+    inline void Update::start<__dim__>(int (*)[2],int*,int*){};
     template<>
-    inline void __Update::__list<__dim__>(){};
+    inline void Update::__list<__dim__>(){};
     template<>
-    inline void __Update::__reset<__dim__>(int&){};
+    inline void Update::__reset<__dim__>(int&){};
     template<>
-    inline void __Update::dealloc_all<__dim__,0>(){};
+    inline void Update::dealloc_all<__dim__,0>(){};
     template<>
-    inline void __Update::__rm_rdndncy<-1,1>(byte*,byte*&,int*){}
+    inline void Update::__rm_rdndncy<-1,1>(byte*,byte*&,int*){}
     template<>
-    inline void __Update::__rm_rdndncy_old_2_new<__dim__,0>(int*){}
+    inline void Update::__rm_rdndncy_old_2_new<__dim__,0>(int*){}
     template<>
-    class __Update::Helper<__dim__>
+    class Update::Helper<__dim__>
     {
     public:
         template<class... VS>
-        static void update_w_x(__Update&,int&,VS*...)
-        {
-        }
+        static void update_w_x(Update&,int&,VS*...){}
         template<class... VS>
-        static void update_w_o_x(__Update&,int&,VS*...)
-        {}
+        static void update_wo_x(Update&,int&,VS*...){}
+        static void update_w_x_w_dH(Update&,Vec<type0>*,type0 (*)[__dim__]){}
     };
 }
 #endif 

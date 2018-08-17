@@ -240,7 +240,7 @@ void Exchange::full_xchng_all()
 /*--------------------------------------------
  
  --------------------------------------------*/
-Update::Update(Atoms* atoms,
+OldUpdate::OldUpdate(Atoms* atoms,
 int& nupdt_vecs_,int& nxchng_vecs_):
 natms_lcl(atoms->natms_lcl),
 natms_ph(atoms->natms_ph),
@@ -296,7 +296,7 @@ nxchng_vecs(nxchng_vecs_)
 /*--------------------------------------------
  
  --------------------------------------------*/
-Update::~Update()
+OldUpdate::~OldUpdate()
 {
     delete [] rcv_buff;
     delete [] snd_buff;
@@ -315,7 +315,7 @@ Update::~Update()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Update::reset()
+void OldUpdate::reset()
 {
     for(int idim=0;idim<__dim__;idim++)
         max_cut_s[idim]=max_cut*depth_inv[idim];
@@ -360,7 +360,7 @@ void Update::reset()
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::add_to_snd_lst(int& icomm,int& iatm)
+inline void OldUpdate::add_to_snd_lst(int& icomm,int& iatm)
 {
     if(snd_atms_lst_sz[icomm]+1>snd_atms_lst_cpcty[icomm])
     {
@@ -376,7 +376,7 @@ inline void Update::add_to_snd_lst(int& icomm,int& iatm)
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::reserve_rcv_buff(int xtra)
+inline void OldUpdate::reserve_rcv_buff(int xtra)
 {
     if(rcv_buff_cpcty<xtra+rcv_buff_sz)
     {
@@ -388,7 +388,7 @@ inline void Update::reserve_rcv_buff(int xtra)
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::reserve_snd_buff(int xtra)
+inline void OldUpdate::reserve_snd_buff(int xtra)
 {
     if(snd_buff_cpcty<xtra+snd_buff_sz)
     {
@@ -400,7 +400,7 @@ inline void Update::reserve_snd_buff(int xtra)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Update::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
+void OldUpdate::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
 {
     int tot_byte_sz=0;
     for(int ivec=0;ivec<nupdt_vecs;ivec++)
@@ -452,7 +452,7 @@ void Update::update(vec** updt_vecs,int nupdt_vecs,bool x_xst)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Update::update(vec* updt_vec,bool x_xst)
+void OldUpdate::update(vec* updt_vec,bool x_xst)
 {
     snd_buff_sz=0;
     reserve_snd_buff(updt_vec->byte_sz*max_snd_atms_lst_sz);
@@ -498,7 +498,7 @@ void Update::update(vec* updt_vec,bool x_xst)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Update::update(vec* updt_vec,type0 (*dH)[__dim__])
+void OldUpdate::update(vec* updt_vec,type0 (*dH)[__dim__])
 {
     
     snd_buff_sz=0;
@@ -545,7 +545,7 @@ void Update::update(vec* updt_vec,type0 (*dH)[__dim__])
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Update::list()
+void OldUpdate::list()
 {
     natms_ph=0;
     type0* x_vec;
@@ -609,7 +609,7 @@ void Update::list()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Update::rm_rdndncy()
+void OldUpdate::rm_rdndncy()
 {
     snd_buff_sz=rcv_buff_sz=0;
     reserve_rcv_buff(max_snd_atms_lst_sz);
@@ -729,8 +729,8 @@ void Update::rm_rdndncy()
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-Update::LoadUnLoadUpdateComm::
-LoadUnLoadUpdateComm(Update* __updt,MPI_Comm& __world):
+OldUpdate::LoadUnLoadUpdateComm::
+LoadUnLoadUpdateComm(OldUpdate* __updt,MPI_Comm& __world):
 LoadUnLoadUpdate(),
 world(__world),
 snd_atms_lst(__updt->snd_atms_lst),
@@ -750,7 +750,7 @@ tot_updt_vecs_sz(__updt->tot_updt_vecs_sz)
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateComm::load_unload
+inline void OldUpdate::LoadUnLoadUpdateComm::load_unload
 (int& __icomm,int& __snd_p,int& __rcv_p)
 {
     snd_buff_sz=snd_atms_lst_sz[__icomm]*tot_updt_vecs_sz;
@@ -792,7 +792,7 @@ inline void Update::LoadUnLoadUpdateComm::load_unload
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateComm::update_mult
+inline void OldUpdate::LoadUnLoadUpdateComm::update_mult
 (int& __icomm,int& __snd_p,int& __rcv_p,vec**& __vecs
 ,int& __nvecs,int& __vecs_byte_sz)
 {
@@ -811,7 +811,7 @@ inline void Update::LoadUnLoadUpdateComm::update_mult
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateComm::update_sing
+inline void OldUpdate::LoadUnLoadUpdateComm::update_sing
 (int& __icomm,int& __snd_p,int& __rcv_p,vec*& __v)
 {
     byte* tmp_snd_buff=snd_buff;
@@ -825,7 +825,7 @@ inline void Update::LoadUnLoadUpdateComm::update_sing
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateComm::xchng_buff
+inline void OldUpdate::LoadUnLoadUpdateComm::xchng_buff
 (int& __snd_p,int& __snd_buff_sz,byte*& __snd_buff
 ,int& __rcv_p,int& __rcv_buff_sz,byte*& __rcv_buff)
 {
@@ -836,8 +836,8 @@ inline void Update::LoadUnLoadUpdateComm::xchng_buff
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-Update::LoadUnLoadUpdateSelfComm::
-LoadUnLoadUpdateSelfComm(Update* __updt):
+OldUpdate::LoadUnLoadUpdateSelfComm::
+LoadUnLoadUpdateSelfComm(OldUpdate* __updt):
 LoadUnLoadUpdate(),
 snd_atms_lst(__updt->snd_atms_lst),
 snd_atms_lst_sz(__updt->snd_atms_lst_sz),
@@ -849,7 +849,7 @@ nupdt_vecs(__updt->nupdt_vecs)
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateSelfComm::load_unload
+inline void OldUpdate::LoadUnLoadUpdateSelfComm::load_unload
 (int& __icomm,int&,int&)
 {
     rcv_atms_lst_sz[__icomm]=snd_atms_lst_sz[__icomm];
@@ -863,7 +863,7 @@ inline void Update::LoadUnLoadUpdateSelfComm::load_unload
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateSelfComm::update_mult
+inline void OldUpdate::LoadUnLoadUpdateSelfComm::update_mult
 (int& __icomm,int&,int&,vec**& vecs
 ,int& nvecs,int&)
 {
@@ -873,7 +873,7 @@ inline void Update::LoadUnLoadUpdateSelfComm::update_mult
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateSelfComm::update_sing
+inline void OldUpdate::LoadUnLoadUpdateSelfComm::update_sing
 (int& __icomm,int&,int&,vec*& v)
 {
     v->cpy_pst(snd_atms_lst[__icomm],snd_atms_lst_sz[__icomm]);
@@ -881,7 +881,7 @@ inline void Update::LoadUnLoadUpdateSelfComm::update_sing
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Update::LoadUnLoadUpdateSelfComm::xchng_buff
+inline void OldUpdate::LoadUnLoadUpdateSelfComm::xchng_buff
 (int&,int& __snd_buff_sz,byte*& __snd_buff
 ,int&,int& __rcv_buff_sz,byte*& __rcv_buff)
 {
@@ -890,43 +890,7 @@ inline void Update::LoadUnLoadUpdateSelfComm::xchng_buff
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-__Update::__Update(Atoms* atoms,
-int& nupdt_vecs_,int& nxchng_vecs_):
-world(atoms->world),
-natms_lcl(atoms->natms_lcl),
-natms_ph(atoms->natms_ph),
-H(atoms->H),
-depth_inv(atoms->depth_inv),
-
-rank(atoms->comm.rank),
-s_lo(atoms->comm.s_lo),
-s_hi(atoms->comm.s_hi),
-
-max_cut(atoms->max_cut),
-x(atoms->x),
-
-vecs(atoms->dynamic_vecs),
-nvecs(atoms->ndynamic_vecs),
-nupdt_vecs(nupdt_vecs_),
-nxchng_vecs(nxchng_vecs_)
-{
-    start<0>(atoms->comm.neigh,atoms->comm.dims,atoms->comm.coords);
-    snd_buff=NULL;
-    snd_buff_cpcty=0;
-    
-    rcv_buff=NULL;
-    rcv_buff_cpcty=0;
-    
-    tot_ncomms=0;
-    tot_updt_vecs_sz=0;
-    for(int ivec=0;ivec<nupdt_vecs;ivec++)
-        tot_updt_vecs_sz+=vecs[ivec]->byte_sz;
-    
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void __Update::rm_rdndncy()
+void Update::rm_rdndncy()
 {
     snd_buff_sz=rcv_buff_sz=0;
     reserve_rcv_buff(max_snd_atms_lst_sz);

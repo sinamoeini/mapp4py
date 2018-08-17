@@ -43,7 +43,7 @@ AtomsDMD::~AtomsDMD()
  --------------------------------------------*/
 void AtomsDMD::update_max_alpha()
 {
-    int n=natms*c_dim;
+    int n=natms_lcl*c_dim;
     type0 max_alpha_lcl=0.0;
     type0* alpha_vec=alpha->begin();
     for(int i=0;i<n;i++)

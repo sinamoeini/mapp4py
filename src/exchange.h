@@ -572,7 +572,7 @@ namespace MAPP_NS
                         f(H[idim],__dH[idim],__vec);
                      */
                     for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
-                        f(H[idim],__vec);
+                        f(__dH[idim],__vec);
                 }
             }
         }

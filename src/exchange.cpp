@@ -498,7 +498,7 @@ void OldUpdate::update(vec* updt_vec,bool x_xst)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void OldUpdate::update(vec* updt_vec,type0 (*dH)[__dim__])
+void OldUpdate::update(vec* updt_vec,type0 (*__dH)[__dim__])
 {
     
     snd_buff_sz=0;
@@ -527,13 +527,13 @@ void OldUpdate::update(vec* updt_vec,type0 (*dH)[__dim__])
                     {
                         for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                __vec[jdim]-=H[idim][jdim];
+                                __vec[jdim]-=__dH[idim][jdim];
                     }
                     else
                     {
                         for(int iatm=0;iatm<rcv_atms_lst_sz[icomm];iatm++,__vec-=__dim__)
                             for(int jdim=0;jdim<idim+1;jdim++)
-                                __vec[jdim]+=H[idim][jdim];
+                                __vec[jdim]+=__dH[idim][jdim];
                     }
                 }
                 icomm++;

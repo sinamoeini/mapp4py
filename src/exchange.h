@@ -466,34 +466,34 @@ namespace MAPP_NS
             }
         }
         
-        template<int idim,int idir>
-        void update_var_cpy(int& __icomm,byte*& __snd_buff,vec* __v)
+        template<int idim,int idir,class T>
+        void update_var_cpy(int& __icomm,byte*& __snd_buff,Vec<T>* __v)
         {
             __v->cpy(__snd_buff,snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
         }
-        template<int idim,int idir,class...VS>
-        void update_var_cpy(int& __icomm,byte*& __snd_buff,vec* __v,VS*... __vs)
+        template<int idim,int idir,class T,class...VS>
+        void update_var_cpy(int& __icomm,byte*& __snd_buff,Vec<T>* __v,VS*... __vs)
         {
             update_var_cpy<idim,idir>(__icomm,__snd_buff,__v);
             update_var_cpy<idim,idir>(__icomm,__snd_buff,__vs...);
         }
         
-        template<int idim,int idir>
-        void update_var_pst(int& __icomm,byte*& __rcv_buff,vec* __v)
+        template<int idim,int idir,class T>
+        void update_var_pst(int& __icomm,byte*& __rcv_buff,Vec<T>* __v)
         {
             __v->pst(__rcv_buff,rcv_atms_lst_sz[idim][idir][__icomm]);
         }
         
-        template<int idim,int idir,class...VS>
-        void update_var_pst(int& __icomm,byte*& __rcv_buff,vec* __v,VS* ... __vs)
+        template<int idim,int idir,class T,class...VS>
+        void update_var_pst(int& __icomm,byte*& __rcv_buff,Vec<T>* __v,VS* ... __vs)
         {
             update_var_pst<idim,idir>(__icomm,__rcv_buff,__v);
             update_var_pst<idim,idir>(__icomm,__rcv_buff,__vs...);
         }
         
         
-        template<int idim,int idir>
-        void update_var(int& __icomm,int& __vecs_byte_sz,vec* __v)
+        template<int idim,int idir,class T>
+        void update_var(int& __icomm,int& __vecs_byte_sz,Vec<T>* __v)
         {
             byte* tmp_snd_buff=snd_buff;
             __v->cpy(tmp_snd_buff,snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
@@ -504,8 +504,8 @@ namespace MAPP_NS
             __v->vec_sz+=rcv_atms_lst_sz[idim][idir][__icomm];
 
         }
-        template<int idim,int idir,class...VS>
-        void update_var(int& __icomm,int& __vecs_byte_sz,vec* __v,VS*... __vs)
+        template<int idim,int idir,class T,class...VS>
+        void update_var(int& __icomm,int& __vecs_byte_sz,Vec<T>* __v,VS*... __vs)
         {
             byte* __snd_buff=snd_buff;
             update_var_cpy<idim,idir>(__icomm,__snd_buff,__v,__vs...);
@@ -518,13 +518,13 @@ namespace MAPP_NS
         }
         
         
-        template<int idim,int idir>
-        void self_update_var(int& __icomm,int&,vec* __v)
+        template<int idim,int idir,class T>
+        void self_update_var(int& __icomm,int&,Vec<T>* __v)
         {
             __v->cpy_pst(snd_atms_lst[idim][idir][__icomm],snd_atms_lst_sz[idim][idir][__icomm]);
         }
-        template<int idim,int idir,class...VS>
-        void self_update_var(int& __icomm,int& __vecs_byte_sz,vec* __v,VS*... __vs)
+        template<int idim,int idir,class T,class...VS>
+        void self_update_var(int& __icomm,int& __vecs_byte_sz,Vec<T>* __v,VS*... __vs)
         {
             self_update_var<idim,idir>(__icomm,__vecs_byte_sz,__v);
             self_update_var<idim,idir>(__icomm,__vecs_byte_sz,__vs...);
@@ -674,14 +674,14 @@ namespace MAPP_NS
         
         
         
-        
-        int reset_vs(vec* __v)
+        template<class T>
+        int reset_vs(Vec<T>* __v)
         {
             __v->vec_sz=natms_lcl;
             return __v->byte_sz;
         }
-        template<class ...VS>
-        int reset_vs(vec* __v,VS*... __vs)
+        template<class T,class ...VS>
+        int reset_vs(Vec<T>* __v,VS*... __vs)
         {
             return reset_vs(__v)+reset_vs(__vs...);
         }
@@ -831,8 +831,8 @@ namespace MAPP_NS
             
         }
         
-        
-        void update_wo_x(vec* __v)
+        template<class T>
+        void update_wo_x(Vec<T>* __v)
         {
             __v->vec_sz=natms_lcl;
             snd_buff_sz=0;

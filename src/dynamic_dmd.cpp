@@ -144,7 +144,7 @@ void DynamicDMD::update(vec* updt_vec)
 /*--------------------------------------------
  update one vectors
  --------------------------------------------*/
-void DynamicDMD::update(Vec<type0>* dx,type0 (*dH)[__dim__])
+void DynamicDMD::update(vec* dx,type0 (*dH)[__dim__])
 {
     updt->update(dx,dH);
 }

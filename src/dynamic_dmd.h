@@ -104,7 +104,7 @@ namespace MAPP_NS
 
         void update(vec**,int);
         void update(vec*);
-        void update(Vec<type0>*,type0 (*)[__dim__]);
+        void update(vec*,type0 (*)[__dim__]);
 #endif
         void init();
         void fin();

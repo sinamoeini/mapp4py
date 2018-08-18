@@ -998,7 +998,7 @@ template<> void MinDMDMan<false,true,true,true>::force_calc(){post_force_calc_c(
 template<> void MinDMDMan<true,false,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
 template<> void MinDMDMan<false,false,true,true>::force_calc(){post_force_calc_c();}
 
-
+#ifdef NEW_UPDATE
 template<> type0 MinDMDMan<true,true,true,true>::F(type0 alpha)
 {
     x=x0+alpha*x_d;
@@ -1033,7 +1033,7 @@ template<> type0 MinDMDMan<false,false,true,true>::F(type0 alpha)
     dynamic->update<false,true>(atoms->c);
     return ff->value_timer();
 }
-
+#endif
 
 
 

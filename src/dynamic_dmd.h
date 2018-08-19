@@ -101,7 +101,7 @@ namespace MAPP_NS
         
         
         template<class...VS>
-        void update(type0 (*&__dH)[__dim__],Vec<type0>* __v,VS*&... __vs)
+        void update(type0 (*&__dH)[__dim__],Vec<type0>*& __v,VS*&... __vs)
         {
             updt->update_w_x_w_dH(__dH,__v,__vs...);
         }
@@ -129,9 +129,9 @@ public:
     }
     
 };
-template<>bool DynamicDMD::__decide<true,true>();
-template<>bool DynamicDMD::__decide<true,false>();
-template<>bool DynamicDMD::__decide<false,true>();
+template<> bool DynamicDMD::__decide<true,true>();
+template<> bool DynamicDMD::__decide<true,false>();
+template<> bool DynamicDMD::__decide<false,true>();
 #endif
 
 #endif

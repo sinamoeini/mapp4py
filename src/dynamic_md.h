@@ -36,16 +36,16 @@ namespace MAPP_NS
         
         
         template<class...VS>
-        void update_wo_x(VS* ...__vs)
+        void update_wo_x(VS*&... __vs)
         {
             updt->update_wo_x(__vs...);
         }
         template<class...VS>
-        void update_w_x(VS* ...__vs)
+        void update_w_x(VS*&... __vs)
         {
             if(chng_box)
             {
-                updt->update_w_x(atoms->x,__vs...);
+                updt->update_w_x(__vs...);
                 
                 if(decide()) return;
                 
@@ -61,7 +61,7 @@ namespace MAPP_NS
             {
                 if(decide())
                 {
-                    updt->update_w_x(atoms->x,__vs...);
+                    updt->update_w_x(__vs...);
                     return;
                 }
                 
@@ -80,7 +80,7 @@ namespace MAPP_NS
         {
         public:
             template<class...VS>
-            static void update(DynamicMD& dynamic,VS* ...__vs)
+            static void update(DynamicMD& dynamic,VS*&... __vs)
             {
                 dynamic.update_w_x(__vs...);
             }
@@ -89,7 +89,7 @@ namespace MAPP_NS
         
         
         template<bool X=false,class...VS>
-        void update(VS* ...__vs)
+        void update(VS*&... __vs)
         {
             Helper<X>::update(*this,__vs...);
         }
@@ -106,7 +106,7 @@ namespace MAPP_NS
     {
     public:
         template<class...VS>
-        static void update(DynamicMD& dynamic,VS* ...__vs)
+        static void update(DynamicMD& dynamic,VS*&... __vs)
         {
             dynamic.update_wo_x(__vs...);
         }

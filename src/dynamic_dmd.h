@@ -22,6 +22,8 @@ namespace MAPP_NS
         class AtomsDMD* atoms;
 #ifdef NEW_UPDATE
         void neighboring();
+        template<bool,bool>
+        bool __decide();
 #endif
     protected:
         
@@ -34,17 +36,17 @@ namespace MAPP_NS
         ~DynamicDMD();
 #ifdef NEW_UPDATE
         template<class...VS>
-        void update_wo_x_wo_alpha(VS* ...__vs)
+        void update_wo_x_wo_alpha(VS*&... __vs)
         {
             updt->update_wo_x(__vs...);
         }
         
         template<class...VS>
-        void update_w_x_w_alpha(VS* ...__vs)
+        void update_w_x_w_alpha(VS*&... __vs)
         {
             if(chng_box)
             {
-                updt->update_w_x(atoms->x,atoms->alpha,__vs...);
+                updt->update_w_x(atoms->alpha,__vs...);
                 
                 if(decide()) return;
                 
@@ -60,7 +62,7 @@ namespace MAPP_NS
             {
                 if(decide())
                 {
-                    updt->update_w_x(atoms->x,atoms->alpha,__vs...);
+                    updt->update_w_x(atoms->alpha,__vs...);
                     return;
                 }
                 
@@ -74,13 +76,16 @@ namespace MAPP_NS
             }
                 
         }
-        
+        /*
+         this is a dummy class to overcome the fact that we
+         cannot do partialy specialize class memebers
+         */
         template<bool X,bool ALPHA>
         class Helper
         {
         public:
             template<class...VS>
-            static void update(DynamicDMD& dynamic,VS* ...__vs)
+            static void update(DynamicDMD& dynamic,VS*&... __vs)
             {
                 dynamic.update_w_x_w_alpha(__vs...);
             }
@@ -89,15 +94,16 @@ namespace MAPP_NS
         
         
         template<bool X=false,bool ALPHA=false,class...VS>
-        void update(VS* ...__vs)
+        void update(VS*&... __vs)
         {
             Helper<X,ALPHA>::update(*this,__vs...);
         }
         
         
-        void update(Vec<type0>* __v,type0 (*__dH)[__dim__])
+        template<class...VS>
+        void update(type0 (*&__dH)[__dim__],Vec<type0>* __v,VS*&... __vs)
         {
-            updt->update_w_x_w_dH(__v,__dH);
+            updt->update_w_x_w_dH(__dH,__v,__vs...);
         }
         
 #else
@@ -117,12 +123,15 @@ class DynamicDMD::Helper<false,false>
 {
 public:
     template<class...VS>
-    static void update(DynamicDMD& dynamic,VS* ...__vs)
+    static void update(DynamicDMD& dynamic,VS*&... __vs)
     {
         dynamic.update_wo_x_wo_alpha(__vs...);
     }
     
 };
+template<>bool DynamicDMD::__decide<true,true>();
+template<>bool DynamicDMD::__decide<true,false>();
+template<>bool DynamicDMD::__decide<false,true>();
 #endif
 
 #endif

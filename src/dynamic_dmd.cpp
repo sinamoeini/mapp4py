@@ -101,10 +101,83 @@ void DynamicDMD::store_x0()
     memcpy(x0->begin(),atoms->x->begin(),last_atm*__dim__*sizeof(type0));
     memcpy(alpha0->begin(),atoms->alpha->begin(),last_atm*c_dim*sizeof(type0));
 }
+#ifdef NEW_UPDATE
 /*--------------------------------------------
  
  --------------------------------------------*/
-#ifdef NEW_UPDATE
+template<>
+bool DynamicDMD::__decide<true,true>()
+{
+    int succ,succ_lcl=1;
+    type0* x_vec=atoms->x->begin();
+    type0* x0_vec=x0->begin();
+    type0* alpha_vec=atoms->alpha->begin();
+    type0* alpha0_vec=alpha0->begin();
+    int last_atm=atoms->natms_lcl;
+    if(chng_box) last_atm+=atoms->natms_ph;
+    
+    for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,x0_vec+=__dim__,x_vec+=__dim__,alpha_vec+=c_dim,alpha0_vec+=c_dim)
+    {
+        type0 dr=sqrt(Algebra::RSQ<__dim__>(x0_vec,x_vec));
+        type0 dalpha=alpha_vec[0]-alpha0_vec[0];
+        for(int i=0;i<c_dim;i++)
+            dalpha=MAX(dalpha,alpha_vec[i]-alpha0_vec[i]);
+        
+        if(dr+dalpha*alpha_scale>0.5*skin) succ_lcl=0;
+    }
+    
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    if(succ) return true;
+    return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+bool DynamicDMD::__decide<true,false>()
+{
+    type0 skin_sq=0.25*skin*skin;
+    int succ,succ_lcl=1;
+    type0* x_vec=atoms->x->begin();
+    type0* x0_vec=x0->begin();
+    int last_atm=atoms->natms_lcl;
+    if(chng_box) last_atm+=atoms->natms_ph;
+    for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,x0_vec+=__dim__,x_vec+=__dim__)
+        if(Algebra::RSQ<__dim__>(x0_vec,x_vec)>skin_sq)
+            succ_lcl=0;
+    
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    if(succ) return true;
+    return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+bool DynamicDMD::__decide<false,true>()
+{
+    int succ,succ_lcl=1;
+    type0* alpha_vec=atoms->alpha->begin();
+    type0* alpha0_vec=alpha0->begin();
+    int last_atm=atoms->natms_lcl;
+    if(chng_box) last_atm+=atoms->natms_ph;
+    
+    for(int iatm=0;succ_lcl && iatm<last_atm;iatm++,alpha_vec+=c_dim,alpha0_vec+=c_dim)
+    {
+        type0 dalpha=alpha_vec[0]-alpha0_vec[0];
+        for(int i=1;i<c_dim;i++)
+            dalpha=MAX(dalpha,alpha_vec[i]-alpha0_vec[i]);
+        
+        if(dalpha*alpha_scale>0.5*skin) succ_lcl=0;
+    }
+    
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    if(succ) return true;
+    return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 #else
 inline
 #endif

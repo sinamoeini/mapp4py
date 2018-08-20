@@ -551,32 +551,6 @@ namespace MAPP_NS
             }
         }
         
-        template<int idim,int idir,class F>
-        void __update(F&& f,Vec<type0>* __v,type0 (*__dH)[__dim__])
-        {
-            for(int icomm=0;icomm<ncomms[idim][idir];icomm++)
-            {
-                if(self_comm[idim])
-                    self_update_var<idim,idir>(icomm,__v->byte_sz,__v);
-                else
-                    update_var<idim,idir>(icomm,__v->byte_sz,__v);
-                
-                
-                if(pbc_correction[idim][idir])
-                {
-                    type0* __vec=__v->end()-__dim__;
-                    // I think this is what it is suppose to be but older version says the one after
-                    // gotta check later
-                    /*
-                    for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
-                        f(H[idim],__dH[idim],__vec);
-                     */
-                    for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,__vec-=__dim__)
-                        f(__dH[idim],__vec);
-                }
-            }
-        }
-        
         
         template<int idim,int idir,class ...VS>
         void __update(int& tot_byte_sz,VS*&... vs)
@@ -654,21 +628,6 @@ namespace MAPP_NS
                 update.__update<idim,0>(tot_byte_sz,vs...);
                 update.__update<idim,1>(tot_byte_sz,vs...);
                 Helper<idim+1>::update_wo_x(update,tot_byte_sz,vs...);
-            }
-            
-            
-            static void update_w_x_w_dH(Update& update,Vec<type0>* __v,type0 (*__dH)[__dim__])
-            {
-                // I think this is what it is suppose to be but older version says the one after
-                // gotta check later
-                /*
-                update.__update<idim,0>(Algebra::V_add2<idim+1,type0>,__v,*__dH);
-                update.__update<idim,1>(Algebra::V_sub2<idim+1,type0>,__v,*__dH);
-                */
-                update.__update<idim,0>(Algebra::V_add<idim+1,type0>,__v,__dH);
-                update.__update<idim,1>(Algebra::V_sub<idim+1,type0>,__v,__dH);
-                
-                Helper<idim+1>::update_w_x_w_dH(update,__v,__dH);
             }
         };
         
@@ -893,7 +852,6 @@ namespace MAPP_NS
         static void update_w_x(Update&,int&,type0 (*)[__dim__],VS*&...){}
         template<class... VS>
         static void update_wo_x(Update&,int&,VS*&...){}
-        static void update_w_x_w_dH(Update&,Vec<type0>*,type0 (*)[__dim__]){}
     };
 }
 #endif 

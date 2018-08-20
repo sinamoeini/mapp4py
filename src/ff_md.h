@@ -9,9 +9,13 @@ namespace MAPP_NS
     private:
         void reset();
     protected:
+#ifdef NEW_UPDATE
+#else
         class DynamicMD* dynamic;
+#endif
         class AtomsMD* atoms;
-        
+
+
         
         virtual void pre_xchng_energy(class GCMC*)=0;
         virtual type0 xchng_energy(class GCMC*)=0;

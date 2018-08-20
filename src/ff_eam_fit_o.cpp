@@ -143,9 +143,11 @@ void ForceFieldEAMFitO::force_calc()
         __vec_lcl[0]+=calc_F(ielem,rho[iatm]);
     }
     
-    
-    
+#ifdef NEW_UPDATE
+    update(rho_ptr);
+#else
     dynamic->update(rho_ptr);
+#endif
 
     for(iatm=0;iatm<natms_lcl;iatm++)
     {

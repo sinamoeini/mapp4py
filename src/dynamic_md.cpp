@@ -37,8 +37,10 @@ void DynamicMD::init()
     store_arch_vecs();
     create_dynamic_vecs();
     x0=new Vec<type0>(atoms,__dim__,"x0");
-
+#ifdef NEW_UPDATE
+#else
     ff->dynamic=this;
+#endif
     ff->init();
     ff->neighbor->init();
     atoms->max_cut=ff->max_cut+atoms->comm.skin;
@@ -46,6 +48,7 @@ void DynamicMD::init()
     xchng=new Exchange(atoms,nxchng_vecs_full);
 #ifdef NEW_UPDATE
     updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+    ff->updt=updt;
 #else
     updt=new OldUpdate(atoms,nupdt_vecs_full,nxchng_vecs_full);
 #endif

@@ -7,13 +7,24 @@
 #include "global.h"
 #include "comm.h"
 #include "atoms.h"
-
+#ifdef NEW_UPDATE
+#include "exchange.h"
+#endif
 namespace MAPP_NS
 {
     class ForceField
     {
     private:
     protected:
+#ifdef NEW_UPDATE
+        Update* updt;
+        template<class...VS>
+        void update(VS*&... __vs)
+        {
+            updt->update_wo_x(__vs...);
+        }
+#else
+#endif
         const size_t nelems;
         virtual void force_calc()=0;
         virtual void energy_calc()=0;

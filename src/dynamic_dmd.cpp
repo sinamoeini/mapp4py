@@ -42,8 +42,10 @@ void DynamicDMD::init()
     create_dynamic_vecs();
     x0=new Vec<type0>(atoms,__dim__,"x0");
     alpha0=new Vec<type0>(atoms,c_dim,"alpha0");
-
+#ifdef NEW_UPDATE
+#else
     ff->dynamic=this;
+#endif
     ff->init();
     ff->neighbor->init();
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
@@ -51,6 +53,7 @@ void DynamicDMD::init()
     xchng=new Exchange(atoms,nxchng_vecs_full);
 #ifdef NEW_UPDATE
     updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+    ff->updt=updt;
 #else
     updt=new OldUpdate(atoms,nupdt_vecs_full,nxchng_vecs_full);
 #endif
@@ -286,5 +289,12 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
 void DynamicDMD::neighboring()
 {
     ff->neighbor->create_list(true);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DynamicDMD::reset_max_cut()
+{
+    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
 }
 #endif

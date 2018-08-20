@@ -300,7 +300,11 @@ void ForceFieldEAMDMDSC::force_calc()
         ent_lcl+=calc_ent(cv_i);
     }
     
+#ifdef NEW_UPDATE
+    update(dE_ptr);
+#else
     dynamic->update(dE_ptr);
+#endif
     
     //sc_loop___();
     
@@ -526,7 +530,11 @@ void ForceFieldEAMDMDSC::energy_calc()
         ent_lcl+=calc_ent(cv_i);
     }
     
+#ifdef NEW_UPDATE
+    update(dE_ptr);
+#else
     dynamic->update(dE_ptr);
+#endif
     
     //sc_loop___();
 
@@ -752,7 +760,12 @@ void ForceFieldEAMDMDSC::sc_loop___()
         en_diff=fabs(curr_en-prev_en);
         //printf("%e %e\n",curr_en,prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
+        
     }
 #ifdef SC_DMD
     atoms->BB=tt;
@@ -983,7 +996,11 @@ void ForceFieldEAMDMDSC::sc_loop()
         en_diff=fabs(curr_en-prev_en);
         //printf("%e %e\n",curr_en,prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
 #ifdef SC_DMD
@@ -1246,7 +1263,11 @@ void ForceFieldEAMDMDSC::sc_loop__Z6_2nd()
         MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
         en_diff=fabs(curr_en-prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
     //printf("npairs %d\n",npairs);
@@ -1426,7 +1447,11 @@ void ForceFieldEAMDMDSC::sc_loop__()
         MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
         en_diff=fabs(curr_en-prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
     
@@ -1619,7 +1644,11 @@ void ForceFieldEAMDMDSC::sc_loop_cluster()
         MPI_Allreduce(__vec_lcl,&curr_en,1,Vec<type0>::MPI_T,MPI_SUM,world);
         en_diff=fabs(curr_en-prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
     type0 __q=0.0,__l=0.0,__n=0.0;

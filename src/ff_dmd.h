@@ -15,6 +15,10 @@ namespace MAPP_NS
         type0 __vec[__nvoigt__+2];
         type0 __vec_lcl[__nvoigt__+2];
         class DynamicDMD* dynamic;
+#ifdef NEW_UPDATE
+#else
+        class DynamicDMD* dynamic;
+#endif
         class AtomsDMD* atoms;
         
         virtual void force_calc_static()=0;

@@ -4,7 +4,6 @@
 #include "dynamic.h"
 #ifdef NEW_UPDATE
 #include "atoms_dmd.h"
-#include "ff_dmd.h"
 #endif
 
 namespace MAPP_NS
@@ -22,6 +21,7 @@ namespace MAPP_NS
         class AtomsDMD* atoms;
 #ifdef NEW_UPDATE
         void neighboring();
+        void reset_max_cut();
         template<bool,bool>
         bool __decide();
 #endif
@@ -52,7 +52,7 @@ namespace MAPP_NS
                 
                 atoms->x2s_lcl();
                 xchng->full_xchng();
-                atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
+                reset_max_cut();
                 updt->reset();
                 updt->list();
                 neighboring();
@@ -68,7 +68,7 @@ namespace MAPP_NS
                 
                 atoms->x2s_lcl();
                 xchng->full_xchng();
-                atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
+                reset_max_cut();
                 updt->reset();
                 updt->list();
                 neighboring();

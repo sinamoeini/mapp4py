@@ -308,9 +308,11 @@ void ForceFieldEAMDMDCLUSTER::force_calc()
         
         ent_lcl+=calc_ent(cv_i);
     }
-    
+#ifdef NEW_UPDATE
+    update(dE_ptr);
+#else
     dynamic->update(dE_ptr);
-    
+#endif
     ___sc_loop();
     __vec_lcl[0]+=vib_lcl;
     __vec_lcl[1+__nvoigt__]+=ent_lcl;
@@ -539,8 +541,11 @@ void ForceFieldEAMDMDCLUSTER::energy_calc()
         ent_lcl+=calc_ent(cv_i);
     }
     
+#ifdef NEW_UPDATE
+    update(dE_ptr);
+#else
     dynamic->update(dE_ptr);
-    
+#endif
     ___sc_loop();
     __vec_lcl[0]+=vib_lcl;
     __vec_lcl[1+__nvoigt__]+=ent_lcl;
@@ -781,11 +786,19 @@ void ForceFieldEAMDMDCLUSTER::sc_loop()
         
         en_diff=fabs(curr_en-prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
     
+#ifdef NEW_UPDATE
+    update(b_ptr);
+#else
     dynamic->update(b_ptr);
+#endif
     type0* theta=theta_ptr->begin();
     type0* d=d_ptr->begin();
     for(int i=0;i<natms_lcl+atoms->natms_ph;i++) theta[i]=c[2*i];
@@ -813,7 +826,11 @@ void ForceFieldEAMDMDCLUSTER::sc_loop()
     }
     
     MPI_Allreduce(&curr_fe_lcl,&curr_fe,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    dynamic->update(d_ptr);
+#ifdef NEW_UPDATE
+    update(b_ptr);
+#else
+    dynamic->update(b_ptr);
+#endif
     type0 prev_fe=curr_fe;
 
     
@@ -892,7 +909,11 @@ void ForceFieldEAMDMDCLUSTER::sc_loop()
             //printf("theta[%d] %e %e %e| %e %e\n",i,theta[i],d[i],b[i],curr_fe_lcl,0.5*(theta[i]*d[i]-b[i]));
         }
         
+#ifdef NEW_UPDATE
+        update(d_ptr);
+#else
         dynamic->update(d_ptr);
+#endif
         MPI_Allreduce(&curr_fe_lcl,&curr_fe,1,Vec<type0>::MPI_T,MPI_SUM,world);
         
         en_diff=fabs(curr_fe-prev_fe);
@@ -1149,7 +1170,11 @@ void ForceFieldEAMDMDCLUSTER::_sc_loop()
         
         en_diff=fabs(curr_en-prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
     
@@ -1320,7 +1345,11 @@ void ForceFieldEAMDMDCLUSTER::__sc_loop()
         en_diff=fabs(curr_en-prev_en);
         //printf("%e %e\n",curr_en,prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
 #ifdef SC_DMD
@@ -1557,7 +1586,11 @@ void ForceFieldEAMDMDCLUSTER::___sc_loop()
         en_diff=fabs(curr_en-prev_en);
         //printf("%e %e\n",curr_en,prev_en);
         prev_en=curr_en;
+#ifdef NEW_UPDATE
+        update(dE_ptr);
+#else
         dynamic->update(dE_ptr);
+#endif
     }
     
  #ifdef SC_DMD

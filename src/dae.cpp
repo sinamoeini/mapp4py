@@ -198,6 +198,19 @@ void DAE::min_error()
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
+#ifdef NEW_UPDATE
+        if(chng_box)
+            dynamic->update(x.A,x.vecs[0],x.vecs[1]);
+        else
+            dynamic->update(x.vecs[0],x.vecs[1]);
+#else
+        if(chng_box)
+            dynamic->update(x.vecs[0],x.A);
+        else
+            dynamic->update(x.vecs[0]);
+        dynamic->update(x.vecs[1]);
+#endif
+        
         ff->J_timer(x,Jx);
         
         if(chng_box)

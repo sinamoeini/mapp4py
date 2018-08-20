@@ -189,9 +189,12 @@ void ForceFieldEAM::force_calc()
         __vec_lcl[0]+=tmp0;
         dF[iatm]=tmp1;
     }
-    
-    dynamic->update(dF_ptr);
 
+#ifdef NEW_UPDATE
+    update(dF_ptr);
+#else
+    dynamic->update(dF_ptr);
+#endif
     
     istart=0;
     for(iatm=0;iatm<natms_lcl;iatm++)

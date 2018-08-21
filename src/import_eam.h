@@ -53,7 +53,7 @@ void ImportEAM::set_cuttoff(size_t nelems,type0 dr,size_t nr,type0(*** r_phi)[N0
         for(size_t j=0;j<i+1;j++)
         {
             size_t __nr=nr-1;
-            while((r_phi[i][j][__nr][0]==0.0 && rho[i][j][__nr][0]==0.0  && rho[j][i][__nr][0]==0.0) && __nr>=0)
+            while((r_phi[i][j][__nr][0]==0.0 && rho[i][j][__nr][0]==0.0  && rho[j][i][__nr][0]==0.0) && __nr>=1)
                 __nr--;
             r_c[i][j]=r_c[j][i]=static_cast<type0>(__nr)*dr;
         }

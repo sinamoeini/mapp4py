@@ -50,11 +50,13 @@ void DynamicDMD::init()
     ff->neighbor->init();
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
     
-    xchng=new Exchange(atoms,nxchng_vecs_full);
+    
 #ifdef NEW_UPDATE
+    xchng=new Exchange(atoms,nxchng_vecs_full);
     updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
     ff->updt=updt;
 #else
+    xchng=new OldExchange(atoms,nxchng_vecs_full);
     updt=new OldUpdate(atoms,nupdt_vecs_full,nxchng_vecs_full);
 #endif
     atoms->x2s_lcl();

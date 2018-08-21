@@ -18,7 +18,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-Exchange::Exchange(Atoms* atoms,int& nxchng_vecs_):
+OldExchange::OldExchange(Atoms* atoms,int& __nxchng_vecs):
 natms_lcl(atoms->natms_lcl),
 x(atoms->x),
 world(atoms->comm.world),
@@ -29,7 +29,7 @@ xchng_id(atoms->comm.xchng_id),
 
 vecs(atoms->dynamic_vecs),
 nvecs(atoms->ndynamic_vecs),
-nxchng_vecs(nxchng_vecs_)
+nxchng_vecs(__nxchng_vecs)
 {
     Algebra::V_eq<__dim__*2>(&(atoms->comm.neigh[0][0]), &(neigh[0][0]));
     snd_buff[0]=snd_buff[1]=NULL;
@@ -48,7 +48,7 @@ nxchng_vecs(nxchng_vecs_)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-Exchange::~Exchange()
+OldExchange::~OldExchange()
 {
     delete [] snd_buff[0];
     delete [] snd_buff[1];
@@ -57,7 +57,7 @@ Exchange::~Exchange()
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Exchange::load(int& iatm,int idir)
+inline void OldExchange::load(int& iatm,int idir)
 {
     if(snd_buff_cpcty[idir]<snd_buff_sz[idir]+tot_xchng_sz)
     {
@@ -77,7 +77,7 @@ inline void Exchange::load(int& iatm,int idir)
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline void Exchange::load(byte*& buff,int& idir)
+inline void OldExchange::load(byte*& buff,int& idir)
 {
     if(snd_buff_cpcty[idir]<snd_buff_sz[idir]+tot_xchng_sz)
     {
@@ -94,7 +94,7 @@ inline void Exchange::load(byte*& buff,int& idir)
 /*--------------------------------------------
  
  --------------------------------------------*/
-inline int Exchange::xchng_buff(int idim,int idir)
+inline int OldExchange::xchng_buff(int idim,int idir)
 {
     rcv_buff_sz=0;
     int max_snd_sz;
@@ -133,7 +133,7 @@ inline int Exchange::xchng_buff(int idim,int idir)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Exchange::full_xchng()
+void OldExchange::full_xchng()
 {
     for(int ivec=0;ivec<nxchng_vecs;ivec++)
         vecs[ivec]->resize(natms_lcl);
@@ -215,7 +215,7 @@ void Exchange::full_xchng()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void Exchange::full_xchng_all()
+void OldExchange::full_xchng_all()
 {
     if(nvecs==nxchng_vecs) return full_xchng();
     int __nxchng_vecs=nxchng_vecs;

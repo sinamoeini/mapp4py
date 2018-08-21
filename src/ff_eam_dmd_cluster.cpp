@@ -136,7 +136,7 @@ void ForceFieldEAMDMDCLUSTER::calc_pair(type0 r,type0* alpha_i,type0* alpha_j,ty
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMDCLUSTER::force_calc()
+void ForceFieldEAMDMDCLUSTER::__force_calc()
 {
     if(max_pairs<neighbor->no_pairs)
     {
@@ -377,7 +377,7 @@ void ForceFieldEAMDMDCLUSTER::force_calc()
 /*--------------------------------------------
  energy calculation
  --------------------------------------------*/
-void ForceFieldEAMDMDCLUSTER::energy_calc()
+void ForceFieldEAMDMDCLUSTER::__energy_calc()
 {
     if(max_pairs<neighbor->no_pairs)
     {
@@ -1602,12 +1602,12 @@ void ForceFieldEAMDMDCLUSTER::___sc_loop()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMDCLUSTER::prep(VecTens<type0,2>& f)
+void ForceFieldEAMDMDCLUSTER::__prepJ_n_res(Vec<type0>*,Vec<type0>*)
 {}
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldEAMDMDCLUSTER::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
+void ForceFieldEAMDMDCLUSTER::__J(Vec<type0>*,Vec<type0>*,Vec<type0>*,Vec<type0>*)
 {}
 /*--------------------------------------------
  init

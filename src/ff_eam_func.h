@@ -13,8 +13,8 @@ namespace MAPP_NS
         Vec<type0>* F_xchng_ptr;
         elem_type* elem_map;
     protected:
-        void force_calc();
-        void energy_calc();
+        void __force_calc();
+        void __energy_calc();
         void pre_xchng_energy(GCMC*);
         type0 xchng_energy(GCMC*);
         void post_xchng_energy(GCMC*);

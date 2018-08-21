@@ -81,7 +81,7 @@ void ForceFieldTersoff::post_xchng_energy(GCMC*)
  force and energy calculation
  --------------------------------------------*/
 #include "xmath.h"
-void ForceFieldTersoff::force_calc()
+void ForceFieldTersoff::__force_calc()
 {
     const type0* x=atoms->x->begin();
     //type0* fvec=f->begin();
@@ -219,7 +219,7 @@ const type0*& r_ij_hat,const type0*& r_ik_hat)
  minimization/linesearch methods that do not
  use derivatives of energy
  --------------------------------------------*/
-void ForceFieldTersoff::energy_calc()
+void ForceFieldTersoff::__energy_calc()
 {
 }
 /*--------------------------------------------

@@ -252,7 +252,7 @@ void ForceFieldEAMFit::sort_AR_ij(type0*& A_ij,type0*& R_ij,size_t sz)
 /*--------------------------------------------
  force and energy calculation
  --------------------------------------------*/
-void ForceFieldEAMFit::force_calc()
+void ForceFieldEAMFit::__force_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* fvec=f->begin();
@@ -354,7 +354,7 @@ void ForceFieldEAMFit::force_calc()
  minimization/linesearch methods that do not
  use derivatives of energy
  --------------------------------------------*/
-void ForceFieldEAMFit::energy_calc()
+void ForceFieldEAMFit::__energy_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* rho=rho_ptr->begin();

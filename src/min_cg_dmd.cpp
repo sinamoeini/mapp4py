@@ -50,7 +50,7 @@ void MinCGDMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
  --------------------------------------------*/
 void MinCGDMD::force_calc()
 {
-    ff->derivative_timer();
+    ff->derivative();
 
     if(chng_box)
     {
@@ -179,81 +179,6 @@ void MinCGDMD::run(int nsteps)
     if(dynamic_cast<LineSearchBackTrack*>(ls))
         return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
-
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::refine(int n,int nsteps)
-{
-    const int c_dim=atoms->c->dim;
-    
-    
-    x.~VecTens();
-    new (&x) VecTens<type0,2>(atoms,false,atoms->H,atoms->x,atoms->alpha);
-    f.~VecTens();
-    new (&f) VecTens<type0,2>(atoms,false,ff->f,ff->f_alpha);
-    h.~VecTens();
-    new (&h) VecTens<type0,2>(atoms,false,__dim__,c_dim);
-    
-    dynamic=new DynamicDMD(atoms,ff,false,{atoms->x_dof,atoms->alpha_dof,atoms->c_dof},{},{});
-    dynamic->init();
-#ifdef NEW_UPDATE
-#else
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-#endif
-    type0 norm,res;
-    
-    
-    
-    __GMRES__<VecTens<type0,2>> gmres(n,atoms,false,__dim__,c_dim);
-    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
-    {
-        ff->J(x,Jx);
-    };
-    
-    
-    res=ff->prep_timer(f);
-    for(int istep=0;istep<nsteps && res>1.0e-8;istep++)
-    {
-        printf("res %e\n",res);
-        gmres.solve(J,f,e_tol,norm,h);
-        
-        
-        //printf("-h.f %e\n",-(h*f));
-        
-        x+=h;
-        
-        type0 max_alpha_lcl=0.0;
-        const int n=atoms->natms_lcl*atoms->alpha->dim;
-        type0* alpha_vec=atoms->alpha->begin();
-        type0* c_vec=atoms->c->begin();
-        for(int i=0;i<n;i++)
-            if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-
-#ifdef NEW_UPDATE
-        dynamic->update<true,true>();
-#else
-        dynamic->update(uvecs,2);
-#endif
-        res=ff->prep_timer(f);
-        
-    }
-    
-#ifdef NEW_UPDATE
-#else
-    uvecs[1]=NULL;
-    uvecs[0]=NULL;
-#endif
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    
-    h.~VecTens();
-    f.~VecTens();
-    x.~VecTens();
-}
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -276,7 +201,7 @@ type0 MinCGDMD::F(type0 alpha)
 #else
     dynamic->update(uvecs,2);
 #endif
-    return ff->value_timer();
+    return ff->value();
 }
 /*--------------------------------------------
  inner product of f and h
@@ -516,12 +441,11 @@ void MinCGDMD::setup_tp_getset()
     getset_export(getset[7]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCGDMD::methods[]=EmptyPyMethodDef(3);
+PyMethodDef MinCGDMD::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
 void MinCGDMD::setup_tp_methods()
 {
     ml_run(methods[0]);
-    ml_refine(methods[1]);
 }
 /*--------------------------------------------
  
@@ -626,65 +550,6 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
         __self->min->run(f.val<1>());
         
         __self->min->fin();
-        
-        __self->min->xprt=NULL;
-        __self->min->ff=NULL;
-        __self->min->atoms=NULL;
-        
-        Py_RETURN_NONE;
-    });
-    
-    tp_methods.ml_doc=(char*)R"---(
-    run(atoms,max_nsteps)
-   
-    Execute minimization
-    
-    This method starts the energy minimization for a given atoms object and maximum number of steps.
-    
-    Parameters
-    ----------
-    atoms : mapp.md.atoms
-        System of interest
-    max_nsteps : int
-        Maximum number of steps to achieve energy minimization
-        
-    Returns
-    -------
-    None
-
-    )---";
-}
-
-
-
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::ml_refine(PyMethodDef& tp_methods)
-{
-    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods.ml_name="refine";
-    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
-    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
-    {
-        Object* __self=reinterpret_cast<Object*>(self);
-        FuncAPI<OP<AtomsDMD>,int,int> f("refine",{"atoms","m","max_nsteps"});
-        f.logics<1>()[0]=VLogics("gt",0);
-        f.logics<2>()[0]=VLogics("ge",0);
-        if(f(args,kwds)) return NULL;
-        
-        AtomsDMD* __atoms=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->atoms;
-        ForceFieldDMD* __ff=reinterpret_cast<AtomsDMD::Object*>(f.val<0>().ob)->ff;
-        ExportDMD* __xprt=__self->xprt==NULL ? NULL:__self->xprt->xprt;
-        
-        __self->min->atoms=__atoms;
-        __self->min->ff=__ff;
-        __self->min->xprt=__xprt;
-        
-        
-        
-        __self->min->refine(f.val<1>(),f.val<2>());
-        
         
         __self->min->xprt=NULL;
         __self->min->ff=NULL;

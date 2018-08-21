@@ -95,10 +95,10 @@ void ForceFieldMD::post_xchng_energy_timer(GCMC* gcmc)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldMD::force_calc_timer()
+void ForceFieldMD::force_calc()
 {
     reset();
-    force_calc();
+    __force_calc();
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
     Algebra::DyadicV_2_MSY(__vec+1,F_H);
@@ -118,10 +118,10 @@ void ForceFieldMD::force_calc_timer()
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 ForceFieldMD::value_timer()
+type0 ForceFieldMD::value()
 {
     __vec_lcl[0]=0.0;
-    energy_calc();
+    __energy_calc();
     type0 en;
     MPI_Allreduce(&__vec_lcl[0],&en,1,Vec<type0>::MPI_T,MPI_SUM,world);
     return en;
@@ -129,10 +129,10 @@ type0 ForceFieldMD::value_timer()
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0* ForceFieldMD::derivative_timer()
+type0* ForceFieldMD::derivative()
 {
     reset();
-    force_calc();
+    __force_calc();
     MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+1,Vec<type0>::MPI_T,MPI_SUM,world);
     Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
     Algebra::DyadicV_2_MSY(__vec+1,F_H);

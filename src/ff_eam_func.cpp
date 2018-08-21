@@ -44,7 +44,7 @@ ForceFieldEAMFunc::~ForceFieldEAMFunc()
 /*--------------------------------------------
  force and energy calculation
  --------------------------------------------*/
-void ForceFieldEAMFunc::force_calc()
+void ForceFieldEAMFunc::__force_calc()
 {
     const type0* x=atoms->x->begin();
     elem_type* evec=atoms->elem->begin();
@@ -119,7 +119,7 @@ void ForceFieldEAMFunc::force_calc()
  minimization/linesearch methods that do not
  use derivatives of energy
  --------------------------------------------*/
-void ForceFieldEAMFunc::energy_calc()
+void ForceFieldEAMFunc::__energy_calc()
 {
     const type0* x=atoms->x->begin();
     elem_type* evec=atoms->elem->begin();

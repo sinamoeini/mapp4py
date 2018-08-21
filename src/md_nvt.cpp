@@ -106,7 +106,7 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
 #else
     dynamic->update(atoms->x);
 #endif
-    ff->force_calc_timer();
+    ff->force_calc();
     
     f=ff->f->begin();
     x_d=atoms->x_d->begin();
@@ -176,7 +176,7 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
 #else
     dynamic->update(atoms->x);
 #endif
-    ff->force_calc_timer();
+    ff->force_calc();
     
     f=ff->f->begin();
     x_d=atoms->x_d->begin();
@@ -352,7 +352,7 @@ void MDNVT::run(int nsteps)
 {
     int step=atoms->step;
     
-    ff->force_calc_timer();
+    ff->force_calc();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);

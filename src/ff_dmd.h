@@ -21,14 +21,16 @@ namespace MAPP_NS
 #endif
         class AtomsDMD* atoms;
         
-        virtual void force_calc_static()=0;
-        virtual void c_d_calc()=0;
-        virtual void prep(VecTens<type0,2>&)=0;
-        virtual void J(Vec<type0>*,Vec<type0>*)=0;
         void pre_init();
         void post_fin();
         void impose_dof(type0*,type0*);
         type0 norm_sq(type0*,type0*);
+        
+        virtual void __force_calc_static()=0;
+        virtual void __c_d_calc()=0;
+        virtual void __J(Vec<type0>*,Vec<type0>*)=0;
+        virtual void __J(Vec<type0>*,Vec<type0>*,Vec<type0>*,Vec<type0>*)=0;
+        virtual void __prepJ_n_res(Vec<type0>*,Vec<type0>*)=0;
     public:
         bool dof_empty,dof_alpha_empty,dof_c_empty;
         
@@ -51,25 +53,24 @@ namespace MAPP_NS
                 
         void force_calc_timer();
         
-        type0 value_timer();
-        type0* derivative_timer();
+        type0 value();
+        type0* derivative();
         //void derivative_timer(type0(*&)[__dim__]);
         //void derivative_timer(bool,type0(*&)[__dim__]);
         
         
         virtual void init_static()=0;
         virtual void fin_static()=0;
-        void force_calc_static_timer();
-        void c_d_calc_timer();
-        type0 c_dd_norm_timer();
-        void J_timer(Vec<type0>*,Vec<type0>*);
+        void force_calc_static();
+        void c_d_calc();
+        type0 c_dd_norm();
+        void J(Vec<type0>*,Vec<type0>*);
         
         
         
-        virtual type0 prep_timer(VecTens<type0,2>&);
-        virtual type0 prep_timer(VecTens<type0,2>&,type0(&)[__dim__][__dim__]);
-        virtual void J_timer(VecTens<type0,2>&,VecTens<type0,2>&);
-        virtual void J(VecTens<type0,2>&,VecTens<type0,2>&)=0;
+        virtual type0 prepJ_n_res(Vec<type0>*,Vec<type0>*);
+        type0* J(Vec<type0>*,Vec<type0>*,Vec<type0>*,Vec<type0>*);
+        
         void calc_thermo();
         type0 err;
         type0 c_d_norm;

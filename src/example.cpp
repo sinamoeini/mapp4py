@@ -444,7 +444,7 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
         x0=atoms->x->begin()[0];
         atoms->x->begin()[0]+=disp;
         dynamic->update(atoms->x);
-        ff->derivative_timer();
+        ff->derivative();
         memcpy(v0.begin(),ff->f->begin(),atoms->natms_lcl*__dim__*sizeof(type0));
         atoms->x->begin()[0]=x0;
         
@@ -452,7 +452,7 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
         x0=atoms->x->begin()[1];
         atoms->x->begin()[1]+=disp;
         dynamic->update(atoms->x);
-        ff->derivative_timer();
+        ff->derivative();
         memcpy(v1.begin(),ff->f->begin(),atoms->natms_lcl*__dim__*sizeof(type0));
         atoms->x->begin()[1]=x0;
         
@@ -460,7 +460,7 @@ void ExamplePython::ml_phonon(PyMethodDef& tp_methods)
         x0=atoms->x->begin()[2];
         atoms->x->begin()[2]+=disp;
         dynamic->update(atoms->x);
-        ff->derivative_timer();
+        ff->derivative();
         memcpy(v2.begin(),ff->f->begin(),atoms->natms_lcl*__dim__*sizeof(type0));
         atoms->x->begin()[2]=x0;
         
@@ -567,7 +567,7 @@ void ExamplePython::ml_phonon_1d(PyMethodDef& tp_methods)
         x0=atoms->x->begin()[N*3];
         atoms->x->begin()[N*3]+=disp;
         dynamic->update(atoms->x);
-        ff->derivative_timer();
+        ff->derivative();
         atoms->x->begin()[1]=x0;
         
         for(int i=0;i<N+1;i++)
@@ -622,7 +622,7 @@ void ExamplePython::ml_phonon_1dd(PyMethodDef& tp_methods)
             x0=atoms->x->begin()[i*3];
             atoms->x->begin()[i*3]+=disp;
             dynamic->update(atoms->x);
-            ff->derivative_timer();
+            ff->derivative();
             atoms->x->begin()[i*3]=x0;
             
             for(int j=0;j<10;j++)
@@ -701,7 +701,7 @@ void ExamplePython::ml_alpha(PyMethodDef& tp_methods)
 #else
             dynamic->update(uvecs,2);
 #endif
-            en=ff->value_timer();
+            en=ff->value();
             if(!rank)
             {
                 

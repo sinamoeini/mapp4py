@@ -100,7 +100,7 @@ ForceFieldEAMFitO::~ForceFieldEAMFitO()
 /*--------------------------------------------
  force and energy calculation
  --------------------------------------------*/
-void ForceFieldEAMFitO::force_calc()
+void ForceFieldEAMFitO::__force_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* fvec=f->begin();
@@ -194,7 +194,7 @@ void ForceFieldEAMFitO::force_calc()
  minimization/linesearch methods that do not
  use derivatives of energy
  --------------------------------------------*/
-void ForceFieldEAMFitO::energy_calc()
+void ForceFieldEAMFitO::__energy_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* rho=rho_ptr->begin();

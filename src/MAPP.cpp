@@ -13,7 +13,6 @@
 #include "min_styles.h"
 #include "dae_styles.h"
 #include "export_styles.h"
-#include "newton_gmres.h"
 #ifdef POTFIT
 #include "potfit.h"
 #include "potfit_o.h"
@@ -335,9 +334,6 @@ PyObject* MAPP::DMD::init_module(void)
     
     if(DAEBDF::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"bdf",reinterpret_cast<PyObject*>(&DAEBDF::TypeObject));
-    
-    if(NewtonGMRES::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"newton_gmres",reinterpret_cast<PyObject*>(&NewtonGMRES::TypeObject));
     
     if(ExportDMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"export",reinterpret_cast<PyObject*>(&ExportDMD::TypeObject));

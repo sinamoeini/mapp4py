@@ -55,8 +55,8 @@ namespace MAPP_NS
         }
         
     protected:
-        void force_calc();
-        void energy_calc();
+        void __force_calc();
+        void __energy_calc();
         void pre_xchng_energy(GCMC*){};
         type0 xchng_energy(GCMC*){return 0.0;};
         void post_xchng_energy(GCMC*){};
@@ -298,7 +298,7 @@ void ForceFieldEAMPotFit<NELEMS>::fin()
  force and energy calculation
  --------------------------------------------*/
 template<size_t NELEMS>
-void ForceFieldEAMPotFit<NELEMS>::force_calc()
+void ForceFieldEAMPotFit<NELEMS>::__force_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* fvec=f->begin();
@@ -392,7 +392,7 @@ void ForceFieldEAMPotFit<NELEMS>::force_calc()
  energy calculation
  --------------------------------------------*/
 template<size_t NELEMS>
-void ForceFieldEAMPotFit<NELEMS>::energy_calc()
+void ForceFieldEAMPotFit<NELEMS>::__energy_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* rho=rho_vec_ptr->begin();

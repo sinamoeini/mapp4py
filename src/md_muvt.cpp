@@ -268,7 +268,7 @@ void MDMuVT::run(int nsteps)
     }
 #endif
     
-    ff->force_calc_timer();
+    ff->force_calc();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);
@@ -326,7 +326,7 @@ void MDMuVT::run(int nsteps)
             T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
         }
 
-        ff->force_calc_timer();
+        ff->force_calc();
         
 #ifdef GCMCDEBUG
         if((istep+1)%nevery==0)

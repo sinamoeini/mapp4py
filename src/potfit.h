@@ -336,7 +336,7 @@ template<class FF,size_t NELEMS>
 type0 PotFit<FF,NELEMS>::cost_en_S_f()
 {
     type0 err_lcl,err_lcl_lcl;
-    type0* curr_val=ff->derivative_timer();
+    type0* curr_val=ff->derivative();
     my_sa_err=curr_val[0]-target[0];
     type0* f_vec=ff->f->begin();
     err_lcl_lcl=0.0;
@@ -1674,7 +1674,7 @@ void PotFit<FF,NELEMS>::ml_mean_rho(PyMethodDef& tp_methods)
         sz=potfit->nconfigs;
         
         potfit->init();
-        potfit->ff->derivative_timer();
+        potfit->ff->derivative();
         type0* v=potfit->get_mean_rho(f.val<0>());
         potfit->fin();
         

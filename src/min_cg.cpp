@@ -32,7 +32,7 @@ type0 MinCG::calc_ndofs()
  --------------------------------------------*/
 void MinCG::force_calc()
 {
-    ff->derivative_timer();
+    ff->derivative();
     if(chng_box)
         Algebra::DoLT<__dim__>::func([this](int i,int j){f.A[i][j]=H_dof[i][j] ? f.A[i][j]:0.0;});
 }
@@ -227,7 +227,7 @@ type0 MinCG::F(type0 alpha)
 #else
     dynamic->update(atoms->x);
 #endif
-    return ff->value_timer();
+    return ff->value();
 }
 /*--------------------------------------------
  inner product of f and h

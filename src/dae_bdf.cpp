@@ -46,7 +46,7 @@ void DAEBDF::init_static()
     Memory::alloc(dy,(max_q+2)*ncs);
     z=dy+ncs;
     
-    ff->derivative_timer();
+    ff->derivative();
     ff->neighbor->init_static();
     ff->neighbor->create_2nd_list();
     ff->init_static();
@@ -114,7 +114,7 @@ void DAEBDF::run(type0 t_tot)
     int __max_q=1;
     type0 __max_dt=0.0,__min_dt=std::numeric_limits<type0>::infinity();
     
-    if(nreset) min_error();
+    if(nreset) chng_box ? min_error_true():min_error_false();
     type0 fe_ave_err,prev_fe_ave_err;
     fe_ave_err=prev_fe_ave_err=calc_err();
     
@@ -178,7 +178,7 @@ void DAEBDF::run(type0 t_tot)
         if(((istep+1)%nreset==0 && fe_ave_err/a_tol>1.0) || fe_ave_err >2.0*prev_fe_ave_err)
         {
             fin_static();
-            min_error();
+            chng_box ? min_error_true():min_error_false();
             fe_ave_err=calc_err();
             prev_fe_ave_err=fe_ave_err;
             init_static();
@@ -189,7 +189,7 @@ void DAEBDF::run(type0 t_tot)
         
         if(ntally && (istep+1)%ntally==0)
         {
-            ff->force_calc_static_timer();
+            ff->force_calc_static();
             thermo.print(step+istep+1);
         }
         
@@ -203,14 +203,14 @@ void DAEBDF::run(type0 t_tot)
     
     if(ntally && istep%ntally)
     {
-        ff->force_calc_static_timer();
+        ff->force_calc_static();
         thermo.print(step+istep);
     }
     
     if(nreset && istep%nreset)
     {
         fin_static();
-        min_error();
+        chng_box ? min_error_true():min_error_false();
         init_static();
         reset();
         nconst_q=nconst_dt=0;
@@ -584,7 +584,7 @@ void DAEBDF::reset()
     };
     
     // ddc^2
-    type0 norm=ff->c_dd_norm_timer()/a_tol_sqrt_nc_dof;
+    type0 norm=ff->c_dd_norm()/a_tol_sqrt_nc_dof;
     type0 max_dt_lcl=std::numeric_limits<type0>::infinity();
     type0* __z=z;
     for(int i=0;i<ncs;i++,__z+=max_q+1)

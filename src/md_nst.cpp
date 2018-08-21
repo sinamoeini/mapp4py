@@ -124,7 +124,7 @@ void MDNST::update_x_d__x__x_d(type0 xi)
 #else
     dynamic->update(atoms->x);
 #endif
-    ff->force_calc_timer();
+    ff->force_calc();
     
     
     f=ff->f->begin();
@@ -203,7 +203,7 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
 #else
     dynamic->update(atoms->x);
 #endif
-    ff->force_calc_timer();
+    ff->force_calc();
     
     
     f=ff->f->begin();
@@ -381,7 +381,7 @@ void MDNST::run(int nsteps)
 {
     int step=atoms->step;
     
-    ff->force_calc_timer();
+    ff->force_calc();
 
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;

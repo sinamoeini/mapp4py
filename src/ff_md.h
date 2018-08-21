@@ -39,10 +39,10 @@ namespace MAPP_NS
         virtual ~ForceFieldMD();
         
         
-        void force_calc_timer();
+        void force_calc();
 
-        type0 value_timer();
-        type0* derivative_timer();
+        type0 value();
+        type0* derivative();
         //void derivative_timer(type0(*&)[__dim__]);
         //void derivative_timer(bool,type0(*&)[__dim__]);
         

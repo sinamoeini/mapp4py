@@ -147,7 +147,7 @@ bool DAEImplicit::newton()
 {
     auto F_norm=[this]()->type0
     {
-        ff->c_d_calc_timer();
+        ff->c_d_calc();
         type0 F_norm_lcl=0.0;
         type0 beta_inv=1.0/beta;
         for(int i=0;i<ncs;i++)
@@ -162,7 +162,7 @@ bool DAEImplicit::newton()
     
     auto Jacobain_calc=[this](Vec<type0>* x,Vec<type0>* Jx)->void
     {
-        ff->J_timer(x,Jx);
+        ff->J(x,Jx);
         type0* __Jx=Jx->begin();
         type0* __x=x->begin();
         type0 beta_inv=1.0/beta;

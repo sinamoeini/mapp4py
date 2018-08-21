@@ -126,7 +126,7 @@ ForceFieldEAMDMD::~ForceFieldEAMDMD()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMD::force_calc()
+void ForceFieldEAMDMD::__force_calc()
 {
     if(max_pairs0<neighbor->no_pairs)
     {
@@ -366,7 +366,7 @@ void ForceFieldEAMDMD::force_calc()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
+void ForceFieldEAMDMD::__prepJ_n_res(Vec<type0>* fvec_ptr,Vec<type0>* f_alphavec_ptr)
 {
     
     if(max_pairs0<neighbor->no_pairs)
@@ -612,8 +612,8 @@ void ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
     
     const int natms_lcl=atoms->natms_lcl;
     dE=dE_ptr->begin();
-    type0* fvec=f.vecs[0]->begin();
-    type0* f_alphavec=f.vecs[1]->begin();
+    type0* fvec=fvec_ptr->begin();
+    type0* f_alphavec=f_alphavec_ptr->begin();
     for(int i=0;i<n;i++) f_alphavec[i]=0.0;
     for(int i=0;i<natms_lcl*__dim__;i++) fvec[i]=0.0;
     
@@ -669,7 +669,7 @@ void ForceFieldEAMDMD::prep(VecTens<type0,2>& f)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
+void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>* Adx_ptr,Vec<type0>* Adalpha_ptr)
 {
     type0* deltadE=E_ptr->begin();
     const int n=atoms->natms_lcl*c_dim;
@@ -686,12 +686,12 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
     int* neighbor_list_size=neighbor->neighbor_list_size;
     
     
-    type0* dx=Dx.vecs[0]->begin();
-    type0* dalpha=Dx.vecs[1]->begin();
+    type0* dx=dx_ptr->begin();
+    type0* dalpha=dalpha_ptr->begin();
     
     
-    type0* Adx=ADx.vecs[0]->begin();
-    type0* Adalpha=ADx.vecs[1]->begin();
+    type0* Adx=Adx_ptr->begin();
+    type0* Adalpha=Adalpha_ptr->begin();
     
     type0* f_coef=mu->begin();
     
@@ -842,7 +842,7 @@ void ForceFieldEAMDMD::J(VecTens<type0,2>& Dx,VecTens<type0,2>& ADx)
 /*--------------------------------------------
  energy calculation
  --------------------------------------------*/
-void ForceFieldEAMDMD::energy_calc()
+void ForceFieldEAMDMD::__energy_calc()
 {
     type0* rho=ddE_ptr->begin();
     const int n=atoms->natms_lcl*c_dim;
@@ -1318,7 +1318,7 @@ void ForceFieldEAMDMD::calc_mu()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAMDMD::force_calc_static()
+void ForceFieldEAMDMD::__force_calc_static()
 {
     int n=atoms->natms_lcl*c_dim;
     type0 const* E=E_ptr->begin();
@@ -1392,7 +1392,7 @@ void ForceFieldEAMDMD::force_calc_static()
  
  F=c-scalar*c_d(c)+a
  --------------------------------------------*/
-void ForceFieldEAMDMD::c_d_calc()
+void ForceFieldEAMDMD::__c_d_calc()
 {
     calc_mu();
     
@@ -1508,7 +1508,7 @@ void ForceFieldEAMDMD::c_d_calc()
  J_ij=d F_i/(d c_j)
  Ax_i=-J_ij*x_j;
  --------------------------------------------*/
-void ForceFieldEAMDMD::J(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
+void ForceFieldEAMDMD::__J(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
 {
 #ifdef NEW_UPDATE
     update(x_ptr);

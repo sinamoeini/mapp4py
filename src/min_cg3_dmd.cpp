@@ -74,7 +74,7 @@ void MinCG3DMD::pre_run_chk(AtomsDMD* atoms,ForceFieldDMD* ff)
  --------------------------------------------*/
 void MinCG3DMD::force_calc()
 {
-    ff->derivative_timer();
+    ff->derivative();
     const int c_dim=atoms->c_dim;
     int natms_lcl=atoms->natms_lcl;
     type0* c=atoms->c->begin();
@@ -266,7 +266,7 @@ type0 MinCG3DMD::F(type0 alpha)
 #else
     dynamic->update(uvecs,3);
 #endif
-    return ff->value_timer();
+    return ff->value();
 }
 /*--------------------------------------------
  inner product of f and h
@@ -1006,7 +1006,7 @@ template<> type0 MinDMDMan<true,true,true,true>::F(type0 alpha)
     atoms->update_max_alpha();
     atoms->update_H();
     dynamic->update<true,true>(atoms->c);
-    return ff->value_timer();
+    return ff->value();
 }
 template<> type0 MinDMDMan<false,true,true,true>::F(type0 alpha)
 {
@@ -1014,7 +1014,7 @@ template<> type0 MinDMDMan<false,true,true,true>::F(type0 alpha)
     aprop_c();
     atoms->update_max_alpha();
     dynamic->update<true,true>(atoms->c);
-    return ff->value_timer();
+    return ff->value();
 }
 template<> type0 MinDMDMan<true,false,true,true>::F(type0 alpha)
 {
@@ -1023,7 +1023,7 @@ template<> type0 MinDMDMan<true,false,true,true>::F(type0 alpha)
     atoms->update_max_alpha();
     atoms->update_H();
     dynamic->update<true,true>(atoms->c);
-    return ff->value_timer();
+    return ff->value();
 }
 template<> type0 MinDMDMan<false,false,true,true>::F(type0 alpha)
 {
@@ -1031,7 +1031,7 @@ template<> type0 MinDMDMan<false,false,true,true>::F(type0 alpha)
     aprop_c();
     atoms->update_max_alpha();
     dynamic->update<false,true>(atoms->c);
-    return ff->value_timer();
+    return ff->value();
 }
 #endif
 

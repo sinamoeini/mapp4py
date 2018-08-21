@@ -61,7 +61,7 @@ ForceFieldEAM::~ForceFieldEAM()
 /*--------------------------------------------
  force calculation
  --------------------------------------------*/
-void ForceFieldEAM::force_calc()
+void ForceFieldEAM::__force_calc()
 {
     if(max_pairs<neighbor->no_pairs)
     {
@@ -243,7 +243,7 @@ void ForceFieldEAM::force_calc()
 /*--------------------------------------------
  energy calculation
  --------------------------------------------*/
-void ForceFieldEAM::energy_calc()
+void ForceFieldEAM::__energy_calc()
 {
     type0* xvec=atoms->x->begin();
     type0* rho=rho_ptr->begin();

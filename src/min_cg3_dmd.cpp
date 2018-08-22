@@ -170,11 +170,11 @@ void MinCG3DMD::init()
         
     },{});
     dynamic->init();
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;
     uvecs[2]=atoms->c;
+#else
 #endif
     if(xprt)
     {
@@ -200,11 +200,11 @@ void MinCG3DMD::fin()
         xprt->fin();
         xprt->atoms=NULL;
     }
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
     uvecs[2]=NULL;
     uvecs[1]=NULL;
     uvecs[0]=NULL;
+#else
 #endif
     dynamic->fin();
     delete dynamic;
@@ -261,10 +261,10 @@ type0 MinCG3DMD::F(type0 alpha)
     
     if(chng_box)
         atoms->update_H();
-#ifdef NEW_UPDATE
-    dynamic->update<true,true>(atoms->c);
-#else
+#ifdef OLD_UPDATE
     dynamic->update(uvecs,3);
+#else
+    dynamic->update<true,true>(atoms->c);
 #endif
     return ff->value();
 }
@@ -293,10 +293,10 @@ type0 MinCG3DMD::dF(type0 alpha,type0& drev)
         atoms->update_H();
 
     
-#ifdef NEW_UPDATE
-    dynamic->update<true,true>(atoms->c);
-#else
+#ifdef OLD_UPDATE
     dynamic->update(uvecs,3);
+#else
+    dynamic->update<true,true>(atoms->c);
 #endif
     force_calc();
     
@@ -440,10 +440,10 @@ void MinCG3DMD::F_reset()
         if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
     MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     if(chng_box) atoms->update_H();
-#ifdef NEW_UPDATE
-    dynamic->update<true,true>(atoms->c);
-#else
+#ifdef OLD_UPDATE
     dynamic->update(uvecs,3);
+#else
+    dynamic->update<true,true>(atoms->c);
 #endif
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
@@ -998,7 +998,8 @@ template<> void MinDMDMan<false,true,true,true>::force_calc(){post_force_calc_c(
 template<> void MinDMDMan<true,false,true,true>::force_calc(){post_force_calc_c(); post_force_calc_box();}
 template<> void MinDMDMan<false,false,true,true>::force_calc(){post_force_calc_c();}
 
-#ifdef NEW_UPDATE
+#ifdef OLD_UPDATE
+#else
 template<> type0 MinDMDMan<true,true,true,true>::F(type0 alpha)
 {
     x=x0+alpha*x_d;

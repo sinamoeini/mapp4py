@@ -97,7 +97,8 @@ void DynamicDMD::store_x0()
     memcpy(x0->begin(),atoms->x->begin(),last_atm*__dim__*sizeof(type0));
     memcpy(alpha0->begin(),atoms->alpha->begin(),last_atm*c_dim*sizeof(type0));
 }
-#ifdef NEW_UPDATE
+#ifdef OLD_UPDATE
+#else
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -171,11 +172,13 @@ bool DynamicDMD::__decide<false,true>()
     if(succ) return true;
     return false;
 }
+#endif
 /*--------------------------------------------
  
  --------------------------------------------*/
-#else
+#ifdef OLD_UPDATE
 inline
+#else
 #endif
 bool DynamicDMD::decide()
 {
@@ -201,8 +204,7 @@ bool DynamicDMD::decide()
     if(succ) return true;
     return false;
 }
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
 /*--------------------------------------------
  update one vectors
  --------------------------------------------*/
@@ -274,8 +276,7 @@ void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
         store_x0();
     }
 }
-#endif
-#ifdef NEW_UPDATE
+#else
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -291,3 +292,4 @@ void DynamicDMD::reset_max_cut()
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
 }
 #endif
+

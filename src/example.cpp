@@ -682,11 +682,11 @@ void ExamplePython::ml_alpha(PyMethodDef& tp_methods)
         int rank=atoms->comm_rank;
 
         memcpy(alpha0.begin(),atoms->alpha->begin(),atoms->natms_lcl*atoms->c_dim*sizeof(type0));
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
         vec* uvecs[2];
         uvecs[0]=atoms->x;
         uvecs[1]=atoms->alpha;
+#else
 #endif
         
         
@@ -696,10 +696,10 @@ void ExamplePython::ml_alpha(PyMethodDef& tp_methods)
         for(int i=0;i<n+1;i++)
         {
             for(int j=0;j<atoms->natms_lcl;j++) atoms->alpha->begin()[j]=alpha0.begin()[j]+disp;
-#ifdef NEW_UPDATE
-            dynamic->update<true,true>();
+#ifdef OLD_UPDATE
+                dynamic->update(uvecs,2);
 #else
-            dynamic->update(uvecs,2);
+                dynamic->update<true,true>();
 #endif
             en=ff->value();
             if(!rank)
@@ -717,10 +717,10 @@ void ExamplePython::ml_alpha(PyMethodDef& tp_methods)
             printf("----------------------------------------------------\n");
         
         memcpy(atoms->alpha->begin(),alpha0.begin(),atoms->natms_lcl*atoms->c_dim*sizeof(type0));
-#ifdef NEW_UPDATE
-        dynamic->update<true,true>();
-#else
+#ifdef OLD_UPDATE
         dynamic->update(uvecs,2);
+#else
+        dynamic->update<true,true>();
 #endif
         
         dynamic->fin();

@@ -101,10 +101,10 @@ void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
         Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
     
     
-#ifdef NEW_UPDATE
-    dynamic->update<true>();
-#else
+#ifdef OLD_UPDATE
     dynamic->update(atoms->x);
+#else
+    dynamic->update<true>();
 #endif
     ff->force_calc();
     
@@ -171,10 +171,10 @@ void MDNVT::update_x_d__x__x_d_w_dof(type0 fac_x_d)
         Algebra::Do<__dim__>::func([&dx,&x,&dof](const int j){if(dof[j]) x[j]-=dx[j];});
     
     
-#ifdef NEW_UPDATE
-    dynamic->update<true>();
-#else
+#ifdef OLD_UPDATE
     dynamic->update(atoms->x);
+#else
+    dynamic->update<true>();
 #endif
     ff->force_calc();
     

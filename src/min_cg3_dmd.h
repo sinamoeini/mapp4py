@@ -303,9 +303,9 @@ namespace MAPP_NS
         class ExportDMD* xprt;
         void print_error();
 
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
         vec* uvecs[3];
+#else
 #endif
         void pre_run_chk(AtomsDMD*,ForceFieldDMD*);
         

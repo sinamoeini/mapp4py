@@ -198,17 +198,17 @@ void DAE::min_error()
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,chng_box,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
-#ifdef NEW_UPDATE
-        if(chng_box)
-            dynamic->update(x.A,x.vecs[0],x.vecs[1]);
-        else
-            dynamic->update(x.vecs[0],x.vecs[1]);
-#else
+#ifdef OLD_UPDATE
         if(chng_box)
             dynamic->update(x.vecs[0],x.A);
         else
             dynamic->update(x.vecs[0]);
         dynamic->update(x.vecs[1]);
+#else
+        if(chng_box)
+            dynamic->update(x.A,x.vecs[0],x.vecs[1]);
+        else
+            dynamic->update(x.vecs[0],x.vecs[1]);
 #endif
         
         type0* __vec=ff->J(x.vecs[0],x.vecs[1],Jx.vecs[0],Jx.vecs[1]);
@@ -307,10 +307,10 @@ void DAE::min_error()
         
         if(chng_box)
             atoms->update_H();
-#ifdef NEW_UPDATE
-        dynamic->update<true,true>();
-#else
+#ifdef OLD_UPDATE
         dynamic->update(uvecs,2);
+#else
+        dynamic->update<true,true>();
 #endif
         
         
@@ -363,11 +363,11 @@ void DAE::min_error_true()
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,true,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
-#ifdef NEW_UPDATE
-        dynamic->update(x.A,x.vecs[0],x.vecs[1]);
-#else
+#ifdef OLD_UPDATE
         dynamic->update(x.vecs[0],x.A);
         dynamic->update(x.vecs[1]);
+#else
+        dynamic->update(x.A,x.vecs[0],x.vecs[1]);
 #endif
         
         type0* __vec=ff->J(x.vecs[0],x.vecs[1],Jx.vecs[0],Jx.vecs[1]);
@@ -442,10 +442,10 @@ void DAE::min_error_true()
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
         atoms->update_H();
-#ifdef NEW_UPDATE
-        dynamic->update<true,true>();
-#else
+#ifdef OLD_UPDATE
         dynamic->update(uvecs,2);
+#else
+        dynamic->update<true,true>();
 #endif
         
         
@@ -493,11 +493,11 @@ void DAE::min_error_false()
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,false,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
-#ifdef NEW_UPDATE
-        dynamic->update(x.vecs[0],x.vecs[1]);
-#else
+#ifdef OLD_UPDATE
         dynamic->update(x.vecs[0]);
         dynamic->update(x.vecs[1]);
+#else
+        dynamic->update(x.vecs[0],x.vecs[1]);
 #endif
         
         ff->J(x.vecs[0],x.vecs[1],Jx.vecs[0],Jx.vecs[1]);
@@ -545,10 +545,10 @@ void DAE::min_error_false()
             if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
 
-#ifdef NEW_UPDATE
-        dynamic->update<true,true>();
-#else
+#ifdef OLD_UPDATE
         dynamic->update(uvecs,2);
+#else
+        dynamic->update<true,true>();
 #endif
         
         

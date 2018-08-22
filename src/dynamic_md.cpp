@@ -88,9 +88,9 @@ void DynamicMD::store_x0()
 /*--------------------------------------------
  
  --------------------------------------------*/
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
 inline
+#else
 #endif
 bool DynamicMD::decide()
 {
@@ -108,8 +108,7 @@ bool DynamicMD::decide()
     if(succ) return true;
     return false;
 }
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
 /*--------------------------------------------
  update one vectors
  --------------------------------------------*/
@@ -174,6 +173,7 @@ void DynamicMD::update(vec** updt_vecs,int nupdt_vecs)
         store_x0();
     }
 }
+#else
 #endif
 /*--------------------------------------------
  
@@ -193,7 +193,8 @@ void DynamicMD::fin_xchng()
     ff->neighbor->create_list(chng_box);
     store_x0();
 }
-#ifdef NEW_UPDATE
+#ifdef OLD_UPDATE
+#else
 /*--------------------------------------------
  
  --------------------------------------------*/

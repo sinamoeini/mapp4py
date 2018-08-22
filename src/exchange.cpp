@@ -1,5 +1,4 @@
-#ifdef NEW_UPDATE
-#else
+#ifdef OLD_UPDATE
 #include "atoms.h"
 #include "exchange.h"
 #include "comm.h"
@@ -889,4 +888,5 @@ inline void Update::LoadUnLoadUpdateSelfComm::xchng_buff
 {
     memcpy(__rcv_buff,__snd_buff,__rcv_buff_sz);
 }
+#else
 #endif

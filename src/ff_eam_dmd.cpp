@@ -302,11 +302,8 @@ void ForceFieldEAMDMD::__force_calc()
     }
     
     __vec_lcl[0]+=kbT*__vec_lcl[1+__nvoigt__];
-#ifdef NEW_UPDATE
     update(dE_ptr);
-#else
-    dynamic->update(dE_ptr);
-#endif
+
     type0* fvec=f->begin();
     type0* f_alphavec=f_alpha->begin();
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
@@ -563,11 +560,8 @@ void ForceFieldEAMDMD::__prepJ_n_res(Vec<type0>* fvec_ptr,Vec<type0>* f_alphavec
     }
     __vec_lcl[0]+=kbT*__vec_lcl[1+__nvoigt__];
     
-#ifdef NEW_UPDATE
     update(dE_ptr);
-#else
-    dynamic->update(dE_ptr);
-#endif
+
     
     type0* f_coef=mu->begin();
     if(c_dim!=1)
@@ -783,14 +777,8 @@ void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>*
             Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
     }
     
-    
-#ifdef NEW_UPDATE
     update(E_ptr);
-#else
-    dynamic->update(E_ptr);
-#endif
 
-    
     deltadE=E_ptr->begin();
     istart=0;
     
@@ -1216,11 +1204,8 @@ void ForceFieldEAMDMD::calc_mu()
         dE[i]=__dE;
     }
     
-#ifdef NEW_UPDATE
     update(dE_ptr);
-#else
-    dynamic->update(dE_ptr);
-#endif
+
     
     type0* fcoef=fcoef_ptr->begin();
     type0* falpha=f_alpha->begin();
@@ -1308,11 +1293,8 @@ void ForceFieldEAMDMD::calc_mu()
         
     }
 
-#ifdef NEW_UPDATE
     update(mu);
-#else
-    dynamic->update(mu);
-#endif
+
     
 }
 /*--------------------------------------------
@@ -1510,12 +1492,8 @@ void ForceFieldEAMDMD::__c_d_calc()
  --------------------------------------------*/
 void ForceFieldEAMDMD::__J(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
 {
-#ifdef NEW_UPDATE
     update(x_ptr);
-#else
-    dynamic->update(x_ptr);
-#endif
-    
+
     //external vecs
     type0* c=atoms->c->begin();
     
@@ -1546,11 +1524,8 @@ void ForceFieldEAMDMD::__J(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
         }
     }
 
-#ifdef NEW_UPDATE
     update(Ax_ptr);
-#else
-    dynamic->update(Ax_ptr);
-#endif
+
     
     type0 tmp0;
     istart=0;
@@ -1567,11 +1542,8 @@ void ForceFieldEAMDMD::__J(Vec<type0>* x_ptr,Vec<type0>* Ax_ptr)
         }
     }
     
-#ifdef NEW_UPDATE
     update(vec0);
-#else
-    dynamic->update(vec0);
-#endif
+
     
     //internal vecs
     type0* xv=vec1->begin();

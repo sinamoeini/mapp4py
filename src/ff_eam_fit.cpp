@@ -302,11 +302,8 @@ void ForceFieldEAMFit::__force_calc()
         printf("%.16lf %.16lf %.16lf %.16lf\n",xvec[3*i],xvec[3*i+1],xvec[3*i+2],rho[i]);
     }*/
 
-#ifdef NEW_UPDATE
     update(rho_ptr);
-#else
-    dynamic->update(rho_ptr);
-#endif
+
 
     //printf("------------------------------------------\n");
     for(iatm=0;iatm<natms_lcl;iatm++)
@@ -443,11 +440,8 @@ void ForceFieldEAMFit::prep4deriv()
         }
     }
     
-#ifdef NEW_UPDATE
     update(rho_ptr);
-#else
-    dynamic->update(rho_ptr);
-#endif
+
     
     type0* S=S_ptr->begin();
     for(int i=0;i<natms_lcl*__nvoigt__;i++)

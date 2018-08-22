@@ -302,11 +302,8 @@ void Atoms::reset_domain()
         if(!vecs[i]->is_empty())
             dynamic_vecs[ndynamic_vecs++]=vecs[i];
     
-#ifdef NEW_UPDATE
     Exchange xchng(this,ndynamic_vecs);
-#else
-    OldExchange xchng(this,ndynamic_vecs);
-#endif
+
     x2s_lcl();
     xchng.full_xchng();
     s2x_lcl();

@@ -9,10 +9,6 @@ namespace MAPP_NS
     private:
         void reset();
     protected:
-#ifdef NEW_UPDATE
-#else
-        class DynamicMD* dynamic;
-#endif
         class AtomsMD* atoms;
 
 

@@ -1,7 +1,6 @@
 #ifndef __MAPP__ff_dmd__
 #define __MAPP__ff_dmd__
 #include "ff.h"
-#include "min_vec.h"
 namespace MAPP_NS
 {
     template<class> class DMDVec;
@@ -14,11 +13,6 @@ namespace MAPP_NS
     protected:
         type0 __vec[__nvoigt__+2];
         type0 __vec_lcl[__nvoigt__+2];
-        class DynamicDMD* dynamic;
-#ifdef NEW_UPDATE
-#else
-        class DynamicDMD* dynamic;
-#endif
         class AtomsDMD* atoms;
         
         void pre_init();

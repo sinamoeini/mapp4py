@@ -38,14 +38,10 @@ namespace MAPP_NS
         
         
         MPI_Comm& world;
-        
-#ifdef NEW_UPDATE
-        Update* updt;
+
         Exchange* xchng;
-#else
-        OldUpdate* updt;
-        OldExchange* xchng;
-#endif
+        Update* updt;
+
         const type0 skin;
         
     public:

@@ -341,11 +341,8 @@ void ForceFieldEAMPotFit<NELEMS>::__force_calc()
     }
     
     
-#ifdef NEW_UPDATE
     update(rho_vec_ptr);
-#else
-    dynamic->update(rho_vec_ptr);
-#endif
+
     
 
     for(iatm=0;iatm<natms_lcl;iatm++)

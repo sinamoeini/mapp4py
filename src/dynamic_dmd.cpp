@@ -42,23 +42,14 @@ void DynamicDMD::init()
     create_dynamic_vecs();
     x0=new Vec<type0>(atoms,__dim__,"x0");
     alpha0=new Vec<type0>(atoms,c_dim,"alpha0");
-#ifdef NEW_UPDATE
-#else
-    ff->dynamic=this;
-#endif
     ff->init();
     ff->neighbor->init();
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
     
-    
-#ifdef NEW_UPDATE
     xchng=new Exchange(atoms,nxchng_vecs_full);
     updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+    
     ff->updt=updt;
-#else
-    xchng=new OldExchange(atoms,nxchng_vecs_full);
-    updt=new OldUpdate(atoms,nupdt_vecs_full,nxchng_vecs_full);
-#endif
     atoms->x2s_lcl();
     xchng->full_xchng();
     updt->reset();

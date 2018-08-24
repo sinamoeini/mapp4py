@@ -7,6 +7,8 @@ namespace MAPP_NS
     class ForceFieldDMD : public ForceField
     {
     friend class DynamicDMD;
+    template<bool,bool,bool>
+    friend class NewDynamicDMD;
     private:
         void reset();
         void reset_c_d();

@@ -450,6 +450,11 @@ namespace MAPP_NS
             delete [] snd_buff[1];
             delete [] rcv_buff;
         }
+        void full_xchng_static()
+        {
+            for(int ivec=0;ivec<nxchng_vecs;ivec++)
+                vecs[ivec]->resize(natms_lcl);
+        }
         void full_xchng()
         {
             for(int ivec=0;ivec<nxchng_vecs;ivec++)

@@ -1380,6 +1380,38 @@ namespace MAPP_NS
             }
         };
         
+        template<const int dim>
+        class __V_set
+        {
+        public:
+            template<typename T>
+            static inline void func(T* v,const T& val)
+            {
+                *v=val;
+                __V_set<dim-1>::func(v+1,val);
+            }
+        };
+        
+        template<>
+        class __V_set<1>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* v,const T& val)
+            {
+                *v=val;
+            }
+        };
+        
+        template<>
+        class __V_set<0>
+        {
+        public:
+            template<typename T>
+            static inline void func(T*,const T&)
+            {
+            }
+        };
         
         
         template<const int dim,const int strd>
@@ -2823,6 +2855,13 @@ namespace MAPP_NS
             template<typename FuncType>
             static inline void func(FuncType f){f(0);}
         };
+        template <>
+        class Do<0>
+        {
+        public:
+            template<typename FuncType>
+            static inline void func(FuncType){}
+        };
         
         
         template <const int i,const int j=i>
@@ -2978,6 +3017,12 @@ namespace MAPP_NS
         void zero(T* V)
         {
             __V_zero<dim>::func(V);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void set(T* V,const T& val)
+        {
+            __V_set<dim>::func(V,val);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

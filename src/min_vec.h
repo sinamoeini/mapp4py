@@ -28,8 +28,8 @@ namespace MAPP_NS
     private:
     protected:
     public:
-        Vec<T>* vecs[N];
-        bool vecs_alloc[N];
+        Vec<T>* vecs[N==0 ? 1:N];
+        bool vecs_alloc[N==0 ? 1:N];
         
         T (*A)[__dim__];
         bool A_alloc;
@@ -46,6 +46,11 @@ namespace MAPP_NS
         VecTens(const VecTens&);
         VecTens(VecTens&&);
         VecTens& operator=(VecTens&&);
+        
+        void assign(Atoms*,int)
+        {
+        
+        }
         
         template<class... Ts>
         void assign(Atoms* atoms,int i,Vec<T>* v,Ts... vs )
@@ -242,6 +247,15 @@ namespace MAPP_NS
             {
                 f(__v0[i],v1.get(0,i));
             }
+        }
+    };
+    template<const int N>
+    class VecOp<N,-1>
+    {
+    public:
+        template<class T,class E,class F>
+        static inline void func(VecTens<T,N>&,const VecTensExpr<T,N,E>&,F)
+        {
         }
     };
 }

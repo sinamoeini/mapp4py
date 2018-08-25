@@ -155,8 +155,8 @@ namespace MAPP_NS
 
 
         bool decide();
-        void store_x0_alpha0(){};
-        void alloc_x0_alpha0(){};
+        void store_x0_alpha0();
+        void alloc_x0_alpha0();
     protected:
         Vec<type0>* x0;
         Vec<type0>* alpha0;
@@ -242,6 +242,7 @@ namespace MAPP_NS
         }
         
     };
+
 }
 using namespace MAPP_NS;
 

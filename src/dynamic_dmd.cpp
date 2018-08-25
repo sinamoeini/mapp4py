@@ -223,6 +223,9 @@ void NewDynamicDMD<true,true,true>::alloc_x0_alpha0()
     x0=new Vec<type0>(atoms,__dim__,"x0");
     alpha0=new Vec<type0>(atoms,c_dim,"alpha0");
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 void NewDynamicDMD<true,true,true>::store_x0_alpha0()
 {
@@ -270,6 +273,9 @@ void NewDynamicDMD<false,true,true>::alloc_x0_alpha0()
     x0=new Vec<type0>(atoms,__dim__,"x0");
     alpha0=new Vec<type0>(atoms,c_dim,"alpha0");
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 void NewDynamicDMD<false,true,true>::store_x0_alpha0()
 {
@@ -316,6 +322,9 @@ void NewDynamicDMD<true,true,false>::alloc_x0_alpha0()
 {
     x0=new Vec<type0>(atoms,__dim__,"x0");
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 void NewDynamicDMD<true,true,false>::store_x0_alpha0()
 {
@@ -353,6 +362,9 @@ void NewDynamicDMD<false,true,false>::alloc_x0_alpha0()
 {
     x0=new Vec<type0>(atoms,__dim__,"x0");
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 void NewDynamicDMD<false,true,false>::store_x0_alpha0()
 {
@@ -390,6 +402,9 @@ void NewDynamicDMD<false,false,true>::alloc_x0_alpha0()
 {
     alpha0=new Vec<type0>(atoms,c_dim,"alpha0");
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 void NewDynamicDMD<false,false,true>::store_x0_alpha0()
 {
@@ -418,6 +433,25 @@ bool NewDynamicDMD<false,false,true>::decide()
     MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
     if(succ) return true;
     return false;
+}
+/*------------------------------------------------------------------------------------------------------------------------------------
+ _____       ___   _       _____   _____        _____       ___   _       _____   _____        _____       ___   _       _____   _____
+|  ___|     /   | | |     /  ___/ | ____|      |  ___|     /   | | |     /  ___/ | ____|      |  ___|     /   | | |     /  ___/ | ____|
+| |__      / /| | | |     | |___  | |__        | |__      / /| | | |     | |___  | |__        | |__      / /| | | |     | |___  | |__
+|  __|    / / | | | |     \___  \ |  __|       |  __|    / / | | | |     \___  \ |  __|       |  __|    / / | | | |     \___  \ |  __|
+| |      / /  | | | |___   ___| | | |___       | |      / /  | | | |___   ___| | | |___       | |      / /  | | | |___   ___| | | |___
+|_|     /_/   |_| |_____| /_____/ |_____|      |_|     /_/   |_| |_____| /_____/ |_____|      |_|     /_/   |_| |_____| /_____/ |_____|
+ ------------------------------------------------------------------------------------------------------------------------------------*/
+template<>
+void NewDynamicDMD<false,false,false>::alloc_x0_alpha0()
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicDMD<false,false,false>::store_x0_alpha0()
+{
 }
 
 #endif

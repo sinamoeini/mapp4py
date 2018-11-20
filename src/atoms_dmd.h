@@ -12,13 +12,15 @@ namespace MAPP_NS
     protected:
     public:
         type0 S_fe[__dim__][__dim__];
-        type0 fe;
+        type0 fe,gp,pe;
         type0 s;
-#ifdef SC_DMD
-        type0 BB;
-        type0 delta;
-#endif
+
+        type0 max_alpha;
+        const int c_dim;
         
+        const int N;
+        type0* xi;
+        type0* wi;
         DMDVec<type0>* alpha;
         DMDVec<type0>* c;
         DMDVec<bool>* c_dof;
@@ -32,13 +34,9 @@ namespace MAPP_NS
         AtomsDMD& operator=(const Atoms&);
         
         type0 vac_msd();
+        type0* ave_comp();
         type0 temp;
-        type0 max_alpha;
-        const int c_dim;
-        
-        const int N;
-        type0* xi;
-        type0* wi;
+
         
         typedef struct
         {
@@ -58,12 +56,13 @@ namespace MAPP_NS
         static void getset_temp(PyGetSetDef&);
         static void getset_S_fe(PyGetSetDef&);
         static void getset_fe(PyGetSetDef&);
+        static void getset_pe(PyGetSetDef&);
+        static void getset_gp(PyGetSetDef&);
         static void getset_s(PyGetSetDef&);
         static void getset_ave_mu(PyGetSetDef&);
-#ifdef SC_DMD
-        static void getset_BB(PyGetSetDef&);
-        static void getset_delta(PyGetSetDef&);
-#endif
+        static void getset_ave_comp(PyGetSetDef&);
+        static void getset_ext_mu(PyGetSetDef&);
+
         static PyMethodDef methods[];
         static void setup_tp_methods();
         
@@ -253,6 +252,7 @@ namespace MAPP_NS
         elem_type* elem_head;
         
         int* map_elem;
+        T* post_arr_data;
         T def_val;
         //bool iter();
         
@@ -268,8 +268,14 @@ VecPy<T,F>::VecPy(__vec,__func)
     elem=reinterpret_cast<AtomsDMD*>(__vec->atoms)->elem->begin();
     def_val=__vec->def_val;
     tmp_dim=__vec->ndim_dump();
-    if(tmp_dim) map_elem=new int[tmp_dim];
-        
+    
+    map_elem=NULL;
+    post_arr_data=NULL;
+    if(tmp_dim)
+    {
+        map_elem=new int[tmp_dim];
+        post_arr_data=new T[tmp_dim];
+    }
 }
 /*--------------------------------------------
  
@@ -277,6 +283,7 @@ VecPy<T,F>::VecPy(__vec,__func)
 template<typename T,class F>
 DMDVecPy<T,F>::~DMDVecPy()
 {
+    delete [] post_arr_data;
     delete [] map_elem;
 }
 /*--------------------------------------------
@@ -298,13 +305,14 @@ void DMDVecPy<T,F>::pre_iter()
     for(int i=0;i<tmp_dim;i++)
     {
         map_elem[i]=-1;
-        VecPy<T,F>::arr_data[i]=def_val;
+        VecPy<T,F>::arr_data[i]=post_arr_data[i]=def_val;
     }
     for(int i=0;i<VecPy<T,F>::dim;i++)
     {
         map_elem[elem_head[i]]=i;
         VecPy<T,F>::arr_data[elem_head[i]]=VecPy<T,F>::head[i];
     }
+    
     
 }
 /*--------------------------------------------
@@ -319,12 +327,16 @@ void DMDVecPy<T,F>::post_iter()
     for(int i=0;i<tmp_dim;i++)
     {
         if(map_elem[i]==-1 && VecPy<T,F>::arr_data[i]!=def_val)
+        {
             throw std::string("cannot change it");
+        }
+        if(map_elem[i]!=-1)
+            post_arr_data[map_elem[i]]=VecPy<T,F>::arr_data[i];
     }
     
     try
     {
-        VecPy<T,F>::func(VecPy<T,F>::head,VecPy<T,F>::arr_data);
+        VecPy<T,F>::func(VecPy<T,F>::head,post_arr_data);
     }
     catch(std::string& err_msg)
     {

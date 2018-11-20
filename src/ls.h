@@ -351,14 +351,11 @@ int LineSearchGoldenSection::min(Func* func,type0& nrgy
     
     func->ls_prep(dfa,h_norm,max_a);
     
-    
-    if(max_a==0.0 && dfa==0.0)
-        return LS_F_GRAD0;
-    
-    if(dfa>=0.0)
-        return LS_F_DOWNHILL;
-    
+    if(dfa==0.0) return LS_F_GRAD0;
     if(max_a==0.0) return LS_MIN_ALPHA;
+    if(dfa>=0.0) return LS_F_DOWNHILL;
+    
+    
     
     a=0.0;
     fa=nrgy;
@@ -542,13 +539,10 @@ int LineSearchBrent::min(Func* func,type0& nrgy
     cgold=0.38196601;
     
     func->ls_prep(dfa,h_norm,max_a);
-    if(max_a==0.0 && dfa==0.0)
-        return LS_F_GRAD0;
     
-    if(dfa>=0.0)
-        return LS_F_DOWNHILL;
-    
+    if(dfa==0.0) return LS_F_GRAD0;
     if(max_a==0.0) return LS_MIN_ALPHA;
+    if(dfa>=0.0) return LS_F_DOWNHILL;
     
     a=0.0;
     fa=nrgy;
@@ -726,13 +720,9 @@ int LineSearchBackTrack::min(Func* func,type0& nrgy
     
     func->ls_prep(dfa,h_norm,max_a);
 
-    if(max_a==0.0 && dfa==0.0)
-        return LS_F_GRAD0;
-    
-    if(dfa>=0.0)
-        return LS_F_DOWNHILL;
-    
+    if(dfa==0.0) return LS_F_GRAD0;
     if(max_a==0.0) return LS_MIN_ALPHA;
+    if(dfa>=0.0) return LS_F_DOWNHILL;
     
     if(init_flag==0)
     {

@@ -5,11 +5,7 @@
 #include "ff_eam_dmd.h"
 
 #include "ff_eam_func.h"
-#ifdef SC_DMD
-#include "ff_eam_dmd_sc.h"
-#include "ff_eam_dmd_scc.h"
-#include "ff_eam_dmd_cluster.h"
-#endif
+
 #ifdef POTFIT
 #include "ff_eam_fit.h"
 #include "ff_eam_fit_o.h"

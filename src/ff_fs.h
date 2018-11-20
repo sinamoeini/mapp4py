@@ -10,12 +10,17 @@ namespace MAPP_NS
         type0** t2;
         type0** cut_sq_phi;
         type0** cut_sq_rho;
+        type0** cut_phi;
+        type0** cut_rho;
         type0** k1;
         type0** k2;
         type0** k3;
         type0* A;
         
         Vec<type0>* rho_ptr;
+        Vec<type0>* F_ptr;
+        Vec<type0>* rho_xchng_ptr;
+        Vec<type0>* F_xchng_ptr;
     protected:
         void __force_calc();
         void __energy_calc();

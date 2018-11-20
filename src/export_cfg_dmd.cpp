@@ -83,8 +83,9 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
         int curr_elem,__curr_elem;
         int first_elem=-1;
         if(natms) first_elem=max_pos(c,nelems);
-        for(int i=0;i<nelems;i++)
-            if(i!=first_elem) fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        for(int i=0;i<nelems-1;i++)
+            fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        if(nelems-1!=first_elem) fprintf(fp,"%lf\n%s\n",masses[nelems-1],elem_names[nelems-1].c_str());
         curr_elem=-1;
         for(int i=0;i<natms;i++)
         {
@@ -138,8 +139,9 @@ void ExportCFGDMD::write_body(FILE* fp)
         int curr_elem,__curr_elem;
         int first_elem=-1;
         if(natms) first_elem=max_pos(c,nelems);
-        for(int i=0;i<nelems;i++)
-            if(i!=first_elem) fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        for(int i=0;i<nelems-1;i++)
+            fprintf(fp,"%lf\n%s\n",masses[i],elem_names[i].c_str());
+        if(nelems-1!=first_elem) fprintf(fp,"%lf\n%s\n",masses[nelems-1],elem_names[nelems-1].c_str());
         curr_elem=-1;
         
         for(int i=0;i<natms;i++)

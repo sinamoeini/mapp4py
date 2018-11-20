@@ -1084,7 +1084,7 @@ PotFitEmbAck::~PotFitEmbAck()
  --------------------------------------------*/
 type0 PotFitEmbAck::F(type0 rho)
 {
-    return vars[0]*sqrt(rho)+(vars[1]+vars[2]*rho*rho)*rho*rho;
+    return vars[0]*sqrt(rho)+(vars[1]+vars[2]*rho*rho)*rho*rho+vars[3]*rho;
 }
 /*--------------------------------------------
  
@@ -1092,7 +1092,7 @@ type0 PotFitEmbAck::F(type0 rho)
 type0 PotFitEmbAck::dF(type0 rho)
 {
     if(rho==0.0) return 0.0;
-    return 0.5*vars[0]/sqrt(rho)+2.0*rho*(vars[1]+2.0*vars[2]*rho*rho);
+    return 0.5*vars[0]/sqrt(rho)+2.0*rho*(vars[1]+2.0*vars[2]*rho*rho)+vars[3];
 }
 /*--------------------------------------------
  
@@ -1112,6 +1112,7 @@ void PotFitEmbAck::DF(type0 rho,type0* dv)
     dv[0]+=sqrt(rho);
     dv[1]+=rho*rho;
     dv[2]+=rho*rho*rho*rho;
+    dv[3]+=rho;
 }
 /*--------------------------------------------
  
@@ -1131,6 +1132,7 @@ void PotFitEmbAck::find_max_alpha(type0& max_alpha)
     max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),0.0,dvars_max[0],vars[0],hvars[0]));
     max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[1],vars[1],hvars[1]));
     max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[2],vars[2],hvars[2]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[3],vars[3],hvars[3]));
 }
 /*--------------------------------------------
  
@@ -1147,9 +1149,9 @@ bool PotFitEmbAck::validate()
 int PotFitEmbAck::set_init(PyObject* val,type0*& data,size_t& data_sz)
 {
     
-    VarAPI<type0 [3]> var("F");
+    VarAPI<type0 [4]> var("F");
     if(var.set(val)!=0) return -1;
-    nvars=3;
+    nvars=4;
     Memory::grow(data,data_sz,data_sz+nvars);
     memcpy(data+data_sz,var.val,nvars*sizeof(type0));
     data_sz+=nvars;
@@ -1160,7 +1162,7 @@ int PotFitEmbAck::set_init(PyObject* val,type0*& data,size_t& data_sz)
  --------------------------------------------*/
 int PotFitEmbAck::set(PyObject* val)
 {
-    VarAPI<type0[3]> var(name);
+    VarAPI<type0[4]> var(name);
     if(var.set(val)!=0) return -1;
     memcpy(vars,var.val,nvars*sizeof(type0));
     return 0;

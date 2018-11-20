@@ -159,7 +159,7 @@ namespace MAPP_NS
         return VecTensMulScl<T,N,E<T,N,Ts...>>(u, v);
     }
     
-#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE == 20171018 or __INTEL_COMPILER_BUILD_DATE == 20170811)
+#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE >= 20170811)
     template<class T,const int N,template<class,const int> class E>
     VecTensMulScl<T,N,E<T,N>> operator*(T const& u,const E<T,N>& v)
     {
@@ -173,7 +173,7 @@ namespace MAPP_NS
         return VecTensSum<T,N,E0<T,N,Ts0...>,E1<T,N,Ts1...>>(v0,v1);
     }
     
-#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE == 20171018 or __INTEL_COMPILER_BUILD_DATE == 20170811)
+#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE >= 20170811)
     template<class T,const int N,template<class,const int> class E0,template<class,const int> class E1>
     VecTensSum<T,N,E0<T,N>,E1<T,N>> operator+(const E0<T,N>& v0,const E1<T,N>& v1)
     {
@@ -199,7 +199,7 @@ namespace MAPP_NS
         return VecTensSub<T,N,E0<T,N,Ts0...>,E1<T,N,Ts1...>>(v0,v1);
     }
     
-#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE == 20171018 or __INTEL_COMPILER_BUILD_DATE == 20170811)
+#if defined(__ICC) and (__INTEL_COMPILER_BUILD_DATE >= 20170811)
     template<class T,const int N,template<class,const int> class E0,template<class,const int> class E1>
     VecTensSub<T,N,E0<T,N>,E1<T,N>> operator-(const E0<T,N>& v0,const E1<T,N>& v1)
     {

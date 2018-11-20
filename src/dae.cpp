@@ -4,6 +4,7 @@
 #include "dynamic_dmd.h"
 #include "ff_dmd.h"
 #include "memory.h"
+#include "min_vec.h"
 #ifdef MINCG_W_NEWTON
 #include "min_cg_dmd.h"
 #endif
@@ -14,6 +15,8 @@ using namespace MAPP_NS;
 DAE::DAE():
 max_nsteps(1000),
 a_tol(sqrt(std::numeric_limits<type0>::epsilon())),
+x_err_tol(sqrt(std::numeric_limits<type0>::epsilon())),
+alpha_err_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 min_dt(std::numeric_limits<type0>::epsilon()),
 c(NULL),
 c_d(NULL),
@@ -27,6 +30,7 @@ S{DESIG2(__dim__,__dim__,NAN)},
 max_nnewton_iters(5),
 max_ngmres_iters(5)
 {
+    Algebra::set<__dim__*__dim__>(S_err_tol[0],std::numeric_limits<type0>::epsilon());
 }
 /*--------------------------------------------
  
@@ -138,6 +142,9 @@ void DAE::init()
     {if(!std::isnan(S[i][j])) ++n;});
     sqrt_nx_nalpha_nS_dof=sqrt(static_cast<type0>(n));
     a_tol_sqrt_nx_nalpha_nS_dof=a_tol*sqrt_nx_nalpha_nS_dof;
+    x_err_tol_sqrt_ndof=x_err_tol*sqrt(static_cast<type0>(ff->nx_dof));
+    alpha_err_tol_sqrt_ndof=alpha_err_tol*sqrt(static_cast<type0>(ff->nalpha_dof));
+    
 }
 /*--------------------------------------------
  
@@ -163,13 +170,13 @@ void DAE::fin()
  --------------------------------------------*/
 type0 DAE::calc_err()
 {
-    if(!chng_box) return ff->err/sqrt_nx_nalpha_nS_dof;
+    if(!chng_box) return sqrt(ff->err_sq_x+ff->err_sq_alpha)/sqrt_nx_nalpha_nS_dof;
     type0 err_sq=0.0;
     type0 (&S_fe)[__dim__][__dim__]=atoms->S_fe;
     Algebra::DoLT<__dim__>::func([&S_fe,&err_sq,this](int i,int j)
-    {if(!std::isnan(S[i][j])) err_sq+=(S[i][j]-S_fe[i][j])*(S[i][j]-S_fe[i][j]);});
-    err_sq*=(atoms->vol)*(atoms->vol);
-    err_sq+=(ff->err)*(ff->err);
+    {if(!std::isnan(S[i][j])) err_sq+=Algebra::pow<2>(S[i][j]-S_fe[i][j]);});
+    err_sq*=atoms->vol*atoms->vol;
+    err_sq+=ff->err_sq_x+ff->err_sq_alpha;
     return sqrt(err_sq)/sqrt_nx_nalpha_nS_dof;
 }
 /*--------------------------------------------
@@ -258,7 +265,8 @@ void DAE::min_error_true()
         });
     };
     
-    res_sq=ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+    ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+    res_sq=ff->err_sq_x+ff->err_sq_alpha;
     type0 vol_neg=-atoms->vol;
     Algebra::DoLT<__dim__>::func([&res_sq,&f,this,&vol_neg](int i,int j)
      {
@@ -273,7 +281,6 @@ void DAE::min_error_true()
     
     
     res=sqrt(res_sq);
-    
     type0 r;
     int istep=0;
     for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_nS_dof>1.0;istep++)
@@ -326,7 +333,8 @@ void DAE::min_error_true()
 #endif
         
         
-        res_sq=ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+        ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+        res_sq=ff->err_sq_x+ff->err_sq_alpha;
         type0 vol_neg=-atoms->vol;
         
         Algebra::DoLT<__dim__>::func([&res_sq,&f,this,&vol_neg](int i,int j)
@@ -381,7 +389,8 @@ void DAE::min_error_false()
 
     };
     
-    res_sq=ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+    ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+    res_sq=ff->err_sq_x+ff->err_sq_alpha;
     res=sqrt(res_sq);
     
     type0 r;
@@ -429,7 +438,8 @@ void DAE::min_error_false()
 #endif
         
         
-        res_sq=ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+        ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
+        res_sq=ff->err_sq_x+ff->err_sq_alpha;
         res=sqrt(res_sq);
         
     }

@@ -350,7 +350,7 @@ namespace MAPP_NS
             return FuncElement<I-1,FuncTuple<Ts...>>::var_api(f.next_func);
         }
         
-        static var<type>& var(FuncTuple<T,Ts...>& f)
+        static ::var<type>& var(FuncTuple<T,Ts...>& f)
         {
             return FuncElement<I-1,FuncTuple<Ts...>>::var(f.next_func);
         }
@@ -371,7 +371,7 @@ namespace MAPP_NS
             return f.__var_api__;
         }
         
-        static var<type>& var(FuncTuple<T,Ts...>& f)
+        static ::var<type>& var(FuncTuple<T,Ts...>& f)
         {
             return f.__var_api__.__var__;
         }

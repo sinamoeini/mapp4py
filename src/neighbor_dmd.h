@@ -15,18 +15,7 @@ namespace MAPP_NS
     public:
         NeighborDMD(class AtomsDMD*,type0**&,type0*&);
         ~NeighborDMD();
-#ifdef SC_DMD
-        virtual void create_list(bool);
-        virtual void init();
-        virtual void fin();
-        
-        virtual void create_2nd_list();
-        virtual void init_static();
-        virtual void fin_static();
-        
-        virtual void mark_redndnt_ph(byte*);
-        virtual void rename_atoms(int*);
-#else
+
         void create_list(bool);
         void init();
         void fin();
@@ -37,7 +26,7 @@ namespace MAPP_NS
         
         virtual void mark_redndnt_ph(byte*);
         void rename_atoms(int*);
-#endif
+        
         int** neighbor_list_2nd;
         int* neighbor_list_size_2nd;
         int neighbor_list_size_size_2nd;

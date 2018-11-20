@@ -28,8 +28,6 @@ namespace MAPP_NS
         
         
         /*--------------------------------------------*/
-        type0 kbT,beta;
-        type0* c_0;
         type0* c_1;
         type0* zeta;
         
@@ -51,7 +49,10 @@ namespace MAPP_NS
         
         /*--------------------------------------------*/
         
-        type0 calc_ent(type0);
+        type0 calc_ent(type0 x)
+        {
+            return x==0.0 ? 0.0:x*log(x);
+        }
         void calc_mu();
         void set_temp();
 
@@ -68,6 +69,9 @@ namespace MAPP_NS
         void __force_calc_static();
         void __force_calc();
         void __energy_calc();
+        
+        void __force_calc_gp();
+        void __energy_calc_gp();
         void __c_d_calc();
         void __J(Vec<type0>*,Vec<type0>*);
         void __prepJ_n_res(Vec<type0>*,Vec<type0>*);

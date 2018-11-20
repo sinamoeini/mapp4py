@@ -12,6 +12,8 @@ wi(new type0[__N]),
 temp(NAN),
 S_fe{DESIG2(__dim__,__dim__,NAN)},
 fe(NAN),
+pe(NAN),
+gp(NAN),
 s(NAN)
 {
     XMath::quadrature_hg(N,xi,wi);
@@ -82,6 +84,47 @@ AtomsDMD& AtomsDMD::operator=(const Atoms& r)
     memcpy(x->begin(),r.x->begin(),natms_lcl*__dim__*sizeof(type0));
     memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
     return* this;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0* AtomsDMD::ave_comp()
+{
+    size_t nelems=elements.nelems;
+    type0* sum=NULL;
+    type0* sum_lcl=NULL;
+    type0* c_sum=NULL;
+    type0* c_sum_lcl=NULL;
+    if(nelems)
+    {
+        sum=new type0[nelems];
+        sum_lcl=new type0[nelems];
+        c_sum=new type0[nelems];
+        c_sum_lcl=new type0[nelems];
+    }
+    for(size_t i=0;i<nelems;i++) sum_lcl[i]=c_sum_lcl[i]=0.0;
+    
+    type0* __c=c->begin();
+    elem_type* __elem=elem->begin();
+    for(int i=0;i<natms_lcl;i++,__c+=c_dim,__elem+=c_dim)
+    {
+        for(int j=0;j<c_dim;j++)
+        {
+            if(__c[j]<0.0) continue;
+            c_sum_lcl[__elem[j]]+=__c[j];
+            ++sum_lcl[__elem[j]];
+        }
+    }
+    
+    MPI_Allreduce(c_sum_lcl,c_sum,static_cast<int>(nelems),Vec<type0>::MPI_T,MPI_SUM,world);
+    MPI_Allreduce(sum_lcl,sum,static_cast<int>(nelems),Vec<type0>::MPI_T,MPI_SUM,world);
+    
+    for(size_t i=0;i<nelems;i++) if(sum[i]!=0.0) c_sum[i]/=sum[i];
+    
+    delete [] c_sum_lcl;
+    delete [] sum_lcl;
+    delete [] sum;
+    return c_sum;
 }
 /*--------------------------------------------
  
@@ -294,57 +337,47 @@ int AtomsDMD::setup_tp()
 }
 /*--------------------------------------------*/
 
-#ifdef SC_DMD
-PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(20);
-#else
-PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(18);
-#endif
+
+PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(23);
 
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
 {
-    getset_step(getset[0]);
-    getset_hP(getset[1]);
-    getset_kB(getset[2]);
-    getset_H(getset[3]);
-    getset_B(getset[4]);
-    getset_vol(getset[5]);
-    getset_elems(getset[6]);
-    getset_skin(getset[7]);
-    getset_comm_rank(getset[8]);
-    getset_comm_size(getset[9]);
-    getset_comm_coords(getset[10]);
-    getset_comm_dims(getset[11]);
-    getset_temp(getset[12]);
-    getset_fe(getset[13]);
-    getset_S_fe(getset[14]);
-    getset_s(getset[15]);
-    getset_ave_mu(getset[16]);
-#ifdef SC_DMD
-    getset_BB(getset[17]);
-    getset_delta(getset[18]);
-#endif
+    getset_natms(getset[0]);
+    getset_step(getset[1]);
+    getset_hP(getset[2]);
+    getset_kB(getset[3]);
+    getset_H(getset[4]);
+    getset_B(getset[5]);
+    getset_vol(getset[6]);
+    getset_elems(getset[7]);
+    getset_skin(getset[8]);
+    getset_comm_rank(getset[9]);
+    getset_comm_size(getset[10]);
+    getset_comm_coords(getset[11]);
+    getset_comm_dims(getset[12]);
+    getset_temp(getset[13]);
+    getset_fe(getset[14]);
+    getset_pe(getset[15]);
+    getset_gp(getset[16]);
+    getset_S_fe(getset[17]);
+    getset_s(getset[18]);
+    getset_ave_mu(getset[19]);
+    getset_ext_mu(getset[20]);
+    getset_ave_comp(getset[21]);
+
 }
 /*--------------------------------------------*/
-
-#ifdef SC_DMD
-PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(17);
-#else
-PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(8);
-#endif
+PyMethodDef AtomsDMD::methods[]=EmptyPyMethodDef(9);
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_methods()
 {
     ml_do(methods[0]);
     ml_strain(methods[1]);
     ml_mul(methods[2]);
-    ImportCFGDMD::ml_import(methods[3]);
-    ForceFieldEAMDMD::ml_new(methods[4],methods[5],methods[6]);
-#ifdef SC_DMD
-    ForceFieldEAMDMDSC::ml_new(methods[7],methods[8],methods[9]);
-    ForceFieldEAMDMDSCC::ml_new(methods[10],methods[11],methods[12]);
-    ForceFieldEAMDMDCLUSTER::ml_new(methods[13],methods[14],methods[15]);
-#endif
+    ml_autogrid(methods[3]);
+    ImportCFGDMD::ml_import(methods[4]);
+    ForceFieldEAMDMD::ml_new(methods[5],methods[6],methods[7]);
 }
 /*--------------------------------------------
  
@@ -422,6 +455,48 @@ void AtomsDMD::getset_fe(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
+void AtomsDMD::getset_pe(PyGetSetDef& getset)
+{
+    getset.name=(char*)"pe";
+    getset.doc=(char*)R"---(
+    (double) free energy
+    
+    Free energy
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->pe);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::getset_gp(PyGetSetDef& getset)
+{
+    getset.name=(char*)"gp";
+    getset.doc=(char*)R"---(
+    (double) grand potential
+    
+    Grand potential
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->gp);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 void AtomsDMD::getset_s(PyGetSetDef& getset)
 {
     getset.name=(char*)"s";
@@ -484,21 +559,26 @@ void AtomsDMD::getset_ave_mu(PyGetSetDef& getset)
         return -1;
     };
 }
-#ifdef SC_DMD
 /*--------------------------------------------
  
  --------------------------------------------*/
-void AtomsDMD::getset_BB(PyGetSetDef& getset)
+void AtomsDMD::getset_ave_comp(PyGetSetDef& getset)
 {
-    getset.name=(char*)"BB";
+    getset.name=(char*)"ave_comp";
     getset.doc=(char*)R"---(
-    (double) free energy
+    (double[nelems]) average mu per element
     
-    BB
+    Average mu per element
     )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
+    getset.get=[](PyObject* __self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->BB);
+        
+        AtomsDMD* __atoms=reinterpret_cast<Object*>(__self)->atoms;
+        type0* ave_comp=__atoms->ave_comp();
+        size_t* szp=&(__atoms->elements.nelems);
+        PyObject* op=var<type0*>::build(ave_comp,&szp);
+        delete [] ave_comp;
+        return op;
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
@@ -509,33 +589,50 @@ void AtomsDMD::getset_BB(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void AtomsDMD::getset_delta(PyGetSetDef& getset)
+void AtomsDMD::getset_ext_mu(PyGetSetDef& getset)
 {
-    getset.name=(char*)"delta";
+    getset.name=(char*)"ext_mu";
     getset.doc=(char*)R"---(
-    (double) temperature
+    (double[nelems]) external mu per element
     
-    Temperature of the system
+    External mu per element
     )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
+    getset.get=[](PyObject* __self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->delta);
-    };
-    getset.set=[](PyObject* self,PyObject* val,void*)->int
-    {
-        Object* __self=reinterpret_cast<Object*>(self);
-        if(!__self->atoms)
+        ForceFieldDMD* __ff=reinterpret_cast<Object*>(__self)->ff;
+        
+        //check if force field is loaded
+        if(!__ff)
         {
-            PyErr_Format(PyExc_TypeError,"cannot set 'delta' prior to loading system configuration");
+            PyErr_SetString(PyExc_TypeError,"cannot get ext_mu without governing equations (force field)");
+            return NULL;
+        }
+        
+        AtomsDMD* __atoms=reinterpret_cast<Object*>(__self)->atoms;
+        size_t* szp=&(__atoms->elements.nelems);
+        return var<type0*>::build(__ff->ext_mu,&szp);
+    };
+    getset.set=[](PyObject* __self,PyObject* val,void*)->int
+    {
+        ForceFieldDMD* __ff=reinterpret_cast<Object*>(__self)->ff;
+        if(!__ff)
+        {
+            PyErr_SetString(PyExc_TypeError,"cannot set ext_mu without governing equations (force field)");
+            return -1;
+        }
+        VarAPI<type0*> var("ext_mu");
+        if(var.set(val)==-1) return -1;
+        
+        AtomsDMD* __atoms=reinterpret_cast<Object*>(__self)->atoms;
+        
+        if(var.__var__.size!=__atoms->elements.nelems)
+        {
+            PyErr_Format(PyExc_TypeError,"size mismatch");
             return -1;
         }
         
-        VarAPI<type0> temp("delta");
-        if(temp.set(val)==-1) return -1;
-        reinterpret_cast<Object*>(self)->atoms->delta=temp.val;
+        memcpy(__ff->ext_mu,var.val,sizeof(type0)*__atoms->elements.nelems);
         return 0;
     };
 }
-#endif
-
 

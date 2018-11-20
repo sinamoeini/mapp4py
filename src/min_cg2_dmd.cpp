@@ -1,4 +1,4 @@
-#include "min_cg3_dmd.h"
+#include "min_cg2_dmd.h"
 #include <stdlib.h>
 
 
@@ -9,22 +9,23 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCG3DMD::MinCG3DMD(type0 __e_tol,
-bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
+MinCG2DMD::MinCG2DMD(type0 __e_tol,
+bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,type0 __max_dbetamu,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
 atoms(NULL),
 ff(NULL),
 max_dalpha(__max_dalpha),
+max_dbetamu(__max_dbetamu),
 xprt(NULL),
 X_DOF(true),
 ALPHA_DOF(true),
-C_DOF(false)
+MU_DOF(false)
 {
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinCG3DMD::~MinCG3DMD()
+MinCG2DMD::~MinCG2DMD()
 {
     atoms=NULL;
     ff=NULL;
@@ -32,7 +33,7 @@ MinCG3DMD::~MinCG3DMD()
 /*--------------------------------------------
  pre run check it throw excepctions
  --------------------------------------------*/
-void MinCG3DMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
+void MinCG2DMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
 {
     //check if configuration is loaded
     if(!__atoms)
@@ -52,7 +53,7 @@ void MinCG3DMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
     if(std::isnan(__atoms->temp))
         throw std::string("temperature should be set prior to minimizatiom");
     
-    if(C_DOF)
+    if(MU_DOF || ALPHA_DOF)
     {
         int err;
         const int c_dim=__atoms->c_dim;
@@ -108,7 +109,7 @@ void MinCG3DMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinCG3DMD::init()
+void MinCG2DMD::init()
 {
     if(xprt)
     {
@@ -127,7 +128,7 @@ void MinCG3DMD::init()
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
-void MinCG3DMD::fin()
+void MinCG2DMD::fin()
 {
     if(xprt)
     {
@@ -138,103 +139,103 @@ void MinCG3DMD::fin()
 /*--------------------------------------------
  min
  --------------------------------------------*/
-void MinCG3DMD::run(int nsteps)
+void MinCG2DMD::run(int nsteps)
 {
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<false,false,false,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<false,false,false,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<false,false,false,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<false,false,true,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<false,false,true,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<false,false,true,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<false,false,true,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<false,false,true,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<false,false,true,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<false,true,false,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<false,true,false,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<false,true,false,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<false,true,false,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<false,true,false,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<false,true,false,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<false,true,true,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<false,true,true,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<false,true,true,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<false,true,true,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<false,true,true,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==false &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<false,true,true,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<true,false,false,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<true,false,false,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<true,false,false,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<true,false,false,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<true,false,false,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<true,false,false,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<true,false,true,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<true,false,true,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<true,false,true,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<true,false,true,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<true,false,true,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==false &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<true,false,true,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<true,true,false,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<true,true,false,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==false)
         return run<true,true,false,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<true,true,false,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<true,true,false,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==false &&  MU_DOF==true)
         return run<true,true,false,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<true,true,true,false>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<true,true,true,false>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==false)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==false)
         return run<true,true,true,false>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBrent*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<true,true,true,true>(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchGoldenSection*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<true,true,true,true>(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  C_DOF==true)
+    if(dynamic_cast<LineSearchBackTrack*>(ls)!=NULL && chng_box==true &&  X_DOF==true &&  ALPHA_DOF==true &&  MU_DOF==true)
         return run<true,true,true,true>(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinCG3DMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinCG2DMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -243,13 +244,14 @@ PyObject* MinCG3DMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinCG2DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
-    FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","max_dalpha","ls"});
-    f.noptionals=6;
+    FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","max_dalpha","max_dbetamu","ls"});
+    f.noptionals=7;
     f.logics<0>()[0]=VLogics("ge",0.0);
     f.logics<3>()[0]=VLogics("gt",0.0);
     f.logics<4>()[0]=VLogics("gt",0.0);
+    f.logics<5>()[0]=VLogics("gt",0.0);
     
     //set the defualts
     f.val<0>()=sqrt(std::numeric_limits<type0>::epsilon());
@@ -263,7 +265,7 @@ int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     LineSearchBackTrack::__init__(__ls,empty_tuple,empty_dict);
     Py_DECREF(empty_dict);
     Py_DECREF(empty_tuple);
-    f.val<5>().ob=__ls;
+    f.val<6>().ob=__ls;
     
     
     if(f(args,kwds)==-1) return -1;
@@ -271,9 +273,9 @@ int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     
     Object* __self=reinterpret_cast<Object*>(self);
-    Py_INCREF(f.val<5>().ob);
-    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
-    __self->min=new MinCG3DMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
+    Py_INCREF(f.val<6>().ob);
+    __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<6>().ob);
+    __self->min=new MinCG2DMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),f.val<5>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;
@@ -281,7 +283,7 @@ int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinCG3DMD::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinCG2DMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -294,7 +296,7 @@ PyObject* MinCG3DMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::__dealloc__(PyObject* self)
+void MinCG2DMD::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -306,13 +308,13 @@ void MinCG3DMD::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinCG3DMD::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinCG2DMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int MinCG3DMD::setup_tp()
+int MinCG2DMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.min_cg3";
+    TypeObject.tp_name="mapp.dmd.min_cg2";
     TypeObject.tp_doc=R"---(
-    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp.dmd.ls_bt())
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,max_dbetamu=0.1,ls=mapp.dmd.ls_bt())
     
     CG minimization algorithm
         
@@ -328,6 +330,8 @@ int MinCG3DMD::setup_tp()
        Maximum displacement of any atom in one step of minimization
     max_dalpha : double
        Maximum change in alpha component of any atom in one step of minimization
+    max_dbetamu : double
+       Maximum change in betamu component of any atom in one step of minimization
     ls : mapp.ls
        Line search method
 
@@ -356,32 +360,33 @@ int MinCG3DMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCG3DMD::getset[]=EmptyPyGetSetDef(11);
+PyGetSetDef MinCG2DMD::getset[]=EmptyPyGetSetDef(12);
 /*--------------------------------------------*/
-void MinCG3DMD::setup_tp_getset()
+void MinCG2DMD::setup_tp_getset()
 {
     getset_e_tol(getset[0]);
     getset_H_dof(getset[1]);
     getset_max_dx(getset[2]);
     getset_max_dalpha(getset[3]);
-    getset_ls(getset[4]);
-    getset_ntally(getset[5]);
-    getset_export(getset[6]);
-    getset_x_dof(getset[7]);
-    getset_alpha_dof(getset[8]);
-    getset_c_dof(getset[9]);
+    getset_max_dbetamu(getset[4]);
+    getset_ls(getset[5]);
+    getset_ntally(getset[6]);
+    getset_export(getset[7]);
+    getset_x_dof(getset[8]);
+    getset_alpha_dof(getset[9]);
+    getset_mu_dof(getset[10]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCG3DMD::methods[]=EmptyPyMethodDef(2);
+PyMethodDef MinCG2DMD::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
-void MinCG3DMD::setup_tp_methods()
+void MinCG2DMD::setup_tp_methods()
 {
     ml_run(methods[0]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_max_dalpha(PyGetSetDef& getset)
+void MinCG2DMD::getset_max_dalpha(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dalpha";
     getset.doc=(char*)R"---(
@@ -391,7 +396,7 @@ void MinCG3DMD::getset_max_dalpha(PyGetSetDef& getset)
     )---";
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dx);
+        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dalpha);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
@@ -406,7 +411,32 @@ void MinCG3DMD::getset_max_dalpha(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_export(PyGetSetDef& getset)
+void MinCG2DMD::getset_max_dbetamu(PyGetSetDef& getset)
+{
+    getset.name=(char*)"max_dbetamu";
+    getset.doc=(char*)R"---(
+    (double) mximum betamu change
+    
+    Maximum change in betamu component of any atom in one step of minimization
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<type0>::build(reinterpret_cast<Object*>(self)->min->max_dbetamu);
+    };
+    getset.set=[](PyObject* self,PyObject* op,void*)->int
+    {
+        VarAPI<type0> max_dbetamu("max_dbetamu");
+        max_dbetamu.logics[0]=VLogics("gt",0.0);
+        int ichk=max_dbetamu.set(op);
+        if(ichk==-1) return -1;
+        reinterpret_cast<Object*>(self)->min->max_dbetamu=max_dbetamu.val;
+        return 0;
+    };
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCG2DMD::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
@@ -435,7 +465,7 @@ void MinCG3DMD::getset_export(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_x_dof(PyGetSetDef& getset)
+void MinCG2DMD::getset_x_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"x_dof";
     getset.doc=(char*)R"---(
@@ -458,7 +488,7 @@ void MinCG3DMD::getset_x_dof(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_alpha_dof(PyGetSetDef& getset)
+void MinCG2DMD::getset_alpha_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"alpha_dof";
     getset.doc=(char*)R"---(
@@ -481,9 +511,9 @@ void MinCG3DMD::getset_alpha_dof(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_c_dof(PyGetSetDef& getset)
+void MinCG2DMD::getset_mu_dof(PyGetSetDef& getset)
 {
-    getset.name=(char*)"c_dof";
+    getset.name=(char*)"mu_dof";
     getset.doc=(char*)R"---(
     (bool) if set true c of atoms will considered as degrees of freedom
         
@@ -491,20 +521,20 @@ void MinCG3DMD::getset_c_dof(PyGetSetDef& getset)
         )---";
         getset.get=[](PyObject* self,void*)->PyObject*
     {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->min->C_DOF);
+        return var<bool>::build(reinterpret_cast<Object*>(self)->min->MU_DOF);
     };
     getset.set=[](PyObject* self,PyObject* op,void*)->int
     {
         VarAPI<bool> c_dof("c_dof");
         if(c_dof.set(op)==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->C_DOF=c_dof.val;
+        reinterpret_cast<Object*>(self)->min->MU_DOF=c_dof.val;
         return 0;
     };
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::ml_run(PyMethodDef& tp_methods)
+void MinCG2DMD::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";

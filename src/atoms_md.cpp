@@ -254,24 +254,25 @@ int AtomsMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef AtomsMD::getset[]=EmptyPyGetSetDef(15);
+PyGetSetDef AtomsMD::getset[]=EmptyPyGetSetDef(16);
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_getset()
 {
-    getset_step(getset[0]);
-    getset_hP(getset[1]);
-    getset_kB(getset[2]);
-    getset_H(getset[3]);
-    getset_B(getset[4]);
-    getset_vol(getset[5]);
-    getset_elems(getset[6]);
-    getset_skin(getset[7]);
-    getset_comm_rank(getset[8]);
-    getset_comm_size(getset[9]);
-    getset_comm_coords(getset[10]);
-    getset_comm_dims(getset[11]);
-    getset_pe(getset[12]);
-    getset_S_pe(getset[13]);
+    getset_natms(getset[0]);
+    getset_step(getset[1]);
+    getset_hP(getset[2]);
+    getset_kB(getset[3]);
+    getset_H(getset[4]);
+    getset_B(getset[5]);
+    getset_vol(getset[6]);
+    getset_elems(getset[7]);
+    getset_skin(getset[8]);
+    getset_comm_rank(getset[9]);
+    getset_comm_size(getset[10]);
+    getset_comm_coords(getset[11]);
+    getset_comm_dims(getset[12]);
+    getset_pe(getset[13]);
+    getset_S_pe(getset[14]);
 }
 /*--------------------------------------------
  
@@ -317,27 +318,28 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
 }
 /*--------------------------------------------*/
 #ifdef POTFIT
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(16);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(17);
 #else
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(13);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(14);
 #endif
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {
     ml_do(methods[0]);
     ml_mul(methods[1]);
-    ml_strain(methods[2]);
-    ml_create_temp(methods[3]);
-    ml_add_elem(methods[4]);
-    ForceFieldLJ::ml_new(methods[5]);
-    ForceFieldEAM::ml_new(methods[6],methods[7],methods[8]);
-    ForceFieldFS::ml_new(methods[9]);
-    ForceFieldEAMFunc::ml_new(methods[10]);
-    ImportCFGMD::ml_import(methods[11]);
+    ml_autogrid(methods[2]);
+    ml_strain(methods[3]);
+    ml_create_temp(methods[4]);
+    ml_add_elem(methods[5]);
+    ForceFieldLJ::ml_new(methods[6]);
+    ForceFieldEAM::ml_new(methods[7],methods[8],methods[9]);
+    ForceFieldFS::ml_new(methods[10]);
+    ForceFieldEAMFunc::ml_new(methods[11]);
+    ImportCFGMD::ml_import(methods[12]);
 #ifdef POTFIT
-    ForceFieldEAMFit::ml_new(methods[12]);
-    ForceFieldEAMFitO::ml_new(methods[13]);
-    ForceFieldEAMPotFitAckOgata::ml_new(methods[14]);
+    ForceFieldEAMFit::ml_new(methods[13]);
+    ForceFieldEAMFitO::ml_new(methods[14]);
+    ForceFieldEAMPotFitAckOgata::ml_new(methods[15]);
 #endif
 }
 /*--------------------------------------------

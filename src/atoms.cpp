@@ -314,6 +314,15 @@ void Atoms::reset_domain()
     ndynamic_vecs=0;
     
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool Atoms::xchng_id(unsigned long& __xchng_id)
+{
+    if(__xchng_id==comm.xchng_id) return true;
+    __xchng_id=comm.xchng_id;
+    return false;
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
@@ -385,22 +394,23 @@ int Atoms::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef Atoms::getset[]=EmptyPyGetSetDef(13);
+PyGetSetDef Atoms::getset[]=EmptyPyGetSetDef(14);
 /*--------------------------------------------*/
 void Atoms::setup_tp_getset()
 {
-    getset_step(getset[0]);
-    getset_hP(getset[1]);
-    getset_kB(getset[2]);
-    getset_H(getset[3]);
-    getset_B(getset[4]);
-    getset_vol(getset[5]);
-    getset_elems(getset[6]);
-    getset_skin(getset[7]);
-    getset_comm_rank(getset[8]);
-    getset_comm_size(getset[9]);
-    getset_comm_coords(getset[10]);
-    getset_comm_dims(getset[11]);
+    getset_natms(getset[0]);
+    getset_step(getset[1]);
+    getset_hP(getset[2]);
+    getset_kB(getset[3]);
+    getset_H(getset[4]);
+    getset_B(getset[5]);
+    getset_vol(getset[6]);
+    getset_elems(getset[7]);
+    getset_skin(getset[8]);
+    getset_comm_rank(getset[9]);
+    getset_comm_size(getset[10]);
+    getset_comm_coords(getset[11]);
+    getset_comm_dims(getset[12]);
 }
 /*--------------------------------------------*/
 PyMethodDef Atoms::methods[]=EmptyPyMethodDef(2);
@@ -408,6 +418,27 @@ PyMethodDef Atoms::methods[]=EmptyPyMethodDef(2);
 void Atoms::setup_tp_methods()
 {
     ml_strain(methods[0]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Atoms::getset_natms(PyGetSetDef& getset)
+{
+    getset.name=(char*)"natms";
+    getset.doc=(char*)R"---(
+    (int) number of atoms 
+    
+    Number of atoms/sites present in the system
+    )---";
+    getset.get=[](PyObject* self,void*)->PyObject*
+    {
+        return var<int>::build(reinterpret_cast<Object*>(self)->atoms->natms);
+    };
+    getset.set=[](PyObject* self,PyObject* val,void*)->int
+    {
+        PyErr_SetString(PyExc_TypeError,"readonly attribute");
+        return -1;
+    };
 }
 /*--------------------------------------------
  
@@ -937,6 +968,35 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
     ----------
     N : int[dim]
        Number of replications in all dimensions, here dim is the dimension of simulation
+    
+    Returns
+    -------
+    None
+   
+    )---";
+}
+/*--------------------------------------------
+ python constructor
+ --------------------------------------------*/
+void Atoms::ml_autogrid(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="autogrid";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<> f("autogrid");
+        reinterpret_cast<Atoms::Object*>(self)->atoms->comm.grid(reinterpret_cast<Atoms::Object*>(self)->atoms->H);
+        Py_RETURN_NONE;
+    });
+    
+    tp_methods.ml_doc=R"---(
+    autogrid()
+    
+    Autogrids the simualtion box
+    
+    Parameters
+    ----------
     
     Returns
     -------

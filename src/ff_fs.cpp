@@ -4,6 +4,7 @@
 #include "elements.h"
 #include "memory.h"
 #include "dynamic_md.h"
+#include "gcmc.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  Finnis-Sinclair (FS) potential
@@ -27,9 +28,13 @@ t2(__t2),
 k1(__k1),
 k2(__k2),
 k3(__k3),
-cut_sq_phi(r_c_phi),
-cut_sq_rho(r_c_rho)
+cut_phi(r_c_phi),
+cut_rho(r_c_rho)
 {
+    gcmc_n_cutoff=2;
+    gcmc_n_vars=2;
+    gcmc_tag_enabled=true;
+    
     __A=NULL;
     __t1=NULL;
     __t2=NULL;
@@ -39,15 +44,19 @@ cut_sq_rho(r_c_rho)
     r_c_phi=NULL;
     r_c_rho=NULL;
     
+    Memory::alloc(cut_sq_phi,nelems,nelems);
+    Memory::alloc(cut_sq_rho,nelems,nelems);
     type0 tmp;
     for(size_t i=0;i<nelems;i++)
         for(size_t j=0;j<i+1;j++)
         {
-            cut[i][j]=cut[j][i]=MAX(cut_sq_phi[i][j],cut_sq_rho[i][j]);
+            cut[i][j]=cut[j][i]=MAX(cut_phi[i][j],cut_rho[i][j]);
             cut_sq[i][j]=cut_sq[j][i]=cut[i][j]*cut[i][j];
-            tmp=cut_sq_phi[i][j];
+            tmp=cut_phi[i][j];
+            cut_phi[j][i]=tmp;
             cut_sq_phi[i][j]=cut_sq_phi[j][i]=tmp*tmp;
-            tmp=cut_sq_rho[i][j];
+            tmp=cut_rho[i][j];
+            cut_rho[j][i]=tmp;
             cut_sq_rho[i][j]=cut_sq_rho[j][i]=tmp*tmp;
         }
 }
@@ -62,6 +71,8 @@ ForceFieldFS::~ForceFieldFS()
     Memory::dealloc(t2);
     Memory::dealloc(t1);
     Memory::dealloc(A);
+    Memory::dealloc(cut_phi);
+    Memory::dealloc(cut_rho);
     Memory::dealloc(cut_sq_phi);
     Memory::dealloc(cut_sq_rho);
 }
@@ -218,7 +229,7 @@ void ForceFieldFS::__force_calc()
             if(rsq<cut_sq_rho[ielem][jelem])
             {
                 r=sqrt(rsq);
-                dr_rho=r-sqrt(cut_sq_rho[ielem][jelem]);
+                dr_rho=r-cut_rho[ielem][jelem];
                 rho[iatm]+=dr_rho*dr_rho*(t1[jelem][ielem]
                 +t2[jelem][ielem]*dr_rho);
                 
@@ -257,7 +268,7 @@ void ForceFieldFS::__force_calc()
                 
                 if(rsq<cut_sq_rho[ielem][jelem])
                 {
-                    dr_rho=r-sqrt(cut_sq_rho[ielem][jelem]);
+                    dr_rho=r-cut_rho[ielem][jelem];
                     
                     rho_coef=0.0;
                     
@@ -295,7 +306,7 @@ void ForceFieldFS::__force_calc()
                 
                 if(rsq<cut_sq_phi[ielem][jelem])
                 {
-                    dr_phi=r-sqrt(cut_sq_phi[ielem][jelem]);
+                    dr_phi=r-cut_phi[ielem][jelem];
                     phi_coef=2.0*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq)
                     +dr_phi*dr_phi*(k2[ielem][jelem]+2.0*k3[ielem][jelem]*r);
                     phi_coef*=-1.0/r;
@@ -374,7 +385,7 @@ void ForceFieldFS::__energy_calc()
                 r=sqrt(rsq);
                 if(rsq<cut_sq_rho[ielem][jelem])
                 {
-                    dr_rho=r-sqrt(cut_sq_rho[ielem][jelem]);
+                    dr_rho=r-cut_rho[ielem][jelem];
                     rho[iatm]+=dr_rho*dr_rho*(t1[jelem][ielem]
                     +t2[jelem][ielem]*dr_rho);
                     
@@ -385,7 +396,7 @@ void ForceFieldFS::__energy_calc()
                 
                 if(rsq<cut_sq_phi[ielem][jelem])
                 {
-                    dr_phi=r-sqrt(cut_sq_phi[ielem][jelem]);
+                    dr_phi=r-cut_phi[ielem][jelem];
                     if(jatm<natms_lcl)
                         __vec_lcl[0]+=dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
                     else
@@ -419,29 +430,191 @@ void ForceFieldFS::fin()
  --------------------------------------------*/
 void ForceFieldFS::init_xchng()
 {
+    F_ptr=new Vec<type0>(atoms,1);
+    rho_xchng_ptr=new Vec<type0>(atoms,1);
+    F_xchng_ptr=new Vec<type0>(atoms,1);
+    
+    const type0* x=atoms->x->begin();
+    type0* rho=rho_ptr->begin();
+    type0* F=F_ptr->begin();
+    type0* rho_xchng=rho_xchng_ptr->begin();
+    type0* F_xchng=F_xchng_ptr->begin();
+    elem_type* evec=atoms->elem->begin();
+    type0 rsq,r;
+    
+    elem_type ielem,jelem;
+    
+    
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    const int natms_lcl=atoms->natms_lcl;
+    for(int iatm=0;iatm<natms_lcl;iatm++) rho[iatm]=rho_xchng[iatm]=F_xchng[iatm]=0.0;
+    
+    type0 dr_rho;
+    for(int iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=evec[iatm];
+        const int list_size=neighbor_list_size[iatm];
+        for(int j=0,jatm;j<list_size;j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=evec[jatm];
+            rsq=Algebra::RSQ<__dim__>(x+iatm*__dim__,x+jatm*__dim__);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            r=sqrt(rsq);
+            
+            
+            dr_rho=r-cut_rho[ielem][jelem];
+            if(dr_rho <0.0)
+            {
+                rho[iatm]+=dr_rho*dr_rho*(t1[jelem][ielem]
+                        +t2[jelem][ielem]*dr_rho);
+                
+                
+                if(jatm<natms_lcl)
+                    rho[jatm]+=dr_rho*dr_rho*(t1[ielem][jelem]
+                            +t2[ielem][jelem]*dr_rho);
+            }
+            
+        }
+        F[iatm]=rho[iatm]<0.0 ? 0.0:(-A[ielem]*sqrt(rho[iatm]));
+    }
+
 }
 /*--------------------------------------------
  fin xchng
  --------------------------------------------*/
 void ForceFieldFS::fin_xchng()
 {
+    delete F_xchng_ptr;
+    delete rho_xchng_ptr;
+    delete F_ptr;
 }
 /*--------------------------------------------
  pre xchng energy
  --------------------------------------------*/
-void ForceFieldFS::pre_xchng_energy(GCMC*)
+void ForceFieldFS::pre_xchng_energy(GCMC* gcmc)
 {
+    int& icomm=gcmc->icomm;
+    type0 en;
+    type0 rho_iatm_lcl;
+    
+    int& iatm=gcmc->iatm;
+    elem_type& ielem=gcmc->ielem;
+    
+    int& jatm=gcmc->jatm;
+    elem_type& jelem=gcmc->jelem;
+    
+    
+    type0&rsq=gcmc->rsq;
+    
+    type0 r;
+    type0 c0=1.0,en0=0.0;
+    
+    type0* rho=rho_ptr->begin();
+    type0* rho_xchng=rho_xchng_ptr->begin();
+    int* tag=gcmc->tag_vec_p->begin();
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
+        rho_xchng[i]=rho[i];
+    type0 dr_rho,dr_phi;
+    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+    {
+        c0=1.0;
+        if(gcmc->xchng_mode==DEL_MODE) c0=-1.0;
+        else if(gcmc->xchng_mode==NOEX_MODE) continue;
+        
+        en=rho_iatm_lcl=0.0;
+        for(gcmc->reset_iatm();iatm!=-1;gcmc->next_iatm())
+            for(gcmc->reset_jatm();jatm!=-1;gcmc->next_jatm())
+            {
+                r=sqrt(rsq);
+                
+                dr_rho=r-cut_rho[ielem][jelem];
+                dr_phi=r-cut_phi[ielem][jelem];
+                
+                
+                if(jatm<natms_lcl)
+                {
+                    if(dr_phi<0.0)
+                        en+=dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
+                    if(dr_rho<0.0)
+                        rho_xchng[jatm]+=c0*dr_rho*dr_rho*(t1[ielem][jelem]
+                        +t2[ielem][jelem]*dr_rho);
+                }
+                else if(dr_phi<0.0)
+                    en+=0.5*dr_phi*dr_phi*(k1[ielem][jelem]+k2[ielem][jelem]*r+k3[ielem][jelem]*rsq);
+                
+                if(dr_rho<0.0)
+                    rho_iatm_lcl+=dr_rho*dr_rho*(t1[jelem][ielem]+t2[jelem][ielem]*dr_rho);
+            }
+        
+        
+        
+        type0* F=F_ptr->begin();
+        type0* F_xchng=F_xchng_ptr->begin();
+        elem_type* evec=atoms->elem->begin();
+        
+        type0 tmp0;
+        en0=0.0;
+        for(int i=0;i<natms_lcl;i++)
+            if(tag[i]==icomm)
+            {
+                tmp0=rho_xchng[i];
+                
+                F_xchng[i]=rho_xchng[i]<0.0 ? 0.0:(-A[evec[i]]*sqrt(rho_xchng[i]));
+                en0+=F_xchng[i]-F[i];
+            }
+        
+        en+=en0*c0;
+        
+        gcmc->lcl_vars[0]=en;
+        gcmc->lcl_vars[1]=rho_iatm_lcl;
+        
+    }
 }
 /*--------------------------------------------
  xchng energy
  --------------------------------------------*/
-type0 ForceFieldFS::xchng_energy(GCMC*)
+type0 ForceFieldFS::xchng_energy(GCMC* gcmc)
 {
+    int& icomm=gcmc->icomm;
+    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+        MPI_Reduce(gcmc->lcl_vars,gcmc->vars,2,Vec<type0>::MPI_T,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
+    
+    
+    if(gcmc->im_root)
+    {
+        //restart the comms
+        gcmc->reset_icomm();
+        if(gcmc->xchng_mode==NOEX_MODE) return 0.0;
+        return (gcmc->vars[1]<0.0 ? 0.0:(-A[gcmc->ielem]*sqrt(gcmc->vars[1])))+gcmc->vars[0];
+        
+    }
     return 0.0;
 }
 /*--------------------------------------------
  post xchng energy
  --------------------------------------------*/
-void ForceFieldFS::post_xchng_energy(GCMC*)
+void ForceFieldFS::post_xchng_energy(GCMC* gcmc)
 {
+    int* tag=gcmc->tag_vec_p->begin();
+    type0* rho=rho_ptr->begin();
+    type0* F=F_ptr->begin();
+    
+    type0* rho_xchng=rho_xchng_ptr->begin();
+    type0* F_xchng=F_xchng_ptr->begin();
+    const int natms_lcl=atoms->natms_lcl;
+    for(int i=0;i<natms_lcl;i++)
+        if(tag[i]==0)
+        {
+            rho[i]=rho_xchng[i];
+            F[i]=F_xchng[i];
+        }
+    
+    if(gcmc->im_root && gcmc->xchng_mode==INS_MODE && gcmc->root_succ)
+    {
+        rho[natms_lcl-1]=gcmc->vars[1];
+        F[natms_lcl-1]=rho[natms_lcl-1]<0.0 ? 0.0:(-A[gcmc->ielem]*sqrt(rho[natms_lcl-1]));
+    }
 }

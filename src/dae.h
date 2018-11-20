@@ -10,6 +10,9 @@ namespace MAPP_NS
     private:
     protected:
         type0 a_tol_sqrt_nc_dof,a_tol_sqrt_nx_nalpha_nS_dof,sqrt_nx_nalpha_nS_dof;
+        type0 x_err_tol,x_err_tol_sqrt_ndof,alpha_err_tol,alpha_err_tol_sqrt_ndof;
+        type0 S_err_tol[__dim__][__dim__];
+
         void pre_run_chk(class AtomsDMD*,class ForceFieldDMD*);
         type0 calc_err();
         int c_dim;

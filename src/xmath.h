@@ -3404,7 +3404,12 @@ namespace MAPP_NS
             __opt_comm_grid::func(dim,dim,h,no,curr_grid,opt_grid,opt_size);
             delete [] curr_grid;
         }
-        
+        /*==========================================================================*/
+        inline type0 mod_log(const type0& x)
+        {
+            if(x!=0.0) return log(x);
+            return log(std::numeric_limits<type0>::epsilon());
+        }
         
         
         

@@ -518,7 +518,7 @@ namespace MAPP_NS
         int is_dynamic(vec*);
         
         void reset_domain();
-        
+        bool xchng_id(unsigned long&);
         virtual void DO(PyObject*){}
         
         
@@ -540,11 +540,13 @@ namespace MAPP_NS
         static void setup_tp_methods();
         static void ml_strain(PyMethodDef&);
         static void ml_mul(PyMethodDef&);
+        static void ml_autogrid(PyMethodDef&);
         static void ml_do(PyMethodDef&);
         
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
+        static void getset_natms(PyGetSetDef&);
         static void getset_step(PyGetSetDef&);
         static void getset_hP(PyGetSetDef&);
         static void getset_kB(PyGetSetDef&);

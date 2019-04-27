@@ -92,6 +92,7 @@ using namespace MAPP_NS;
 template<class C>
 void MinCGDMD::run(C* ls,int nsteps)
 {
+    ls->reset();
     int step=atoms->step;
     
     force_calc();

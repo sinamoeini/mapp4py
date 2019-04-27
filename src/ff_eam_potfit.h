@@ -23,6 +23,7 @@ namespace MAPP_NS
         void reorder(std::string*,size_t);
         
         Vec<type0>* rho_vec_ptr;
+        Vec<type0>* t_vec_ptr;
         template<class T,size_t N>
         size_t find_uniq(T** orig,T**& uniq)
         {
@@ -72,7 +73,7 @@ namespace MAPP_NS
         void init_xchng(){};
         void fin_xchng(){};
         void energy_gradient();
-        void force_gradient();
+        void force_gradient(type0*,type0*,type0);
         type0 mean_rho(elem_type);
         
         size_t nvs;
@@ -144,6 +145,7 @@ uniq_F_ptr(NULL)
 #define POTFIT_OFFSET(A) \
 offset=A->vars-vs; \
 A->dvars_lcl=dvs_lcl+offset; \
+A->dvars=dvs+offset; \
 A->dofs=dofs+offset; \
 A->dvars_max=dvs_max+offset; \
 A->hvars=hvs+offset
@@ -284,6 +286,7 @@ void ForceFieldEAMPotFit<NELEMS>::init()
 {
     pre_init();
     rho_vec_ptr=new Vec<type0>(atoms,1,"rho");
+    t_vec_ptr=new Vec<type0>(atoms,1);
 }
 /*--------------------------------------------
  
@@ -291,6 +294,7 @@ void ForceFieldEAMPotFit<NELEMS>::init()
 template<size_t NELEMS>
 void ForceFieldEAMPotFit<NELEMS>::fin()
 {
+    delete t_vec_ptr;
     delete rho_vec_ptr;
     post_fin();
 }
@@ -508,6 +512,7 @@ void ForceFieldEAMPotFit<NELEMS>::energy_gradient()
 /*--------------------------------------------
  force_norm gradient 
  --------------------------------------------*/
+/*
 template<size_t NELEMS>
 void ForceFieldEAMPotFit<NELEMS>::force_gradient()
 {
@@ -580,6 +585,7 @@ void ForceFieldEAMPotFit<NELEMS>::force_gradient()
     for(size_t i=0;i<nvs;i++)
         if(!dofs[i]) dvs[i]=0.0;
 }
+ */
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -636,8 +642,126 @@ type0 ForceFieldEAMPotFit<NELEMS>::fpair_calc(elem_type ielem,elem_type jelem,ty
              F_ptr[ielem]->dF(rho_i)*rho_ptr[jelem][ielem]->dF(r)+
              F_ptr[jelem]->dF(rho_j)*rho_ptr[ielem][jelem]->dF(r))/r;
 }
+/*--------------------------------------------
+ force and energy calculation
+ --------------------------------------------*/
+template<size_t NELEMS>
+void ForceFieldEAMPotFit<NELEMS>::
+force_gradient(type0* en_S_t,type0* en_S_coef,type0 f_coef)
+{
+    for(size_t i=0;i<nvs;i++) dvs_lcl[i]=0.0;
+    
+    type0 inv_vol=1.0/atoms->vol;
+    //check to see if __vec reflects what I need
+    type0 C_S[__nvoigt__];
+    type0 C_en=en_S_coef[0]*(__vec[0]-en_S_t[0]);
+    type0 C_f=f_coef/(static_cast<type0>(atoms->natms*__dim__));
+    Algebra::Do<__nvoigt__>::func(
+    [this,&en_S_t,&en_S_coef,&C_S,&inv_vol]
+    (int i){C_S[i]=inv_vol*en_S_coef[i+1]*(__vec[i+1]-en_S_t[i+1]);});
+    
+    update(f);
+    type0* xvec=atoms->x->begin();
+    type0* fvec=f->begin();
+    type0* rho=rho_vec_ptr->begin();
+    elem_type* evec=atoms->elem->begin();
+    type0* t_vec=t_vec_ptr->begin();
+    
+    int iatm,jatm;
+    elem_type ielem,jelem;
+    type0 r,rsq,E_i,E_j,dE_i,dE_j,drho_ji,drho_ij,m_ij=0.0;
+    type0 dx_ij[__dim__];
+    type0 df_ij[__dim__];
+    int** neighbor_list=neighbor->neighbor_list;
+    int* neighbor_list_size=neighbor->neighbor_list_size;
+    const int natms_lcl=atoms->natms_lcl;
+    
+    for(iatm=0;iatm<natms_lcl;iatm++) t_vec[iatm]=0.0;
+    
+    for(iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=evec[iatm];
+        for(int j=0;j<neighbor_list_size[iatm];j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=evec[jatm];
 
+            rsq=Algebra::DX_RSQ<__dim__>(xvec+iatm*__dim__,xvec+jatm*__dim__,dx_ij);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            
+            r=sqrt(rsq);
+            Algebra::DX<__dim__>(fvec+iatm*__dim__,fvec+jatm*__dim__,df_ij);
+            m_ij=(-C_f*Algebra::V_mul_V<__dim__>(dx_ij,df_ij)+
+            Algebra::V_mul_DyadicV<__dim__>(dx_ij,C_S))/r;
+            // here calculate m_ij
+            // suppose that it is done
+            
+            E_i=F_ptr[ielem]->F(rho[iatm]);
+            dE_i=F_ptr[ielem]->dF(rho[iatm]);
+            drho_ji=rho_ptr[jelem][ielem]->dF(r);
+            
+            
+            F_ptr[ielem]->DdF(m_ij*drho_ji,rho[iatm]);
+            rho_ptr[jelem][ielem]->DF(C_en*dE_i,r);
+            rho_ptr[jelem][ielem]->DdF(m_ij*dE_i,r);
+            t_vec[iatm]+=m_ij*drho_ji;
+            
+            if(jatm<natms_lcl)
+            {
+                E_j=F_ptr[jelem]->F(rho[jatm]);
+                dE_j=F_ptr[jelem]->dF(rho[jatm]);
+                drho_ij=rho_ptr[ielem][jelem]->dF(r);
+                
+                F_ptr[jelem]->DdF(m_ij*drho_ij,rho[jatm]);
+                rho_ptr[ielem][jelem]->DF(C_en*dE_j,r);
+                rho_ptr[ielem][jelem]->DdF(m_ij*dE_j,r);
+                t_vec[jatm]+=m_ij*drho_ij;
+                
+                phi_ptr[ielem][jelem]->DF(C_en,r);
+                phi_ptr[ielem][jelem]->DdF(m_ij,r);
+            }
+            else
+            {
+                phi_ptr[ielem][jelem]->DF(C_en*0.5,r);
+                phi_ptr[ielem][jelem]->DdF(m_ij*0.5,r);
+            }
+        }
+        F_ptr[ielem]->DF(C_en,rho[iatm]);
+    }
+    
+    
+    update(t_vec_ptr);
 
+    type0 ddE_i,ddE_j;
+
+    for(iatm=0;iatm<natms_lcl;iatm++)
+    {
+        ielem=evec[iatm];
+
+        for(int j=0;j<neighbor_list_size[iatm];j++)
+        {
+            jatm=neighbor_list[iatm][j];
+            jelem=evec[jatm];
+
+            rsq=Algebra::DX_RSQ<__dim__>(xvec+iatm*__dim__,xvec+jatm*__dim__,dx_ij);
+            if(rsq>=cut_sq[ielem][jelem]) continue;
+            
+            r=sqrt(rsq);
+            
+            ddE_i=F_ptr[ielem]->ddF(rho[iatm]);
+            rho_ptr[jelem][ielem]->DF(ddE_i*t_vec[iatm],r);
+            
+            if(jatm<natms_lcl)
+            {
+                ddE_j=F_ptr[jelem]->ddF(rho[jatm]);
+                rho_ptr[ielem][jelem]->DF(ddE_j*t_vec[jatm],r);
+            }
+
+        }
+    }
+    
+
+}
 #endif
 
 

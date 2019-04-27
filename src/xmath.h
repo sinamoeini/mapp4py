@@ -2362,6 +2362,11 @@ namespace MAPP_NS
                 *dyad+=scl*(*x*y[dim-i]+*y*x[dim-i]);
                 __DyadicV<i-1,dim>::func(scl,x,y,dyad+1);
             }
+            template<typename T>
+            static inline T dot(T* x,T* dyad)
+            {
+                return *dyad*(*x*x[dim-i])+__DyadicV<i-1,dim>::dot(x,dyad+1);
+            }
         };
         
         template<const int dim>
@@ -2386,6 +2391,11 @@ namespace MAPP_NS
                 *dyad+=scl*(*x*y[dim-1]+*y*x[dim-1]);
                 __DyadicV<dim-1,dim-1>::func(scl,x+1,y+1,dyad+1);
             }
+            template<typename T>
+            static inline T dot(T* x,T* dyad)
+            {
+                return *dyad*(*x*x[dim-1])+__DyadicV<dim-1,dim-1>::dot(x+1,dyad+1);
+            }
         };
         
         template<>
@@ -2407,6 +2417,11 @@ namespace MAPP_NS
             {
                 *dyad+=2.0*scl**x**y;
                 
+            }
+            template<typename T>
+            static inline T dot(T* x,T* dyad)
+            {
+                return *dyad*(*x**x);
             }
         };
         
@@ -3185,6 +3200,12 @@ namespace MAPP_NS
         void DyadicV(T scl,T* x,T* y,T* dyad)
         {
             __DyadicV<dim,dim>::func(scl,x,y,dyad);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        T V_mul_DyadicV(T* x,T* dyad)
+        {
+            return __DyadicV<dim,dim>::dot(x,dyad);
         }
         /*==========================================================================*/
         /*

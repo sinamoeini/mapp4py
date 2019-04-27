@@ -100,6 +100,45 @@ void MinCG::init()
         }
     }
 }
+#ifdef POTFIT
+/*--------------------------------------------
+ init before a run
+ --------------------------------------------*/
+void MinCG::init(vec* ext_vec_0)
+{
+    x.~VecTens();
+    new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
+    f.~VecTens();
+    new (&f) VecTens<type0,1>(atoms,chng_box,ff->F_H,ff->f);
+    h.~VecTens();
+    new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x0.~VecTens();
+    new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
+    x_d.~VecTens();
+    new (&x_d) VecTens<type0,1>(atoms,chng_box,__dim__);
+    f0.~VecTens();
+    new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
+    
+    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->x_dof,h.vecs[0],x0.vecs[0],x_d.vecs[0],f0.vecs[0],
+    ext_vec_0
+    },{atoms->x_d});
+    dynamic->init();
+    
+    if(xprt)
+    {
+        try
+        {
+            xprt->atoms=atoms;
+            xprt->init();
+        }
+        catch(std::string& err_msg)
+        {
+            fin();
+            throw err_msg;
+        }
+    }
+}
+#endif
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/

@@ -39,6 +39,7 @@ namespace MAPP_NS
         const type0 golden;
         type0 prev_val;
     public:
+        void reset() {prev_val=-1;};
         template<class Func>
         int bracket(Func*,type0,type0,type0&,type0&,type0&,type0&,type0&,type0&);
     

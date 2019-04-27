@@ -316,7 +316,7 @@ void MDMuVT::run(int nsteps)
 #else
             dynamic->update<true>();
 #endif
-            ff->force_calc_timer();
+            ff->force_calc();
             delta_u=atoms->pe;
 #endif
             gcmc.xchng(false,nattempts);

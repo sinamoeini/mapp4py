@@ -39,6 +39,11 @@ namespace MAPP_NS
         template<class C>
         void run(C*,int);
         virtual void init();
+#ifdef POTFIT
+        template<class FF,size_t NELEMS>
+        friend class PotFit;
+        void init(vec*);
+#endif
         virtual void fin();
         void ff_test(int,type0,type0,int);
         void force_calc();
@@ -85,6 +90,7 @@ using namespace MAPP_NS;
 template<class C>
 void MinCG::run(C* ls,int nsteps)
 {
+    ls->reset();
     int step=atoms->step;
     
     force_calc();

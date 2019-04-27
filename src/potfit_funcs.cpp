@@ -66,7 +66,7 @@ type0 PotFitAux::find_max_alpha(const type0 xlo,const type0 xhi,type0 max_dx,typ
  
  ----------------------------------------------------------------------------------------*/
 PotFitPairFunc::PotFitPairFunc(const char* __name):
-name(__name),nvars(0),rc(0.0),vars(NULL),dvars_lcl(NULL),
+name(__name),nvars(0),rc(0.0),vars(NULL),dvars_lcl(NULL),dvars(NULL),
 A_name(std::string("A_")+std::string(name)),
 dA_name_max(std::string("dA_")+std::string(name)+std::string("_max")),
 A_name_dof(std::string("A_")+std::string(name)+std::string("_dof"))
@@ -84,8 +84,7 @@ PotFitPairFunc::~PotFitPairFunc()
 void PotFitPairFunc::random_neigh(Random* random)
 {
     for(size_t i=0;i<nvars;i++)
-        if(dofs[i])
-            hvars[i]=(2.0*random->uniform()-1.0)*dvars_max[i];
+        hvars[i]=(2.0*random->uniform()-1.0)*dvars_max[i];
     
 }
 /*--------------------------------------------
@@ -110,6 +109,14 @@ PyObject* PotFitPairFunc::get_A()
 {
     size_t* szp=&nvars;
     return var<type0*>::build(vars,&szp);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* PotFitPairFunc::get_dA()
+{
+    size_t* szp=&nvars;
+    return var<type0*>::build(dvars,&szp);
 }
 /*--------------------------------------------
  
@@ -977,7 +984,7 @@ int PotFitPhiSpl::set(PyObject* val)
  
  ----------------------------------------------------------------------------------------*/
 PotFitEmbFunc::PotFitEmbFunc(const char* __name):
-name(__name),nvars(0),vars(NULL),dvars_lcl(NULL),
+name(__name),nvars(0),vars(NULL),dvars_lcl(NULL),dvars(NULL),
 A_name(std::string("A_")+std::string(name)),
 dA_name_max(std::string("dA_")+std::string(name)+std::string("_max")),
 A_name_dof(std::string("A_")+std::string(name)+std::string("_dof"))
@@ -1019,6 +1026,14 @@ PyObject* PotFitEmbFunc::get_A()
 {
     size_t* szp=&nvars;
     return var<type0*>::build(vars,&szp);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PyObject* PotFitEmbFunc::get_dA()
+{
+    size_t* szp=&nvars;
+    return var<type0*>::build(dvars,&szp);
 }
 /*--------------------------------------------
  
@@ -1106,23 +1121,24 @@ type0 PotFitEmbAck::ddF(type0 rho)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitEmbAck::DF(type0 rho,type0* dv)
+void PotFitEmbAck::DF(type0 coef,type0 rho,type0* dv)
 {
     if(rho==0.0) return;
-    dv[0]+=sqrt(rho);
-    dv[1]+=rho*rho;
-    dv[2]+=rho*rho*rho*rho;
-    dv[3]+=rho;
+    dv[0]+=coef*sqrt(rho);
+    dv[1]+=coef*rho*rho;
+    dv[2]+=coef*rho*rho*rho*rho;
+    dv[3]+=coef*rho;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitEmbAck::DdF(type0 rho,type0* dv)
+void PotFitEmbAck::DdF(type0 coef,type0 rho,type0* dv)
 {
     if(rho==0.0) return;
-    dv[0]+=0.5/sqrt(rho);
-    dv[1]+=2.0*rho;
-    dv[2]+=4.0*rho*rho*rho;
+    dv[0]+=coef*0.5/sqrt(rho);
+    dv[1]+=coef*2.0*rho;
+    dv[2]+=coef*4.0*rho*rho*rho;
+    dv[3]+=coef;
 }
 /*--------------------------------------------
  
@@ -1201,6 +1217,7 @@ type0 PotFitEmbAng::dF(type0 rho)
     type0 rho_b=rho/vars[3];
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
     //return (2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
+    //printf("<<<%lf\n",-rho_b*(2.0*vars[0]*rho_b+vars[1]+2.0*vars[2]*lim*rho_b+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3]);
     return (2.0*vars[0]*rho_b+vars[1]+2.0*vars[2]*lim*rho_b+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
 }
 /*--------------------------------------------
@@ -1217,31 +1234,32 @@ type0 PotFitEmbAng::ddF(type0 rho)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitEmbAng::DF(type0 rho,type0* dv)
+void PotFitEmbAng::DF(type0 coef,type0 rho,type0* dv)
 {
     if(rho==0.0) return;
     type0 rho_b=rho/vars[3];
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
-    dv[0]+=rho_b*rho_b;
-    dv[1]+=rho_b;
+    dv[0]+=coef*rho_b*rho_b;
+    dv[1]+=coef*rho_b;
     //dv[2]+=rho_b*rho_b_2_3/(1.0+rho_b);
-    dv[2]+=lim*rho_b*rho_b+rho_b*rho_b_2_3/(1.0+rho_b);
-    dv[3]+=-rho_b*(2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
-    
+    dv[2]+=coef*(lim*rho_b*rho_b+rho_b*rho_b_2_3/(1.0+rho_b));
+    //dv[3]+=coef*(-rho_b*(2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3]);
+    dv[3]+=-rho_b*coef*(2.0*vars[0]*rho_b+vars[1]+2.0*vars[2]*lim*rho_b+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3];
+    //printf("=====%lf\n",(-rho_b*(2.0*vars[0]*rho_b+vars[1]+vars[2]*rho_b_2_3*(5.0+2.0*rho_b)/(3.0*Algebra::pow<2>(1.0+rho_b)))/vars[3]));
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void PotFitEmbAng::DdF(type0 rho,type0* dv)
+void PotFitEmbAng::DdF(type0 coef,type0 rho,type0* dv)
 {
     if(rho==0.0) return;
     type0 rho_b=rho/vars[3];
     type0 rho_b_2_3=pow(rho_b,2.0/3.0);
-    dv[0]+=2.0*rho_b/vars[3];
-    dv[1]+=1.0/vars[3];
+    dv[0]+=coef*2.0*rho_b/vars[3];
+    dv[1]+=coef*1.0/vars[3];
     //dv[2]+=(rho_b_2_3*(5.0+2.0*rho_b)/(3.0*(1.0+rho_b)*(1.0+rho_b)))/vars[3];
-    dv[2]+=(2.0*lim*rho_b+rho_b_2_3*(5.0+2.0*rho_b)/(3.0*(1.0+rho_b)*(1.0+rho_b)))/vars[3];
-    dv[3]+=
+    dv[2]+=coef*(2.0*lim*rho_b+rho_b_2_3*(5.0+2.0*rho_b)/(3.0*(1.0+rho_b)*(1.0+rho_b)))/vars[3];
+    dv[3]+=coef*
     (vars[0]+
     vars[1]*4.0*rho_b+
     vars[2]*rho_b_2_3*((4.0*rho_b+11.0)*rho_b+25.0)/(9.0*Algebra::pow<3>((1.0+rho_b))))/(vars[3]*vars[3]);

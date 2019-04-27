@@ -15,7 +15,6 @@
 #include "export_styles.h"
 #ifdef POTFIT
 #include "potfit.h"
-#include "potfit_o.h"
 #endif
 using namespace MAPP_NS;
 /*--------------------------------------------*/
@@ -196,12 +195,7 @@ PyObject* MAPP::init_module(void)
     if(LineSearchBackTrack::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"ls_bt",reinterpret_cast<PyObject*>(&LineSearchBackTrack::TypeObject));
 
-#ifdef POTFIT
-
-    
-    if(PotFitO::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"potfit_o",reinterpret_cast<PyObject*>(&PotFitO::TypeObject));
-    
+#ifdef POTFIT   
     if(PotFit<ForceFieldEAMPotFitAckOgata,2>::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"potfit",reinterpret_cast<PyObject*>(&PotFit<ForceFieldEAMPotFitAckOgata,2>::TypeObject));
 #endif

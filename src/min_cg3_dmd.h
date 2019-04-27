@@ -513,6 +513,7 @@ namespace MAPP_NS
         template<bool BC,bool X,bool ALPHA,bool C,class LS>
         void  run(LS* ls,int nsteps)
         {
+            ls->reset();
             MinDMDHandler<BC,X,ALPHA,C> handler(atoms,ff,max_dx,max_dalpha,H_dof);
             handler.init();
             handler.dynamic->init();

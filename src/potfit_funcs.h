@@ -29,6 +29,7 @@ namespace MAPP_NS
         type0* hvars;
         type0* dvars_max;
         type0* dvars_lcl;
+        type0* dvars;
         bool* dofs;
         type0 rc;
         size_t nvars;
@@ -47,6 +48,7 @@ namespace MAPP_NS
         
         virtual int set_A(PyObject*);
         virtual PyObject* get_A();
+        virtual PyObject* get_dA();
         virtual int set_dA_max(PyObject*);
         virtual PyObject* get_dA_max();
         virtual int set_A_dof(PyObject*);
@@ -69,22 +71,26 @@ namespace MAPP_NS
         type0* hvars;
         type0* dvars_max;
         type0* dvars_lcl;
+        type0* dvars;
         bool* dofs;
         size_t nvars;
         virtual type0 F(type0)=0;
         virtual type0 dF(type0)=0;
         virtual type0 ddF(type0)=0;
-        virtual void DF(type0,type0*)=0;
-        virtual void DdF(type0,type0*)=0;
+        virtual void DF(type0,type0,type0*)=0;
+        virtual void DdF(type0,type0,type0*)=0;
         virtual void find_max_alpha(type0&)=0;
         virtual void random_neigh(class Random*);
         virtual bool validate()=0;
         virtual int set_init(PyObject*,type0*&,size_t&)=0;
-        void DF(type0 rho){DF(rho,dvars_lcl);};
-        void DdF(type0 rho){DdF(rho,dvars_lcl);};
+        void DF(type0 rho){DF(1.0,rho,dvars_lcl);};
+        void DdF(type0 rho){DdF(1.0,rho,dvars_lcl);};
+        void DF(type0 coef,type0 rho){DF(coef,rho,dvars_lcl);};
+        void DdF(type0 coef,type0 rho){DdF(coef,rho,dvars_lcl);};
         
         virtual int set_A(PyObject*);
         virtual PyObject* get_A();
+        virtual PyObject* get_dA();
         virtual int set_dA_max(PyObject*);
         virtual PyObject* get_dA_max();
         virtual int set_A_dof(PyObject*);
@@ -176,8 +182,8 @@ namespace MAPP_NS
         type0 F(type0);
         type0 dF(type0);
         type0 ddF(type0);
-        void DF(type0,type0*);
-        void DdF(type0,type0*);
+        void DF(type0,type0,type0*);
+        void DdF(type0,type0,type0*);
         void find_max_alpha(type0&);
         bool validate();
         int set_init(PyObject*,type0*&,size_t&);
@@ -195,8 +201,8 @@ namespace MAPP_NS
         type0 F(type0);
         type0 dF(type0);
         type0 ddF(type0);
-        void DF(type0,type0*);
-        void DdF(type0,type0*);
+        void DF(type0,type0,type0*);
+        void DdF(type0,type0,type0*);
         void find_max_alpha(type0&);
         
         bool validate();

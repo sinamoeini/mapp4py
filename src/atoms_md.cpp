@@ -65,7 +65,7 @@ void AtomsMD::x_d2s_d_dump()
 #include "xmath.h"
 void AtomsMD::create_T(type0 T,int seed)
 {
-    x_d->fill();
+    if(x_d->is_empty()) x_d->fill();
     Random rand(seed+comm_rank);
     type0* __x_d=x_d->begin();
     type0* m=elements.masses;
@@ -422,4 +422,40 @@ void AtomsMD::ml_add_elem(PyMethodDef& tp_method)
    
     )---";
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+/*
+void AtomsMD::ml_xxx(PyMethodDef& tp_method)
+{
+    tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_method.ml_name="xxx";
+    tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
+        
+        FuncAPI<std::string,std::string,type0,int> f("xxx",{"elem_0","elem_1","rc","N"});
+        f.noptionals=0;
+        const std::string* names=__self->atoms->elements.names;
+        const size_t nelems=__self->atoms->elements.nelems;
+        if(f(args,kwds)) return NULL;
+        if(f.remap<1,0>("elements present in system",names,nelems)) return NULL;
+        elem_type elem_0,elem_1;
+        
+        try
+        {
+            __self->atoms->elements.find(f.val<0>().c_str());
+        }
+        catch(int)
+        {
+            PyErr_SetString(PyExc_TypeError,"");
+        }
+        
 
+        Py_RETURN_NONE;
+    });
+    tp_method.ml_doc=(char*)"NONE";
+
+}
+ */

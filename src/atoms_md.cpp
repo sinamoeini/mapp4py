@@ -187,6 +187,7 @@ void AtomsMD::DO(PyObject* op)
  ------------------------------------------------------------------------------------------------------------------------------------*/
 #include "ff_styles.h"
 #include "import_styles.h"
+#include "analysis.h"
 PyObject* AtomsMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
@@ -318,9 +319,9 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
 }
 /*--------------------------------------------*/
 #ifdef POTFIT
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(17);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(16);
 #else
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(14);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(15);
 #endif
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
@@ -336,10 +337,9 @@ void AtomsMD::setup_tp_methods()
     ForceFieldFS::ml_new(methods[10]);
     ForceFieldEAMFunc::ml_new(methods[11]);
     ImportCFGMD::ml_import(methods[12]);
+    BCTPolarity::ml_bct_polarity(methods[13]);
 #ifdef POTFIT
-    ForceFieldEAMFit::ml_new(methods[13]);
-    ForceFieldEAMFitO::ml_new(methods[14]);
-    ForceFieldEAMPotFitAckOgata::ml_new(methods[15]);
+    ForceFieldEAMPotFitAckOgata::ml_new(methods[14]);
 #endif
 }
 /*--------------------------------------------
@@ -425,37 +425,33 @@ void AtomsMD::ml_add_elem(PyMethodDef& tp_method)
 /*--------------------------------------------
  
  --------------------------------------------*/
-/*
-void AtomsMD::ml_xxx(PyMethodDef& tp_method)
+void AtomsMD::ml_rdf(PyMethodDef& tp_method)
 {
     tp_method.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_method.ml_name="xxx";
+    tp_method.ml_name="rdf";
     tp_method.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
         AtomsMD::Object* __self=reinterpret_cast<AtomsMD::Object*>(self);
-        
-        FuncAPI<std::string,std::string,type0,int> f("xxx",{"elem_0","elem_1","rc","N"});
-        f.noptionals=0;
+ 
+        FuncAPI<symm<type0**>,int,std::string*> f("rdf",{"r_c","N","elems"});
+        f.noptionals=1;
+        f.logics<0>()[0]=VLogics("ge",0.0);
+        f.logics<1>()[0]=VLogics("gt",1);
+ 
         const std::string* names=__self->atoms->elements.names;
         const size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
-        if(f.remap<1,0>("elements present in system",names,nelems)) return NULL;
-        elem_type elem_0,elem_1;
-        
-        try
-        {
-            __self->atoms->elements.find(f.val<0>().c_str());
-        }
-        catch(int)
-        {
-            PyErr_SetString(PyExc_TypeError,"");
-        }
-        
+        if(f.remap<2,0>("elements present in system",names,nelems))
+            return NULL;
+ 
 
         Py_RETURN_NONE;
     });
-    tp_method.ml_doc=(char*)"NONE";
+
+    tp_method.ml_doc=R"---(
+    NONE
+    )---";
 
 }
- */
+

@@ -147,6 +147,24 @@ namespace MAPP_NS
         int set_init(PyObject*,type0*&,size_t&);
         int set(PyObject*);
     };
+    
+    class PotFitRhoJP: public PotFitPairFunc
+    {
+    private:
+    protected:
+    public:
+        PotFitRhoJP(const char*);
+        ~PotFitRhoJP();
+        type0 F(type0);
+        type0 dF(type0);
+        type0 ddF(type0);
+        void DF(type0,type0,type0*);
+        void DdF(type0,type0,type0*);
+        void find_max_alpha(type0&);
+        bool validate();
+        int set_init(PyObject*,type0*&,size_t&);
+        int set(PyObject*);
+    };
 
     
     class PotFitPhiSpl: public PotFitPairFunc
@@ -198,6 +216,25 @@ namespace MAPP_NS
     public:
         PotFitEmbAng(const char*);
         ~PotFitEmbAng();
+        type0 F(type0);
+        type0 dF(type0);
+        type0 ddF(type0);
+        void DF(type0,type0,type0*);
+        void DdF(type0,type0,type0*);
+        void find_max_alpha(type0&);
+        
+        bool validate();
+        int set_init(PyObject*,type0*&,size_t&);
+        int set(PyObject*);
+    };
+    
+    class PotFitEmbJP:public PotFitEmbFunc
+    {
+    private:
+    protected:
+    public:
+        PotFitEmbJP(const char*);
+        ~PotFitEmbJP();
         type0 F(type0);
         type0 dF(type0);
         type0 ddF(type0);

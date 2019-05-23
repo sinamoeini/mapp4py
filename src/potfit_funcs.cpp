@@ -1310,3 +1310,265 @@ int PotFitEmbAng::set(PyObject* val)
 }
 
 
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PotFitEmbJP::PotFitEmbJP(const char* __name):
+PotFitEmbFunc(__name)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PotFitEmbJP::~PotFitEmbJP()
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 PotFitEmbJP::F(type0 rho)
+{
+    if(rho==0.0) return 0.0;
+    type0 rhob=rho/vars[2];
+    return
+    -vars[1]*(1.0-vars[0]*log(rhob))*pow(rhob,vars[0])
+    +vars[3]*rhob;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 PotFitEmbJP::dF(type0 rho)
+{
+    if(rho==0.0) return 0.0;
+    type0 rhob=rho/vars[2];
+    return (
+    vars[1]*vars[0]*vars[0]*log(rhob)*pow(rhob,vars[0]-1.0)
+    +vars[3]
+    )/vars[2];
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 PotFitEmbJP::ddF(type0 rho)
+{
+    if(rho==0.0) return 0.0;
+    type0 rhob=rho/vars[2];
+    
+    return
+    vars[1]*vars[0]*vars[0]*
+    (1.0+(vars[0]-1.0)*log(rhob))
+    *pow(rhob,vars[0]-2.0)/
+    (vars[2]*vars[2]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitEmbJP::DF(type0 coef,type0 rho,type0* dv)
+{
+    if(rho==0.0) return;
+    type0 rhob=rho/vars[2];
+    type0 rhob_n=pow(rhob,vars[0]);
+    type0 log_rhob=log(rhob);
+    dv[0]+=coef*vars[0]*vars[1]*rhob_n*log_rhob*log_rhob;
+    dv[1]+=-coef*rhob_n*(1.0-vars[0]*log_rhob);
+    dv[2]+=-coef*(vars[1]*vars[0]*vars[0]*log_rhob*rhob_n+vars[3]*rhob)/vars[2];
+    dv[3]+=coef*rhob;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitEmbJP::DdF(type0 coef,type0 rho,type0* dv)
+{
+    if(rho==0.0) return;
+    type0 rhob=rho/vars[2];
+    type0 rhob_n_1=pow(rhob,vars[0]-1.0);
+    type0 log_rhob=log(rhob);
+    dv[0]+=coef*vars[0]*vars[1]*rhob_n_1*log_rhob*(2.0+vars[0]*log_rhob);
+    dv[1]+=coef*vars[0]*vars[0]*rhob_n_1*log_rhob;
+    dv[2]+=-coef*(vars[3]+vars[0]*vars[0]*vars[1]*(1.0+vars[0]*log_rhob))
+    /(vars[2]*vars[2]);
+    dv[3]+=coef/vars[2];
+
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitEmbJP::find_max_alpha(type0& max_alpha)
+{
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[0],vars[0],hvars[0]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[1],vars[1],hvars[1]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[2],vars[2],hvars[2]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(std::numeric_limits<type0>::quiet_NaN(),std::numeric_limits<type0>::quiet_NaN(),dvars_max[3],vars[3],hvars[3]));
+}
+/*--------------------------------------------
+ n, F0, rhob, a
+ --------------------------------------------*/
+bool PotFitEmbJP::validate()
+{
+    //if(vars[0]>=1.0) return false;
+    if(vars[1]<0.0) return false;
+    if(vars[2]<0.0) return false;
+    return true;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitEmbJP::set_init(PyObject* val,type0*& data,size_t& data_sz)
+{
+    
+    VarAPI<type0 [4]> var(name);
+    if(var.set(val)!=0) return -1;
+    nvars=4;
+    Memory::grow(data,data_sz,data_sz+nvars);
+    memcpy(data+data_sz,var.val,nvars*sizeof(type0));
+    data_sz+=nvars;
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitEmbJP::set(PyObject* val)
+{
+    VarAPI<type0[4]> var(name);
+    if(var.set(val)!=0) return -1;
+    memcpy(vars,var.val,nvars*sizeof(type0));
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PotFitRhoJP::PotFitRhoJP(const char* __name):
+PotFitPairFunc(__name)
+{
+    rc=2.8;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+PotFitRhoJP::~PotFitRhoJP()
+{
+}
+/*--------------------------------------------
+ rho0 k h
+ --------------------------------------------*/
+type0 PotFitRhoJP::F(type0 r)
+{
+    if(r>=rc) return 0.0;
+    return vars[0]*exp(-vars[1]*r)*(1.0-1.0/(1.0+Algebra::pow<4>((r-rc)/vars[2])));
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 PotFitRhoJP::dF(type0 r)
+{
+    if(r>=rc) return 0.0;
+    type0 x=(r-rc)/vars[2];
+    type0 fx=(1.0-1.0/(1.0+Algebra::pow<4>(x)));
+    return vars[0]*exp(-vars[1]*r)*fx*
+    (
+     -vars[1]+4.0*(1.0-fx)/(vars[2]*x)
+     );
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+type0 PotFitRhoJP::ddF(type0 r)
+{
+    if(r>=rc) return 0.0;
+    type0 x=(r-rc)/vars[2];
+    type0 fx=(1.0-1.0/(1.0+Algebra::pow<4>(x)));
+    return vars[0]*exp(-vars[1]*r)*fx*
+    (vars[1]*vars[1]
+     +(-8.0*vars[1]+ (12.0-32.0*fx)/(vars[2]*x))*(1.0-fx)/(vars[2]*x)
+     );
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitRhoJP::DF(type0 coef,type0 r,type0* dv)
+{
+    if(r>=rc) return;
+    
+    type0 x=(r-rc)/vars[2];
+    type0 fx=(1.0-1.0/(1.0+Algebra::pow<4>(x)));
+    type0 exp_kr=exp(-vars[1]*r);
+    dv[0]+=exp_kr*fx;
+    dv[1]+=-r*vars[0]*exp_kr*fx;
+    dv[2]+=-4.0*vars[0]*exp_kr*fx*(1.0-fx)/vars[2];
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitRhoJP::DdF(type0 coef,type0 r,type0* dv)
+{
+    if(r>=rc) return;
+    type0 x=(r-rc)/vars[2];
+    type0 fx=(1.0-1.0/(1.0+Algebra::pow<4>(x)));
+    type0 exp_kr=exp(-vars[1]*r);
+    type0 tmp=4.0*(1.0-fx)/(x*vars[2])-vars[1];
+    dv[0]+=coef*exp_kr*fx*tmp;
+    dv[1]+=-coef*vars[0]*exp_kr*fx*(r*tmp+1.0);
+    dv[2]+=coef*4.0*vars[0]*exp_kr*fx*(1.0-fx)*(vars[1]*vars[2]*x-4.0+8.0*fx)/(x*vars[2]*vars[2]);
+    
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void PotFitRhoJP::find_max_alpha(type0& max_alpha)
+{
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[0],vars[0],hvars[0]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[1],vars[1],hvars[1]));
+    max_alpha=MIN(max_alpha,PotFitAux::find_max_alpha(0.0,std::numeric_limits<type0>::quiet_NaN(),dvars_max[2],vars[2],hvars[2]));
+
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+bool PotFitRhoJP::validate()
+{
+    if(vars[0]<=0.0) return false;
+    if(vars[1]<=0.0) return false;
+    if(vars[2]<=0.0) return false;
+    return true;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitRhoJP::set_init(PyObject* val,type0*& data,size_t& data_sz)
+{
+    
+    VarAPI<type0[3]> var(name);
+    if(var.set(val)!=0) return -1;
+    nvars=3;
+    Memory::grow(data,data_sz,data_sz+nvars);
+    memcpy(data+data_sz,var.val,nvars*sizeof(type0));
+    data_sz+=nvars;
+    return 0;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+int PotFitRhoJP::set(PyObject* val)
+{
+    VarAPI<type0[3]> var(name);
+    if(var.set(val)!=0) return -1;
+    memcpy(vars,var.val,nvars*sizeof(type0));
+    return 0;
+}
+

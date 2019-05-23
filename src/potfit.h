@@ -3,7 +3,6 @@
 #include "ff_eam_potfit.h"
 #include "atoms_md.h"
 #include "min_cg.h"
-#include "ff_eam_fit.h"
 #include "thermo_dynamics.h"
 #include "import_cfg.h"
 #include "random.h"
@@ -18,7 +17,6 @@ namespace MAPP_NS
         type0* f0;
         size_t nvars;
         int ntally;
-        int ntrials,max_ntrials;
         type0 err_tol;
         int nmin_steps;
         static const char* err_msgs[];
@@ -58,14 +56,17 @@ namespace MAPP_NS
         PotFit(PyObject*,
         std::string*&&,std::string*&,int*&,
         type0(*&)[1+__nvoigt__],
+        MinCG**,
         PyObject**,size_t,MPI_Comm&);
         ~PotFit();
         
         void init();
         void fin();
+        void assign_min(MinCG*);
         void store_x0();
         void restore_x0();
         void full_reset();
+        void swtch2dflt();
         type0 val();
         type0 deriv();
         type0 iter();
@@ -87,6 +88,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             class PotFit<FF,NELEMS>* potfit;
+            MinCG::Object** mins;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -115,14 +117,13 @@ namespace MAPP_NS
         static void getset_A_F_dof(PyGetSetDef& getset);
         static void getset_dA_F(PyGetSetDef& getset);
         
-        static void getset_max_ntrials(PyGetSetDef&);
         static void getset_ntally(PyGetSetDef&);
         static void getset_nmin_steps(PyGetSetDef&);
         static void getset_tol(PyGetSetDef&);
         static void getset_en_coefs(PyGetSetDef&);
         static void getset_f_coefs(PyGetSetDef&);
         static void getset_S_coefs(PyGetSetDef&);
-        static void getset_H_dofs(PyGetSetDef&);
+        static void getset_mins(PyGetSetDef&);
         static void getset_errs(PyGetSetDef&);
         static void getset_err(PyGetSetDef&);
         
@@ -133,6 +134,7 @@ namespace MAPP_NS
         static void ml_deriv(PyMethodDef&);
         static void ml_min_struc(PyMethodDef&);
         static void ml_reset(PyMethodDef&);
+        static void ml_swtch2dflt(PyMethodDef&);
         static void ml_min_cg(PyMethodDef&);
         static void ml_min_sa(PyMethodDef&);
         static void ml_mean_rho(PyMethodDef&);
@@ -176,6 +178,7 @@ template<class FF,size_t NELEMS>
 PotFit<FF,NELEMS>::PotFit(PyObject* ff_args,
 std::string*&& __names_str,std::string*& files,int*& nprocs,
 type0(*& __targets)[1+__nvoigt__],
+MinCG** __mins,
 PyObject** dof_funcs,size_t __nconfigs,
 MPI_Comm& __world):
 atoms(NULL),
@@ -184,8 +187,6 @@ world(__world)
     //defaults
     ntally=1;
     nmin_steps=0;
-    ntrials=0;
-    max_ntrials=5;
     err_tol=1.0e-8;
     
     nconfigs=static_cast<int>(__nconfigs);
@@ -239,10 +240,12 @@ world(__world)
     new (&Xorig) VecTens<type0,1>(atoms,true,__dim__);
     
     min_ls=new LineSearchBrent();
-    min=new MinCG(0.0,H_dof,false,0.4,min_ls);
+    
+    
+    min=__mins[my_conf];
     min->atoms=atoms;
     min->ff=ff;
-    min->ntally=0;
+    
     
     memcpy(Xorig.vecs[0]->begin(),atoms->x->begin(),sizeof(type0)*__dim__*atoms->natms_lcl);
     memcpy(&Xorig.A[0][0],&atoms->H[0][0],sizeof(type0)*__dim__*__dim__);
@@ -259,12 +262,13 @@ world(__world)
 template<class FF,size_t NELEMS>
 PotFit<FF,NELEMS>::~PotFit()
 {
+    min->atoms=NULL;
+    min->ff=NULL;
     fin();
     Xorig.~VecTens();
     
     delete min_ls;
     
-    delete min;
     
     delete ff;
     delete atoms;
@@ -293,6 +297,23 @@ template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::fin()
 {
     min->fin();
+}
+/*--------------------------------------------
+ init
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+void PotFit<FF,NELEMS>::assign_min(MinCG* __min)
+{
+    if(min)
+    {
+        fin();
+        min->atoms=NULL;
+        min->ff=NULL;
+    }
+    min=__min;
+    min->atoms=atoms;
+    min->ff=ff;
+    init();
 }
 /*--------------------------------------------
  new configuration
@@ -338,9 +359,15 @@ void PotFit<FF,NELEMS>::min_sa(int seed,int nsteps,int ntrials,type0 temp,type0 
     
     //type0 old_skin=atoms->comm.skin;
     //atoms->comm.skin=0.0001;
+    type0 * lwst_vars=NULL;
+    Memory::alloc(lwst_vars,nvars);
+    type0 lwst_val;
+    
+    
     
     type0 dc,c_n,c_o,dpe;
-    err=val();
+    lwst_val=err=val();
+    memcpy(lwst_vars,ff->vs,nvars*sizeof(type0));
     c_o=err;
     dpe=atoms->pe-target[0];
     
@@ -371,6 +398,11 @@ void PotFit<FF,NELEMS>::min_sa(int seed,int nsteps,int ntrials,type0 temp,type0 
                 c_o=c_n;
                 err=c_o;
                 dpe=atoms->pe-target[0];
+                if(c_n<lwst_val)
+                {
+                    lwst_val=c_n;
+                    memcpy(lwst_vars,ff->vs,nvars*sizeof(type0));
+                }
             }
         }
         
@@ -397,6 +429,9 @@ void PotFit<FF,NELEMS>::min_sa(int seed,int nsteps,int ntrials,type0 temp,type0 
     delete random;
     random=NULL;
     //atoms->comm.skin=old_skin;
+    err=lwst_val;
+    memcpy(ff->vs,lwst_vars,nvars*sizeof(type0));
+    Memory::dealloc(lwst_vars);
 }
 /*--------------------------------------------
  minimize error function
@@ -404,16 +439,23 @@ void PotFit<FF,NELEMS>::min_sa(int seed,int nsteps,int ntrials,type0 temp,type0 
 template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::min_struc()
 {
+    int __ntally=min->ntally;
+    min->ntally=0;
     min->run(nmin_steps);
+    min->ntally=__ntally;
     err=val();
     errs[my_conf]=atoms->pe-target[0];
     for(int i=0;i<nconfigs;i++)
         MPI_Bcast(&errs[i],1,Vec<type0>::MPI_T,roots[i],world);
     
-    ThermoDynamics thermo=get_thermo();
-    thermo.init();
-    thermo.print(0);
-    thermo.fin();
+    if(ntally)
+    {
+        ThermoDynamics thermo=get_thermo();
+        thermo.init();
+        thermo.print(0);
+        thermo.fin();
+    }
+    
 }
 /*--------------------------------------------
  minimize error function
@@ -431,9 +473,10 @@ void PotFit<FF,NELEMS>::min_cg(int nsteps)
     for(size_t i=0;i<nvars;i++) f0_f0+=f[i]*f[i];
     
     int istep=0;
-    thermo.init();
+    
     if(ntally)
     {
+        thermo.init();
         errs[my_conf]=atoms->pe-target[0];
         for(int i=0;i<nconfigs;i++)
             MPI_Bcast(&errs[i],1,Vec<type0>::MPI_T,roots[i],world);
@@ -501,9 +544,11 @@ void PotFit<FF,NELEMS>::min_cg(int nsteps)
         for(int i=0;i<nconfigs;i++)
             MPI_Bcast(&errs[i],1,Vec<type0>::MPI_T,roots[i],world);
         thermo.print(istep);
+        
+        
     }
-    thermo.fin();
-    fprintf(MAPP::mapp_out,"%s",err_msgs[ERR]);
+    if(ntally) thermo.fin();
+    
 }
 /*--------------------------------------------
  find maximum h
@@ -566,11 +611,8 @@ type0 PotFit<FF,NELEMS>::F(type0 alpha)
 template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::test_deriv(ptrdiff_t offset,type0 delta,int nsteps)
 {
-    int __max_ntrials=max_ntrials;
     int __nmin_steps=nmin_steps;
-    max_ntrials=9999999;
     nmin_steps=0;
-    ntrials=1;
     
     full_reset();
     store_x0();
@@ -593,7 +635,6 @@ void PotFit<FF,NELEMS>::test_deriv(ptrdiff_t offset,type0 delta,int nsteps)
     thermo.fin();
     restore_x0();
     
-    max_ntrials=__max_ntrials;
     nmin_steps=__nmin_steps;
     
 }
@@ -673,11 +714,16 @@ void PotFit<FF,NELEMS>::full_reset()
     memcpy(atoms->x->begin(),Xorig.vecs[0]->begin(),sizeof(type0)*__dim__*atoms->natms_lcl);
     memcpy(&atoms->H[0][0],&Xorig.A[0][0],sizeof(type0)*__dim__*__dim__);
     atoms->update_H();
-#ifdef OLD_UPDATE
-    min->dynamic->update(atoms->x);
-#else
     min->dynamic->update<true>();
-#endif
+}
+/*--------------------------------------------
+ just one test run
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+void PotFit<FF,NELEMS>::swtch2dflt()
+{
+    memcpy(Xorig.vecs[0]->begin(),atoms->x->begin(),sizeof(type0)*__dim__*atoms->natms_lcl);
+    memcpy(&Xorig.A[0][0],&atoms->H[0][0],sizeof(type0)*__dim__*__dim__);
 }
 /*--------------------------------------------
  
@@ -792,6 +838,8 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Memory::alloc(targets,nconfigs);
     PyObject** funcs;
     Memory::alloc(funcs,nconfigs);
+    MinCG::Object** min_objs;
+    Memory::alloc(min_objs,nconfigs);
     
     
     int tot_nproc=0;
@@ -801,16 +849,19 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
         FuncAPI<std::string,std::string,
         int,
         type0,symm<type0[__dim__][__dim__]>,
+        OP<MinCG>,
         OB<PyFunctionObject,PyFunction_Type>>
-        conf("configuration tuple",{"name","cfg_file","nproc","pe_target","S_target","dof_func"});
+        conf("configuration tuple",{"name","cfg_file","nproc","pe_target","S_target","min_obj","dof_func"});
         
-        conf.val<5>()=NULL;
+        conf.val<6>()=NULL;
         conf.noptionals=1;
         if(conf(config,NULL))
         {
             Memory::dealloc(names);
             Memory::dealloc(files);
             Memory::dealloc(targets);
+            *min_objs=NULL;
+            Memory::dealloc(min_objs);
             *funcs=NULL;
             Memory::dealloc(funcs);
             return -1;
@@ -820,7 +871,8 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
         nprocs[i]=conf.val<2>();
         targets[i][0]=conf.val<3>();
         Algebra::MSY_2_DyadicV(conf.val<4>(),&targets[i][1]);
-        funcs[i]=conf.val<5>();
+        min_objs[i]=reinterpret_cast<MinCG::Object*>(conf.val<5>().ob);
+        funcs[i]=conf.val<6>();
         tot_nproc+=nprocs[i];
     }
     
@@ -833,6 +885,8 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
         Memory::dealloc(names);
         Memory::dealloc(files);
         Memory::dealloc(targets);
+        *min_objs=NULL;
+        Memory::dealloc(min_objs);
         *funcs=NULL;
         Memory::dealloc(funcs);
         return -1;
@@ -840,15 +894,27 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     
     
-    
+    MinCG** mins;
+    Memory::alloc(mins,nconfigs);
+    for(int i=0;i<nconfigs;i++) mins[i]=min_objs[i]->min;
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->potfit=new PotFit<FF,NELEMS>(f.val<0>(),std::move(names),files,nprocs,targets,funcs,nconfigs,world);
+    __self->potfit=new PotFit<FF,NELEMS>(f.val<0>(),std::move(names),
+    files,nprocs,targets,mins,funcs,nconfigs,world);
+    *mins=NULL;
+    Memory::dealloc(mins);
+    
+    __self->mins=min_objs;
+    for(int i=0;i<nconfigs;i++)
+        Py_INCREF(min_objs[i]);
+    
+    min_objs=NULL;
+    
+    
     Memory::dealloc(names);
     Memory::dealloc(files);
     Memory::dealloc(targets);
     *funcs=NULL;
     Memory::dealloc(funcs);
-    
     return 0;
 }
 /*--------------------------------------------
@@ -861,6 +927,7 @@ PyObject* PotFit<FF,NELEMS>::__alloc__(PyTypeObject* type,Py_ssize_t)
     Py_TYPE(__self)=type;
     Py_REFCNT(__self)=1;
     __self->potfit=NULL;
+    __self->mins=NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------
@@ -870,8 +937,17 @@ template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
+    if(__self->potfit)
+    {
+        int __nconfigs=__self->potfit->nconfigs;
+        for(int i=0;i<__nconfigs;i++)
+        Py_DECREF(__self->mins[i]);
+    }
     delete __self->potfit;
     __self->potfit=NULL;
+    *(__self->mins)=NULL;
+    Memory::dealloc(__self->mins);
+    __self->mins=NULL;
     delete __self;
 }
 /*--------------------------------------------*/
@@ -909,7 +985,7 @@ int PotFit<FF,NELEMS>::setup_tp()
 }
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
-PyGetSetDef PotFit<FF,NELEMS>::getset[]=EmptyPyGetSetDef(23);
+PyGetSetDef PotFit<FF,NELEMS>::getset[]=EmptyPyGetSetDef(22);
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::setup_tp_getset()
@@ -931,15 +1007,14 @@ void PotFit<FF,NELEMS>::setup_tp_getset()
     
     
     getset_ntally(getset[12]);
-    getset_max_ntrials(getset[13]);
-    getset_nmin_steps(getset[14]);
-    getset_tol(getset[15]);
-    getset_en_coefs(getset[16]);
-    getset_f_coefs(getset[17]);
-    getset_S_coefs(getset[18]);
-    getset_H_dofs(getset[19]);
-    getset_errs(getset[20]);
-    getset_err(getset[21]);
+    getset_nmin_steps(getset[13]);
+    getset_tol(getset[14]);
+    getset_en_coefs(getset[15]);
+    getset_f_coefs(getset[16]);
+    getset_S_coefs(getset[17]);
+    getset_mins(getset[18]);
+    getset_errs(getset[19]);
+    getset_err(getset[20]);
 }
 /*--------------------------------------------
  
@@ -1445,27 +1520,6 @@ void PotFit<FF,NELEMS>::getset_ntally(PyGetSetDef& getset)
  
  --------------------------------------------*/
 template<class FF,size_t NELEMS>
-void PotFit<FF,NELEMS>::getset_max_ntrials(PyGetSetDef& getset)
-{
-    getset.name=(char*)"max_ntrials";
-    getset.doc=(char*)"";
-    
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<int>::build(reinterpret_cast<Object*>(self)->potfit->max_ntrials);
-    };
-    getset.set=[](PyObject* self,PyObject* val,void*)->int
-    {
-        VarAPI<int> var("max_ntrials");
-        if(var.set(val)!=0) return -1;
-        reinterpret_cast<Object*>(self)->potfit->max_ntrials=var.val;
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::getset_nmin_steps(PyGetSetDef& getset)
 {
     getset.name=(char*)"nmin_steps";
@@ -1660,55 +1714,70 @@ void PotFit<FF,NELEMS>::getset_S_coefs(PyGetSetDef& getset)
  
  --------------------------------------------*/
 template<class FF,size_t NELEMS>
-void PotFit<FF,NELEMS>::getset_H_dofs(PyGetSetDef& getset)
+void PotFit<FF,NELEMS>::getset_mins(PyGetSetDef& getset)
 {
-    getset.name=(char*)"H_dofs";
+    getset.name=(char*)"mins";
     getset.doc=(char*)"";
     
     getset.get=[](PyObject* self,void*)->PyObject*
     {
-        PotFit<FF,NELEMS>* potfit=reinterpret_cast<Object*>(self)->potfit;
-        size_t sz;
-        size_t* szp=&sz;
-        sz=potfit->nconfigs;
-        bool(* v)[__dim__][__dim__]=reinterpret_cast<bool(*)[__dim__][__dim__]>(potfit->get_H_dofs());
         
-        PyObject* op=var<bool(*)[__dim__][__dim__]>::build(v,&szp);
-        Memory::dealloc(v);
-        return op;
+        int __nconfigs=reinterpret_cast<Object*>(self)->potfit->nconfigs;
+        MinCG::Object** mins=reinterpret_cast<Object*>(self)->mins;
+        
+        PyObject* py_obj=PyList_New(__nconfigs);
+        for(size_t i=0;i<__nconfigs;i++)
+            PyList_SET_ITEM(py_obj,i,reinterpret_cast<PyObject*>(mins[i]));
+    
+        return py_obj;
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
-        VarAPI<symm<bool[__dim__][__dim__]>*> var("H_dofs");
+        VarAPI<OP<MinCG>*> var("mins");
         if(var.set(val)!=0) return -1;
-        PotFit<FF,NELEMS>* potfit=reinterpret_cast<Object*>(self)->potfit;
-        if(var.__var__.size!=static_cast<size_t>(potfit->nconfigs))
+        Object* __self=reinterpret_cast<Object*>(self);
+        PotFit<FF,NELEMS>* potfit=__self->potfit;
+        int __nconfigs=potfit->nconfigs;
+        int __my_conf=potfit->my_conf;
+        if(var.__var__.size!=__nconfigs)
         {
             PyErr_SetString(PyExc_TypeError,"size mismatch");
             return -1;
         }
-        int __my_conf=potfit->my_conf;
-        memcpy(&(potfit->min->H_dof[0][0]),&var.val[__my_conf][0][0],__dim__*__dim__*sizeof(bool));
+        OP<MinCG>* __mins=var.val;
+        
+        for(int i=0;i<__nconfigs;i++)
+        {
+            if(i==__my_conf)
+                __self->potfit->assign_min(reinterpret_cast<MinCG::Object*>(__mins[i].ob)->min);
+            
+            Py_DECREF(__self->mins[i]);
+           __self->mins[i]=reinterpret_cast<MinCG::Object*>(__mins[i].ob);
+           Py_INCREF(__self->mins[i]);
+        }
+
+        
         return 0;
     };
 }
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
-PyMethodDef PotFit<FF,NELEMS>::methods[]=EmptyPyMethodDef(11);
+PyMethodDef PotFit<FF,NELEMS>::methods[]=EmptyPyMethodDef(12);
 /*--------------------------------------------*/
 template<class FF,size_t NELEMS>
 void PotFit<FF,NELEMS>::setup_tp_methods()
 {
     ml_reset(methods[0]);
-    ml_min_struc(methods[1]);
-    ml_min_cg(methods[2]);
-    ml_min_sa(methods[3]);
-    ml_mean_rho(methods[4]);
-    ml_test_A_phi(methods[5]);
-    ml_test_A_rho(methods[6]);
-    ml_test_A_F(methods[7]);
-    ml_val(methods[8]);
-    ml_deriv(methods[9]);
+    ml_swtch2dflt(methods[1]);
+    ml_min_struc(methods[2]);
+    ml_min_cg(methods[3]);
+    ml_min_sa(methods[4]);
+    ml_mean_rho(methods[5]);
+    ml_test_A_phi(methods[6]);
+    ml_test_A_rho(methods[7]);
+    ml_test_A_F(methods[8]);
+    ml_val(methods[9]);
+    ml_deriv(methods[10]);
 }
 /*--------------------------------------------
 
@@ -1760,6 +1829,24 @@ void PotFit<FF,NELEMS>::ml_reset(PyMethodDef& tp_methods)
         FuncAPI<>f("reset");
         if(f(args,kwds)) return NULL;
         reinterpret_cast<Object*>(self)->potfit->full_reset();
+        Py_RETURN_NONE;
+    });
+    tp_methods.ml_doc=(char*)"";
+}
+/*--------------------------------------------
+
+ --------------------------------------------*/
+template<class FF,size_t NELEMS>
+void PotFit<FF,NELEMS>::ml_swtch2dflt(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="swtch2dflt";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<>f("swtch2dflt");
+        if(f(args,kwds)) return NULL;
+        reinterpret_cast<Object*>(self)->potfit->swtch2dflt();
         Py_RETURN_NONE;
     });
     tp_methods.ml_doc=(char*)"";

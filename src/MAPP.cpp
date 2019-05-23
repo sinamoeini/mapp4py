@@ -198,6 +198,9 @@ PyObject* MAPP::init_module(void)
 #ifdef POTFIT   
     if(PotFit<ForceFieldEAMPotFitAckOgata,2>::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"potfit",reinterpret_cast<PyObject*>(&PotFit<ForceFieldEAMPotFitAckOgata,2>::TypeObject));
+    
+    if(PotFit<ForceFieldEAMPotFitAckJP,2>::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"potfit_jp",reinterpret_cast<PyObject*>(&PotFit<ForceFieldEAMPotFitAckJP,2>::TypeObject));
 #endif
     
     PyObject* md=MAPP::MD::init_module();

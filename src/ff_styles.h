@@ -7,7 +7,5 @@
 #include "ff_eam_func.h"
 
 #ifdef POTFIT
-#include "ff_eam_fit.h"
-#include "ff_eam_fit_o.h"
 #include "ff_eam_potfit.h"
 #endif

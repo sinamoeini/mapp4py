@@ -111,6 +111,15 @@ namespace MAPP_NS
         static ForceFieldEAMPotFit<nelems>* get_new_ff(class AtomsMD*,PyObject*,PyObject*);
         static void ml_new(PyMethodDef&);
     };
+    class ForceFieldEAMPotFitAckJP
+    {
+    private:
+    protected:
+    public:
+        static constexpr size_t nelems=2;
+        static ForceFieldEAMPotFit<nelems>* get_new_ff(class AtomsMD*,PyObject*,PyObject*);
+        static void ml_new(PyMethodDef&);
+    };
 }
 /*--------------------------------------------
  constructor

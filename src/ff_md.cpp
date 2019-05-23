@@ -3,24 +3,52 @@
 #include "neighbor_md.h"
 #include "atoms_md.h"
 #include "xmath.h"
+#include "memory.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
 ForceFieldMD::ForceFieldMD(AtomsMD* __atoms):
 ForceField(__atoms),
-atoms(__atoms)
+atoms(__atoms),
+f_alloc(false)
 {
     neighbor=new NeighborMD(__atoms,cut_sk_sq);
-    f=new Vec<type0>(atoms,__dim__,"f");
+    vec* __f=atoms->find_vec("f");
+    if(__f) f=reinterpret_cast<Vec<type0>*>(__f);
+    else
+    {
+        f_alloc=true;
+        f=new Vec<type0>(atoms,__dim__,"f");
+    }
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ForceFieldMD::~ForceFieldMD()
 {
-    delete f;
+    if(f_alloc) delete f;
     delete neighbor;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+ForceFieldZero::ForceFieldZero(class AtomsMD* atoms,type0**&& __cut):
+ForceFieldMD(atoms)
+{
+    for(size_t i=0;i<nelems;i++)
+    for(size_t j=0;j<i+1;j++)
+    {
+        cut[i][j]=cut[j][i]=__cut[i][j];
+        cut_sq[i][j]=cut_sq[j][i]=__cut[i][j]*__cut[i][j];
+    }
+    Memory::dealloc(__cut);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+ForceFieldZero::~ForceFieldZero()
+{
 }
 /*--------------------------------------------
  

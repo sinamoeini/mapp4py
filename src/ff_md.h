@@ -7,6 +7,7 @@ namespace MAPP_NS
     {
     friend class DynamicMD;
     private:
+        bool f_alloc;
         void reset();
     protected:
         class AtomsMD* atoms;
@@ -54,4 +55,26 @@ namespace MAPP_NS
     };
 }
 
+namespace MAPP_NS
+{
+    class ForceFieldZero: public ForceFieldMD
+    {
+    private:
+    protected:
+        void __force_calc(){};
+        void __energy_calc(){};
+        void pre_xchng_energy(GCMC*){};
+        type0 xchng_energy(GCMC*) {return 0.0;};
+        void post_xchng_energy(GCMC*){};
+    public:
+        ForceFieldZero(class AtomsMD*,type0**&&);
+        ~ForceFieldZero();
+
+        void init(){pre_init();};
+        void fin(){post_fin();};
+        void init_xchng(){};
+        void fin_xchng(){};
+
+    };
+}
 #endif

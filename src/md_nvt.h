@@ -30,6 +30,7 @@ namespace MAPP_NS
         type0 Ndof_part[__dim__];
         ThermostatNHC thermo_part;
         
+        bool dofs[__dim__];
         bool dof_empty;
         type0 kB;
         type0 T;
@@ -39,8 +40,13 @@ namespace MAPP_NS
         int ntally;
         
         void update_x_d__x__x_d(type0);
+        void update_x_d__x(type0);
+        void update_x_d();
         void update_x_d_final(type0);
+        
         void update_x_d__x__x_d_w_dof(type0);
+        void update_x_d__x_w_dof(type0);
+        void update_x_d_w_dof();
         void update_x_d_final_w_dof(type0);
         virtual void change_dt(type0);
         virtual void pre_run_chk(AtomsMD*,ForceFieldMD*);

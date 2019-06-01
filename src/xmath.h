@@ -1209,6 +1209,17 @@ namespace MAPP_NS
             }
         };
         
+        template<>
+        class __POW<0>
+        {
+        public:
+            template<typename T>
+            static inline T func(T x)
+            {
+                return 1;
+            }
+        };
+        
         
         template<const int dim>
         class __V_eq
@@ -1626,9 +1637,224 @@ namespace MAPP_NS
             }
         };
         
+
+        
+        /*
+         remeber dim is dimension of cofac matrix
+         */
+        template<const int i0,const int i,const int dim>
+        class __cofac__row
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+                *MC=*M;
+                __cofac__row<i0+1,i,dim>::func(M+1,MC+1);
+            }
+        };
+        
+        template<const int i,const int dim>
+        class __cofac__row<i,i,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+                __cofac__row<i+1,i,dim>::func(M+1,MC);
+            }
+        };
+        
+        template<const int i,const int dim>
+        class __cofac__row<dim,i,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+                *MC=*M;
+            }
+        };
+        
+        template<const int dim>
+        class __cofac__row<dim,dim,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+            }
+        };
+        
+        
+        template<const int i0,const int i,const int j,const int dim>
+        class __cofac
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+                __cofac__row<0,j,dim>::func(M,MC);
+                __cofac<i0+1,i,j,dim>::func(M+dim+1,MC+dim);
+            }
+        };
+        
+        template<const int i,const int j,const int dim>
+        class __cofac<i,i,j,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+                __cofac<i+1,i,j,dim>::func(M+dim+1,MC);
+            }
+        };
+        template<const int i,const int j,const int dim>
+        class __cofac<dim,i,j,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+                __cofac__row<0,j,dim>::func(M,MC);
+            }
+        };
+        
+        template<const int j,const int dim>
+        class __cofac<dim,dim,j,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MC)
+            {
+            }
+        };
+        
+        
+        template<const int i,const int dim>
+        class __MSQ_det
+        {
+        public:
+            template<typename T>
+            static inline T func(T* M)
+            {
+                T MC[dim-1][dim-1];
+                __cofac<0,0,i,dim-1>::func(M,MC[0]);
+                return __POW<i>::func(-1)*M[i]*__MSQ_det<0,dim-1>::func(MC[0])+
+                __MSQ_det<i+1,dim>::func(M);
+            }
+        };
+        
+        template<const int dim>
+        class __MSQ_det<dim-1,dim>
+        {
+        public:
+            template<typename T>
+            static inline T func(T* M)
+            {
+                T MC[dim-1][dim-1];
+                __cofac<0,0,dim-1,dim-1>::func(M,MC[0]);
+                return __POW<dim-1>::func(-1)*M[dim-1]*__MSQ_det<0,dim-1>::func(MC[0]);
+            }
+        };
+        
+        
+        template<>
+        class __MSQ_det<0,2>
+        {
+        public:
+            template<typename T>
+            static inline T func(T* M)
+            {
+                
+                return M[0]*M[3]-M[1]*M[2];
+            }
+        };
+        
+        template<>
+        class __MSQ_det<0,1>
+        {
+        public:
+            template<typename T>
+            static inline T func(T* M)
+            {
+                
+                return M[0];
+            }
+        };
+        
+        
+        template<const int i,const int j,const int dim>
+        class __MSQ_adj
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MA)
+            {
+                T MC[dim-1][dim-1];
+                __cofac<0,j,i,dim-1>::func(M,MC[0]);
+                MA[i*dim+j]=__POW<i+j>::func(-1)*__MSQ_det<0,dim-1>::func(MC[0]);
+                __MSQ_adj<i,j+1,dim>::func(M,MA);
+            }
+        };
+        
+        template<const int i,const int dim>
+        class __MSQ_adj<i,dim-1,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MA)
+            {
+                T MC[dim-1][dim-1];
+                __cofac<0,dim-1,i,dim-1>::func(M,MC[0]);
+                MA[i*dim+dim-1]=__POW<i+dim-1>::func(-1)*__MSQ_det<0,dim-1>::func(MC[0]);
+                __MSQ_adj<i+1,0,dim>::func(M,MA);
+            }
+        };
+        
+        template<const int dim>
+        class __MSQ_adj<dim-1,dim-1,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* M,T* MA)
+            {
+                T MC[dim-1][dim-1];
+                __cofac<0,dim-1,dim-1,dim-1>::func(M,MC[0]);
+                MA[(dim-1)*dim+dim-1]=__MSQ_det<0,dim-1>::func(MC[0]);
+            }
+        };
+        
+        /* dot product for vector by square matrix MSQV=MSQ*V */
+        template<const int i,const int dim>
+        class __MSQ_mul_V
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSQ,T* V,T* MSQV)
+            {
+                *MSQV=__V_mul_V<dim>::func(MSQ,V);
+                __MSQ_mul_V<i-1,dim>::func(MSQ+dim,V,MSQV+1);
+            }
+        };
+        template<const int dim>
+        class __MSQ_mul_V<1,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSQ,T* V,T* MSQV)
+            {
+                *MSQV=__V_mul_V<dim>::func(MSQ,V);
+            }
+        };
+        
+        
+        
+        
+        
         /* dot product for vector by lower triangular matrix VMLT=MLT*V */
         /* WARNING: MLT should start at the last row MLT+(dim-1)*dim
-                and VMLT should start at the last component VMLT+ dim-1
+         and VMLT should start at the last component VMLT+ dim-1
          */
         template<const int i,const int dim>
         class __MLT_mul_V
@@ -2208,6 +2434,43 @@ namespace MAPP_NS
             template<typename T>
             static inline void func(T*,T*)
             {}
+        };
+        
+        
+        
+        
+        template<const int row,const int cl,const int dim>
+        class __MSQ_mul_MSQ
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSQL,T* MSQR,T* MSQ)
+            {
+                *MSQ=__V_strd_mul_V<dim,dim>::func(MSQR,MSQL);
+                __MSQ_mul_MSQ<row,cl+1,dim>::func(MSQL,MSQR+1,MSQ+1);
+            }
+        };
+        
+        template<const int row,const int dim>
+        class __MSQ_mul_MSQ<row,dim-1,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSQL,T* MSQR,T* MSQ)
+            {
+                *MSQ=__V_strd_mul_V<dim,dim>::func(MSQR,MSQL);
+                __MSQ_mul_MSQ<row+1,0,dim>::func(MSQL+dim,MSQR-dim+1,MSQ+1);
+            }
+        };
+        
+        template<const int dim>
+        class __MSQ_mul_MSQ<dim,0,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* MSQL,T* MSQR,T* MSQ)
+            {
+            }
         };
         
         
@@ -3067,18 +3330,24 @@ namespace MAPP_NS
         template<const int dim,typename T>
         void MLT_mul_V(T(&MLT)[dim][dim],T*&V,T*&MLTV)
         {
-            __MLT_mul_V<dim,dim> ::func(&MLT[dim-1][0],V,&MLTV[dim-1]);
+            __MLT_mul_V<dim,dim>::func(&MLT[dim-1][0],V,&MLTV[dim-1]);
         }
         template<const int dim,typename T>
         void MLT_mul_V(T(&MLT)[dim][dim],T*&V,T(&MLTV)[dim])
         {
-            __MLT_mul_V<dim,dim> ::func(&MLT[dim-1][0],V,&MLTV[dim-1]);
+            __MLT_mul_V<dim,dim>::func(&MLT[dim-1][0],V,&MLTV[dim-1]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void MSQ_mul_V(T(&MSQ)[dim][dim],T* V,T* MSQV)
+        {
+            __MSQ_mul_V<dim,dim>::func(&MSQ[0][0],V,MSQV);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
         void V_mul_MLT(T* V,T (*MLT)[dim],T* VMLT)
         {
-            __V_mul_MLT<dim,dim> ::func(V,&MLT[0][0],VMLT);
+            __V_mul_MLT<dim,dim>::func(V,&MLT[0][0],VMLT);
         }
         /*==========================================================================*/
         template<typename T,const int dim>
@@ -3096,29 +3365,35 @@ namespace MAPP_NS
         template<const int dim,typename T>
         void MUT_mul_V(T(&MUT)[dim][dim],T*&V,T*&MUTV)
         {
-            __MUT_mul_V<dim,dim> ::func(&MUT[0][0],V,MUTV);
+            __MUT_mul_V<dim,dim>::func(&MUT[0][0],V,MUTV);
         }
         template<const int dim,typename T>
         void MUT_mul_V(T(&MUT)[dim][dim],T*&V,T(&MUTV)[dim])
         {
-            __MUT_mul_V<dim,dim> ::func(&MUT[0][0],V,MUTV);
+            __MUT_mul_V<dim,dim>::func(&MUT[0][0],V,MUTV);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
         void V_mul_MUT(T*&V,T(&MUT)[dim][dim],T*&VMUT)
         {
-            __V_mul_MUT<dim,dim> ::func(V,&MUT[0][dim-1],VMUT[dim-1]);
+            __V_mul_MUT<dim,dim>::func(V,&MUT[0][dim-1],VMUT[dim-1]);
         }
         template<const int dim,typename T>
         void V_mul_MUT(T*&V,T(&MUT)[dim][dim],T(&VMUT)[dim])
         {
-            __V_mul_MUT<dim,dim> ::func(V,&MUT[0][dim-1],VMUT[dim-1]);
+            __V_mul_MUT<dim,dim>::func(V,&MUT[0][dim-1],VMUT[dim-1]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
         void MLT_mul_MLT(T(*MLTL)[dim],T(*MLTR)[dim],T(*MLT)[dim])
         {
             __MLT_mul_MLT<0,0,dim>::func(&MLTL[0][0],&MLTR[0][0],&MLT[0][0]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void MSQ_mul_MSQ(T(*MSQL)[dim],T(*MSQR)[dim],T(*MSQ)[dim])
+        {
+            __MSQ_mul_MSQ<0,0,dim>::func(&MSQL[0][0],&MSQR[0][0],&MSQ[0][0]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
@@ -3191,7 +3466,7 @@ namespace MAPP_NS
             __DyadicV<dim,dim>::func(scl,x,dyad);
         }*/
         template<const int dim,typename T>
-        void DyadicV(T*&x,T*& y,T* dyad)
+        void DyadicV(T*x,T* y,T* dyad)
         {
             __DyadicV<dim,dim>::func(x,y,dyad);
         }
@@ -3251,6 +3526,18 @@ namespace MAPP_NS
         T MLT_det(T(&M)[dim][dim])
         {
             return __MLT_det<dim,dim>::func(&M[0][0]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        T MSQ_det(T(&M)[dim][dim])
+        {
+            return __MSQ_det<0,dim>::func(&M[0][0]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void MSQ_adj(T(&M)[dim][dim],T(&MA)[dim][dim])
+        {
+            __MSQ_adj<0,0,dim>::func(&M[0][0],&MA[0][0]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

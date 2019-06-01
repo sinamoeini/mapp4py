@@ -24,137 +24,6 @@ MDMuVT::~MDMuVT()
 {
 }
 /*--------------------------------------------
- 
- --------------------------------------------*/
-void MDMuVT::update_x_d__x(type0 fac_x_d)
-{
-    type0* x=atoms->x->begin();
-    type0* f=ff->f->begin();
-    type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements.masses;
-    type0 m_i;
-    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
-    const int natms_lcl=atoms->natms_lcl;
-    for(int i=0;i<natms_lcl;++i)
-    {
-        m_i=m[*elem];
-        Algebra::Do<__dim__>::func([&x_d,&dx_lcl,&x,&f,&m_i,&fac_x_d,this](const int j)
-        {
-            x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;
-            dx_lcl[j]+=x_d[j]*dt;
-            x[j]+=x_d[j]*dt;
-        });
-        
-        f+=__dim__;
-        x_d+=__dim__;
-        x+=__dim__;
-        ++elem;
-    }
-    
-    type0 dx[__dim__]={DESIG(__dim__,0.0)};
-    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    type0 natms=static_cast<type0>(atoms->natms);
-    Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
-    x=atoms->x->begin();
-    for(int i=0;i<natms_lcl;++i,x+=__dim__)
-        Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MDMuVT::update_x_d()
-{
-    
-    type0* f=ff->f->begin();
-    type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
-    type0* m=atoms->elements.masses;
-    type0 m_i;
-    Algebra::zero<__nvoigt__>(__vec_lcl);
-    const int natms_lcl=atoms->natms_lcl;
-    for(int i=0;i<natms_lcl;++i)
-    {
-        m_i=m[*elem];
-        Algebra::Do<__dim__>::func([&x_d,&f,&m_i,this](const int j){x_d[j]+=f[j]*dt2/m_i;});
-        Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-        f+=__dim__;
-        x_d+=__dim__;
-        ++elem;
-    }
-    
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MDMuVT::update_x_d__x_w_dof(type0 fac_x_d)
-{
-    type0* x=atoms->x->begin();
-    type0* f=ff->f->begin();
-    type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
-    bool* dof=atoms->x_dof->begin();
-    type0* m=atoms->elements.masses;
-    type0 m_i;
-    type0 dx_lcl[__dim__]={DESIG(__dim__,0.0)};
-    const int natms_lcl=atoms->natms_lcl;
-    for(int i=0;i<natms_lcl;++i)
-    {
-        m_i=m[*elem];
-        Algebra::Do<__dim__>::func([&x_d,&dx_lcl,&x,&f,&m_i,&fac_x_d,&dof,this](const int j)
-        {
-            if(dof[j]) x_d[j]=x_d[j]*fac_x_d+f[j]*dt2/m_i;
-            dx_lcl[j]+=x_d[j]*dt;
-            x[j]+=x_d[j]*dt;
-        });
-        
-        f+=__dim__;
-        x_d+=__dim__;
-        x+=__dim__;
-        dof+=__dim__;
-        ++elem;
-    }
-    
-    type0 dx[__dim__]={DESIG(__dim__,0.0)};
-    MPI_Allreduce(dx_lcl,dx,__dim__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    type0 natms=static_cast<type0>(atoms->natms);
-    Algebra::Do<__dim__>::func([&dx,natms](const int i){dx[i]/=natms;});
-    x=atoms->x->begin();
-    for(int i=0;i<natms_lcl;++i,x+=__dim__)
-        Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MDMuVT::update_x_d_w_dof()
-{
-    
-    type0* f=ff->f->begin();
-    type0* x_d=atoms->x_d->begin();
-    elem_type* elem=atoms->elem->begin();
-    bool* dof=atoms->x_dof->begin();
-    type0* m=atoms->elements.masses;
-    type0 m_i;
-    Algebra::zero<__nvoigt__>(__vec_lcl);
-    const int natms_lcl=atoms->natms_lcl;
-    for(int i=0;i<natms_lcl;++i)
-    {
-        m_i=m[*elem];
-        Algebra::Do<__dim__>::func([&dof,&x_d,&f,&m_i,this](const int j){if(dof[j])x_d[j]+=f[j]*dt2/m_i;});
-        Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
-        
-        dof+=__dim__;
-        f+=__dim__;
-        x_d+=__dim__;
-        ++elem;
-    }
-    
-    MPI_Allreduce(__vec_lcl,mvv,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
-    T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
-}
-/*--------------------------------------------
  pre run check it throw excepctions
  --------------------------------------------*/
 void MDMuVT::pre_run_chk(AtomsMD* atoms,ForceFieldMD* ff)
@@ -292,74 +161,117 @@ void MDMuVT::run(int nsteps)
     if(ntally) thermo.print(step);
     
     type0 fac,fac_x_d=1.0;
-    for(int istep=0;istep<nsteps;istep++)
+    if(dof_empty)
     {
-        // particle thermostat
-        fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
-        fac*=fac;
-        Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
-        T_part*=fac;
-        
-        update_x_d__x(fac_x_d);
-        
-        if((istep+1)%nevery)
-#ifdef OLD_UPDATE
-            dynamic->update(atoms->x);
-#else
-            dynamic->update<true>();
-#endif
-        else
+        for(int istep=0;istep<nsteps;istep++)
         {
-#ifdef GCMCDEBUG
-#ifdef OLD_UPDATE
-            dynamic->update(atoms->x);
-#else
-            dynamic->update<true>();
-#endif
-            ff->force_calc();
-            delta_u=atoms->pe;
-#endif
-            gcmc.xchng(false,nattempts);
-            gas_frac=static_cast<type0>(gcmc.ngas)/static_cast<type0>(atoms->natms);
-            ndof_part+=static_cast<type0>(gcmc.dof_diff);
-            Algebra::Do<__nvoigt__>::func([this,&gcmc](const int i){mvv[i]+=gcmc.mvv[i];});
-            T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
-        }
+            // particle thermostat
+            fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            update_x_d__x(fac_x_d);
+            
+            if((istep+1)%nevery)
+                dynamic->update<true>();
+            else
+            {
+    #ifdef GCMCDEBUG
+                dynamic->update<true>();
 
-        ff->force_calc();
-        
-#ifdef GCMCDEBUG
-        if((istep+1)%nevery==0)
-        {
-            delta_u-=atoms->pe;
-            if(atoms->comm_rank==0)
-                fprintf(fp_debug,"%d\t%e\t%e\t%e\t%e\n",istep,-delta_u,gcmc.tot_delta_u,fabs((delta_u+gcmc.tot_delta_u)/delta_u),fabs(delta_u+gcmc.tot_delta_u));
+                ff->force_calc();
+                delta_u=atoms->pe;
+    #endif
+                gcmc.xchng(false,nattempts);
+                gas_frac=static_cast<type0>(gcmc.ngas)/static_cast<type0>(atoms->natms);
+                ndof_part+=static_cast<type0>(gcmc.dof_diff);
+                Algebra::Do<__nvoigt__>::func([this,&gcmc](const int i){mvv[i]+=gcmc.mvv[i];});
+                T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+            }
+
+            ff->force_calc();
+            
+    #ifdef GCMCDEBUG
+            if((istep+1)%nevery==0)
+            {
+                delta_u-=atoms->pe;
+                if(atoms->comm_rank==0)
+                    fprintf(fp_debug,"%d\t%e\t%e\t%e\t%e\n",istep,-delta_u,gcmc.tot_delta_u,fabs((delta_u+gcmc.tot_delta_u)/delta_u),fabs(delta_u+gcmc.tot_delta_u));
+            }
+    #endif
+            
+            
+            update_x_d();
+            
+            // particle thermostat
+            fac_x_d=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            
+            Algebra::DoLT<__dim__>::func([this](const int i,const int j)
+            {
+                S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+            });
+            
+            if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
+            if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
         }
-#endif
-        
-        
-        update_x_d();
-        
-        // particle thermostat
-        fac_x_d=fac=thermo_part(T_part/T,ndof_part);
-        fac*=fac;
-        Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
-        T_part*=fac;
-        
-        
-        Algebra::DoLT<__dim__>::func([this](const int i,const int j)
-        {
-            S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
-        });
-        
-        if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
-        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
     }
-    
+    else
+    {
+        for(int istep=0;istep<nsteps;istep++)
+        {
+            // particle thermostat
+            fac_x_d*=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            update_x_d__x_w_dof(fac_x_d);
+            
+            if((istep+1)%nevery)
+                dynamic->update<true>();
+            else
+            {
+
+                gcmc.xchng(false,nattempts);
+                gas_frac=static_cast<type0>(gcmc.ngas)/static_cast<type0>(atoms->natms);
+                ndof_part+=static_cast<type0>(gcmc.dof_diff);
+                Algebra::Do<__nvoigt__>::func([this,&gcmc](const int i){mvv[i]+=gcmc.mvv[i];});
+                T_part=Algebra::Tr_DyadicV<__dim__>(mvv)/(ndof_part*kB);
+            }
+
+            ff->force_calc();
+            
+            update_x_d_w_dof();
+            
+            // particle thermostat
+            fac_x_d=fac=thermo_part(T_part/T,ndof_part);
+            fac*=fac;
+            Algebra::Do<__nvoigt__>::func([this,&fac](int i){mvv[i]*=fac;});
+            T_part*=fac;
+            
+            
+            Algebra::DoLT<__dim__>::func([this](const int i,const int j)
+            {
+                S_part[i][j]=atoms->S_pe[i][j]-mvv[i+j*__dim__-j*(j+1)/2]/atoms->vol;
+            });
+            
+            if(ntally && (istep+1)%ntally==0) thermo.print(step+istep+1);
+            if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+        }
+    }
     if(ntally && nsteps%ntally) thermo.print(step+nsteps);
     if(nevery_xprt && nsteps%nevery_xprt) xprt->write(step+nsteps);
     
-    update_x_d_final(fac_x_d);
+    if(dof_empty)
+        update_x_d_final(fac_x_d);
+    else
+        update_x_d_final_w_dof(fac_x_d);
+    
     if(ntally) thermo.fin();
     
     gcmc.fin();

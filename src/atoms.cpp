@@ -978,6 +978,249 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
 /*--------------------------------------------
  python constructor
  --------------------------------------------*/
+void Atoms::ml_ucell_chg(PyMethodDef& tp_methods)
+{
+    tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    tp_methods.ml_name="ucell_chg";
+    tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<int[__dim__][__dim__],type0> f("ucell_chg",{"N","tol"});
+        f.noptionals=1;
+        f.val<1>()=1.0e-12;
+        if(f(args,kwds)) return NULL;
+        type0 tol=f.val<1>();
+        int N[__dim__][__dim__];
+        memcpy(N[0],f.val<0>(),__dim__*__dim__*sizeof(int));
+        int N_t[__dim__][__dim__];
+        int N_adj[__dim__][__dim__];
+        int N_adj_t[__dim__][__dim__];
+        Algebra::MSQ_adj(N,N_adj);
+        Algebra::Do<__dim__>::func([&N_adj,&N_adj_t,&N,&N_t](int i)
+        {
+            Algebra::Do<__dim__>::func([&N_adj,&N_adj_t,&N,&N_t,&i](int j)
+            {
+                N_adj_t[i][j]=N_adj[j][i];
+                N_t[i][j]=N[j][i];
+            });
+        });
+        int N_det=Algebra::V_mul_V<__dim__>(N[0],N_adj_t[0]);
+        if(N_det<=0)
+        {
+            PyErr_SetString(PyExc_TypeError,"determinant of N must be positive");
+            return NULL;
+        }
+        
+        type0 Nd[__dim__][__dim__];
+        type0* __Nd=Nd[0];
+        int* __N=N[0];
+        Algebra::Do<__dim__*__dim__>::func([&__N,__Nd](int i){__Nd[i]=static_cast<type0>(__N[i]);});
+        
+        
+        type0 H1_SQ[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 H1[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 B1[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        Atoms* atoms=reinterpret_cast<Atoms::Object*>(self)->atoms;
+        Algebra::MSQ_mul_MLT(Nd,atoms->H,H1_SQ);
+        Algebra::MSQ_2_MLT(H1_SQ,H1);
+        Algebra::DoLT<__dim__-1>::func([&H1,&tol](int i,int j)
+        {
+            if(fabs(H1[i+1][j])<tol) H1[i+1][j]=0.0;
+               
+        });
+        
+        Algebra::MLT_inv(H1,B1);
+        type0 Q[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        Algebra::MLT_mul_MSQ(B1,H1_SQ,Q);
+        type0 H0_new[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 (&H0)[__dim__][__dim__]=atoms->H;
+        Algebra::MSQ_mul_MSQ(Q,H0,H0_new);
+        
+        
+        /*
+        type0 H0_t[__dim__][__dim__];
+        Algebra::Do<__dim__>::func([&H0,&H0_t](int i)
+        {
+            Algebra::Do<__dim__>::func([&H0,&H0_t,&i](int j)
+            {
+                H0_t[i][j]=H0[j][i];
+            });
+        });
+        
+        type0 H0_t_mul_H0[__dim__][__dim__]{DESIG2(__dim__,__dim__,0)};
+        Algebra::MSQ_mul_MSQ(H0_t,H0,H0_t_mul_H0);
+        int N_t_mul_N[__dim__][__dim__]{DESIG2(__dim__,__dim__,0)};
+        Algebra::MSQ_mul_MSQ(N_t,N,N_t_mul_N);
+        //return var<int[__dim__][__dim__]>::build(N_t_mul_N);
+        type0 N_t_mul_Nd[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        __Nd=N_t_mul_Nd[0];
+        __N=N_t_mul_N[0];
+        Algebra::Do<__dim__*__dim__>::func([&__N,__Nd](int i){__Nd[i]=static_cast<type0>(__N[i]);});
+        
+        type0 A[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        Algebra::MUT_mul_MSQ_mul_MLT(N_t_mul_Nd,H0,A);
+        
+        
+        type0 dy[__dim__*__dim__];
+        Algebra::zero<__dim__*__dim__>(dy);
+        Algebra::DyadicV<__dim__>(Nd[0],Nd[1],dy);
+        */
+        
+        
+        
+        
+        
+        
+        
+        
+        /*
+         here we are doing two things
+         rotating the atoms for the new coordinates system
+         finding the maximum id
+         */
+        unsigned int* __id=atoms->id->begin();
+        type0* __x=atoms->x->begin();
+        type0 __x_tmp[__dim__];
+        int natms_lcl=atoms->natms_lcl;
+        unsigned int max_id_lcl=0;
+        unsigned int max_id;
+        for(int i=0;i<natms_lcl;i++,__x+=__dim__)
+        {
+            Algebra::V_eq<__dim__>(__x,__x_tmp);
+            Algebra::MSQ_mul_V(Q,__x_tmp,__x);
+            max_id_lcl=MAX(max_id_lcl,__id[i]);
+        }
+        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<unsigned int>::MPI_T,MPI_MAX,atoms->world);
+        
+        
+        
+        
+        
+        /*
+         now we are ready to replicate
+         */
+        int nvecs=atoms->nvecs;
+        vec** vecs=atoms->vecs;
+        for(int i=0;i<nvecs;i++)
+            vecs[i]->replicate(N_det);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        int min_cell[__dim__]{DESIG(__dim__,0)};
+        int len_cell[__dim__]{DESIG(__dim__,0)};
+        
+        Algebra::Do<__dim__>::func([&min_cell,&N,&len_cell](int i)
+        {
+            int* __N=N[i];
+            Algebra::Do<__dim__>::func([&min_cell,&__N,&len_cell](int j)
+            {
+                if(__N[j]>0)
+                {
+                    len_cell[j]+=__N[j];
+                }
+                else
+                {
+                    min_cell[j]+=__N[j];
+                    len_cell[j]-=__N[j];
+                }
+            });
+        });
+        
+        int tot_cell=1;
+        Algebra::Do<__dim__>::func([&len_cell,&tot_cell](int i){tot_cell*=len_cell[i];});
+    
+        int p_cell[__dim__]{DESIG(__dim__,1)};
+        Algebra::DoLT<__dim__-1>::func([&p_cell,&len_cell](int i,int j)
+        {
+            p_cell[__dim__-2-i]*=len_cell[__dim__-1-j];
+        });
+    
+        
+        int is[__dim__];
+        type0 dx[__dim__];
+        __id=atoms->id->begin();
+        __x=atoms->x->begin();
+        int icurs=1;
+        for(int i=0;i<tot_cell;i++)
+        {
+            int no=i;
+            Algebra::V_eq<__dim__>(min_cell,is);
+            Algebra::Do<__dim__>::func([&is,&p_cell,&no](int i)
+            {
+                is[i]+=static_cast<int>(no/p_cell[i]);
+                no=no%p_cell[i];
+            });
+            if(Algebra::V_mul_V<__dim__>(is,is)==0) continue;
+            bool is_in=true;
+            Algebra::Do<__dim__>::func([&is,&N_adj_t,N_det,&is_in](int i)
+            {
+                if(is_in)
+                {
+                    int dotp=Algebra::V_mul_V<__dim__>(is,N_adj_t[i]);
+                    if(dotp<0 || dotp>=N_det) is_in=false;
+                }
+            });
+            if(!is_in) continue;
+            
+            
+            Algebra::zero<__dim__>(dx);
+            Algebra::Do<__dim__>::func([&dx,&is,&H0_new](int i)
+            {
+                Algebra::V_add_x_mul_V<__dim__>(static_cast<type0>(is[i]),H0_new[i],dx);
+            });
+            
+            
+            unsigned int did=static_cast<unsigned int>(icurs)*(max_id+1);
+            for(int j=0;j<natms_lcl;j++)
+            {
+                Algebra::V_add<__dim__>(dx,__x);
+                *__id+=did;
+                __x+=__dim__;
+                ++__id;
+            }
+
+            ++icurs;
+            
+        }
+        
+        memcpy(atoms->H[0],H1[0],__dim__*__dim__*sizeof(type0));
+        atoms->update_H();
+        atoms->natms_lcl*=N_det;
+        atoms->natms*=N_det;
+        atoms->reset_domain();
+        
+        
+        Py_RETURN_NONE;
+//        return var<type0[__dim__][__dim__]>::build(Q);
+//        int n=Algebra::MSQ_det(f.val<0>());
+//        return var<int>::build(n);
+    });
+    
+    tp_methods.ml_doc=R"---(
+    mul(N)
+    
+    Replicates the box in each dimension according to the given values by the vector
+    
+    Parameters
+    ----------
+    N : int[dim]
+       Number of replications in all dimensions, here dim is the dimension of simulation
+    
+    Returns
+    -------
+    None
+   
+    )---";
+}
+/*--------------------------------------------
+ python constructor
+ --------------------------------------------*/
 void Atoms::ml_autogrid(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;

@@ -319,27 +319,28 @@ void AtomsMD::getset_pe(PyGetSetDef& getset)
 }
 /*--------------------------------------------*/
 #ifdef POTFIT
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(16);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(17);
 #else
-PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(15);
+PyMethodDef AtomsMD::methods[]=EmptyPyMethodDef(16);
 #endif
 /*--------------------------------------------*/
 void AtomsMD::setup_tp_methods()
 {
     ml_do(methods[0]);
     ml_mul(methods[1]);
-    ml_autogrid(methods[2]);
-    ml_strain(methods[3]);
-    ml_create_temp(methods[4]);
-    ml_add_elem(methods[5]);
-    ForceFieldLJ::ml_new(methods[6]);
-    ForceFieldEAM::ml_new(methods[7],methods[8],methods[9]);
-    ForceFieldFS::ml_new(methods[10]);
-    ForceFieldEAMFunc::ml_new(methods[11]);
-    ImportCFGMD::ml_import(methods[12]);
-    BCTPolarity::ml_bct_polarity(methods[13]);
+    ml_ucell_chg(methods[2]);
+    ml_autogrid(methods[3]);
+    ml_strain(methods[4]);
+    ml_create_temp(methods[5]);
+    ml_add_elem(methods[6]);
+    ForceFieldLJ::ml_new(methods[7]);
+    ForceFieldEAM::ml_new(methods[8],methods[9],methods[10]);
+    ForceFieldFS::ml_new(methods[11]);
+    ForceFieldEAMFunc::ml_new(methods[12]);
+    ImportCFGMD::ml_import(methods[13]);
+    BCTPolarity::ml_bct_polarity(methods[14]);
 #ifdef POTFIT
-    ForceFieldEAMPotFitAckOgata::ml_new(methods[14]);
+    ForceFieldEAMPotFitAckOgata::ml_new(methods[15]);
 #endif
 }
 /*--------------------------------------------

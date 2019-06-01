@@ -12,10 +12,6 @@ namespace MAPP_NS
         int nevery;
         int nattempts;
     protected:
-        void update_x_d__x(type0);
-        void update_x_d__x_w_dof(type0);
-        void update_x_d();
-        void update_x_d_w_dof();
         void pre_run_chk(AtomsMD*,ForceFieldMD*);
         void pre_init();
     public:

@@ -260,15 +260,15 @@ size_t FileReader::concatenate(size_t nargs,char** args
 {
     size_t lngth=0;
     size_t pos=0;
-    for(int i=0;i<nargs;i++)
+    for(size_t i=0;i<nargs;i++)
         lngth+=strlen(args[i]);
     
     lngth+=nargs;
     line=new char[lngth];
-    for(int i=0;i<nargs;i++)
+    for(size_t i=0;i<nargs;i++)
     {
         lngth=strlen(args[i]);
-        for(int j=0;j<lngth;j++)
+        for(size_t j=0;j<lngth;j++)
         {
             line[pos]=args[i][j];
             pos++;

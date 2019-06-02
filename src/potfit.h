@@ -534,7 +534,7 @@ void PotFit<FF,NELEMS>::min_cg(int nsteps)
         f_f0=0.0;
         for(size_t i=0;i<nvars;i++) f_f0+=f[i]*f0[i];
         ratio=(f_f-f_f0)/(f0_f0);
-        for(int j=0;j<nvars;j++) h[j]=ratio*h[j]+f[j];
+        for(size_t j=0;j<nvars;j++) h[j]=ratio*h[j]+f[j];
         //advance h here
         f0_f0=f_f;
     }
@@ -677,7 +677,7 @@ template<class FF,size_t NELEMS>
 type0 PotFit<FF,NELEMS>::iter()
 {
     type0 err=deriv();
-    for(int i=0;i<nvars;i++)
+    for(size_t i=0;i<nvars;i++)
         f[i]= (ff->dofs[i]) ? -ff->dvs[i]:0.0;
     return err;
 }
@@ -896,7 +896,7 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     MinCG** mins;
     Memory::alloc(mins,nconfigs);
-    for(int i=0;i<nconfigs;i++) mins[i]=min_objs[i]->min;
+    for(size_t i=0;i<nconfigs;i++) mins[i]=min_objs[i]->min;
     Object* __self=reinterpret_cast<Object*>(self);
     __self->potfit=new PotFit<FF,NELEMS>(f.val<0>(),std::move(names),
     files,nprocs,targets,mins,funcs,nconfigs,world);
@@ -904,7 +904,7 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Memory::dealloc(mins);
     
     __self->mins=min_objs;
-    for(int i=0;i<nconfigs;i++)
+    for(size_t i=0;i<nconfigs;i++)
         Py_INCREF(min_objs[i]);
     
     min_objs=NULL;
@@ -1722,7 +1722,7 @@ void PotFit<FF,NELEMS>::getset_mins(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         
-        int __nconfigs=reinterpret_cast<Object*>(self)->potfit->nconfigs;
+        size_t __nconfigs=static_cast<size_t>(reinterpret_cast<Object*>(self)->potfit->nconfigs);
         MinCG::Object** mins=reinterpret_cast<Object*>(self)->mins;
         
         PyObject* py_obj=PyList_New(__nconfigs);
@@ -1739,7 +1739,7 @@ void PotFit<FF,NELEMS>::getset_mins(PyGetSetDef& getset)
         PotFit<FF,NELEMS>* potfit=__self->potfit;
         int __nconfigs=potfit->nconfigs;
         int __my_conf=potfit->my_conf;
-        if(var.__var__.size!=__nconfigs)
+        if(var.__var__.size!=static_cast<size_t>(__nconfigs))
         {
             PyErr_SetString(PyExc_TypeError,"size mismatch");
             return -1;

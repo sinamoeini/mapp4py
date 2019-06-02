@@ -26,7 +26,7 @@ void ForceFieldEAMDMD::__force_calc_gp()
         Memory::alloc(drho_phi_dalpha,no_0);
     }
     
-    for(int i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
+    for(size_t i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
     
     
     

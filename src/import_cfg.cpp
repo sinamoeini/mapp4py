@@ -249,7 +249,7 @@ void ImportCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_
     
     bool mass_flag=false;
     bool elem_init=false;
-    
+    size_t __entry_count=static_cast<size_t>(entry_count);
     
     while(!freader.finished)
     {
@@ -259,7 +259,7 @@ void ImportCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_
             freader(line,line_cpcty);
             continue;
         }
-        if(nargs!=1 && nargs!=entry_count)
+        if(nargs!=1 && nargs!=__entry_count)
         {
             delete [] buff;
             delete [] args;

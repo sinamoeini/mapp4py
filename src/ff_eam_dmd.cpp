@@ -138,7 +138,7 @@ void ForceFieldEAMDMD::__force_calc()
         Memory::alloc(drho_phi_dalpha,no_0);
     }
     
-    for(int i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
+    for(size_t i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
     
     
     
@@ -390,8 +390,8 @@ void ForceFieldEAMDMD::__prepJ_n_res(Vec<type0>* fvec_ptr,Vec<type0>* f_alphavec
         Memory::alloc(ddrho_phi_dalphadalpha,no_0);
     }
     
-    for(int i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
-    for(int i=0;i<max_pairs1*3;i++) ddrho_phi_drdr[i]=ddrho_phi_dalphadalpha[i]=ddrho_phi_drdalpha[i]=0.0;
+    for(size_t i=0;i<max_pairs0*3;i++) rho_phi[i]=drho_phi_dr[i]=drho_phi_dalpha[i]=0.0;
+    for(size_t i=0;i<max_pairs1*3;i++) ddrho_phi_drdr[i]=ddrho_phi_dalphadalpha[i]=ddrho_phi_drdalpha[i]=0.0;
     
     type0 r,r_inv;
     size_t m;

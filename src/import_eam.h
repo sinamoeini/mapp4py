@@ -416,20 +416,20 @@ type0**& r_c,MPI_Comm world)
     size_t nelem_refs=nargs-1;
     elem_ref=new int[nelem_refs];
     found=new bool[nelems];
-    for(int i=0;i<nelems;i++) found[i]=false;
-    for(int i=0;i<nelem_refs;i++)
+    for(size_t i=0;i<nelems;i++) found[i]=false;
+    for(size_t i=0;i<nelem_refs;i++)
     {
         int ielem=-1;
-        for(int j=0;j<nelems&& ielem==-1 ;j++)
+        for(size_t j=0;j<nelems&& ielem==-1 ;j++)
             if(!strcmp(args[1+i],elems[j].c_str()))
             {
                 found[j]=true;
-                ielem=j;
+                ielem=static_cast<int>(j);
             }
         elem_ref[i]=ielem;
     }
     
-    for(int i=0;i<nelems;i++)
+    for(size_t i=0;i<nelems;i++)
     {
         if(!found[i])
         {
@@ -672,20 +672,20 @@ type0**& r_c,MPI_Comm world)
     size_t nelem_refs=nargs-1;
     elem_ref=new int[nelem_refs];
     found=new bool[nelems];
-    for(int i=0;i<nelems;i++) found[i]=false;
-    for(int i=0;i<nelem_refs;i++)
+    for(size_t i=0;i<nelems;i++) found[i]=false;
+    for(size_t i=0;i<nelem_refs;i++)
     {
         int ielem=-1;
-        for(int j=0;j<nelems&& ielem==-1 ;j++)
+        for(size_t j=0;j<nelems&& ielem==-1 ;j++)
             if(!strcmp(args[1+i],elems[j].c_str()))
             {
                 found[j]=true;
-                ielem=j;
+                ielem=static_cast<int>(j);
             }
         elem_ref[i]=ielem;
     }
     
-    for(int i=0;i<nelems;i++)
+    for(size_t i=0;i<nelems;i++)
     {
         if(!found[i])
         {

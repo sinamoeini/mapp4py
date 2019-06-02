@@ -51,7 +51,7 @@ vec_names(NULL)
     for(size_t i=0;i<__nuser_vecs;i++)
     {
         
-        for(int j=0;j<i && valid_user_vecs[i];j++)
+        for(size_t j=0;j<i && valid_user_vecs[i];j++)
             if(std::strcmp(__user_vec_names[i].c_str(),__user_vec_names[j].c_str())==0)
                 valid_user_vecs[i]=false;
         

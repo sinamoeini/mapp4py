@@ -87,7 +87,7 @@ inline void vec::change_dim(int new_dim)
     int new_byte_sz=(byte_sz/dim)*new_dim;
     int min_byte_sz=MIN(new_byte_sz,byte_sz);
     byte* __data=new byte[new_byte_sz*vec_cpcty];
-    for(int i=0;i<vec_sz;i++)
+    for(size_t i=0;i<vec_sz;i++)
         memcpy(__data+i*new_byte_sz,data+i*byte_sz,min_byte_sz);
     
     delete [] data;
@@ -676,7 +676,7 @@ inline void Vec<T>::fill()
     
     
     T* __data=begin();
-    for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
+    for(size_t i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
     __is_empty__=false;
 }
 /*--------------------------------------------

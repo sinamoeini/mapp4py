@@ -185,7 +185,7 @@ size_t* Var::is_array(const int r)
     size_t sz=1;
     for(int i=0;i<r;i++)
     {
-        for(int j=1;j<sz;j++)
+        for(size_t j=1;j<sz;j++)
         {
             if(sz_lst[i][j]!=sz_lst[i][0])
             {

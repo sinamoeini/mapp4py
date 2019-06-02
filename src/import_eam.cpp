@@ -116,7 +116,7 @@ void ImportEAM::__interpolate(size_t n,type0 delta,type0(*spline)[7])
     spline[n-2][1]=0.5*(spline[n-1][0]-spline[n-3][0]);
     spline[n-1][1]=spline[n-1][0]-spline[n-2][0];
     
-    for(int i=2;i<n-2;i++)
+    for(size_t i=2;i<n-2;i++)
         spline[i][1]=((spline[i-2][0]-spline[i+2][0])+
                       8.0*(spline[i+1][0]-spline[i-1][0]))/12.0;
     
@@ -153,7 +153,7 @@ void ImportEAM::read_double(type0* buff,size_t n,FileReader& fr,char*& line,size
         if(nargs+i>n)
             throw Print::vprintf("%s file has extra arguments",fr.file);
         
-        for(int j=0;j<nargs;j++)
+        for(size_t j=0;j<nargs;j++)
             buff[i++]=atof(args[j]);
     }
 }

@@ -176,7 +176,7 @@ void ExamplePython::ml_test(PyMethodDef& tp_methods)
         type0* alpha_ave=new type0[nelems];
         type0* n_lcl=new type0[nelems];
         type0* n=new type0[nelems];
-        for(size_t i=0;i<nelems;i++) alpha_ave_lcl[i]=n_lcl[i]=0.0;
+        for(int i=0;i<nelems;i++) alpha_ave_lcl[i]=n_lcl[i]=0.0;
         type0* c=atoms->c->begin();
         type0* alpha=atoms->alpha->begin();
         elem_type* elem=atoms->elem->begin();

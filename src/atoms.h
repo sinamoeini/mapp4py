@@ -540,7 +540,7 @@ namespace MAPP_NS
         static void setup_tp_methods();
         static void ml_strain(PyMethodDef&);
         static void ml_mul(PyMethodDef&);
-        static void ml_ucell_chg(PyMethodDef&);
+        static void ml_cell_change(PyMethodDef&);
         static void ml_autogrid(PyMethodDef&);
         static void ml_do(PyMethodDef&);
         

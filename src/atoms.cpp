@@ -978,17 +978,23 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
 /*--------------------------------------------
  python constructor
  --------------------------------------------*/
-void Atoms::ml_ucell_chg(PyMethodDef& tp_methods)
+void Atoms::ml_cell_change(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
-    tp_methods.ml_name="ucell_chg";
+    tp_methods.ml_name="cell_change";
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<int[__dim__][__dim__],type0> f("ucell_chg",{"N","tol"});
+        FuncAPI<int[__dim__][__dim__],type0> f("cell_change",{"N","tol"});
         f.noptionals=1;
-        f.val<1>()=1.0e-12;
+        f.val<1>()=pow(std::numeric_limits<type0>::epsilon(),0.75);
+        f.logics<1>()[0]=VLogics("ge",0.0);
         if(f(args,kwds)) return NULL;
+        if(Algebra::MSQ_det(f.val<0>())<=0)
+        {
+            PyErr_SetString(PyExc_TypeError,"determinant of N should be greater than 0");
+            return NULL;
+        }
         type0 tol=f.val<1>();
         int N[__dim__][__dim__];
         memcpy(N[0],f.val<0>(),__dim__*__dim__*sizeof(int));
@@ -1005,11 +1011,7 @@ void Atoms::ml_ucell_chg(PyMethodDef& tp_methods)
             });
         });
         int N_det=Algebra::V_mul_V<__dim__>(N[0],N_adj_t[0]);
-        if(N_det<=0)
-        {
-            PyErr_SetString(PyExc_TypeError,"determinant of N must be positive");
-            return NULL;
-        }
+        
         
         type0 Nd[__dim__][__dim__];
         type0* __Nd=Nd[0];
@@ -1022,6 +1024,8 @@ void Atoms::ml_ucell_chg(PyMethodDef& tp_methods)
         type0 B1[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         Atoms* atoms=reinterpret_cast<Atoms::Object*>(self)->atoms;
         Algebra::MSQ_mul_MLT(Nd,atoms->H,H1_SQ);
+        
+        
         Algebra::MSQ_2_MLT(H1_SQ,H1);
         Algebra::DoLT<__dim__-1>::func([&H1,&tol](int i,int j)
         {
@@ -1034,38 +1038,11 @@ void Atoms::ml_ucell_chg(PyMethodDef& tp_methods)
         Algebra::MLT_mul_MSQ(B1,H1_SQ,Q);
         type0 H0_new[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         type0 (&H0)[__dim__][__dim__]=atoms->H;
-        Algebra::MSQ_mul_MSQ(Q,H0,H0_new);
-        
-        
-        /*
-        type0 H0_t[__dim__][__dim__];
-        Algebra::Do<__dim__>::func([&H0,&H0_t](int i)
+        Algebra::Do<__dim__>::func([&H0,&H0_new,&Q](int i)
         {
-            Algebra::Do<__dim__>::func([&H0,&H0_t,&i](int j)
-            {
-                H0_t[i][j]=H0[j][i];
-            });
+            Algebra::MSQ_mul_V(Q,H0[i],H0_new[i]);
         });
-        
-        type0 H0_t_mul_H0[__dim__][__dim__]{DESIG2(__dim__,__dim__,0)};
-        Algebra::MSQ_mul_MSQ(H0_t,H0,H0_t_mul_H0);
-        int N_t_mul_N[__dim__][__dim__]{DESIG2(__dim__,__dim__,0)};
-        Algebra::MSQ_mul_MSQ(N_t,N,N_t_mul_N);
-        //return var<int[__dim__][__dim__]>::build(N_t_mul_N);
-        type0 N_t_mul_Nd[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        __Nd=N_t_mul_Nd[0];
-        __N=N_t_mul_N[0];
-        Algebra::Do<__dim__*__dim__>::func([&__N,__Nd](int i){__Nd[i]=static_cast<type0>(__N[i]);});
-        
-        type0 A[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        Algebra::MUT_mul_MSQ_mul_MLT(N_t_mul_Nd,H0,A);
-        
-        
-        type0 dy[__dim__*__dim__];
-        Algebra::zero<__dim__*__dim__>(dy);
-        Algebra::DyadicV<__dim__>(Nd[0],Nd[1],dy);
-        */
-        
+       
         
         
         

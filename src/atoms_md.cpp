@@ -328,7 +328,7 @@ void AtomsMD::setup_tp_methods()
 {
     ml_do(methods[0]);
     ml_mul(methods[1]);
-    ml_ucell_chg(methods[2]);
+    ml_cell_change(methods[2]);
     ml_autogrid(methods[3]);
     ml_strain(methods[4]);
     ml_create_temp(methods[5]);

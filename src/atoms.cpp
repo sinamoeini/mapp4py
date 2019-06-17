@@ -813,7 +813,7 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
     tp_methods.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
     [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
     {
-        FuncAPI<type0[__dim__][__dim__]> f("strain",{"eps"});
+        FuncAPI<type0[__dim__][__dim__]> f("strain",{"E"});
         if(f(args,kwds)) return NULL;
         
         Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
@@ -858,14 +858,14 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
     });
     
     tp_methods.ml_doc=R"---(
-    strain(eps)
+    strain(E)
     
     Strain the system (NEED MORE EXPLANATION TBCMPLTD)
     
         
     Parameters
     ----------
-    eps : double[dim][dim]
+    E : double[dim][dim]
        Strain tensor, here dim is the dimension of simulation
     
     Returns
@@ -1019,14 +1019,14 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
         Algebra::Do<__dim__*__dim__>::func([&__N,__Nd](int i){__Nd[i]=static_cast<type0>(__N[i]);});
         
         
-        type0 H1_SQ[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 H1_old[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         type0 H1[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         type0 B1[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
         Atoms* atoms=reinterpret_cast<Atoms::Object*>(self)->atoms;
-        Algebra::MSQ_mul_MLT(Nd,atoms->H,H1_SQ);
+        Algebra::MSQ_mul_MLT(Nd,atoms->H,H1_old);
         
         
-        Algebra::MSQ_2_MLT(H1_SQ,H1);
+        Algebra::MSQ_2_MLT(H1_old,H1);
         Algebra::DoLT<__dim__-1>::func([&H1,&tol](int i,int j)
         {
             if(fabs(H1[i+1][j])<tol) H1[i+1][j]=0.0;
@@ -1035,12 +1035,12 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
         
         Algebra::MLT_inv(H1,B1);
         type0 Q[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        Algebra::MLT_mul_MSQ(B1,H1_SQ,Q);
-        type0 H0_new[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        type0 (&H0)[__dim__][__dim__]=atoms->H;
-        Algebra::Do<__dim__>::func([&H0,&H0_new,&Q](int i)
+        Algebra::MLT_mul_MSQ(B1,H1_old,Q);
+        type0 H0[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        type0 (&H0_old)[__dim__][__dim__]=atoms->H;
+        Algebra::Do<__dim__>::func([&H0_old,&H0,&Q](int i)
         {
-            Algebra::MSQ_mul_V(Q,H0[i],H0_new[i]);
+            Algebra::MSQ_mul_V(Q,H0_old[i],H0[i]);
         });
        
         
@@ -1147,9 +1147,9 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
             
             
             Algebra::zero<__dim__>(dx);
-            Algebra::Do<__dim__>::func([&dx,&is,&H0_new](int i)
+            Algebra::Do<__dim__>::func([&dx,&is,&H0](int i)
             {
-                Algebra::V_add_x_mul_V<__dim__>(static_cast<type0>(is[i]),H0_new[i],dx);
+                Algebra::V_add_x_mul_V<__dim__>(static_cast<type0>(is[i]),H0[i],dx);
             });
             
             

@@ -1739,14 +1739,14 @@ namespace MAPP_NS
             static inline T func(T* M)
             {
                 T MC[dim-1][dim-1];
-                __cofac<0,0,i,dim-1>::func(M,MC[0]);
-                return __POW<i>::func(-1)*M[i]*__MSQ_det<0,dim-1>::func(MC[0])+
-                __MSQ_det<i+1,dim>::func(M);
+                __cofac<0,0,dim-i,dim-1>::func(M,MC[0]);
+                return __POW<dim-i>::func(-1)*M[i]*__MSQ_det<dim-1,dim-1>::func(MC[0])+
+                __MSQ_det<i-1,dim>::func(M);
             }
         };
         
         template<const int dim>
-        class __MSQ_det<dim-1,dim>
+        class __MSQ_det<1,dim>
         {
         public:
             template<typename T>
@@ -1754,13 +1754,13 @@ namespace MAPP_NS
             {
                 T MC[dim-1][dim-1];
                 __cofac<0,0,dim-1,dim-1>::func(M,MC[0]);
-                return __POW<dim-1>::func(-1)*M[dim-1]*__MSQ_det<0,dim-1>::func(MC[0]);
+                return __POW<dim-1>::func(-1)*M[dim-1]*__MSQ_det<dim-1,dim-1>::func(MC[0]);
             }
         };
         
         
         template<>
-        class __MSQ_det<0,2>
+        class __MSQ_det<2,2>
         {
         public:
             template<typename T>
@@ -1772,7 +1772,7 @@ namespace MAPP_NS
         };
         
         template<>
-        class __MSQ_det<0,1>
+        class __MSQ_det<1,1>
         {
         public:
             template<typename T>
@@ -1792,28 +1792,28 @@ namespace MAPP_NS
             static inline void func(T* M,T* MA)
             {
                 T MC[dim-1][dim-1];
-                __cofac<0,j,i,dim-1>::func(M,MC[0]);
-                MA[i*dim+j]=__POW<i+j>::func(-1)*__MSQ_det<0,dim-1>::func(MC[0]);
-                __MSQ_adj<i,j+1,dim>::func(M,MA);
+                __cofac<0,dim-j,dim-i,dim-1>::func(M,MC[0]);
+                MA[(dim-i)*dim+dim-j]=__POW<2*dim-i-j>::func(-1)*__MSQ_det<dim-1,dim-1>::func(MC[0]);
+                __MSQ_adj<i,j-1,dim>::func(M,MA);
             }
         };
         
         template<const int i,const int dim>
-        class __MSQ_adj<i,dim-1,dim>
+        class __MSQ_adj<i,1,dim>
         {
         public:
             template<typename T>
             static inline void func(T* M,T* MA)
             {
                 T MC[dim-1][dim-1];
-                __cofac<0,dim-1,i,dim-1>::func(M,MC[0]);
-                MA[i*dim+dim-1]=__POW<i+dim-1>::func(-1)*__MSQ_det<0,dim-1>::func(MC[0]);
-                __MSQ_adj<i+1,0,dim>::func(M,MA);
+                __cofac<0,dim-1,dim-i,dim-1>::func(M,MC[0]);
+                MA[(dim-i)*dim+dim-1]=__POW<dim-i+dim-1>::func(-1)*__MSQ_det<dim-1,dim-1>::func(MC[0]);
+                __MSQ_adj<i-1,dim,dim>::func(M,MA);
             }
         };
         
         template<const int dim>
-        class __MSQ_adj<dim-1,dim-1,dim>
+        class __MSQ_adj<1,1,dim>
         {
         public:
             template<typename T>
@@ -1821,7 +1821,7 @@ namespace MAPP_NS
             {
                 T MC[dim-1][dim-1];
                 __cofac<0,dim-1,dim-1,dim-1>::func(M,MC[0]);
-                MA[(dim-1)*dim+dim-1]=__MSQ_det<0,dim-1>::func(MC[0]);
+                MA[(dim-1)*dim+dim-1]=__MSQ_det<dim-1,dim-1>::func(MC[0]);
             }
         };
         
@@ -2439,7 +2439,7 @@ namespace MAPP_NS
         
         
         
-        template<const int row,const int cl,const int dim>
+        template<const int i,const int j,const int dim>
         class __MSQ_mul_MSQ
         {
         public:
@@ -2447,29 +2447,30 @@ namespace MAPP_NS
             static inline void func(T* MSQL,T* MSQR,T* MSQ)
             {
                 *MSQ=__V_strd_mul_V<dim,dim>::func(MSQR,MSQL);
-                __MSQ_mul_MSQ<row,cl+1,dim>::func(MSQL,MSQR+1,MSQ+1);
+                __MSQ_mul_MSQ<i,j-1,dim>::func(MSQL,MSQR+1,MSQ+1);
             }
         };
         
-        template<const int row,const int dim>
-        class __MSQ_mul_MSQ<row,dim-1,dim>
+        template<const int i,const int dim>
+        class __MSQ_mul_MSQ<i,1,dim>
         {
         public:
             template<typename T>
             static inline void func(T* MSQL,T* MSQR,T* MSQ)
             {
                 *MSQ=__V_strd_mul_V<dim,dim>::func(MSQR,MSQL);
-                __MSQ_mul_MSQ<row+1,0,dim>::func(MSQL+dim,MSQR-dim+1,MSQ+1);
+                __MSQ_mul_MSQ<i-1,dim,dim>::func(MSQL+dim,MSQR-dim+1,MSQ+1);
             }
         };
         
         template<const int dim>
-        class __MSQ_mul_MSQ<dim,0,dim>
+        class __MSQ_mul_MSQ<1,1,dim>
         {
         public:
             template<typename T>
             static inline void func(T* MSQL,T* MSQR,T* MSQ)
             {
+                *MSQ=__V_strd_mul_V<dim,dim>::func(MSQR,MSQL);
             }
         };
         
@@ -3531,13 +3532,13 @@ namespace MAPP_NS
         template<const int dim,typename T>
         T MSQ_det(T(&M)[dim][dim])
         {
-            return __MSQ_det<0,dim>::func(&M[0][0]);
+            return __MSQ_det<dim,dim>::func(&M[0][0]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
         void MSQ_adj(T(&M)[dim][dim],T(&MA)[dim][dim])
         {
-            __MSQ_adj<0,0,dim>::func(&M[0][0],&MA[0][0]);
+            __MSQ_adj<dim,dim,dim>::func(&M[0][0],&MA[0][0]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

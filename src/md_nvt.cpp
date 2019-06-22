@@ -131,13 +131,13 @@ void MDNVT::update_x_d()
  --------------------------------------------*/
 void MDNVT::update_x_d__x__x_d(type0 fac_x_d)
 {
-    update_x_d__x_w_dof(fac_x_d);
+    update_x_d__x(fac_x_d);
     
     dynamic->update<true>();
     
     ff->force_calc();
     
-    update_x_d_w_dof();
+    update_x_d();
 }
 /*--------------------------------------------
  

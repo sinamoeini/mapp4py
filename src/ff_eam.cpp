@@ -603,7 +603,7 @@ void ForceFieldEAM::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodD
         FuncAPI<std::string*,std::string*> f("ff_eam_funcfl",{"funcfl_files","elems"});
         f.noptionals=1;
         const std::string* names=__self->atoms->elements.names;
-        const size_t nelems=__self->atoms->elements.nelems;
+        size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
         if(f.remap<1,0>("elements present in system",names,nelems)) return NULL;
         

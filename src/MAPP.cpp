@@ -16,9 +16,10 @@
 #ifdef POTFIT
 #include "potfit.h"
 #endif
+#include "import_eam.h"
 using namespace MAPP_NS;
 /*--------------------------------------------*/
-PyMethodDef MAPP::methods[]=EmptyPyMethodDef(3);
+PyMethodDef MAPP::methods[]=EmptyPyMethodDef(6);
 /*--------------------------------------------*/
 void MAPP::setup_methods()
 {
@@ -71,6 +72,9 @@ void MAPP::setup_methods()
         >>> resume_slave_out()
 
     )---";
+    
+    ImportEAM::ml_read_eam(methods[2],methods[3],methods[4]);
+    
 }
 /*--------------------------------------------
  

@@ -2,6 +2,7 @@
 #define __MAPP__import_eam__
 #include "global.h"
 #include "import.h"
+typedef struct PyMethodDef PyMethodDef;
 namespace MAPP_NS
 {
     class ImportEAM
@@ -23,21 +24,24 @@ namespace MAPP_NS
         type0**&,MPI_Comm=MPI_COMM_WORLD);
         
         template<size_t N0,size_t N1>
-        static void setfl(size_t,std::string*,std::string,
+        static void setfl(size_t&,std::string*,std::string,
         type0&,type0&,size_t&,size_t&,
         type0(***&)[N0],type0(***&)[N0],type0(**&)[N1],
         type0**&,MPI_Comm=MPI_COMM_WORLD);
         
         template<size_t N0,size_t N1>
-        static void fs(size_t,std::string*,std::string,
+        static void fs(size_t&,std::string*,std::string,
         type0&,type0&,size_t&,size_t&,
         type0(***&)[N0],type0(***&)[N0],type0(**&)[N1],
         type0**&,MPI_Comm=MPI_COMM_WORLD);
         
         static type0 interpolate(type0*,size_t,type0,size_t);
+        static void interpolate(size_t,type0,type0(*)[1]);
         static void interpolate(size_t,type0,type0(*)[4]);
         static void interpolate(size_t,type0,type0(*)[5]);
         static void __interpolate(size_t,type0,type0(*)[7]);
+        
+        static void ml_read_eam(PyMethodDef&,PyMethodDef&,PyMethodDef&);
     };
 }
 using namespace MAPP_NS;
@@ -342,7 +346,7 @@ type0**& r_c,MPI_Comm world)
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ImportEAM::setfl(size_t nelems,std::string* elems,std::string file,
+void ImportEAM::setfl(size_t& nelems,std::string* elems,std::string file,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)
@@ -414,19 +418,32 @@ type0**& r_c,MPI_Comm world)
     }
     
     size_t nelem_refs=nargs-1;
-    elem_ref=new int[nelem_refs];
-    found=new bool[nelems];
-    for(size_t i=0;i<nelems;i++) found[i]=false;
-    for(size_t i=0;i<nelem_refs;i++)
+    if(nelems!=0)
     {
-        int ielem=-1;
-        for(size_t j=0;j<nelems&& ielem==-1 ;j++)
-            if(!strcmp(args[1+i],elems[j].c_str()))
-            {
-                found[j]=true;
-                ielem=static_cast<int>(j);
-            }
-        elem_ref[i]=ielem;
+        elem_ref=new int[nelem_refs];
+        found=new bool[nelems];
+        for(size_t i=0;i<nelems;i++) found[i]=false;
+        for(size_t i=0;i<nelem_refs;i++)
+        {
+            int ielem=-1;
+            for(size_t j=0;j<nelems&& ielem==-1 ;j++)
+                if(!strcmp(args[1+i],elems[j].c_str()))
+                {
+                    found[j]=true;
+                    ielem=static_cast<int>(j);
+                }
+            elem_ref[i]=ielem;
+        }
+    }
+    else
+    {
+        nelems=nelem_refs;
+        elem_ref=new int[nelem_refs];
+        found=new bool[nelems];
+        for(size_t i=0;i<nelems;i++) found[i]=true;
+        for(size_t i=0;i<nelem_refs;i++)
+            elem_ref[i]=static_cast<int>(i);
+            
     }
     
     for(size_t i=0;i<nelems;i++)
@@ -598,7 +615,7 @@ type0**& r_c,MPI_Comm world)
  
  --------------------------------------------*/
 template<size_t N0,size_t N1>
-void ImportEAM::fs(size_t nelems,std::string* elems,std::string file,
+void ImportEAM::fs(size_t& nelems,std::string* elems,std::string file,
 type0& dr,type0& drho,size_t& nr,size_t& nrho,
 type0(***& r_phi)[N0],type0(***& rho)[N0],type0(**& F)[N1],
 type0**& r_c,MPI_Comm world)
@@ -670,19 +687,32 @@ type0**& r_c,MPI_Comm world)
     }
     
     size_t nelem_refs=nargs-1;
-    elem_ref=new int[nelem_refs];
-    found=new bool[nelems];
-    for(size_t i=0;i<nelems;i++) found[i]=false;
-    for(size_t i=0;i<nelem_refs;i++)
+    if(nelems!=0)
     {
-        int ielem=-1;
-        for(size_t j=0;j<nelems&& ielem==-1 ;j++)
-            if(!strcmp(args[1+i],elems[j].c_str()))
-            {
-                found[j]=true;
-                ielem=static_cast<int>(j);
-            }
-        elem_ref[i]=ielem;
+        elem_ref=new int[nelem_refs];
+        found=new bool[nelems];
+        for(size_t i=0;i<nelems;i++) found[i]=false;
+        for(size_t i=0;i<nelem_refs;i++)
+        {
+            int ielem=-1;
+            for(size_t j=0;j<nelems&& ielem==-1 ;j++)
+                if(!strcmp(args[1+i],elems[j].c_str()))
+                {
+                    found[j]=true;
+                    ielem=static_cast<int>(j);
+                }
+            elem_ref[i]=ielem;
+        }
+    }
+    else
+    {
+        nelems=nelem_refs;
+        elem_ref=new int[nelem_refs];
+        found=new bool[nelems];
+        for(size_t i=0;i<nelems;i++) found[i]=true;
+        for(size_t i=0;i<nelem_refs;i++)
+            elem_ref[i]=static_cast<int>(i);
+        
     }
     
     for(size_t i=0;i<nelems;i++)

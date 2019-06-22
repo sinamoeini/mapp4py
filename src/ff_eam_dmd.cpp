@@ -1643,7 +1643,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         f.logics<2>()[0]=VLogics("gt",0.0);
         
         const std::string* names=__self->atoms->elements.names;
-        const size_t nelems=__self->atoms->elements.nelems;
+        size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
         if(f.remap<3,0,1,2>("elements present in system",names,nelems)) return NULL;
         
@@ -1732,7 +1732,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         f.logics<2>()[0]=VLogics("gt",0.0);
         
         const std::string* names=__self->atoms->elements.names;
-        const size_t nelems=__self->atoms->elements.nelems;
+        size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
         if(f.remap<3,2,1>("elements present in system",names,nelems)) return NULL;
         
@@ -1822,7 +1822,7 @@ void ForceFieldEAMDMD::ml_new(PyMethodDef& method_0,PyMethodDef& method_1,PyMeth
         f.logics<2>()[0]=VLogics("gt",0.0);
         
         const std::string* names=__self->atoms->elements.names;
-        const size_t nelems=__self->atoms->elements.nelems;
+        size_t nelems=__self->atoms->elements.nelems;
         if(f(args,kwds)) return NULL;
         if(f.remap<3,2,1>("elements present in system",names,nelems)) return NULL;
         

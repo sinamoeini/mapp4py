@@ -1,4 +1,5 @@
 #include "import_eam.h"
+#include "memory.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -49,6 +50,11 @@ type0 ImportEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
         return ((coef3*p+coef2)*p+coef1)*p+coef0;
     }
 }
+/*--------------------------------------------
+
+ --------------------------------------------*/
+void ImportEAM::interpolate(size_t n,type0 delta,type0(*spline)[1])
+{}
 /*--------------------------------------------
 
  --------------------------------------------*/
@@ -175,3 +181,458 @@ void ImportEAM::skip(size_t n,FileReader& fr,char*& line,size_t& line_cpcty)
         i+=nargs;
     }
 }
+
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+#include "api.h"
+void ImportEAM::ml_read_eam(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodDef& method_2)
+{
+    method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    method_0.ml_name="import_funcfl";
+    method_0.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+        FuncAPI<std::string*> f("import_funcfl",{"funcfl_files"});
+        if(f(args,kwds)) return NULL;
+        
+        size_t nelems=f.v<0>().size;
+        size_t nr,nrho;
+        type0 dr,drho;
+        type0** r_c;
+        type0(** F)[1]=NULL;
+        type0(*** r_phi)[1]=NULL;
+        type0(*** rho)[1]=NULL;
+        try
+        {
+            ImportEAM::funcfl(nelems,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+        }
+        catch(char* err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg);
+            delete [] err_msg;
+            return NULL;
+        }
+        
+        type0* data=NULL;
+        Memory::alloc(data,nelems*nrho+nelems*nr+nelems*(nelems+1)*nr/2);
+        type0* __data=data;
+        for(size_t i=0;i<nelems;i++)
+            for(size_t in=0;in<nrho;in++,++__data)
+                *__data=F[i][in][0];
+        
+        
+        
+        
+        for(size_t i=0;i<nelems;i++)
+            for(size_t in=0;in<nr;in++,++__data)
+                *__data=rho[i][0][in][0];
+        
+        for(size_t i=0;i<nelems;i++)
+            for(size_t j=i;j<nelems;j++)
+            {
+                *__data=0.0;
+                ++__data;
+                for(size_t in=1;in<nr;in++,++__data)
+                    *__data=r_phi[i][j][in][0]/(static_cast<type0>(in)*dr);
+            }
+        Memory::dealloc(F);
+        Memory::dealloc(rho);
+        Memory::dealloc(r_phi);
+        
+        
+        
+        size_t* nrhop=&nrho;
+        size_t* nrp=&nr;
+        PyObject* op;
+        
+        __data=data;
+        PyObject* F_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            op=var<type0*>::build(__data,&nrhop);
+            PyList_SET_ITEM(F_obj,i,op);
+            __data+=nrho;
+        }
+        
+        
+        PyObject* rho_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            op=var<type0*>::build(__data,&nrp);
+            PyList_SET_ITEM(rho_obj,i,op);
+            __data+=nr;
+        }
+        PyObject* phi_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            PyList_SET_ITEM(phi_obj,i,PyList_New(nelems));
+            for(size_t j=0;j<nelems;j++)
+            {
+                if(j<i)
+                {
+                    op=PyList_GET_ITEM(PyList_GET_ITEM(phi_obj,j),i);
+                    Py_INCREF(op);
+                }
+                else
+                {
+                    op=var<type0*>::build(__data,&nrp);
+                    __data+=nr;
+                }
+                
+                PyList_SET_ITEM(PyList_GET_ITEM(phi_obj,i),j,op);
+            }
+            
+            
+        }
+        
+        
+        
+        Memory::dealloc(data);
+        
+        PyObject* ans=PyList_New(5);
+        PyList_SET_ITEM(ans,0,F_obj);
+        PyList_SET_ITEM(ans,1,rho_obj);
+        PyList_SET_ITEM(ans,2,phi_obj);
+        PyList_SET_ITEM(ans,3,var<type0>::build(drho));
+        PyList_SET_ITEM(ans,4,var<type0>::build(dr));
+        return ans;
+    });
+    method_0.ml_doc=(char*)R"---(
+    import_eam_funcfl(funcfl_files)
+   
+    Importing FuncFL file/s
+    
+    Imports FuncFL file/s
+    
+    Parameters
+    ----------
+    funcfl_files : string[nelems]
+        list of relative paths to DYNAMO files with FuncFL format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Ni
+    
+    ::
+    
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/Ni.cfg")
+        >>> sim.ff_eam_funcfl("potentials/Ni_u3.eam")
+    
+    
+
+    )---";
+    
+    method_1.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    method_1.ml_name="import_setfl";
+    method_1.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+
+        FuncAPI<std::string> f("import_setfl",{"setfl_file"});
+        if(f(args,kwds)) return NULL;
+        
+        size_t nelems=0;
+        size_t nr,nrho;
+        type0 dr,drho;
+        type0** r_c;
+        type0(** F)[1]=NULL;
+        type0(*** r_phi)[1]=NULL;
+        type0(*** rho)[1]=NULL;
+        try
+        {
+            ImportEAM::setfl(nelems,NULL,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+        }
+        catch(char* err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg);
+            delete [] err_msg;
+            return NULL;
+        }
+        
+        type0* data=NULL;
+        Memory::alloc(data,nelems*nrho+nelems*nr+nelems*(nelems+1)*nr/2);
+        type0* __data=data;
+        for(size_t i=0;i<nelems;i++)
+            for(size_t in=0;in<nrho;in++,++__data)
+                *__data=F[i][in][0];
+        
+        
+        
+        
+        for(size_t i=0;i<nelems;i++)
+            for(size_t in=0;in<nr;in++,++__data)
+                *__data=rho[i][0][in][0];
+        
+        for(size_t i=0;i<nelems;i++)
+            for(size_t j=i;j<nelems;j++)
+            {
+                *__data=0.0;
+                ++__data;
+                for(size_t in=1;in<nr;in++,++__data)
+                    *__data=r_phi[i][j][in][0]/(static_cast<type0>(in)*dr);
+            }
+        Memory::dealloc(F);
+        Memory::dealloc(rho);
+        Memory::dealloc(r_phi);
+        
+        
+        
+        size_t* nrhop=&nrho;
+        size_t* nrp=&nr;
+        PyObject* op;
+        
+        __data=data;
+        PyObject* F_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            op=var<type0*>::build(__data,&nrhop);
+            PyList_SET_ITEM(F_obj,i,op);
+            __data+=nrho;
+        }
+        
+
+        PyObject* rho_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            op=var<type0*>::build(__data,&nrp);
+            PyList_SET_ITEM(rho_obj,i,op);
+            __data+=nr;
+        }
+        PyObject* phi_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            PyList_SET_ITEM(phi_obj,i,PyList_New(nelems));
+            for(size_t j=0;j<nelems;j++)
+            {
+                if(j<i)
+                {
+                    op=PyList_GET_ITEM(PyList_GET_ITEM(phi_obj,j),i);
+                    Py_INCREF(op);
+                }
+                else
+                {
+                    op=var<type0*>::build(__data,&nrp);
+                    __data+=nr;
+                }
+                
+                PyList_SET_ITEM(PyList_GET_ITEM(phi_obj,i),j,op);
+            }
+            
+            
+        }
+        
+        
+        
+        Memory::dealloc(data);
+        
+        PyObject* ans=PyList_New(5);
+        PyList_SET_ITEM(ans,0,F_obj);
+        PyList_SET_ITEM(ans,1,rho_obj);
+        PyList_SET_ITEM(ans,2,phi_obj);
+        PyList_SET_ITEM(ans,3,var<type0>::build(drho));
+        PyList_SET_ITEM(ans,4,var<type0>::build(dr));
+        return ans;
+    });
+    method_1.ml_doc=(char*)R"---(
+    ff_eam_setfl(setfl_file)
+   
+    Tabulated EAM force field given by a single SetFL file
+    
+    Assigns EAM force field to system
+    
+    Parameters
+    ----------
+    setfl_file : string
+        relative path to DYNAMO file with SetFL format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Cu
+    
+    ::
+    
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/Cu.cfg")
+        >>> sim.ff_eam_setfl("potentials/Cu_mishin.eam.alloy")
+
+    
+    
+    )---";
+    
+    
+    method_2.ml_flags=METH_VARARGS | METH_KEYWORDS;
+    method_2.ml_name="import_fs";
+    method_2.ml_meth=(PyCFunction)(PyCFunctionWithKeywords)(
+    [](PyObject* self,PyObject* args,PyObject* kwds)->PyObject*
+    {
+
+        FuncAPI<std::string> f("import_fs",{"fs_file"});
+        if(f(args,kwds)) return NULL;
+        
+        size_t nelems=0;
+        size_t nr,nrho;
+        type0 dr,drho;
+        type0** r_c;
+        type0(** F)[1]=NULL;
+        type0(*** r_phi)[1]=NULL;
+        type0(*** rho)[1]=NULL;
+        try
+        {
+            ImportEAM::fs(nelems,NULL,f.val<0>(),dr,drho,nr,nrho,r_phi,rho,F,r_c);
+        }
+        catch(char* err_msg)
+        {
+            PyErr_SetString(PyExc_TypeError,err_msg);
+            delete [] err_msg;
+            return NULL;
+        }
+        
+        type0* data=NULL;
+        Memory::alloc(data,nelems*nrho+nelems*nelems*nr+nelems*(nelems+1)*nr/2);
+        type0* __data=data;
+        for(size_t i=0;i<nelems;i++)
+            for(size_t in=0;in<nrho;in++,++__data)
+                *__data=F[i][in][0];
+        
+        
+        
+        
+        for(size_t i=0;i<nelems;i++)
+            for(size_t j=0;j<nelems;j++)
+                for(size_t in=0;in<nr;in++,++__data)
+                    *__data=rho[i][j][in][0];
+        
+        for(size_t i=0;i<nelems;i++)
+            for(size_t j=i;j<nelems;j++)
+            {
+                *__data=0.0;
+                ++__data;
+                for(size_t in=1;in<nr;in++,++__data)
+                    *__data=r_phi[i][j][in][0]/(static_cast<type0>(in)*dr);
+            }
+        Memory::dealloc(F);
+        Memory::dealloc(rho);
+        Memory::dealloc(r_phi);
+        
+        
+        
+        size_t* nrhop=&nrho;
+        size_t* nrp=&nr;
+        PyObject* op;
+        
+        __data=data;
+        PyObject* F_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            op=var<type0*>::build(__data,&nrhop);
+            PyList_SET_ITEM(F_obj,i,op);
+            __data+=nrho;
+        }
+        
+        
+        PyObject* rho_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            PyList_SET_ITEM(rho_obj,i,PyList_New(nelems));
+            for(size_t j=0;j<nelems;j++)
+            {
+                op=var<type0*>::build(__data,&nrp);
+                PyList_SET_ITEM(PyList_GET_ITEM(rho_obj,i),j,op);
+                __data+=nr;
+            }
+            
+        }
+        
+        
+        PyObject* phi_obj=PyList_New(nelems);
+        for(size_t i=0;i<nelems;i++)
+        {
+            PyList_SET_ITEM(phi_obj,i,PyList_New(nelems));
+            for(size_t j=0;j<nelems;j++)
+            {
+                if(j<i)
+                {
+                    op=PyList_GET_ITEM(PyList_GET_ITEM(phi_obj,j),i);
+                    Py_INCREF(op);
+                }
+                else
+                {
+                    op=var<type0*>::build(__data,&nrp);
+                    __data+=nr;
+                }
+                
+                PyList_SET_ITEM(PyList_GET_ITEM(phi_obj,i),j,op);
+            }
+            
+            
+        }
+        
+        
+        
+        Memory::dealloc(data);
+        
+        PyObject* ans=PyList_New(5);
+        PyList_SET_ITEM(ans,0,F_obj);
+        PyList_SET_ITEM(ans,1,rho_obj);
+        PyList_SET_ITEM(ans,2,phi_obj);
+        PyList_SET_ITEM(ans,3,var<type0>::build(drho));
+        PyList_SET_ITEM(ans,4,var<type0>::build(dr));
+        return ans;
+    });
+    method_2.ml_doc=(char*)R"---(
+    ff_eam_fs(fs_file)
+   
+    Tabulated Finnis-Sinclair EAM
+    
+    Assigns Finnis-Sinclair EAM force field to system. For explanation of the parameter see the Notes section.
+    
+    Parameters
+    ----------
+    fs_file : string
+        relative path to DYNAMO file with fs format
+    
+    Returns
+    -------
+    None
+   
+    Notes
+    -----
+    This is tabulated form of Finnis-Sinclair Embedded Atom Method (EAM) potential
+    
+    
+    Examples
+    --------
+    Iron Hydrogrn mixture
+    ::
+    
+        >>> from mapp import md
+        >>> sim=md.cfg("configs/FeH.cfg")
+        >>> sim.ff_eam_fs("potentials/FeH.eam.fs")
+    
+    
+
+    )---";
+    
+}
+ 
+

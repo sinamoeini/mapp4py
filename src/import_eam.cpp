@@ -1,4 +1,6 @@
+#include "api.h"
 #include "import_eam.h"
+//#include <structmember.h>
 #include "memory.h"
 using namespace MAPP_NS;
 /*--------------------------------------------
@@ -185,7 +187,6 @@ void ImportEAM::skip(size_t n,FileReader& fr,char*& line,size_t& line_cpcty)
 /*--------------------------------------------
  
  --------------------------------------------*/
-#include "api.h"
 void ImportEAM::ml_read_eam(PyMethodDef& method_0,PyMethodDef& method_1,PyMethodDef& method_2)
 {
     method_0.ml_flags=METH_VARARGS | METH_KEYWORDS;

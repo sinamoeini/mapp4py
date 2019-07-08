@@ -270,149 +270,22 @@ namespace MAPP_NS
         
         MPI_Comm& world;
         
+        template<int>
+        void load(int&);
         
         template<int idir>
-        void load(int& iatm)
-        {
-            if(snd_buff_cpcty[idir]<snd_buff_sz[idir]+tot_xchng_sz)
-            {
-                byte* tmp_buff=new byte[snd_buff_sz[idir]+tot_xchng_sz+buff_grw];
-                memcpy(tmp_buff,snd_buff[idir],snd_buff_sz[idir]);
-                delete [] snd_buff[idir];
-                snd_buff[idir]=tmp_buff;
-                snd_buff_cpcty[idir]=snd_buff_sz[idir]+tot_xchng_sz+buff_grw;
-            }
-            byte* tmp_buff=&snd_buff[idir][snd_buff_sz[idir]];
-            
-            for(int ivec=0;ivec<nxchng_vecs;ivec++)
-                vecs[ivec]->pop_out(tmp_buff,iatm);
-            
-            snd_buff_sz[idir]+=tot_xchng_sz;
-        }
-        template<int idir>
-        void load(byte*& buff)
-        {
-            if(snd_buff_cpcty[idir]<snd_buff_sz[idir]+tot_xchng_sz)
-            {
-                byte* tmp_buff=new byte[snd_buff_sz[idir]+tot_xchng_sz+buff_grw];
-                memcpy(tmp_buff,snd_buff[idir],snd_buff_sz[idir]);
-                delete [] snd_buff[idir];
-                snd_buff[idir]=tmp_buff;
-                snd_buff_cpcty[idir]=snd_buff_sz[idir]+tot_xchng_sz+buff_grw;
-            }
-            memcpy(&snd_buff[idir][snd_buff_sz[idir]],buff,tot_xchng_sz);
-            snd_buff_sz[idir]+=tot_xchng_sz;
-            buff+=tot_xchng_sz;
-        }
+        void load(byte*&);
         
+        template<int,int>
+        int xchng_buff();
         
 
         
         
-        template<int idim,int idir>
-        int xchng_buff()
-        {
-            int max_snd_sz=1;
-            int nxchngs=0;
-            while(max_snd_sz!=0)
-            {
-                rcv_buff_sz=0;
-                MPI_Allreduce(&snd_buff_sz[idir],&max_snd_sz,1,MPI_INT,MPI_MAX,world);
-                if(max_snd_sz==0)
-                    continue;
-                
-                MPI_Sendrecv(&snd_buff_sz[idir],1,MPI_INT,neigh[idim][idir],0,
-                             &rcv_buff_sz,1,MPI_INT,neigh[idim][1-idir],0,
-                             world,MPI_STATUS_IGNORE);
-                
-                if(rcv_buff_cpcty<rcv_buff_sz)
-                {
-                    delete [] rcv_buff;
-                    rcv_buff=new byte[rcv_buff_sz+buff_grw];
-                    rcv_buff_cpcty=rcv_buff_sz+buff_grw;
-                }
-                
-                MPI_Sendrecv(snd_buff[idir],snd_buff_sz[idir],MPI_BYTE,neigh[idim][idir],0,
-                             rcv_buff,rcv_buff_sz,MPI_BYTE,neigh[idim][1-idir],0,
-                             world,MPI_STATUS_IGNORE);
-                
-                nxchngs++;
-                snd_buff_sz[idir]=0;
-                
-                /*
-                 * here make sure, that we have enough space
-                 * for the potential atoms to be inserted in
-                 * xchng vectors
-                 */
-                for(int ivec=0;ivec<nxchng_vecs;ivec++)
-                    vecs[ivec]->reserve(rcv_buff_sz/tot_xchng_sz);
-                
-                
-                
-                type0 s;
-                byte* buff_tmp=rcv_buff;
-                while(rcv_buff_sz)
-                {
-                    s=reinterpret_cast<type0*>(buff_tmp)[idim];
-                    if(s_lo[idim]<=s && s<s_hi[idim])
-                        for(int ivec=0;ivec<nxchng_vecs;ivec++)
-                            vecs[ivec]->pop_in(buff_tmp);
-                    else
-                        load<idir>(buff_tmp);
-                    
-                    rcv_buff_sz-=tot_xchng_sz;
-                }
-            }
-            return nxchngs;
-        }
         
-        template<int idim>
-        int load_up()
-        {
-            if(rank==neigh[idim][0] && rank==neigh[idim][1])
-                return load_up<idim+1>();
-            
-            snd_buff_sz[0]=snd_buff_sz[1]=0;
-            int iatm=0;
-            type0 s;
-            type0* s_ptr=x->begin()+idim;
-            unsigned int n=x->vec_sz;
-            while(iatm<n)
-            {
-                s=*s_ptr;
-                if(s>=s_hi[idim])
-                {
-                    //ds_hi=s-s_hi[idim];
-                    //ds_lo=1.0+s_lo[idim]-s;
-                    //if(ds_hi<ds_lo)
-                    if(s-s_hi[idim]<1.0+s_lo[idim]-s)
-                        load<snd_to_frnt>(iatm);
-                    else
-                        load<snd_to_bhnd>(iatm);
-                    n--;
-                }
-                else if(s<s_lo[idim])
-                {
-                    //ds_hi=1.0+s-s_hi[idim];
-                    //ds_lo=s_lo[idim]-s;
-                    //if(ds_hi<ds_lo)
-                    if(1.0+s-s_hi[idim]<s_lo[idim]-s)
-                        load<snd_to_frnt>(iatm);
-                    else
-                        load<snd_to_bhnd>(iatm);
-                    n--;
-                }
-                else
-                {
-                    iatm++;
-                    s_ptr+=__dim__;
-                }
-                
-                
-            }
-            return xchng_buff<idim,0>()+xchng_buff<idim,1>()
-            +load_up<idim+1>();
-        }
+        template<int>
+        int load_up();
+
 
         
     protected:
@@ -468,6 +341,155 @@ namespace MAPP_NS
     template<>
     inline int Exchange::load_up<__dim__>(){return 0;}
 }
+/*------------------------------------------------
+ 
+ ------------------------------------------------*/
+template<int idir>
+void Exchange::load(int& iatm)
+{
+    if(snd_buff_cpcty[idir]<snd_buff_sz[idir]+tot_xchng_sz)
+    {
+        byte* tmp_buff=new byte[snd_buff_sz[idir]+tot_xchng_sz+buff_grw];
+        memcpy(tmp_buff,snd_buff[idir],snd_buff_sz[idir]);
+        delete [] snd_buff[idir];
+        snd_buff[idir]=tmp_buff;
+        snd_buff_cpcty[idir]=snd_buff_sz[idir]+tot_xchng_sz+buff_grw;
+    }
+    byte* tmp_buff=&snd_buff[idir][snd_buff_sz[idir]];
+    
+    for(int ivec=0;ivec<nxchng_vecs;ivec++)
+        vecs[ivec]->pop_out(tmp_buff,iatm);
+    
+    snd_buff_sz[idir]+=tot_xchng_sz;
+}
+/*------------------------------------------------
+ 
+ ------------------------------------------------*/
+template<int idim>
+int Exchange::load_up()
+{
+    if(rank==neigh[idim][0] && rank==neigh[idim][1])
+        return load_up<idim+1>();
+    
+    snd_buff_sz[0]=snd_buff_sz[1]=0;
+    int iatm=0;
+    type0 s;
+    type0* s_ptr=x->begin()+idim;
+    unsigned int n=x->vec_sz;
+    while(iatm<n)
+    {
+        s=*s_ptr;
+        if(s>=s_hi[idim])
+        {
+            //ds_hi=s-s_hi[idim];
+            //ds_lo=1.0+s_lo[idim]-s;
+            //if(ds_hi<ds_lo)
+            if(s-s_hi[idim]<1.0+s_lo[idim]-s)
+                load<snd_to_frnt>(iatm);
+            else
+                load<snd_to_bhnd>(iatm);
+            n--;
+        }
+        else if(s<s_lo[idim])
+        {
+            //ds_hi=1.0+s-s_hi[idim];
+            //ds_lo=s_lo[idim]-s;
+            //if(ds_hi<ds_lo)
+            if(1.0+s-s_hi[idim]<s_lo[idim]-s)
+                load<snd_to_frnt>(iatm);
+            else
+                load<snd_to_bhnd>(iatm);
+            n--;
+        }
+        else
+        {
+            iatm++;
+            s_ptr+=__dim__;
+        }
+        
+        
+    }
+    return xchng_buff<idim,0>()+xchng_buff<idim,1>()
+    +load_up<idim+1>();
+}
+/*------------------------------------------------
+ 
+ ------------------------------------------------*/
+template<int idir>
+void Exchange::load(byte*& buff)
+{
+    if(snd_buff_cpcty[idir]<snd_buff_sz[idir]+tot_xchng_sz)
+    {
+        byte* tmp_buff=new byte[snd_buff_sz[idir]+tot_xchng_sz+buff_grw];
+        memcpy(tmp_buff,snd_buff[idir],snd_buff_sz[idir]);
+        delete [] snd_buff[idir];
+        snd_buff[idir]=tmp_buff;
+        snd_buff_cpcty[idir]=snd_buff_sz[idir]+tot_xchng_sz+buff_grw;
+    }
+    memcpy(&snd_buff[idir][snd_buff_sz[idir]],buff,tot_xchng_sz);
+    snd_buff_sz[idir]+=tot_xchng_sz;
+    buff+=tot_xchng_sz;
+}
+/*------------------------------------------------
+
+ ------------------------------------------------*/
+template<int idim,int idir>
+int Exchange::xchng_buff()
+{
+    int max_snd_sz=1;
+    int nxchngs=0;
+    while(max_snd_sz!=0)
+    {
+        rcv_buff_sz=0;
+        MPI_Allreduce(&snd_buff_sz[idir],&max_snd_sz,1,MPI_INT,MPI_MAX,world);
+        if(max_snd_sz==0)
+            continue;
+        
+        MPI_Sendrecv(&snd_buff_sz[idir],1,MPI_INT,neigh[idim][idir],0,
+                     &rcv_buff_sz,1,MPI_INT,neigh[idim][1-idir],0,
+                     world,MPI_STATUS_IGNORE);
+        
+        if(rcv_buff_cpcty<rcv_buff_sz)
+        {
+            delete [] rcv_buff;
+            rcv_buff=new byte[rcv_buff_sz+buff_grw];
+            rcv_buff_cpcty=rcv_buff_sz+buff_grw;
+        }
+        
+        MPI_Sendrecv(snd_buff[idir],snd_buff_sz[idir],MPI_BYTE,neigh[idim][idir],0,
+                     rcv_buff,rcv_buff_sz,MPI_BYTE,neigh[idim][1-idir],0,
+                     world,MPI_STATUS_IGNORE);
+        
+        nxchngs++;
+        snd_buff_sz[idir]=0;
+        
+        /*
+         * here make sure, that we have enough space
+         * for the potential atoms to be inserted in
+         * xchng vectors
+         */
+        for(int ivec=0;ivec<nxchng_vecs;ivec++)
+            vecs[ivec]->reserve(rcv_buff_sz/tot_xchng_sz);
+        
+        
+        
+        type0 s;
+        byte* buff_tmp=rcv_buff;
+        while(rcv_buff_sz)
+        {
+            s=reinterpret_cast<type0*>(buff_tmp)[idim];
+            if(s_lo[idim]<=s && s<s_hi[idim])
+                for(int ivec=0;ivec<nxchng_vecs;ivec++)
+                    vecs[ivec]->pop_in(buff_tmp);
+            else
+                load<idir>(buff_tmp);
+            
+            rcv_buff_sz-=tot_xchng_sz;
+        }
+    }
+    return nxchngs;
+}
+
 /*------------------------------------------------
  _   _   _____   _____       ___   _____   _____
 | | | | |  _  \ |  _  \     /   | |_   _| | ____|

@@ -67,8 +67,8 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
     {
         atoms->x2s_dump();
         int natms=atoms->natms;
-        unsigned int* id=atoms->id->begin_dump();
-        unsigned int* id_map=natms==0 ? NULL:new unsigned int[natms];
+        id_type* id=atoms->id->begin_dump();
+        id_type* id_map=natms==0 ? NULL:new id_type[natms];
         for(int i=0;i<natms;i++) id_map[id[i]]=i;
         
         std::string* elem_names=atoms->elements.names;
@@ -76,7 +76,7 @@ void ExportCFGDMD::write_body_sort(FILE* fp)
         int nelems=static_cast<int>(atoms->elements.nelems);
         type0* c=atoms->c->begin_dump();
         type0* __c=c;
-        unsigned int iatm;
+        id_type iatm;
         
         vec** usr_vecs=vecs+ndef_vecs;
         

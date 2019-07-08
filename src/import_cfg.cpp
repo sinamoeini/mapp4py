@@ -228,7 +228,7 @@ void ImportCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_
         return true;
     };
     
-    byte* buff=new byte[sizeof(unsigned int)+sizeof(elem_type)+sizeof(type0)*entry_count];
+    byte* buff=new byte[sizeof(id_type)+sizeof(elem_type)+sizeof(type0)*entry_count];
     vec_list[0]=atoms->id;
     vec_list[1]=new Vec<elem_type>(atoms,1);
     vec_list[2]=atoms->x;
@@ -245,7 +245,7 @@ void ImportCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_
     byte* __buff;
     elem_type ielem=0;
     type0 mass=0.0;
-    unsigned int curr_id=0;
+    id_type curr_id=0;
     
     bool mass_flag=false;
     bool elem_init=false;
@@ -333,8 +333,8 @@ void ImportCFG::read_body_ext(Atoms* atoms,FileReader& freader,char*& line,size_
         
         
         __buff=buff;
-        memcpy(__buff,&curr_id,sizeof(unsigned int));
-        __buff+=sizeof(unsigned int);
+        memcpy(__buff,&curr_id,sizeof(id_type));
+        __buff+=sizeof(id_type);
         memcpy(__buff,&ielem,sizeof(elem_type));
         __buff+=sizeof(elem_type);
         
@@ -378,7 +378,7 @@ void ImportCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_
         return true;
     };
     
-    byte* buff=new byte[sizeof(unsigned int)+sizeof(elem_type)+sizeof(type0)*entry_count];
+    byte* buff=new byte[sizeof(id_type)+sizeof(elem_type)+sizeof(type0)*entry_count];
     vec_list[0]=atoms->id;
     vec_list[1]=new Vec<elem_type>(atoms,1);
     vec_list[2]=atoms->x;
@@ -395,7 +395,7 @@ void ImportCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_
     byte* __buff;
     elem_type ielem=0;
     type0 mass=0.0;
-    unsigned int curr_id=0;
+    id_type curr_id=0;
     
 
     while(!freader.finished)
@@ -452,8 +452,8 @@ void ImportCFG::read_body_std(Atoms* atoms,FileReader& freader,char*& line,size_
         }
         
         __buff=buff;
-        memcpy(__buff,&curr_id,sizeof(unsigned int));
-        __buff+=sizeof(unsigned int);
+        memcpy(__buff,&curr_id,sizeof(id_type));
+        __buff+=sizeof(id_type);
         memcpy(__buff,&ielem,sizeof(elem_type));
         __buff+=sizeof(elem_type);
         

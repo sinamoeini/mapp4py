@@ -47,7 +47,7 @@ AtomsMD& AtomsMD::operator=(const Atoms& r)
         if(!vecs[i]->is_empty())
             vecs[i]->resize(natms_lcl);
     memcpy(x->begin(),r.x->begin(),natms_lcl*__dim__*sizeof(type0));
-    memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(unsigned int));
+    memcpy(id->begin(),r.id->begin(),natms_lcl*sizeof(id_type));
     return* this;
 }
 /*--------------------------------------------
@@ -134,14 +134,14 @@ void AtomsMD::DO(PyObject* op)
     class Func_id
     {
     public:
-        void operator()(unsigned int* old_val,unsigned int* new_val)
+        void operator()(id_type* old_val,id_type* new_val)
         {
             if(*old_val!=*new_val)
                 throw std::string("id of atoms cannot be changed");
         };
     };
     Func_id func_id;
-    VecPy<unsigned int,Func_id> id_vec_py(id,func_id);
+    VecPy<id_type,Func_id> id_vec_py(id,func_id);
     
     
     

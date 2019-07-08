@@ -100,8 +100,8 @@ void GCMC::init()
     vol=1.0;
     for(int i=0;i<__dim__;i++)vol*=atoms->H[i][i];
     
-    unsigned int max_id_=0;
-    unsigned int* id=atoms->id->begin();
+    id_type max_id_=0;
+    id_type* id=atoms->id->begin();
     for(int i=0;i<natms_lcl;i++)
         max_id_=MAX(id[i],max_id_);
     MPI_Allreduce(&max_id_,&max_id,1,MPI_UNSIGNED,MPI_MAX,world);

@@ -53,7 +53,8 @@ namespace MAPP_NS
         
         virtual void add_xchng(vec*);
         virtual void add_updt(vec*);
-
+        static void rearrange_vecs(MPI_Comm&,id_type*,int,id_type*,int,vec**,int);
+        static int* srt_idx_by_p(MPI_Comm&,const id_type*,int,const id_type*,int,int*&);
         
         
     };
@@ -70,9 +71,12 @@ namespace MAPP_NS
         bool decide();
         class ForceField* ff;
         class Atoms* atoms;
+        
+        
     protected:
         void store_arch_vecs();
         void restore_arch_vecs();
+        
         void create_dynamic_vecs();
         void destroy_dynamic_vecs();
                 
@@ -105,7 +109,7 @@ namespace MAPP_NS
         virtual void add_xchng(vec*);
         virtual void add_updt(vec*);
 
-        
+
         
     };
 }

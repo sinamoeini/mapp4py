@@ -1187,6 +1187,9 @@ namespace MAPP_NS
     namespace Algebra
     {
         
+        
+        
+        
         template<const int N>
         class __POW
         {
@@ -1220,6 +1223,53 @@ namespace MAPP_NS
             }
         };
         
+        
+        template<const int N>
+        class __SUM
+        {
+        public:
+            template<typename T>
+            static inline T func(T* x)
+            {
+                return *x+__SUM<N-1>::func(x+1);
+            }
+        };
+        
+        template<>
+        class __SUM<1>
+        {
+        public:
+            template<typename T>
+            static inline T func(T* x)
+            {
+                return *x;
+            }
+        };
+        
+        
+        template<const int dim>
+        class ___is_same
+        {
+        public:
+            template<typename T>
+            static inline bool func(T* v0,T* v1)
+            {
+                if(*v0!=*v1) return false;
+                return ___is_same<dim-1>::func(v0+1,v1+1);
+            }
+        };
+        
+        template<>
+        class ___is_same<1>
+        {
+        public:
+            template<typename T>
+            static inline bool func(T* v0,T* v1)
+            {
+                if(*v0!=*v1) return false;
+                return true;
+            }
+        };
         
         template<const int dim>
         class __V_eq
@@ -3216,6 +3266,14 @@ namespace MAPP_NS
                 while(*x>=1.0) --*x;
                 __X2S<dim-1>::func(b+dim,x+1);
             }
+            template<typename T>
+            static inline void func(T* RESTRICT b,T* RESTRICT x,T* RESTRICT s)
+            {
+                *s=__V_mul_V<dim>::func(b,x);
+                while(*s<0.0) ++*s;
+                while(*s>=1.0) --*s;
+                __X2S<dim-1>::func(b+dim,x+1,s+1);
+            }
         };
         
         template<>
@@ -3228,6 +3286,13 @@ namespace MAPP_NS
                 *x*=*b;
                 while(*x<0.0) ++*x;
                 while(*x>=1.0) --*x;
+            }
+            template<typename T>
+            static inline void func(T* RESTRICT b,T* RESTRICT x,T* RESTRICT s)
+            {
+                *s=*x**b;
+                while(*s<0.0) ++*s;
+                while(*s>=1.0) --*s;
             }
         };
         
@@ -3283,13 +3348,23 @@ namespace MAPP_NS
             }
         };
         
-        
-
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        bool is_same(T* v0,T* v1)
+        {
+            return ___is_same<dim>::func(v0,v1);
+        }
         /*==========================================================================*/
         template<const int N,typename T>
         T pow(T x)
         {
             return __POW<N>::func(x);
+        }
+        /*==========================================================================*/
+        template<const int N,typename T>
+        T sum(T* x)
+        {
+            return __SUM<N>::func(x);
         }
         /*==========================================================================*/
         template<const int dim,typename T>
@@ -3658,6 +3733,11 @@ namespace MAPP_NS
                 __X2S<dim>::func(b,x);
                 x+=dim;
             }
+        }
+        template<const int dim,typename T>
+        void X2S(T* RESTRICT b,T* RESTRICT x,T* RESTRICT s)
+        {
+            __X2S<dim>::func(b,x,s);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

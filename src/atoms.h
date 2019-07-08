@@ -491,7 +491,7 @@ namespace MAPP_NS
         
         void update_H();
         Vec<type0>* x;
-        Vec<unsigned int>* id;
+        Vec<id_type>* id;
         Vec<bool>* x_dof;
         vec** vecs;
         int nvecs;

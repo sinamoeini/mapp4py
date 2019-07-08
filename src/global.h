@@ -20,6 +20,7 @@
 
 
 typedef double type0;
+typedef unsigned int id_type;
 typedef unsigned char elem_type;
 typedef unsigned char byte;
 

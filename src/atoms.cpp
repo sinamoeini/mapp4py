@@ -74,7 +74,7 @@ step(0)
     Algebra::zero<__nvoigt__>(__h);
     Algebra::zero<__nvoigt__>(__b);
     x=new Vec<type0>(this,__dim__,"x");
-    id= new Vec<unsigned int>(this,1,"id");
+    id= new Vec<id_type>(this,1,"id");
     x_dof=new Vec<bool>(this,__dim__,"x_dof");
     x_dof->empty(true);
 }
@@ -894,12 +894,12 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
         int n=1;
         Algebra::Do<__dim__>::func([&n,&N](int i){n*=N[i];});
         
-        unsigned int* __id=atoms->id->begin();
+        id_type* __id=atoms->id->begin();
         int natms_lcl=atoms->natms_lcl;
-        unsigned int max_id_lcl=0;
-        unsigned int max_id;
+        id_type max_id_lcl=0;
+        id_type max_id;
         for(int i=0;i<natms_lcl;i++) max_id_lcl=MAX(max_id_lcl,__id[i]);
-        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<unsigned int>::MPI_T,MPI_MAX,atoms->world);
+        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<id_type>::MPI_T,MPI_MAX,atoms->world);
         
         
         
@@ -919,7 +919,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
         
         
         int no;
-        unsigned int did;
+        id_type did;
         type0* __x=atoms->x->begin()+natms_lcl*__dim__;
         __id=atoms->id->begin()+natms_lcl;
         type0 (&H)[__dim__][__dim__]=atoms->H;
@@ -933,7 +933,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
                I[i]=static_cast<type0>(no/P[i]);
                 no=no%P[i];
             });
-            did=static_cast<unsigned int>(i)*(max_id+1);
+            did=static_cast<id_type>(i)*(max_id+1);
             Algebra::V_mul_MLT(I,H,dx);
             for(int j=0;j<natms_lcl;j++)
             {
@@ -1055,19 +1055,19 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
          rotating the atoms for the new coordinates system
          finding the maximum id
          */
-        unsigned int* __id=atoms->id->begin();
+        id_type* __id=atoms->id->begin();
         type0* __x=atoms->x->begin();
         type0 __x_tmp[__dim__];
         int natms_lcl=atoms->natms_lcl;
-        unsigned int max_id_lcl=0;
-        unsigned int max_id;
+        id_type max_id_lcl=0;
+        id_type max_id;
         for(int i=0;i<natms_lcl;i++,__x+=__dim__)
         {
             Algebra::V_eq<__dim__>(__x,__x_tmp);
             Algebra::MSQ_mul_V(Q,__x_tmp,__x);
             max_id_lcl=MAX(max_id_lcl,__id[i]);
         }
-        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<unsigned int>::MPI_T,MPI_MAX,atoms->world);
+        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<id_type>::MPI_T,MPI_MAX,atoms->world);
         
         
         
@@ -1153,7 +1153,7 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
             });
             
             
-            unsigned int did=static_cast<unsigned int>(icurs)*(max_id+1);
+            id_type did=static_cast<id_type>(icurs)*(max_id+1);
             for(int j=0;j<natms_lcl;j++)
             {
                 Algebra::V_add<__dim__>(dx,__x);

@@ -984,7 +984,7 @@ namespace MAPP_NS
         
         
         template <class... Ss>
-        static void Do(Atoms* ,PyObject*,Ss&... ss);
+        static void Do(Atoms*,PyObject*,Ss&... ss);
         
 
         
@@ -1022,7 +1022,8 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
     int err_lcl=0;
     std::string err_msg;
     PyObject* ans=NULL;
-    
+    int* del_idx_lcl=natms_lcl==0 ? NULL:new int[natms_lcl];
+    int ndel_idx_lcl=0;
     for(int i=0;i<natms_lcl && err_lcl==0;i++)
     {
         pre_iter(ss...);
@@ -1038,13 +1039,16 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
             continue;
         }
         
-        if(Py_None!=ans)
+        if(ans!=Py_None && ans!=Py_True && ans!=Py_False)
         {
             Py_DECREF(ans);
             err_lcl=1;
-            err_msg=std::string("provided function should not return any value");
+            err_msg=std::string("provided function should only return True, False, or None");
             continue;
         }
+        
+        if(ans==Py_False) del_idx_lcl[ndel_idx_lcl++]=i;
+        
         
         Py_DECREF(ans);
 
@@ -1087,6 +1091,8 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
         MPI_Bcast(__err_msg,err_msg_length,MPI_CHAR,first_proc,atoms->world);
         err_msg=std::string(__err_msg);
         delete [] __err_msg;
+        
+        delete [] del_idx_lcl;
         throw err_msg;
         
     }
@@ -1095,6 +1101,32 @@ void VecPyFunc::Do(Atoms* atoms,PyObject* op,Ss&... ss)
     
     Py_DECREF(tuple);
     fin(ss...);
+    
+    
+    int ndel_idx=0;
+    MPI_Allreduce(&ndel_idx_lcl,&ndel_idx,1,Vec<int>::MPI_T,MPI_SUM,atoms->world);
+    if(ndel_idx)
+    {
+        for(int i=ndel_idx_lcl-1;i>-1;i--)
+            atoms->del(del_idx_lcl[i]);
+        
+        
+        // redo the ids
+        natms_lcl=atoms->natms_lcl;
+        int ntams_prev=0;
+        MPI_Scan(&natms_lcl,&ntams_prev,1,Vec<int>::MPI_T,MPI_SUM,atoms->world);
+        ntams_prev-=natms_lcl;
+        id_type st=static_cast<id_type>(ntams_prev);
+        id_type* __id=atoms->id->begin();
+        for(int i=0;i<natms_lcl;i++,st++)
+            __id[i]=st;
+        
+        //update the number of atoms 
+        MPI_Allreduce(&natms_lcl,&(atoms->natms),1,Vec<int>::MPI_T,MPI_SUM,atoms->world);
+    }
+    
+    delete [] del_idx_lcl;
+    
     
 }
 

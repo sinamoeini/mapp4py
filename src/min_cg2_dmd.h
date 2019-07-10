@@ -634,45 +634,6 @@ namespace MAPP_NS
         virtual void run(int);
         virtual void init();
         virtual void fin();
-        /*
-        template<bool BC,bool X,bool ALPHA,bool C,class LS>
-        void  run(LS* ls,int nsteps)
-        {
-            MinDMD2Handler<BC,X,ALPHA,C> handler(atoms,ff,max_dx,max_dalpha,H_dof);
-            handler.init();
-            handler.dynamic->init();
-            
-            
-            typename MinDMD2Handler<BC,X,ALPHA,C>::VECTENS1& f=handler.f;
-            typename MinDMD2Handler<BC,X,ALPHA,C>::VECTENS1& h=handler.h;
-            typename MinDMD2Handler<BC,X,ALPHA,C>::VECTENS0& x0=handler.x0;
-            typename MinDMD2Handler<BC,X,ALPHA,C>::VECTENS0& x=handler.x;
-            type0& f_h=handler.f_h;
-            
-            type0 e_curr=handler.force_calc();
-
-            
-
-            
-            
-            type0 f0_f0;
-            h=f;
-            f0_f0=f*f;
-            type0 dfa,h_norm,max_a;
-            x0=x;
-            f_h=f*h;
-            handler.prep();
-            handler.ls_prep(dfa,h_norm,max_a);
-            type0 delta=max_a/1000000.0;
-            for(int i=0;i<100;i++)
-            {
-                type0 fo=handler.F(i*delta);
-                printf("%.16lf %.16lf %.16lf \n",i*delta,dfa*i*delta,fo-e_curr);
-            }
-            handler.dynamic->fin();
-            handler.fin();
-        }
-        */
         
         template<bool BC,bool X,bool ALPHA,bool C,class LS>
         void  run(LS* ls,int nsteps)

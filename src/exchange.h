@@ -375,7 +375,7 @@ int Exchange::load_up()
     int iatm=0;
     type0 s;
     type0* s_ptr=x->begin()+idim;
-    unsigned int n=x->vec_sz;
+    int n=x->vec_sz;
     while(iatm<n)
     {
         s=*s_ptr;

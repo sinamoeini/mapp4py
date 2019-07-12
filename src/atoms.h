@@ -29,8 +29,8 @@ namespace MAPP_NS
         bool __is_empty__;
         int dim;
         int byte_sz;
-        unsigned int vec_sz;
-        unsigned int vec_cpcty;
+        int vec_sz;
+        int vec_cpcty;
         class Atoms* atoms;
         const char* name;
         byte* data;
@@ -87,7 +87,7 @@ inline void vec::change_dim(int new_dim)
     int new_byte_sz=(byte_sz/dim)*new_dim;
     int min_byte_sz=MIN(new_byte_sz,byte_sz);
     byte* __data=new byte[new_byte_sz*vec_cpcty];
-    for(size_t i=0;i<vec_sz;i++)
+    for(int i=0;i<vec_sz;i++)
         memcpy(__data+i*new_byte_sz,data+i*byte_sz,min_byte_sz);
     
     delete [] data;
@@ -676,7 +676,7 @@ inline void Vec<T>::fill()
     
     
     T* __data=begin();
-    for(size_t i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
+    for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
     __is_empty__=false;
 }
 /*--------------------------------------------

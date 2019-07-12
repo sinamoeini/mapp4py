@@ -71,7 +71,7 @@ module_mapp = Extension('mapp',
                     libraries=libs,
                     library_dirs=lib_dirs,
                     sources=cpp_files,
-                    extra_compile_args=['-std=c++11','-Wno-reorder','-O3'])
+                    extra_compile_args=['-std=c++11','-Wno-unused-but-set-variable','-Wno-reorder','-O3'])
 
 
 

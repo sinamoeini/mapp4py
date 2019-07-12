@@ -1962,7 +1962,7 @@ void var<T[N]>::set(py_var<T_EQUIV>& pv)
     
     deallocate(*ptr);
     size_t sz[get_rank()];
-    for(int i=0;i<rank;i++) sz[i]=0;
+    for(int i=0;i<get_rank();i++) sz[i]=0;
     accum_size(pv,sz);
     void* data_ptr[get_rank()];
     for(int i=0;i<rank;i++) data_ptr[i]=NULL;
@@ -2479,7 +2479,7 @@ void var<T*>::set(py_var<T_EQUIV>& pv)
     
     deallocate(*ptr);
     size_t sz[get_rank()];
-    for(int i=0;i<rank;i++) sz[i]=0;
+    for(int i=0;i<get_rank();i++) sz[i]=0;
     accum_size(pv,sz);
     void* data_ptr[get_rank()];
     for(int i=0;i<rank;i++) data_ptr[i]=NULL;
@@ -2504,6 +2504,7 @@ void var<T*>::reset_n_remap(const size_t* map,const size_t map_sz)
     vars=NULL;
     
     size_t sz[get_rank()];
+    for(int i=0;i<get_rank();i++) sz[i]=0;
     sz[0]=map_sz;
     for(int i=1;i<rank;i++) sz[i]=map_sz*sz[i-1];
     void* data_ptr[get_rank()];

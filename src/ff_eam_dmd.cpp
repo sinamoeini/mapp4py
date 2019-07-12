@@ -307,6 +307,7 @@ void ForceFieldEAMDMD::__force_calc()
     type0* f_alphavec=f_alpha->begin();
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
+    Algebra::zero<__dim__>(x_i);
     istart=0;
     for(int i=0;i<n;i++)
     {
@@ -613,6 +614,7 @@ void ForceFieldEAMDMD::__prepJ_n_res(Vec<type0>* fvec_ptr,Vec<type0>* f_alphavec
     
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
+    Algebra::zero<__dim__>(x_i);
     type0 dx_ij[__dim__];
     type0 fpair,apair;
     istart=0;
@@ -691,8 +693,11 @@ void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>*
     type0 dx_ij[__dim__];
     type0 ddx_ij[__dim__];
     type0 x_i[__dim__];
+    Algebra::zero<__dim__>(x_i);
     type0 dx_i[__dim__];
+    Algebra::zero<__dim__>(dx_i);
     type0 Adx_i[__dim__];
+    Algebra::zero<__dim__>(Adx_i);
     
     type0 pair_alpha_0,pair_alpha_1,df_pair,f_pair,a,b,alpha_i,dalpha_i,Adalpha_i;
     for(int i=0;i<n;i++)
@@ -1223,6 +1228,7 @@ void ForceFieldEAMDMD::calc_mu()
     type0* x=atoms->x->begin();
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
+    Algebra::zero<__dim__>(x_i);
     type0 dx_ij[__dim__];
     type0 fpair,apair;
     istart=0;
@@ -1304,6 +1310,7 @@ void ForceFieldEAMDMD::__force_calc_static()
 
     
     type0 x_i[__dim__];
+    Algebra::zero<__dim__>(x_i);
     type0 dx_ij[__dim__];
     
     type0 fpair;

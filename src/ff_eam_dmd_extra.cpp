@@ -182,6 +182,7 @@ void ForceFieldEAMDMD::__force_calc_gp()
     type0* __f_alpha=f_alpha->begin();
     type0 f_i[__dim__]={DESIG(__dim__,0.0)};
     type0 x_i[__dim__];
+    Algebra::zero<__dim__>(x_i);
     istart=0;
     for(int i=0;i<n;i++)
     {

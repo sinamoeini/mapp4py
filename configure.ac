@@ -35,7 +35,7 @@ LDFLAGS=-L$NPY_LIB_DIR" "$LDFLAGS
 LIBS="-lnpymath "$LIBS
 
 
-AM_INIT_AUTOMAKE([1.11 -Wall -Wno-extra-portability foreign])
+AM_INIT_AUTOMAKE([1.11 -Wall -Wno-extra-portability foreign subdir-objects])
 
 #LT_PREREQ([2.2])
 #LT_INIT([dlopen shared])

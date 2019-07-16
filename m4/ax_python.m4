@@ -60,11 +60,20 @@ AC_ARG_VAR(PYTHON_SITE,[path to site-packages directory of python])
 
 ax_python_bin_list="python3 python"
 
+if test -z $PYTHON;
+then
+    __ax_python=
+else
+    ax_python_bin_list=`basename $PYTHON`" "$ax_python_bin_list
+    __ax_python=$PYTHON
+fi
 
 for python in $ax_python_bin_list
 do
-    AC_CHECK_PROGS(PYTHON, [$python])
-    ax_python=$PYTHON
+    AC_CHECK_PROGS(__ax_python, [$python])
+    ax_python=$__ax_python
+    __ax_python=
+
     if test x$ax_python != x
     then
         ax_python_inc=`$ax_python -c "from distutils.sysconfig import get_config_var; print(get_config_var('CONFINCLUDEPY'))"`

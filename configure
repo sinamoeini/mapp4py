@@ -663,6 +663,7 @@ INSTALL_PROGRAM
 EGREP
 GREP
 CXXCPP
+__ax_python
 PYTHON_SITE
 PYTHON
 HAVE_CXX11
@@ -3665,6 +3666,13 @@ $as_echo "" >&6; }
 
 ax_python_bin_list="python3 python"
 
+if test -z $PYTHON;
+then
+    __ax_python=
+else
+    ax_python_bin_list=`basename $PYTHON`" "$ax_python_bin_list
+    __ax_python=$PYTHON
+fi
 
 for python in $ax_python_bin_list
 do
@@ -3674,11 +3682,11 @@ do
 set dummy $ac_prog; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PYTHON+:} false; then :
+if ${ac_cv_prog___ax_python+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PYTHON"; then
-  ac_cv_prog_PYTHON="$PYTHON" # Let the user override the test.
+  if test -n "$__ax_python"; then
+  ac_cv_prog___ax_python="$__ax_python" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -3687,7 +3695,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PYTHON="$ac_prog"
+    ac_cv_prog___ax_python="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -3697,20 +3705,22 @@ IFS=$as_save_IFS
 
 fi
 fi
-PYTHON=$ac_cv_prog_PYTHON
-if test -n "$PYTHON"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON" >&5
-$as_echo "$PYTHON" >&6; }
+__ax_python=$ac_cv_prog___ax_python
+if test -n "$__ax_python"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $__ax_python" >&5
+$as_echo "$__ax_python" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
 
-  test -n "$PYTHON" && break
+  test -n "$__ax_python" && break
 done
 
-    ax_python=$PYTHON
+    ax_python=$__ax_python
+    __ax_python=
+
     if test x$ax_python != x
     then
         ax_python_inc=`$ax_python -c "from distutils.sysconfig import get_config_var; print(get_config_var('CONFINCLUDEPY'))"`

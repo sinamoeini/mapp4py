@@ -29,7 +29,7 @@ AX_PYTHON([AC_MSG_ERROR(could not find a bonafide version of python with numpy)]
 
 
 bindir=$PYTHON_SITE
-CXXFLAGS="-fPIC -std=c++11 "$CXXFLAGS
+CXXFLAGS="-fPIC "$CXXFLAGS
 CPPFLAGS=-I$PYTHON_INC" "-I$NPY_INCLUDE" "$CPPFLAGS
 LDFLAGS=-L$NPY_LIB_DIR" "$LDFLAGS
 LIBS="-lnpymath "$LIBS

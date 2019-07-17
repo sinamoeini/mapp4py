@@ -36,6 +36,7 @@ LIBS="-lnpymath "$LIBS
 
 
 AM_INIT_AUTOMAKE([1.11 -Wall -Wno-extra-portability foreign subdir-objects])
+AM_MAINTAINER_MODE([enable])
 
 #LT_PREREQ([2.2])
 #LT_INIT([dlopen shared])

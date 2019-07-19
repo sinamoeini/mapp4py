@@ -10,8 +10,8 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 ForceFieldMD::ForceFieldMD(AtomsMD* __atoms):
 ForceField(__atoms),
-atoms(__atoms),
-f_alloc(false)
+f_alloc(false),
+atoms(__atoms)
 {
     neighbor=new NeighborMD(__atoms,cut_sk_sq);
     vec* __f=atoms->find_vec("f");

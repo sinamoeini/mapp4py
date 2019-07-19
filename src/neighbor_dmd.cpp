@@ -15,15 +15,15 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 NeighborDMD::NeighborDMD(AtomsDMD* __atoms,
 type0**& __cut_sk,type0*& __rsq_crd):
+Neighbor(__atoms),
 elem(__atoms->elem),
 cut_sk(__cut_sk),
 rsq_crd(__rsq_crd),
-Neighbor(__atoms),
+scl(__atoms->xi[__atoms->N-1]),
+atoms(__atoms),
 neighbor_list_2nd(NULL),
 neighbor_list_size_2nd(NULL),
 neighbor_list_size_size_2nd(0),
-scl(__atoms->xi[__atoms->N-1]),
-atoms(__atoms),
 no_pairs_2nd(0)
 {
 }

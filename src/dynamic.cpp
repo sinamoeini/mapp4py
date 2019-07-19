@@ -67,25 +67,23 @@ Dynamic::Dynamic(Atoms* __atoms,ForceField* __ff,bool __chng_box,
 std::initializer_list<vec*> __updt_vecs_def,std::initializer_list<vec*> __updt_vecs,
 std::initializer_list<vec*> __xchng_comp_vecs_def,std::initializer_list<vec*> __xchng_comp_vecs,
 std::initializer_list<vec*> __arch_vecs_def,std::initializer_list<vec*> __arch_vecs):
-atoms(__atoms),
-world(__atoms->comm.world),
-skin(__atoms->comm.skin),
 ff(__ff),
+atoms(__atoms),
+
 chng_box(__chng_box),
-
-updt_vecs(__updt_vecs_def.size()+__updt_vecs.size()==0 ? NULL: new vec*[__updt_vecs_def.size()+__updt_vecs.size()]),
-nupdt_vecs(static_cast<int>(__updt_vecs.size()+__updt_vecs_def.size())),
-
-xchng_comp_vecs(__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()==0 ? NULL: new vec*[__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()]),
-nxchng_comp_vecs(static_cast<int>(__xchng_comp_vecs.size()+__xchng_comp_vecs_def.size())),
 
 arch_vecs(__arch_vecs_def.size()+__arch_vecs.size()==0 ? NULL: new vec*[__arch_vecs_def.size()+__arch_vecs.size()]),
 narch_vecs(static_cast<int>(__arch_vecs.size()+__arch_vecs_def.size())),
-
+xchng_comp_vecs(__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()==0 ? NULL: new vec*[__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()]),
+nxchng_comp_vecs(static_cast<int>(__xchng_comp_vecs.size()+__xchng_comp_vecs_def.size())),
+updt_vecs(__updt_vecs_def.size()+__updt_vecs.size()==0 ? NULL: new vec*[__updt_vecs_def.size()+__updt_vecs.size()]),
+nupdt_vecs(static_cast<int>(__updt_vecs.size()+__updt_vecs_def.size())),
 nupdt_vecs_full(0),
 nxchng_vecs_full(0),
 arch_vecs_full(NULL),
-narch_vecs_full(0)
+narch_vecs_full(0),
+world(__atoms->comm.world),
+skin(__atoms->comm.skin)
 {
     memcpy(updt_vecs,__updt_vecs_def.begin(),__updt_vecs_def.size()*sizeof(vec*));
     memcpy(updt_vecs+__updt_vecs_def.size(),__updt_vecs.begin(),__updt_vecs.size()*sizeof(vec*));
@@ -524,25 +522,20 @@ NewDynamic::NewDynamic(Atoms* __atoms,ForceField* __ff,
 std::initializer_list<vec*> __updt_vecs_def,std::initializer_list<vec*> __updt_vecs,
 std::initializer_list<vec*> __xchng_comp_vecs_def,std::initializer_list<vec*> __xchng_comp_vecs,
 std::initializer_list<vec*> __arch_vecs_def,std::initializer_list<vec*> __arch_vecs):
-atoms(__atoms),
-world(__atoms->comm.world),
-skin(__atoms->comm.skin),
 ff(__ff),
-
-
-updt_vecs(__updt_vecs_def.size()+__updt_vecs.size()==0 ? NULL: new vec*[__updt_vecs_def.size()+__updt_vecs.size()]),
-nupdt_vecs(static_cast<int>(__updt_vecs.size()+__updt_vecs_def.size())),
-
-xchng_comp_vecs(__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()==0 ? NULL: new vec*[__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()]),
-nxchng_comp_vecs(static_cast<int>(__xchng_comp_vecs.size()+__xchng_comp_vecs_def.size())),
-
+atoms(__atoms),
 arch_vecs(__arch_vecs_def.size()+__arch_vecs.size()==0 ? NULL: new vec*[__arch_vecs_def.size()+__arch_vecs.size()]),
 narch_vecs(static_cast<int>(__arch_vecs.size()+__arch_vecs_def.size())),
-
+xchng_comp_vecs(__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()==0 ? NULL: new vec*[__xchng_comp_vecs_def.size()+__xchng_comp_vecs.size()]),
+nxchng_comp_vecs(static_cast<int>(__xchng_comp_vecs.size()+__xchng_comp_vecs_def.size())),
+updt_vecs(__updt_vecs_def.size()+__updt_vecs.size()==0 ? NULL: new vec*[__updt_vecs_def.size()+__updt_vecs.size()]),
+nupdt_vecs(static_cast<int>(__updt_vecs.size()+__updt_vecs_def.size())),
 nupdt_vecs_full(0),
 nxchng_vecs_full(0),
 arch_vecs_full(NULL),
-narch_vecs_full(0)
+narch_vecs_full(0),
+world(__atoms->comm.world),
+skin(__atoms->comm.skin)
 {
     memcpy(updt_vecs,__updt_vecs_def.begin(),__updt_vecs_def.size()*sizeof(vec*));
     memcpy(updt_vecs+__updt_vecs_def.size(),__updt_vecs.begin(),__updt_vecs.size()*sizeof(vec*));

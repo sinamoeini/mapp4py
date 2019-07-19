@@ -30,26 +30,26 @@ const char* Min::err_msgs[]=
  constructor
  --------------------------------------------*/
 Min::Min():
-H_dof{DESIG2(__dim__,__dim__,false)},
-ls(NULL),
-chng_box(false),
-e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
-affine(false),
 max_dx(1.0),
-ntally(1000)
+chng_box(false),
+affine(false),
+e_tol(sqrt(std::numeric_limits<type0>::epsilon())),
+H_dof{DESIG2(__dim__,__dim__,false)},
+ntally(1000),
+ls(NULL)
 {
 }
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
 Min::Min(type0 __e_tol,bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
-H_dof{DESIG2(__dim__,__dim__,false)},
-ls(__ls),
-chng_box(false),
-e_tol(__e_tol),
-affine(__affine),
 max_dx(__max_dx),
-ntally(1000)
+chng_box(false),
+affine(__affine),
+e_tol(__e_tol),
+H_dof{DESIG2(__dim__,__dim__,false)},
+ntally(1000),
+ls(__ls)
 {
     for(int i=0;i<__dim__;i++)
         for(int j=0;j<__dim__;j++)

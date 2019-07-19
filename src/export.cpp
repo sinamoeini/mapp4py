@@ -36,10 +36,10 @@ ExportDMD::~ExportDMD()
  --------------------------------------------*/
 Export::Export(std::initializer_list<const char*> __def_vec_names,
 int __nevery,std::string* __user_vec_names,size_t __nuser_vecs):
-nevery(__nevery),
-nvecs(0),
+vec_names(NULL),
 vecs(NULL),
-vec_names(NULL)
+nvecs(0),
+nevery(__nevery)
 {
 
     const char* const* ___def_vec_names=__def_vec_names.begin();

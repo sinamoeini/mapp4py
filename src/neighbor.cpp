@@ -14,8 +14,8 @@ using namespace MAPP_NS;
 Neighbor::Neighbor(Atoms* atoms_):
 atoms(atoms_),
 pair_wise(true),
-neighbor_list_size(NULL),
 neighbor_list(NULL),
+neighbor_list_size(NULL),
 neighbor_list_size_size(0)
 {
 }

@@ -4,17 +4,17 @@
  
  --------------------------------------------*/
 AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __N):
-c_dim(__c_dim),
-N(__N),
 Atoms(world),
-xi(new type0[__N]),
-wi(new type0[__N]),
-temp(NAN),
 S_fe{DESIG2(__dim__,__dim__,NAN)},
 fe(NAN),
-pe(NAN),
 gp(NAN),
-s(NAN)
+pe(NAN),
+s(NAN),
+c_dim(__c_dim),
+N(__N),
+xi(new type0[__N]),
+wi(new type0[__N]),
+temp(NAN)
 {
     XMath::quadrature_hg(N,xi,wi);
     elem=new Vec<elem_type>(this,c_dim,"elem");

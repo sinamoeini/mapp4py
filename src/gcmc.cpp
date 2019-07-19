@@ -18,18 +18,18 @@ using namespace MAPP_NS;
  constructor
  --------------------------------------------*/
 GCMC::GCMC(AtomsMD*& __atoms,ForceFieldMD*&__ff,DynamicMD*& __dynamic,elem_type __gas_type,type0 __mu,type0 __T,int seed):
-atoms(__atoms),
-ff(__ff),
-world(__atoms->comm.world),
-dynamic(__dynamic),
 gas_type(__gas_type),
-mu(__mu),
 T(__T),
-cut_sq(__ff->cut_sq),
-s_hi(__atoms->comm.s_hi),
-s_lo(__atoms->comm.s_lo),
+mu(__mu),
 natms_lcl(__atoms->natms_lcl),
 natms_ph(__atoms->natms_ph),
+cut_sq(__ff->cut_sq),
+s_lo(__atoms->comm.s_lo),
+s_hi(__atoms->comm.s_hi),
+dynamic(__dynamic),
+world(__atoms->comm.world),
+atoms(__atoms),
+ff(__ff),
 ielem(gas_type)
 {
     random=new Random(seed);

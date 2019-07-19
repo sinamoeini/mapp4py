@@ -90,12 +90,12 @@ void Var::replace(Var* key,Var* value)
  
  ----------------------------------------------------------------------------------------*/
 Var::Var(int rank_,size_t hash_code_,const char* __name):
+pushed(true),
+root(true),
+obj_set(false),
 rank(rank_),
 hash_code(hash_code_),
-name(__name),
-obj_set(false),
-pushed(true),
-root(true)
+name(__name)
 {
     push(this);
 }
@@ -103,12 +103,12 @@ root(true)
  
  --------------------------------------------*/
 Var::Var(int rank_,size_t hash_code_,std::string&& name_):
+pushed(true),
+root(false),
+obj_set(false),
 rank(rank_),
 hash_code(hash_code_),
-name(name_),
-obj_set(false),
-pushed(true),
-root(false)
+name(name_)
 {
     push(this);
 }
@@ -116,12 +116,12 @@ root(false)
  
  --------------------------------------------*/
 Var::Var(int __rank,size_t hash_code_,const std::string& __name):
+pushed(true),
+root(false),
+obj_set(false),
 rank(__rank),
 hash_code(hash_code_),
-name(__name),
-obj_set(false),
-pushed(true),
-root(false)
+name(__name)
 {
     push(this);
 }
@@ -129,11 +129,11 @@ root(false)
  
  --------------------------------------------*/
 Var::Var(int rank_,size_t hash_code_):
-rank(rank_),
-hash_code(hash_code_),
-obj_set(false),
 pushed(false),
-root(false)
+root(false),
+obj_set(false),
+rank(rank_),
+hash_code(hash_code_)
 {
 }
 /*--------------------------------------------
@@ -147,12 +147,12 @@ Var::~Var()
  
  --------------------------------------------*/
 Var::Var(const Var& r):
+pushed(r.pushed),
+root(r.root),
+obj_set(r.obj_set),
 rank(r.rank),
 hash_code(r.hash_code),
-obj_set(r.obj_set),
-size(r.size),
-pushed(r.pushed),
-root(r.root)
+size(r.size)
 {
     if(pushed) push(this);
 }
@@ -160,13 +160,13 @@ root(r.root)
  
  --------------------------------------------*/
 Var::Var(Var&& r):
+pushed(r.pushed),
+root(r.root),
+obj_set(r.obj_set),
 rank(r.rank),
 hash_code(r.hash_code),
-name(std::move(r.name)),
-obj_set(r.obj_set),
 size(r.size),
-pushed(r.pushed),
-root(r.root)
+name(std::move(r.name))
 {
     if(pushed) replace(&r,this);
     

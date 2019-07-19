@@ -427,8 +427,8 @@ PyObject* var<OB<O,T>>::build(O*& v,size_t**)
  --------------------------------------------*/
 template<class O,PyTypeObject& T>
 var<OB<O,T>>::var(OB<O,T>& v,const char* name_):
-ptr(&v),
-Var(get_rank(),base_hash_code(),name_)
+Var(get_rank(),base_hash_code(),name_),
+ptr(&v)
 {
     size=1;
 }
@@ -439,8 +439,8 @@ Var(get_rank(),base_hash_code(),name_)
  --------------------------------------------*/
 template<class O,PyTypeObject& T>
 var<OB<O,T>>::var(OB<O,T>& v,std::string&& name_,py_var<T_EQUIV>& pv,void**):
-ptr(&v),
-Var(get_rank(),base_hash_code(),std::move(name_))
+Var(get_rank(),base_hash_code(),std::move(name_)),
+ptr(&v)
 {
     size=1;
     v=pv;
@@ -452,8 +452,8 @@ Var(get_rank(),base_hash_code(),std::move(name_))
  --------------------------------------------*/
 template<class O,PyTypeObject& T>
 var<OB<O,T>>::var():
-ptr(NULL),
-Var(get_rank(),base_hash_code())
+Var(get_rank(),base_hash_code()),
+ptr(NULL)
 {
     size=0;
 }

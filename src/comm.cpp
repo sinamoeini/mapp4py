@@ -89,11 +89,11 @@ void MAPP_MPI::setup_tp_members()
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
 Communication::Communication(MPI_Comm __world,int(&N)[__dim__],type0(&H)[__dim__][__dim__],type0 __skin):
-world(__world),
-size(get_size(__world)),
 rank(get_rank(__world)),
+size(get_size(__world)),
 skin(__skin),
-xchng_id(0)
+xchng_id(0),
+world(__world)
 {
     grid(N,H);
 }
@@ -101,11 +101,11 @@ xchng_id(0)
  
  --------------------------------------------*/
 Communication::Communication(MPI_Comm __world,type0(&H)[__dim__][__dim__],type0 __skin):
-world(__world),
-size(get_size(__world)),
 rank(get_rank(__world)),
+size(get_size(__world)),
 skin(__skin),
-xchng_id(0)
+xchng_id(0),
+world(__world)
 {
     int N[__dim__]={DESIG(__dim__,0)};
     grid(N,H);
@@ -114,11 +114,11 @@ xchng_id(0)
  
  --------------------------------------------*/
 Communication::Communication(MPI_Comm __world,type0 __skin):
-world(__world),
-size(get_size(__world)),
 rank(get_rank(__world)),
+size(get_size(__world)),
 skin(__skin),
-xchng_id(0)
+xchng_id(0),
+world(__world)
 {
     int N[__dim__]={DESIG(__dim__,0)};
     type0 H[__dim__][__dim__]={DESIG2(__dim__,__dim__,0.0)};
@@ -129,11 +129,11 @@ xchng_id(0)
  
  --------------------------------------------*/
 Communication::Communication(const Communication& r):
-world(r.world),
-size(r.size),
 rank(r.rank),
+size(r.size),
 skin(r.skin),
-xchng_id(r.xchng_id)
+xchng_id(r.xchng_id),
+world(r.world)
 {
     for(int i=0;i<__dim__;i++)
     {

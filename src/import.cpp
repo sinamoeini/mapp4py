@@ -63,12 +63,12 @@ FileReader(__world,__file.c_str())
  
  --------------------------------------------*/
 FileReader::FileReader(MPI_Comm __world,const char* __file):
+fst(Communication::get_rank(__world)==0 ? std::ifstream(__file,std::ios_base::in): std::ifstream()),
 world(__world),
 rank(Communication::get_rank(__world)),
-file(NULL),
-finished(false),
 line_no(0),
-fst(Communication::get_rank(__world)==0 ? std::ifstream(__file,std::ios_base::in): std::ifstream())
+file(NULL),
+finished(false)
 {
     bool file_xst=true;
     if(!rank)

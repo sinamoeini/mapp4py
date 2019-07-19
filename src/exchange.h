@@ -264,7 +264,6 @@ namespace MAPP_NS
         int rcv_buff_cpcty;
         
         vec**& vecs;
-        int& nvecs;
         int& nxchng_vecs;
         int tot_xchng_sz;
         
@@ -293,15 +292,13 @@ namespace MAPP_NS
         Exchange(Atoms* atoms,int& __nxchng_vecs):
         natms_lcl(atoms->natms_lcl),
         x(atoms->x),
-        world(atoms->comm.world),
+        xchng_id(atoms->comm.xchng_id),
         rank(atoms->comm.rank),
         s_lo(atoms->comm.s_lo),
         s_hi(atoms->comm.s_hi),
-        xchng_id(atoms->comm.xchng_id),
-        
         vecs(atoms->dynamic_vecs),
-        nvecs(atoms->ndynamic_vecs),
-        nxchng_vecs(__nxchng_vecs)
+        nxchng_vecs(__nxchng_vecs),
+        world(atoms->comm.world)
         {
             Algebra::V_eq<__dim__*2>(&(atoms->comm.neigh[0][0]), &(neigh[0][0]));
             snd_buff[0]=snd_buff[1]=NULL;
@@ -982,18 +979,18 @@ namespace MAPP_NS
         natms_ph(atoms->natms_ph),
         H(atoms->H),
         depth_inv(atoms->depth_inv),
-        
-        rank(atoms->comm.rank),
+    
         s_lo(atoms->comm.s_lo),
         s_hi(atoms->comm.s_hi),
         
         max_cut(atoms->max_cut),
+        rank(atoms->comm.rank),
         x(atoms->x),
         
         vecs(atoms->dynamic_vecs),
         nvecs(atoms->ndynamic_vecs),
-        nupdt_vecs(__nupdt_vecs),
-        nxchng_vecs(__nxchng_vecs)
+        nxchng_vecs(__nxchng_vecs),
+        nupdt_vecs(__nupdt_vecs)
         {
             start<0>(atoms->comm.neigh,atoms->comm.dims,atoms->comm.coords);
             snd_buff=NULL;

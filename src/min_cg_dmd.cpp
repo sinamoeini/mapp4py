@@ -7,9 +7,9 @@ using namespace MAPP_NS;
 MinCGDMD::MinCGDMD(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
+max_dalpha(__max_dalpha),
 atoms(NULL),
 ff(NULL),
-max_dalpha(__max_dalpha),
 xprt(NULL)
 {
 }

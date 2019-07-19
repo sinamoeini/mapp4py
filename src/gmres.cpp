@@ -4,9 +4,9 @@
  
  --------------------------------------------*/
 GMRES::GMRES(Atoms* __atoms,int __m,int __dim):
-world(__atoms->world),
 m(__m),
-n(__dim*__atoms->natms_lcl)
+n(__dim*__atoms->natms_lcl),
+world(__atoms->world)
 {
     
     

@@ -5,14 +5,14 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 ThermostatNHC::ThermostatNHC():
-t_relax(0),
-freq_sq(0),
-L(0),
-niters(0),
 ddt(0),
 ddt2(0),
 ddt4(0),
-eta_d(NULL)
+freq_sq(0),
+eta_d(NULL),
+t_relax(0),
+L(0),
+niters(0)
 {}
 /*--------------------------------------------
  
@@ -20,14 +20,16 @@ eta_d(NULL)
 ThermostatNHC::ThermostatNHC(const type0 __dt,
 const type0 __t_relax,const int __L,
 const int __niters):
-t_relax(__t_relax),
-freq_sq(1.0/(__t_relax*__t_relax)),
-L(__L),
-niters(__niters),
-eta_d(NULL),
+
 ddt(__dt/static_cast<type0>(__niters)),
 ddt2(0.5*__dt/static_cast<type0>(__niters)),
-ddt4(0.25*__dt/static_cast<type0>(__niters))
+ddt4(0.25*__dt/static_cast<type0>(__niters)),
+freq_sq(1.0/(__t_relax*__t_relax)),
+eta_d(NULL),
+t_relax(__t_relax),
+L(__L),
+niters(__niters)
+
 {
     eta_d=new type0[L];
     for(int ich=0;ich<L;ich++) eta_d[ich]=0.0;

@@ -16,16 +16,17 @@ type0 __dr,type0 __drho,size_t __nr,size_t __nrho,
 type0(***&& __r_phi_arr)[4],type0(***&& __rho_arr)[4],type0(**&& __F_arr)[4],
 type0**&& __cut):
 ForceFieldMD(atoms),
-max_pairs(0),
-drhoi_dr(NULL),
-drhoj_dr(NULL),
-dr(__dr),
-drho(__drho),
 nr(__nr),
 nrho(__nrho),
+dr(__dr),
+drho(__drho),
+F_arr(__F_arr),
 r_phi_arr(__r_phi_arr),
 rho_arr(__rho_arr),
-F_arr(__F_arr)
+drhoi_dr(NULL),
+drhoj_dr(NULL),
+max_pairs(0)
+
 {
     gcmc_n_cutoff=2;
     gcmc_n_vars=2;

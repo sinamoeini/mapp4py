@@ -5,9 +5,9 @@
  constructor
  --------------------------------------------*/
 LineSearch::LineSearch():
-golden(0.5+0.5*sqrt(5.0)),
 epsilon_3_4(pow(std::numeric_limits<type0>::epsilon(),0.75)),
 sqrt_epsilon(sqrt(std::numeric_limits<type0>::epsilon())),
+golden(0.5+0.5*sqrt(5.0)),
 prev_val(-1.0)
 {    
 }

@@ -580,15 +580,14 @@ namespace MAPP_NS
  
  --------------------------------------------*/
 inline vec::vec(Atoms* __atoms,int __dim,size_t __t_size,const char* __name):
+__is_empty__(false),
 dim(__dim),
 byte_sz(static_cast<int>(__t_size)*__dim),
-data(NULL),
 vec_sz(0),
 vec_cpcty(0),
-
-name(__name),
 atoms(__atoms),
-__is_empty__(false),
+name(__name),
+data(NULL),
 data_dump(NULL)
 {
     atoms->push(this);
@@ -747,14 +746,14 @@ namespace MAPP_NS
  --------------------------------------------*/
 template<typename T,class F>
 VecPy<T,F>::VecPy(Vec<T>* __vec,F& __func):
+ipos(0),
+inc(false),
+op(NULL),
+dim(__vec->dim),
 data(NULL),
 arr_data(NULL),
-vec(__vec),
-dim(__vec->dim),
 func(__func),
-op(NULL),
-inc(false),
-ipos(0)
+vec(__vec)
 {
 }
 /*--------------------------------------------

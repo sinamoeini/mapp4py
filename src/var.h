@@ -355,8 +355,8 @@ namespace MAPP_NS
  --------------------------------------------*/
 template<class T>
 py_var<T*>::py_var():
-size(0),
-vars(NULL)
+vars(NULL),
+size(0)
 {
 }
 /*--------------------------------------------
@@ -364,8 +364,8 @@ vars(NULL)
  --------------------------------------------*/
 template<class T>
 py_var<T*>::py_var(PyObject* op):
-size(0),
-vars(NULL)
+vars(NULL),
+size(0)
 {
     
     int type_num=cpp_type2type_num<T_BASE>::type_num();
@@ -430,8 +430,8 @@ vars(NULL)
  --------------------------------------------*/
 template<class T>
 py_var<T*>::py_var(PyObject** op_ptr):
-size(0),
-vars(NULL)
+vars(NULL),
+size(0)
 {
     size=1;
     vars=new py_var<T>[1];
@@ -501,8 +501,8 @@ vars(NULL)
  --------------------------------------------*/
 template<class T>
 py_var<T*>::py_var(size_t* sz,void*& data):
-size(*sz),
-vars(NULL)
+vars(NULL),
+size(0)
 {
     if(std::is_same<T,char>::value)
     {
@@ -536,8 +536,8 @@ vars(NULL)
  --------------------------------------------*/
 template<class T>
 py_var<T*>::py_var(int depth,long* sz,PyObject**& objs):
-size(0),
-vars(NULL)
+vars(NULL),
+size(0)
 {
     if(depth==0)
     {
@@ -1169,9 +1169,9 @@ inline PyObject* var<std::string>::build(std::string& v,size_t**)
  --------------------------------------------*/
 template<class T>
 var<T>::var(T& v,const char* name_):
+Var(get_rank(),base_hash_code(),name_),
 val(type_attr<T>::zero),
-ptr(&v),
-Var(get_rank(),base_hash_code(),name_)
+ptr(&v)
 {
     size=1;
 }
@@ -1182,9 +1182,9 @@ Var(get_rank(),base_hash_code(),name_)
  --------------------------------------------*/
 template<class T>
 var<T>::var(T& v,std::string&& name_,py_var<T_EQUIV>& pv,void**):
+Var(get_rank(),base_hash_code(),std::move(name_)),
 val(type_attr<T>::zero),
-ptr(&v),
-Var(get_rank(),base_hash_code(),std::move(name_))
+ptr(&v)
 {
     size=1;
     v=pv;
@@ -1196,9 +1196,9 @@ Var(get_rank(),base_hash_code(),std::move(name_))
  --------------------------------------------*/
 template<class T>
 var<T>::var(T& v,var<T>& __var,void**,const size_t*,const size_t):
+Var(get_rank(),base_hash_code(),__var.name),
 val(type_attr<T>::zero),
-ptr(&v),
-Var(get_rank(),base_hash_code(),__var.name)
+ptr(&v)
 {
     size=1;
     *ptr=*__var.ptr;
@@ -1210,9 +1210,9 @@ Var(get_rank(),base_hash_code(),__var.name)
  --------------------------------------------*/
 template<class T>
 var<T>::var():
-ptr(NULL),
 Var(get_rank(),base_hash_code()),
-val(type_attr<T>::zero)
+val(type_attr<T>::zero),
+ptr(NULL)
 {
     size=0;
 }
@@ -1231,9 +1231,9 @@ var<T>::~var()
  --------------------------------------------*/
 template<class T>
 var<T>::var(T&& v):
+Var(get_rank(),base_hash_code()),
 val(v),
-ptr(&val),
-Var(get_rank(),base_hash_code())
+ptr(&val)
 {
     size=1;
     name=Print::to_string(val);
@@ -1720,9 +1720,9 @@ PyObject* var<T[N]>::build(T_CPP(&v)[N],size_t** sz)
  --------------------------------------------*/
 template<class T,size_t N>
 var<T[N]>::var(T_CPP (&v)[N],const char* name_):
-ptr(&v),
+Var(get_rank(),base_hash_code(),name_),
 __dsizes__(NULL),
-Var(get_rank(),base_hash_code(),name_)
+ptr(&v)
 {
     size=0;
 }
@@ -1749,9 +1749,9 @@ ptr(&v)
  --------------------------------------------*/
 template<class T,size_t N>
 var<T[N]>::var(T_CPP(&v)[N],std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
-ptr(&v),
+Var(get_rank(),base_hash_code(),std::move(name_)),
 __dsizes__(NULL),
-Var(get_rank(),base_hash_code(),std::move(name_))
+ptr(&v)
 {
     size=N;
     for(size_t i=0;i<size;i++)
@@ -1767,9 +1767,9 @@ Var(get_rank(),base_hash_code(),std::move(name_))
  --------------------------------------------*/
 template<class T,size_t N>
 var<T[N]>::var():
-ptr(NULL),
+Var(get_rank(),base_hash_code()),
 __dsizes__(NULL),
-Var(get_rank(),base_hash_code())
+ptr(NULL)
 {
     size=N;
 }
@@ -1816,8 +1816,8 @@ Var(get_rank(),base_hash_code())
 template<class T,size_t N>
 var<T[N]>::var(const var<T[N]>& r):
 Var(static_cast<const Var&>(r)),
-ptr(r.ptr),
-__dsizes__(NULL)
+__dsizes__(NULL),
+ptr(r.ptr)
 {
     if(r.__dsizes__)
     {
@@ -2187,10 +2187,10 @@ PyObject* var<T*>::build(T_CPP*& v,size_t** sz)
  --------------------------------------------*/
 template<class T>
 var<T*>::var(T_CPP*& v,const char* name_):
-vars(NULL),
-ptr(&v),
+Var(get_rank(),base_hash_code(),name_),
 __dsizes__(NULL),
-Var(get_rank(),base_hash_code(),name_)
+vars(NULL),
+ptr(&v)
 {
     size=0;
     v=NULL;
@@ -2222,8 +2222,8 @@ ptr(&v)
 template<class T>
 var<T*>::var(T_CPP*& v,std::string&& name_,py_var<T_EQUIV>& pv,void** data_ptr):
 Var(get_rank(),base_hash_code(),std::move(name_)),
-vars(NULL),
 __dsizes__(NULL),
+vars(NULL),
 ptr(&v)
 {
     v=static_cast<T*>(*data_ptr);
@@ -2244,8 +2244,8 @@ ptr(&v)
 template<class T>
 var<T*>::var(T_CPP*& v,var<T*>& __var,void** data_ptr,const size_t* map,const size_t map_sz):
 Var(get_rank(),base_hash_code(),__var.name),
-vars(NULL),
 __dsizes__(NULL),
+vars(NULL),
 ptr(&v)
 {
     v=static_cast<T*>(*data_ptr);
@@ -2266,8 +2266,8 @@ ptr(&v)
 template<class T>
 var<T*>::var():
 Var(get_rank(),base_hash_code()),
-vars(NULL),
 __dsizes__(NULL),
+vars(NULL),
 ptr(NULL)
 {
     size=0;
@@ -2319,8 +2319,8 @@ Var(get_rank(),base_hash_code())
 template<class T>
 var<T*>::var(const var<T*>& r):
 Var(static_cast<const Var&>(r)),
-ptr(r.ptr),
-__dsizes__(NULL)
+__dsizes__(NULL),
+ptr(r.ptr)
 {
     if(r.__dsizes__)
     {

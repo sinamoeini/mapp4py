@@ -12,14 +12,14 @@ using namespace MAPP_NS;
 MinCG2DMD::MinCG2DMD(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,type0 __max_dbetamu,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
-atoms(NULL),
-ff(NULL),
-max_dalpha(__max_dalpha),
-max_dbetamu(__max_dbetamu),
-xprt(NULL),
 X_DOF(true),
 ALPHA_DOF(true),
-MU_DOF(false)
+MU_DOF(false),
+max_dalpha(__max_dalpha),
+max_dbetamu(__max_dbetamu),
+atoms(NULL),
+ff(NULL),
+xprt(NULL)
 {
 }
 /*--------------------------------------------

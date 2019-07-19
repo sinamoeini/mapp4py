@@ -106,8 +106,8 @@ namespace MAPP_NS
 template<typename T>
 inline DMDVec<T>::DMDVec(class AtomsDMD* __atoms,T __def_val,const char* __name):
 Vec<T>(__atoms,__atoms->c_dim,__name),
-def_val(__def_val),
-atoms_dmd(__atoms)
+atoms_dmd(__atoms),
+def_val(__def_val)
 {
 }
 /*--------------------------------------------

@@ -240,14 +240,14 @@ namespace MAPP_NS
         type0 __max_dalpha,
         bool (&__H_dof)[__dim__][__dim__]
         ):
-        atoms(__atoms),
         ff(__ff),
+        atoms(__atoms),
         max_dx(__max_dx),
         max_dalpha(__max_dalpha),
-        c_dim(__atoms->c_dim),
-        dynamic(NULL),
         beta_mu(NULL),
-        beta_mu_0(NULL)
+        beta_mu_0(NULL),
+        c_dim(__atoms->c_dim),
+        dynamic(NULL)
         {
             Algebra::V_eq<__dim__*__dim__>(__H_dof[0],H_dof[0]);
         }

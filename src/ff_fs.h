@@ -5,13 +5,13 @@ namespace MAPP_NS
 {
     class ForceFieldFS: public ForceFieldMD
     {
-    private:        
-        type0** t1;
-        type0** t2;
+    private:
         type0** cut_sq_phi;
         type0** cut_sq_rho;
         type0** cut_phi;
         type0** cut_rho;
+        type0** t1;
+        type0** t2;
         type0** k1;
         type0** k2;
         type0** k3;

@@ -66,10 +66,11 @@ type0 PotFitAux::find_max_alpha(const type0 xlo,const type0 xhi,type0 max_dx,typ
  
  ----------------------------------------------------------------------------------------*/
 PotFitPairFunc::PotFitPairFunc(const char* __name):
-name(__name),nvars(0),rc(0.0),vars(NULL),dvars_lcl(NULL),dvars(NULL),
+name(__name),
 A_name(std::string("A_")+std::string(name)),
 dA_name_max(std::string("dA_")+std::string(name)+std::string("_max")),
-A_name_dof(std::string("A_")+std::string(name)+std::string("_dof"))
+A_name_dof(std::string("A_")+std::string(name)+std::string("_dof")),
+vars(NULL),dvars_lcl(NULL),dvars(NULL),rc(0.0),nvars(0)
 {
 }
 /*--------------------------------------------
@@ -984,10 +985,11 @@ int PotFitPhiSpl::set(PyObject* val)
  
  ----------------------------------------------------------------------------------------*/
 PotFitEmbFunc::PotFitEmbFunc(const char* __name):
-name(__name),nvars(0),vars(NULL),dvars_lcl(NULL),dvars(NULL),
+name(__name),
 A_name(std::string("A_")+std::string(name)),
 dA_name_max(std::string("dA_")+std::string(name)+std::string("_max")),
-A_name_dof(std::string("A_")+std::string(name)+std::string("_dof"))
+A_name_dof(std::string("A_")+std::string(name)+std::string("_dof")),
+vars(NULL),dvars_lcl(NULL),dvars(NULL),nvars(0)
 {
 }
 /*--------------------------------------------

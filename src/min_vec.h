@@ -143,7 +143,7 @@ namespace MAPP_NS
         E const& v;
         T const& scl;
     public:
-        VecTensMulScl(T const& __scl, E const& __v):scl(__scl),v(__v){}
+        VecTensMulScl(T const& __scl, E const& __v):v(__v),scl(__scl){}
         template<const int I>
         T operator[](int i)const{return v.operator[]<I>(i)*scl;}
         T get(int I,int i) const {return v.get(I,i)*scl;}
@@ -308,9 +308,9 @@ A_dof(__A_dof)
  --------------------------------------------*/
 template<typename T,const int N>template<class... Ts>
 VecTens<T,N>::VecTens(Atoms* atoms,bool __A_dof,T(&__A)[__dim__][__dim__],Ts... vs):
-A_dof(__A_dof),
+A(__A),
 A_alloc(false),
-A(__A)
+A_dof(__A_dof)
 {
     static_assert(sizeof...(Ts)==N,"not enough vecs");
     assign(atoms,0,vs...);
@@ -936,11 +936,11 @@ namespace MAPP_NS
 template<class V>template<class ... Cs>
 __GMRES__<V>::__GMRES__(int __m,Cs ... cs):
 m(__m),
-res(0.0),
-iter(0),
 N(0),
 RES(cs...),
-dx(cs...)
+dx(cs...),
+iter(0),
+res(0.0)
 {
     
     

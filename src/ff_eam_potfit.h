@@ -131,7 +131,8 @@ type0*& __vs,size_t __nvs,
 PotFitPairFunc*(& __phi_ptr)[NELEMS][NELEMS],
 PotFitPairFunc*(&__rho_ptr)[NELEMS][NELEMS],
 PotFitEmbFunc*(&__F_ptr)[NELEMS]):
-ForceFieldMD(__atoms),vs(__vs),nvs(__nvs),
+ForceFieldMD(__atoms),
+nvs(__nvs),vs(__vs),
 uniq_rho_ptr(NULL),
 uniq_phi_ptr(NULL),
 uniq_F_ptr(NULL)

@@ -449,7 +449,7 @@ namespace MAPP_NS
  --------------------------------------------*/
 template<class VarClass>
 Logics::LogBinary<VarClass>::LogBinary(VarClass* l,const bool l_alloc,VarClass* r,const bool r_alloc,const char* op_name,const bool _is_):
-Log(op_name,_is_),left(l),right(r),left_alloc(l_alloc),right_alloc(r_alloc)
+Log(op_name,_is_),left(l),left_alloc(l_alloc),right(r),right_alloc(r_alloc)
 {}
 /*--------------------------------------------
    

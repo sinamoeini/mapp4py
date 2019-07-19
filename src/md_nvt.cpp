@@ -12,15 +12,15 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 MDNVT::MDNVT(type0 __T,type0 __dt):
-dynamic(NULL),
 atoms(NULL),
 ff(NULL),
+dynamic(NULL),
 xprt(NULL),
-dt(__dt),
+thermo_part(__dt/2.0,100.0*__dt,3,1),
 T(__T),
+dt(__dt),
 dt2(__dt/2.0),
-ntally(10000),
-thermo_part(__dt/2.0,100.0*__dt,3,1)
+ntally(10000)
 {
 }
 /*--------------------------------------------

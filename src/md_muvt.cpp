@@ -12,9 +12,9 @@ MDMuVT::MDMuVT(type0 __mu,type0 __T,type0 __dt,std::string __gas_elem_name,int _
 MDNVT(__T,__dt),
 seed(__seed),
 mu(__mu),
+gas_elem_name(__gas_elem_name),
 nevery(1000),
-nattempts(1000),
-gas_elem_name(__gas_elem_name)
+nattempts(1000)
 {
 }
 /*--------------------------------------------

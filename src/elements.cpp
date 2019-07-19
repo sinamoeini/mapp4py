@@ -10,22 +10,22 @@ using namespace MAPP_NS;
  constructor
  --------------------------------------------*/
 Elements::Elements():
+__nelems__(nelems,"nelems"),
 nelems(0),
 __nelems(0),
 names(NULL),
-masses(NULL),
-__nelems__(nelems,"nelems")
+masses(NULL)
 {
 }
 /*--------------------------------------------
  copy constructor
  --------------------------------------------*/
 Elements::Elements(const Elements& r):
+__nelems__(nelems,"nelems"),
 nelems(r.nelems),
 __nelems(r.__nelems),
 names(NULL),
-masses(NULL),
-__nelems__(nelems,"nelems")
+masses(NULL)
 {
     if(nelems==0) return;
     names=new std::string[nelems];
@@ -40,11 +40,11 @@ __nelems__(nelems,"nelems")
  copy constructor
  --------------------------------------------*/
 Elements::Elements(Elements&& r):
+__nelems__(std::move(r.__nelems__)),
 nelems(r.nelems),
 __nelems(r.__nelems),
 names(r.names),
-masses(r.masses),
-__nelems__(std::move(r.__nelems__))
+masses(r.masses)
 {
     r.names=NULL;
     r.masses=NULL;

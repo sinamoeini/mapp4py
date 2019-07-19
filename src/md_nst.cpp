@@ -13,17 +13,17 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 MDNST::MDNST(type0(&__S)[__dim__][__dim__],type0 __T,type0 __dt):
 MDNVT(__T,__dt),
-thermo_baro(__dt/2.0,1000.0*__dt,3,1),
-nreset(0),
 MLT0{DESIG2(__dim__,__dim__,0.0)},
 MLT1{DESIG2(__dim__,__dim__,0.0)},
 MLT2{DESIG2(__dim__,__dim__,0.0)},
-S{DESIG2(__dim__,__dim__,0.0)},
 S_dev{DESIG2(__dim__,__dim__,0.0)},
 B_ref{DESIG2(__dim__,__dim__,0.0)},
-tau{DESIG2(__dim__,__dim__,0.0)},
 V_H{DESIG2(__dim__,__dim__,0.0)},
-S_dof{DESIG2(__dim__,__dim__,false)}
+thermo_baro(__dt/2.0,1000.0*__dt,3,1),
+S_dof{DESIG2(__dim__,__dim__,false)},
+S{DESIG2(__dim__,__dim__,0.0)},
+tau{DESIG2(__dim__,__dim__,0.0)},
+nreset(0)
 {
     
     Algebra::DoLT<__dim__>::func([this,&__S,&__dt]

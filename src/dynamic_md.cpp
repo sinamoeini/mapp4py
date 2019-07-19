@@ -18,8 +18,8 @@ Dynamic(__atoms,__ff,__chng_box,
 {__atoms->x,__atoms->elem},__updt_vecs,
 {__atoms->id},__xchng_comp_vecs,
 {},__arch_vecs),
-atoms(__atoms),
 ff(__ff),
+atoms(__atoms),
 x0(NULL)
 {
 }

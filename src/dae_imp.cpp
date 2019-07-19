@@ -13,9 +13,9 @@ DAEImplicit::DAEImplicit():
 DAE(),
 y_0(NULL),
 c_0(NULL),
+a(NULL),
 del_c(NULL),
 F(NULL),
-a(NULL),
 F_ptr(NULL),
 del_c_ptr(NULL),
 gmres(NULL)

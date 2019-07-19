@@ -404,10 +404,10 @@ namespace MAPP_NS
         noptionals(0){}
         
         FuncAPI(const char* __name,std::initializer_list<const char*> __names):
-        name(__name+std::string("()")),
         func(__names.begin()),
         nvars(__names.size()),
-        noptionals(0){}
+        noptionals(0),
+        name(__name+std::string("()")){}
         
         int operator()(PyObject*,PyObject*);
         template<class F>

@@ -17,9 +17,9 @@ ForceFieldLJ::
 ForceFieldLJ(AtomsMD* atoms,type0**&& __epsilon,
 type0**&& __sigma,type0**&& __cut,bool __shift):
 ForceFieldMD(atoms),
-epsilon(__epsilon),
-sigma(__sigma),
 shift(__shift),
+sigma(__sigma),
+epsilon(__epsilon),
 offset(NULL)
 {
     gcmc_n_cutoff=1;

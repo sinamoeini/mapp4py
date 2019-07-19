@@ -352,8 +352,8 @@ Logics& Logics::link()
 |_____| \_____/ \_____/
  ----------------------*/
 Logics::Log::Log(std::string&& op_name_,const bool _is):
-_is_(_is),
-op_name(op_name_)
+op_name(op_name_),
+_is_(_is)
 {
 
 }

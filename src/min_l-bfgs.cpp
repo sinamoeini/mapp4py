@@ -31,10 +31,10 @@ MinLBFGS::MinLBFGS(int __m,type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
 MinCG(__e_tol,__H_dof,__affine,__max_dx,__ls),
 m(__m),
-s(NULL),
-y(NULL),
+rho(NULL),
 alpha(NULL),
-rho(NULL)
+s(NULL),
+y(NULL)
 {
 }
 /*--------------------------------------------

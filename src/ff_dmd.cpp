@@ -10,9 +10,9 @@ using namespace MAPP_NS;
 ForceFieldDMD::ForceFieldDMD(AtomsDMD* __atoms):
 ForceField(__atoms),
 atoms(__atoms),
-ave_mu(NULL),
 rsq_crd(NULL),
-r_crd(NULL)
+r_crd(NULL),
+ave_mu(NULL)
 {
     Memory::alloc(lambda,nelems);
     Memory::alloc(mu_0,nelems);

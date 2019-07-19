@@ -102,24 +102,27 @@ ThermoQuantity::~ThermoQuantity()
  
  --------------------------------------------*/
 ThermoQuantity::ThermoQuantity(const char* __name,type0& val):
-name(__name),ptr(&val),
-name_lngth(static_cast<int>(strlen(__name)))
+name(__name),
+name_lngth(static_cast<int>(strlen(__name))),
+ptr(&val)
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ThermoQuantity::ThermoQuantity(const ThermoQuantity& r):
-name(r.name),ptr(r.ptr),
-name_lngth(r.name_lngth)
+name(r.name),
+name_lngth(r.name_lngth),
+ptr(r.ptr)
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 ThermoQuantity::ThermoQuantity(ThermoQuantity&& r):
-name(r.name),ptr(r.ptr),
-name_lngth(r.name_lngth)
+name(r.name),
+name_lngth(r.name_lngth),
+ptr(r.ptr)
 {
 }
 /*--------------------------------------------

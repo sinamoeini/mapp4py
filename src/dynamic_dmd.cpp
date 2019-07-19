@@ -22,10 +22,10 @@ Dynamic(__atoms,__ff,__chng_box,
 {__atoms->x,__atoms->alpha,__atoms->c,__atoms->elem},__updt_vecs,
 {__atoms->id},__xchng_comp_vecs,
 {},__arch_vecs),
-atoms(__atoms),
-ff(__ff),
 c_dim(__atoms->c->dim),
 alpha_scale(__atoms->xi[__atoms->N-1]),
+ff(__ff),
+atoms(__atoms),
 x0(NULL),
 alpha0(NULL)
 {

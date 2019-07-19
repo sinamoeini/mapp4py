@@ -22,14 +22,14 @@ ForceFieldFS::ForceFieldFS(AtomsMD* __atoms,type0*&& __A,
 type0**&& __t1,type0**&& __t2,type0**&& __k1,type0**&& __k2,
 type0**&& __k3,type0**&& r_c_phi,type0**&& r_c_rho):
 ForceFieldMD(__atoms),
-A(__A),
+cut_phi(r_c_phi),
+cut_rho(r_c_rho),
 t1(__t1),
 t2(__t2),
 k1(__k1),
 k2(__k2),
 k3(__k3),
-cut_phi(r_c_phi),
-cut_rho(r_c_rho)
+A(__A)
 {
     gcmc_n_cutoff=2;
     gcmc_n_vars=2;

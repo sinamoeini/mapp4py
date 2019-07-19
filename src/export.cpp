@@ -402,7 +402,7 @@ PyTypeObject ExportMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int ExportMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.export";
+    TypeObject.tp_name="mapp4py.md.export";
     TypeObject.tp_doc="export";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -511,7 +511,7 @@ PyTypeObject ExportDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int ExportDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.export";
+    TypeObject.tp_name="mapp4py.dmd.export";
     TypeObject.tp_doc="export";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

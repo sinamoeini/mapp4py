@@ -62,7 +62,7 @@ void MAPP::setup_methods()
    
     Notes
     -----
-    This function resumes python's stdout and stderr of all if they have been paused by :py:function:`mapp.pause_slave_out`
+    This function resumes python's stdout and stderr of all if they have been paused by :py:function:`mapp4py.pause_slave_out`
 
     
     Examples
@@ -164,15 +164,15 @@ PyObject* MAPP::init_module(void)
     mapp_out=__stdout__=GET_FILE_FROM_PY(stdout);
     mapp_err=__stderr__=GET_FILE_FROM_PY(stderr);
     
-    import_array2("mapp was unable to import numpy.core.multiarray", NULL)
+    import_array2("mapp4py was unable to import numpy.core.multiarray", NULL)
     setup_methods();
 #ifdef IS_PY3K
-    module.m_name="mapp";
+    module.m_name="mapp4py";
     module.m_doc="MIT Atomistic Parallel Package";
     module.m_methods=methods;
     PyObject* module_ob=PyModule_Create(&module);
 #else
-    PyObject* module_ob=Py_InitModule3("mapp",methods,"MIT Atomistic Parallel Package");
+    PyObject* module_ob=Py_InitModule3("mapp4py",methods,"MIT Atomistic Parallel Package");
 #endif
 
     
@@ -242,12 +242,12 @@ PyObject* MAPP::MD::init_module(void)
 {
     setup_methods();
 #ifdef IS_PY3K
-    module.m_name="mapp.md";
+    module.m_name="mapp4py.md";
     module.m_doc="Molecular Dynamics (MD) module";
     module.m_methods=methods;
     PyObject* module_ob=PyModule_Create(&module);
 #else
-    PyObject* module_ob=Py_InitModule3("mapp.md",methods,"Molecular Dynamics (MD) module");
+    PyObject* module_ob=Py_InitModule3("mapp4py.md",methods,"Molecular Dynamics (MD) module");
 #endif
     if(module_ob==NULL) return NULL;
     
@@ -309,12 +309,12 @@ PyObject* MAPP::DMD::init_module(void)
 {
     setup_methods();
 #ifdef IS_PY3K
-    module.m_name="mapp.dmd";
+    module.m_name="mapp4py.dmd";
     module.m_doc="Diffusive Molecular Dynamics (MD) module";
     module.m_methods=methods;
     PyObject* module_ob=PyModule_Create(&module);
 #else
-    PyObject* module_ob=Py_InitModule3("mapp.dmd",methods,"Diffusive Molecular Dynamics (DMD) module");
+    PyObject* module_ob=Py_InitModule3("mapp4py.dmd",methods,"Diffusive Molecular Dynamics (DMD) module");
 #endif
     if(module_ob==NULL) return NULL;
     

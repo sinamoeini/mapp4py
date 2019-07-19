@@ -338,7 +338,7 @@ PyTypeObject MDMuVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MDMuVT::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.muvt";
+    TypeObject.tp_name="mapp4py.md.muvt";
     TypeObject.tp_doc=R"---(
     __init__(mu,T,dt,gas_element,seed)
     

@@ -219,9 +219,9 @@ PyTypeObject MinLBFGSDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MinLBFGSDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.min_lbfgs";
+    TypeObject.tp_name="mapp4py.dmd.min_lbfgs";
     TypeObject.tp_doc=R"---(
-    __init__(m=2,e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp.dmd.ls_bt())
+    __init__(m=2,e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp4py.dmd.ls_bt())
     
     L-BFGS minimization algorithm
     
@@ -239,7 +239,7 @@ int MinLBFGSDMD::setup_tp()
        Maximum displacement of any atom in one step of minimization
     max_dalpha : double
        Maximum change in alpha component of any atom in one step of minimization
-    ls : mapp.ls
+    ls : mapp4py.ls
        Line search method
     
     Notes

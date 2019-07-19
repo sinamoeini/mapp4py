@@ -355,7 +355,7 @@ PyTypeObject DAEImplicit::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int DAEImplicit::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.dae_implicit";
+    TypeObject.tp_name="mapp4py.dmd.dae_implicit";
     TypeObject.tp_doc="chemical integration";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

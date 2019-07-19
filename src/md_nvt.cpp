@@ -533,7 +533,7 @@ PyTypeObject MDNVT::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MDNVT::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.nvt";
+    TypeObject.tp_name="mapp4py.md.nvt";
     TypeObject.tp_doc=R"---(
     __init__(T,dt)
     
@@ -754,7 +754,7 @@ void MDNVT::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
-    (mapp.md.export) export object
+    (mapp4py.md.export) export object
     
     Export object to record the snapshots of the system while running
     )---";
@@ -868,7 +868,7 @@ void MDNVT::ml_run(PyMethodDef& tp_methods)
     
     Parameters
     ----------
-    atoms : mapp.md.atoms
+    atoms : mapp4py.md.atoms
         System of interest
     nsteps : int
         Number of steps to perform molecular dynamics

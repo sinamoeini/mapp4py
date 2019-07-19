@@ -233,7 +233,7 @@ PyTypeObject AtomsMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int AtomsMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.atoms";
+    TypeObject.tp_name="mapp4py.md.atoms";
     TypeObject.tp_doc="container class";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;

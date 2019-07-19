@@ -711,7 +711,7 @@ PyTypeObject DAEBDF::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int DAEBDF::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.bdf";
+    TypeObject.tp_name="mapp4py.dmd.bdf";
     TypeObject.tp_doc=(char*)R"---(
     __init__(a_tol=1.0e-8,min_dt=1.0e-8,max_ngmres_iters=5,max_nnewton_iters=5,max_nsteps=10000)
     

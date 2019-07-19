@@ -381,9 +381,9 @@ PyTypeObject MinCGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MinCGDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.min_cg";
+    TypeObject.tp_name="mapp4py.dmd.min_cg";
     TypeObject.tp_doc=R"---(
-    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp.dmd.ls_bt())
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp4py.dmd.ls_bt())
     
     CG minimization algorithm
         
@@ -399,7 +399,7 @@ int MinCGDMD::setup_tp()
        Maximum displacement of any atom in one step of minimization
     max_dalpha : double
        Maximum change in alpha component of any atom in one step of minimization
-    ls : mapp.ls
+    ls : mapp4py.ls
        Line search method
 
     Notes
@@ -479,7 +479,7 @@ void MinCGDMD::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
-    (mapp.dmd.export) export object
+    (mapp4py.dmd.export) export object
     
     Export object to record the snapshots of the system while minimizing
     )---";
@@ -567,7 +567,7 @@ void MinCGDMD::ml_run(PyMethodDef& tp_methods)
     
     Parameters
     ----------
-    atoms : mapp.md.atoms
+    atoms : mapp4py.md.atoms
         System of interest
     max_nsteps : int
         Maximum number of steps to achieve energy minimization

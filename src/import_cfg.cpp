@@ -606,9 +606,9 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
     tp_methods.ml_doc=R"---(
     import(cfg_file)
     
-    Imports cfg file to :py:class:`mapp.md.atoms`.
+    Imports cfg file to :py:class:`mapp4py.md.atoms`.
     
-    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format to :py:class:`mapp.md.atoms` object. It should be thought of a specialized constructor for :py:class:`mapp.md.atoms` class.
+    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format to :py:class:`mapp4py.md.atoms` object. It should be thought of a specialized constructor for :py:class:`mapp4py.md.atoms` class.
         
     Parameters
     ----------
@@ -617,7 +617,7 @@ void ImportCFGMD::ml_import(PyMethodDef& tp_methods)
     
     Returns
     -------
-    mapp.dmd.atoms
+    mapp4py.dmd.atoms
        object that holds the configuration of the system
    
     
@@ -870,9 +870,9 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     tp_methods.ml_doc=R"---(
     import(N,cfg_file)
     
-    Imports cfg file to :py:class:`mapp.dmd.atoms`.
+    Imports cfg file to :py:class:`mapp4py.dmd.atoms`.
     
-    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format to :py:class:`mapp.dmd.atoms` object. It should be thought of a specialized constructor for :py:class:`mapp.dmd.atoms` class.
+    This is a static function that is used to import a desired system presented in `cfg (Atomeye) <http://li.mit.edu/Archive/Graphics/A>`_ format to :py:class:`mapp4py.dmd.atoms` object. It should be thought of a specialized constructor for :py:class:`mapp4py.dmd.atoms` class.
     
     Parameters
     ----------
@@ -883,7 +883,7 @@ void ImportCFGDMD::ml_import(PyMethodDef& tp_methods)
     
     Returns
     -------
-    mapp.dmd.atoms
+    mapp4py.dmd.atoms
        object that holds the configuration of the system
     
     Notes

@@ -315,7 +315,7 @@ PyTypeObject AtomsDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int AtomsDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.atoms";
+    TypeObject.tp_name="mapp4py.dmd.atoms";
     TypeObject.tp_doc="container class";
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
     TypeObject.tp_basicsize=sizeof(Object);

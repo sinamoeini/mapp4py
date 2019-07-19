@@ -543,7 +543,7 @@ PyTypeObject MDNST::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MDNST::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.nst";
+    TypeObject.tp_name="mapp4py.md.nst";
     TypeObject.tp_doc=R"---(
     __init__(S,T,dt)
     

@@ -57,7 +57,7 @@ PyTypeObject LineSearch::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int LineSearch::setup_tp()
 {
-    TypeObject.tp_name="mapp.ls";
+    TypeObject.tp_name="mapp4py.ls";
     TypeObject.tp_doc="line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -145,7 +145,7 @@ PyTypeObject LineSearchGoldenSection::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int LineSearchGoldenSection::setup_tp()
 {
-    TypeObject.tp_name="mapp.ls_golden";
+    TypeObject.tp_name="mapp4py.ls_golden";
     TypeObject.tp_doc=(char*)"Golden section line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -312,7 +312,7 @@ PyTypeObject LineSearchBrent::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int LineSearchBrent::setup_tp()
 {
-    TypeObject.tp_name="mapp.ls_brent";
+    TypeObject.tp_name="mapp4py.ls_brent";
     TypeObject.tp_doc=(char*)"Brent line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -507,7 +507,7 @@ PyTypeObject LineSearchBackTrack::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int LineSearchBackTrack::setup_tp()
 {
-    TypeObject.tp_name="mapp.ls_bt";
+    TypeObject.tp_name="mapp4py.ls_bt";
     TypeObject.tp_doc=(char*)"Back track line search";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

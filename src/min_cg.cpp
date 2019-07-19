@@ -418,9 +418,9 @@ PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MinCG::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.min_cg";
+    TypeObject.tp_name="mapp4py.md.min_cg";
     TypeObject.tp_doc=R"---(
-    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.ls_bt())
+    __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp4py.ls_bt())
     
     CG minimization algorithm
         
@@ -434,7 +434,7 @@ int MinCG::setup_tp()
        If set to True atomic displacements would be affine
     max_dx : double
        Maximum displacement of any atom in one step of minimization
-    ls : mapp.ls
+    ls : mapp4py.ls
        Line search method
     
     Notes
@@ -500,7 +500,7 @@ void MinCG::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
-    (mapp.md.export) export object
+    (mapp4py.md.export) export object
     
     Export object to record the snapshots of the system while minimizing
     )---";
@@ -588,7 +588,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
     
     Parameters
     ----------
-    atoms : mapp.md.atoms
+    atoms : mapp4py.md.atoms
         System of interest
     max_nsteps : int
         Maximum number of steps to achieve energy minimization
@@ -641,7 +641,7 @@ void MinCG::ml_ff_test(PyMethodDef& tp_methods)
     
     Parameters
     ----------
-    atoms : mapp.md.atoms
+    atoms : mapp4py.md.atoms
         System of interest
     max_nsteps : int
         Maximum number of steps to achieve energy minimization

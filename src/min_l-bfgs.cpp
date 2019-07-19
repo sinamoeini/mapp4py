@@ -225,9 +225,9 @@ PyTypeObject MinLBFGS::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MinLBFGS::setup_tp()
 {
-    TypeObject.tp_name="mapp.md.min_lbfgs";
+    TypeObject.tp_name="mapp4py.md.min_lbfgs";
     TypeObject.tp_doc=R"---(
-    __init__(m=2,e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp.md.ls_bt())
+    __init__(m=2,e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp4py.md.ls_bt())
     
     L-BFGS minimization algorithm
     
@@ -243,7 +243,7 @@ int MinLBFGS::setup_tp()
        If set to True atomic displacements would be affine
     max_dx : double
        Maximum displacement of any atom in one step of minimization
-    ls : mapp.ls
+    ls : mapp4py.ls
        Line search method
     
     Notes

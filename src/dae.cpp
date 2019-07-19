@@ -497,7 +497,7 @@ PyTypeObject DAE::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int DAE::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.dae";
+    TypeObject.tp_name="mapp4py.dmd.dae";
     TypeObject.tp_doc="chemical integration";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;
@@ -714,7 +714,7 @@ void DAE::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
-    (mapp.dmd.export) export object
+    (mapp4py.dmd.export) export object
     
     Export object to record the snapshots of the system while minimizing
     )---";
@@ -804,7 +804,7 @@ void DAE::ml_run(PyMethodDef& tp_methods)
     
     Parameters
     ----------
-    atoms : mapp.dmd.atoms
+    atoms : mapp4py.dmd.atoms
         System of interest
     t : double
         Desired time

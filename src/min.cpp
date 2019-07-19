@@ -315,7 +315,7 @@ void Min::getset_ls(PyGetSetDef& getset)
 {
     getset.name=(char*)"ls";
     getset.doc=(char*)R"---(
-    (mapp.ls) line search algorithm
+    (mapp4py.ls) line search algorithm
     
     Line search method to find the energy minimum in one dimension
     )---";

@@ -291,7 +291,7 @@ PyTypeObject ExportCFGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int ExportCFGDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp.dmd.export_cfg";
+    TypeObject.tp_name="mapp4py.dmd.export_cfg";
     TypeObject.tp_doc="export atomeye";
     
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT;

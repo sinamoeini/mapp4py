@@ -127,7 +127,7 @@ void NeighborDMD::create_list(bool box_change)
     Memory::alloc(tmp_neigh_list_sz,c_dim);
     for(int ic=0;ic<c_dim;ic++) tmp_neigh_list_sz[ic]=0;
     
-    auto store=[this,&tmp_neigh_list_sz,&tmp_neigh_list,&c,&c_dim](int i)->void
+    auto store=[this,&tmp_neigh_list_sz,&tmp_neigh_list,&c_dim](int i)->void
     {
         for(int ic=0;ic<c_dim;ic++)
         {

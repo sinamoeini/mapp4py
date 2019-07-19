@@ -251,9 +251,8 @@ void DAE::min_error_true()
         Algebra::DyadicV_2_MLT(__vec,Jdx.A);
         
         type0 dlog_vol=0.0;
-        type0 (&H)[__dim__][__dim__]=atoms->H;
     
-        Algebra::Do<__dim__>::func([&H,&dx,&dlog_vol](int i)
+        Algebra::Do<__dim__>::func([&dx,&dlog_vol](int i)
         {
             dlog_vol+=dx.A[i][i];
         });

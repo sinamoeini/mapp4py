@@ -129,11 +129,9 @@ void ForceFieldEAMDMD::__force_calc_gp()
             type0 r2_inv=r_inv*r_inv;
             type0 alpha_inv=1.0/alpha_ij;
             type0 alpha2_inv=alpha_inv*alpha_inv;
-            type0 alpha4_inv=alpha2_inv*alpha2_inv;
-            type0 r2alpha2_inv=r2_inv*alpha2_inv;
             
             
-            Algebra::Do<3>::func([&istart,&H,&r_inv,&r2_inv,&alpha2_inv,&r2alpha2_inv,&alpha_ij_sq,&alpha_inv,&rsq,&alpha4_inv,this]
+            Algebra::Do<3>::func([&istart,&H,&r_inv,&r2_inv,&alpha2_inv,&alpha_inv,this]
             (int i)
             {
                 rho_phi[istart+i]=PI_IN_SQ*r_inv*H[i][0];
@@ -356,7 +354,7 @@ void ForceFieldEAMDMD::__energy_calc_gp()
             
             tmp0=PI_IN_SQ*r_inv;
             
-            Algebra::Do<3>::func([&__arr,&tmp0,this](int i)
+            Algebra::Do<3>::func([&__arr,&tmp0](int i)
                                  {
                                      __arr[i]*=tmp0;
                                  });

@@ -233,7 +233,6 @@ void ForceFieldEAMFunc::pre_xchng_energy(GCMC* gcmc)
     type0 en;
     type0 rho_iatm_lcl;
     
-    int& iatm=gcmc->iatm;
     elem_type& ielem=gcmc->ielem;
     
     int& jatm=gcmc->jatm;
@@ -252,15 +251,15 @@ void ForceFieldEAMFunc::pre_xchng_energy(GCMC* gcmc)
     for(int i=0;i<natms_lcl;i++)
         rho_xchng[i]=rho[i];
     
-    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+    for(gcmc->reset_icomm();gcmc->icomm!=-1;gcmc->next_icomm())
     {
         c0=1.0;
         if(gcmc->xchng_mode==DEL_MODE) c0=-1.0;
         else if(gcmc->xchng_mode==NOEX_MODE) continue;
         
         en=rho_iatm_lcl=0.0;
-        for(gcmc->reset_iatm();iatm!=-1;gcmc->next_iatm())
-            for(gcmc->reset_jatm();jatm!=-1;gcmc->next_jatm())
+        for(gcmc->reset_iatm();gcmc->iatm!=-1;gcmc->next_iatm())
+            for(gcmc->reset_jatm();gcmc->jatm!=-1;gcmc->next_jatm())
             {
                 r=sqrt(rsq);
 
@@ -303,8 +302,7 @@ void ForceFieldEAMFunc::pre_xchng_energy(GCMC* gcmc)
  --------------------------------------------*/
 type0 ForceFieldEAMFunc::xchng_energy(GCMC* gcmc)
 {
-    int& icomm=gcmc->icomm;
-    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+    for(gcmc->reset_icomm();gcmc->icomm!=-1;gcmc->next_icomm())
         MPI_Reduce(gcmc->lcl_vars,gcmc->vars,2,Vec<type0>::MPI_T,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
  
     

@@ -99,10 +99,8 @@ void ForceFieldLJ::fin_xchng()
 void ForceFieldLJ::pre_xchng_energy(GCMC* gcmc)
 {
     
-    int& icomm=gcmc->icomm;
     type0 en;
     
-    int& iatm=gcmc->iatm;
     elem_type& ielem=gcmc->ielem;
     
     int& jatm=gcmc->jatm;
@@ -114,11 +112,11 @@ void ForceFieldLJ::pre_xchng_energy(GCMC* gcmc)
     
     const int natms_lcl=atoms->natms_lcl;
     
-    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+    for(gcmc->reset_icomm();gcmc->icomm!=-1;gcmc->next_icomm())
     {
         en=0.0;
-        for(gcmc->reset_iatm();iatm!=-1;gcmc->next_iatm())
-            for(gcmc->reset_jatm();jatm!=-1;gcmc->next_jatm())
+        for(gcmc->reset_iatm();gcmc->iatm!=-1;gcmc->next_iatm())
+            for(gcmc->reset_jatm();gcmc->jatm!=-1;gcmc->next_jatm())
             {
                 sig2=sigma[ielem][jelem]*sigma[ielem][jelem]/rsq;
                 sig6=sig2*sig2*sig2;
@@ -138,8 +136,8 @@ void ForceFieldLJ::pre_xchng_energy(GCMC* gcmc)
  --------------------------------------------*/
 type0 ForceFieldLJ::xchng_energy(GCMC* gcmc)
 {
-    int& icomm=gcmc->icomm;
-    for(gcmc->reset_icomm();icomm!=-1;gcmc->next_icomm())
+    
+    for(gcmc->reset_icomm();gcmc->icomm!=-1;gcmc->next_icomm())
         MPI_Reduce(gcmc->lcl_vars,gcmc->vars,1,Vec<type0>::MPI_T,MPI_SUM,gcmc->curr_root,*gcmc->curr_comm);
     if(gcmc->im_root)
         return gcmc->vars[0];

@@ -91,7 +91,7 @@ type0* BCTPolarity::polarity(AtomsMD* __atoms,type0**&& __cut,int n)
         
          XMath::quicksort(dummy,dummy+neighbor_list_size[iatm]
         ,[&rsqs](int* i,int* j){return (rsqs[*i]<rsqs[*j]);}
-        ,[&neighbor_list,&iatm](int* i,int* j){
+        ,[](int* i,int* j){
             std::swap(*i,*j);
             
         });

@@ -376,7 +376,7 @@ namespace MAPP_NS
             int* key_1= n1==0 ? NULL:new int[n1];
             for(int i=0;i<n1;i++) key_1[i]=n0+i;
             XMath::quicksort(key_1,key_1+n1,
-            [&buff,&n0,&strd](int* ikey,int* jkey)
+            [&buff](int* ikey,int* jkey)
             {return (*reinterpret_cast<id_type*>(buff+*ikey*strd) < *reinterpret_cast<id_type*>(buff+*jkey*strd));},
             [](int* ikey,int* jkey){std::swap(*ikey,*jkey);});
             

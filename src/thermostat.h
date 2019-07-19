@@ -9,7 +9,7 @@ namespace MAPP_NS
     private:
         const type0 ddt;
         const type0 ddt2;
-        const type0 ddt4;
+        //const type0 ddt4;
         const type0 freq_sq;
         type0* eta_d;
     protected:

@@ -71,7 +71,7 @@ namespace MAPP_NS
         int nneighs;
         
         
-        int icell,jcell;
+        int jcell;
         int jatm_next;
         int n_cells;
         

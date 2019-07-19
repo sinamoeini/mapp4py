@@ -22,7 +22,6 @@ namespace MAPP_NS
         
     
         type0 v0[__dim__];
-        type0 v1[__dim__];
         
         
         type0 V_H[__dim__][__dim__];

@@ -12,7 +12,7 @@ using namespace MAPP_NS;
  constructor
  --------------------------------------------*/
 Neighbor::Neighbor(Atoms* atoms_):
-atoms(atoms_),
+//atoms(atoms_),
 pair_wise(true),
 neighbor_list(NULL),
 neighbor_list_size(NULL),

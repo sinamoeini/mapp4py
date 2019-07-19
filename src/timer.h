@@ -15,8 +15,8 @@ namespace MAPP_NS
     class Timer
     {
     private:
-        int curr_time_mode;
-        int prev_time_mode;
+        //int curr_time_mode;
+        //int prev_time_mode;
         type0 tst_time;
         char** mode_names;
     protected:

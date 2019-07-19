@@ -10,7 +10,7 @@ namespace MAPP_NS
     class Neighbor
     {
     private:
-        class Atoms* atoms;
+        //class Atoms* atoms;
     protected:
         int no_neigh_lists;        
     public:

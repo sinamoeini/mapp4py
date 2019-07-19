@@ -7,7 +7,7 @@ using namespace MAPP_NS;
 ThermostatNHC::ThermostatNHC():
 ddt(0),
 ddt2(0),
-ddt4(0),
+//ddt4(0),
 freq_sq(0),
 eta_d(NULL),
 t_relax(0),
@@ -23,7 +23,7 @@ const int __niters):
 
 ddt(__dt/static_cast<type0>(__niters)),
 ddt2(0.5*__dt/static_cast<type0>(__niters)),
-ddt4(0.25*__dt/static_cast<type0>(__niters)),
+//ddt4(0.25*__dt/static_cast<type0>(__niters)),
 freq_sq(1.0/(__t_relax*__t_relax)),
 eta_d(NULL),
 t_relax(__t_relax),

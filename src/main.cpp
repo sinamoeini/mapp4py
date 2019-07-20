@@ -28,7 +28,7 @@ namespace MAPP_NS
 int main(int nargs,char* args[])
 {
     MPI_Init(&nargs, &args);
-    PyImport_AppendInittab("mapp4py",MAPP_NS::initmapp);
+    PyImport_AppendInittab("mapp4py",MAPP_NS::initmapp4py);
     Py_Main(nargs,args);
     int mpi_finalized;
     MPI_Finalized(&mpi_finalized);

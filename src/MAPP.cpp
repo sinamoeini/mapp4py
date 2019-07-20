@@ -122,7 +122,7 @@ FILE* MAPP_NS::MAPP::mapp_debug(NULL);
 #ifdef IS_PY3K
 PyModuleDef MAPP::module=EmptyModule;
 #endif
-MOD_INIT(mapp,MAPP_NS::MAPP::init_module())
+MOD_INIT(mapp4py,MAPP_NS::MAPP::init_module())
 /*--------------------------------------------*/
 PyObject* MAPP::init_module(void)
 {

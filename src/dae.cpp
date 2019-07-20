@@ -195,7 +195,7 @@ void DAE::min_error_true()
     VecTens<type0,2> f(atoms,true,ff->F_H,ff->f,ff->f_alpha);
     VecTens<type0,2> h(atoms,true,__dim__,c_dim);
 
-#ifndef OLD_UPDATE
+#ifdef OLD_UPDATE
     vec* uvecs[2];
     uvecs[0]=atoms->x;
     uvecs[1]=atoms->alpha;

@@ -494,7 +494,6 @@ if cxx_11==True:
 
 setup(name ='mapp4py',
       version = '0.0.0',
-      headers = h_files,
       description = 'MIT Atomistic Parallel Package',
       author = 'Sina Moeini',
       author_email = 'sinam@mit.edu',

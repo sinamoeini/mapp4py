@@ -24,7 +24,7 @@ int main(int nargs,char* args[])
 }
 #else
 namespace MAPP_NS
-{ PyMODINIT_FUNC initmapp(void);}
+{ PyMODINIT_FUNC initmapp4py(void);}
 int main(int nargs,char* args[])
 {
     MPI_Init(&nargs, &args);

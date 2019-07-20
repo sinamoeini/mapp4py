@@ -283,7 +283,8 @@ def find_mpi_cxx(cxx_11):
                 if find_executable(mpi_cxx_lst[i]) is not None:
                     found_any=True;
                     mpi_cxx=mpi_cxx_lst[i];
-                    environ['CC']=mpi_cxx;
+                    environ['CC']=environ.get('MPICXX');
+                    environ['CXX']=environ.get('MPICXX');
                     if has_cxx_11()==False:
                         mpi_cxx=None;
                 i+=1;
@@ -293,6 +294,7 @@ def find_mpi_cxx(cxx_11):
                 raise Exception('default compiler does not supprt c++11, and could not find any c++ mpi compilers in path');
         else:
             environ['CC']=environ.get('MPICXX');
+            environ['CXX']=environ.get('MPICXX');
             if has_cxx_11()==False:
                 raise Exception('default compiler does not supprt c++11, neither does any of provided c++ mpi compiler (MPICXX)');
             mpi_cxx=environ.get('MPICXX');

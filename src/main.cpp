@@ -14,7 +14,7 @@ int main(int nargs,char* args[])
     wchar_t** __args=NULL;
     if(nargs) __args=new wchar_t*[nargs];
     for(int i=0;i<nargs;i++) __args[i]=Py_DecodeLocale(args[i], NULL);
-    PyImport_AppendInittab("mapp",MAPP_NS::MAPP::init_module);
+    PyImport_AppendInittab("mapp4py",MAPP_NS::MAPP::init_module);
     Py_Main(nargs,__args);
     delete [] __args;
     int mpi_finalized;
@@ -28,11 +28,12 @@ namespace MAPP_NS
 int main(int nargs,char* args[])
 {
     MPI_Init(&nargs, &args);
-    PyImport_AppendInittab("mapp",MAPP_NS::initmapp);
+    PyImport_AppendInittab("mapp4py",MAPP_NS::initmapp);
     Py_Main(nargs,args);
     int mpi_finalized;
     MPI_Finalized(&mpi_finalized);
-    if(!mpi_finalized) MPI_Finalize();    return EXIT_SUCCESS;
+    if(!mpi_finalized) MPI_Finalize();
+    return EXIT_SUCCESS;
 }
 #endif
 

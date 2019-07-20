@@ -291,12 +291,11 @@ void XMath::quadrature_lg(int n,type0* x,type0* w)
     int m=n/2+1;
     int iter,ord,icurs,jcurs;
     int max_iter=50;
-    type0 a,u0,inv_u0,f,up,df,tmp0,tol;
+    type0 a,u0,inv_u0,f,df,tmp0,tol;
     type0 ii,jj,del_u0;
     type0* p_coef=new type0[m];
     type0* dp_coef=new type0[m];
     
-    up=0.0;
     for(int i=0;i<m;i++)
         p_coef[i]=dp_coef[i]=0.0;
     
@@ -443,7 +442,7 @@ void XMath::quadrature_hg(int n,type0* x,type0* w)
     int m=n/2+1;
     int iter,ord,icurs;
     int max_iter=50;
-    type0 a,u0,f,up,df,tmp0,tol,tmp1;
+    type0 a,u0,f,df,tmp0,tol,tmp1;
     type0 ii,del_u0;
 
     
@@ -452,7 +451,6 @@ void XMath::quadrature_hg(int n,type0* x,type0* w)
     type0* p_coef=new type0[m];
     type0* dp_coef=new type0[m];
     
-    up=0.0;
     for(int i=0;i<m;i++)
         p_1[i]=p_2[i]=p_coef[i]=dp_coef[i]=0.0;
     

@@ -160,11 +160,6 @@ void ImportCFG::read_header(Atoms* atoms,FileReader& freader,char*& line,size_t&
     
     
     type0 H_x[__dim__][__dim__];
-    type0 H_x_d[__dim__][__dim__];
-    for(int i=0;i<__dim__;i++)
-        for(int j=0;j<__dim__;j++)
-            H_x_d[i][j]=0.0;
-    
     for(int i=0;i<__dim__;i++)
         for(int j=0;j<__dim__;j++)
         {
@@ -755,13 +750,11 @@ AtomsDMD* ImportCFGDMD::operator()(int N,const char* file)
     
     int lcl_err=0;
     int max_ncmp_lcl=0,__max_ncmp=0;
-    int jcmp;
     elem_type __nelems=static_cast<elem_type>(nelems);
     type0 __c_sum;
     for(int i=0;i<atoms->natms_lcl && lcl_err==0;i++,alpha+=vec_dim,c+=vec_dim)
     {
         __max_ncmp=0;
-        jcmp=0;
         __c_sum=0.0;
         for(elem_type j=0;j<__nelems && lcl_err==0;j++)
         {
@@ -832,7 +825,6 @@ AtomsDMD* ImportCFGDMD::operator()(int N,const char* file)
     for(int i=0;i<atoms->natms_lcl;i++,alpha+=vec_dim,c+=vec_dim,__alpha+=c_dim,__c+=c_dim,__elem+=c_dim)
     {
         __max_ncmp=0;
-        jcmp=0;
         for(elem_type j=0;j<__nelems;j++)
         {
             if(c[j]!=-1.0)

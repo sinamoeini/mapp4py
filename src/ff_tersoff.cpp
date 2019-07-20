@@ -83,6 +83,7 @@ void ForceFieldTersoff::post_xchng_energy(GCMC*)
 #include "xmath.h"
 void ForceFieldTersoff::__force_calc()
 {
+    /*
     const type0* x=atoms->x->begin();
     //type0* fvec=f->begin();
     elem_type* evec=atoms->elem->begin();
@@ -173,7 +174,7 @@ void ForceFieldTersoff::__force_calc()
     
     
     
-    
+    */
     
 }
 /*--------------------------------------------
@@ -187,6 +188,7 @@ const type0& r_ij,const type0& r_ik,const type0& cos_theta_ijk,
 const type0*& r_ij_hat,const type0*& r_ik_hat)
 {
     
+    /*
     type0 r0=lambda_2*(r_ij-r_ik);
     type0 r1=pow(r0,m);
     //type0 r2=(r1/r0)*lambda_2*m;
@@ -213,6 +215,8 @@ const type0*& r_ij_hat,const type0*& r_ik_hat)
     
     
     return fc*r1*g;
+     */
+    return 0.0;
 }
 /*--------------------------------------------
  only energy calculation this is useful for

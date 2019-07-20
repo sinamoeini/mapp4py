@@ -554,13 +554,10 @@ void ForceFieldFS::pre_xchng_energy(GCMC* gcmc)
         type0* F_xchng=F_xchng_ptr->begin();
         elem_type* evec=atoms->elem->begin();
         
-        type0 tmp0;
         en0=0.0;
         for(int i=0;i<natms_lcl;i++)
             if(tag[i]==icomm)
-            {
-                tmp0=rho_xchng[i];
-                
+            {               
                 F_xchng[i]=rho_xchng[i]<0.0 ? 0.0:(-A[evec[i]]*sqrt(rho_xchng[i]));
                 en0+=F_xchng[i]-F[i];
             }

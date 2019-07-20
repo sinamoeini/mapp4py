@@ -181,7 +181,8 @@ bool DAEImplicit::newton()
     //memcpy(c_0,c,ncs*sizeof(type0));
     //memcpy(c,y_0,ncs*sizeof(type0));
     //dynamic->update(atoms->c);
-    type0 cost=F_norm();
+    //type0 cost=F_norm();
+    F_norm();
 
     bool converge=false,diverge=false;
     while(iter<max_nnewton_iters && !converge && !diverge)
@@ -196,7 +197,8 @@ bool DAEImplicit::newton()
         if(iter) R=MAX(0.3*R,delta/delta_prev);
         if(iter>1 && R*delta<1.0)
         {
-            cost=F_norm();
+            //cost=F_norm();
+            F_norm();
             converge=true;
             continue;
         }
@@ -209,7 +211,8 @@ bool DAEImplicit::newton()
         
         delta_prev=delta;
         
-        cost=F_norm();
+        //cost=F_norm();
+        F_norm();
         iter++;
     }
     

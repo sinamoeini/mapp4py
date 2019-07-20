@@ -867,7 +867,7 @@ void ForceFieldEAMDMD::__energy_calc()
             
             type0 upper=(r+cut[elem_i][elem_j])/alpha_ij;
             type0 lower=(r-cut[elem_i][elem_j])/alpha_ij;
-            type0 __r,p,tmp0,tmp1;
+            type0 __r,p,tmp0;
             type0* coef;
             
             r_inv=1.0/r;

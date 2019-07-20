@@ -8,13 +8,13 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 type0 ImportEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
 {
-    type0 coef0,coef1,coef2,coef3,tmp;
+    type0 coef0,coef1,coef2,coef3;
     coef0=arr[k];
     
     if(k==0)
     {
         coef1=arr[1]-arr[0];
-        tmp=0.5*(arr[2]-arr[0]);
+        //tmp=0.5*(arr[2]-arr[0]);
         coef2=(-arr[0]+2.0*arr[1]-arr[2])/2.0;
         coef3=(arr[0]-2.0*arr[1]+arr[2])/2.0;
         return ((coef3*p+coef2)*p+coef1)*p+coef0;
@@ -22,7 +22,7 @@ type0 ImportEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
     else if(k==1)
     {
         coef1=0.5*(arr[2]-arr[0]);
-        tmp=((arr[0]-arr[4])+8.0*(arr[3]-arr[1]))/12.0;
+        //tmp=((arr[0]-arr[4])+8.0*(arr[3]-arr[1]))/12.0;
         coef2=(11.0*arr[0]-28.0*arr[1]+24.0*arr[2]-8.0*arr[3]+arr[4])/12.0;
         coef3=(-5.0*arr[0]+16.0*arr[1]-18.0*arr[2]+8.0*arr[3]-arr[4])/12.0;
         return ((coef3*p+coef2)*p+coef1)*p+coef0;
@@ -30,7 +30,7 @@ type0 ImportEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
     else if(k==n-2)
     {
         coef1=0.5*(arr[n-1]-arr[n-3]);
-        tmp=arr[n-1]-arr[n-2];
+        //tmp=arr[n-1]-arr[n-2];
         coef2=arr[n-3]-3.0*arr[n-2]+2.0*arr[n-1];
         coef3=0.5*(-arr[n-3]+3.0*arr[n-2]-2.0*arr[n-1]);
         return ((coef3*p+coef2)*p+coef1)*p+coef0;
@@ -44,8 +44,7 @@ type0 ImportEAM::interpolate(type0* arr,size_t n,type0 p,size_t k)
     {
         coef1=((arr[k-2]-arr[k+2])+
                8.0*(arr[k+1]-arr[k-1]))/12.0;
-        tmp=((arr[k-1]-arr[k+3])+
-             8.0*(arr[k+2]-arr[k]))/12.0;
+        //tmp=((arr[k-1]-arr[k+3])+8.0*(arr[k+2]-arr[k]))/12.0;
         
         coef2=(-2.0*arr[k-2]+15.0*arr[k-1]-28.0*arr[k]+21.0*arr[k+1]-6.0*arr[k+2])/12.0;
         coef3=(arr[k-2]-7.0*arr[k-1]+16.0*arr[k]-17.0*arr[k+1]+7.0*arr[k+2])/12.0;

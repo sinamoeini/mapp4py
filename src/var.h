@@ -502,7 +502,7 @@ size(0)
 template<class T>
 py_var<T*>::py_var(size_t* sz,void*& data):
 vars(NULL),
-size(0)
+size(*sz)
 {
     if(std::is_same<T,char>::value)
     {

@@ -528,7 +528,6 @@ int LineSearchBrent::min(Func* func,type0& nrgy
     type0 a,b;
     type0 fa;
     type0 max_a,h_norm;
-    type0 cgold,gold;
     type0 dfa;
 
     type0 d=0.0,etemp,fu,fv,fw,fx;
@@ -536,8 +535,8 @@ int LineSearchBrent::min(Func* func,type0& nrgy
     type0 e=0.0;
     u=fu=0.0;
     
-    gold=0.61803399;
-    cgold=0.38196601;
+    //type0 gold=0.61803399;
+    type0 cgold=0.38196601;
     
     func->ls_prep(dfa,h_norm,max_a);
     

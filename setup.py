@@ -481,7 +481,9 @@ cpp_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.cpp')]
 h_files=[]
 h_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.h')]
 
-mapp_ext=Extension('mapp4py',sources=cpp_files);
+mapp_ext=Extension('mapp4py',
+                   sources=cpp_files,
+                   language='c++');
 mapp_ext.extra_compile_args.append('-std=c++11');
 numpy_params(mapp_ext);
 if cxx_11==True:

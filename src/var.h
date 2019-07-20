@@ -2506,7 +2506,7 @@ void var<T*>::reset_n_remap(const size_t* map,const size_t map_sz)
     size_t sz[get_rank()];
     for(int i=0;i<get_rank();i++) sz[i]=0;
     sz[0]=map_sz;
-    for(int i=1;i<rank;i++) sz[i]=map_sz*sz[i-1];
+    for(int i=1;i<get_rank();i++) sz[i]=map_sz*sz[i-1];
     void* data_ptr[get_rank()];
     for(int i=0;i<rank;i++) data_ptr[i]=NULL;
     allocate(data_ptr,*ptr,sz);

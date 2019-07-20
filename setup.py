@@ -312,22 +312,22 @@ def find_mpi_cxx(cxx_11):
     return mpi_cxx;
 
 def mpi_cxx_params(mpi_cxx,ext):
-    result='';
+    line='';
     cmd=mpi_cxx+' -show';
     from subprocess import check_output
     import sys
     try:
         if sys.version_info < (3,0):
-            result=check_output(cmd.split());
+            line=check_output(cmd.split());
         else:
-            result=check_output(cmd.split()).decode('utf-8');
+            line=check_output(cmd.split()).decode('utf-8');
     except:
         pass;
         err_msg='could not excute \"'+cmd+'\"';
         raise Exception(err_msg)
 
     from distutils.util import split_quoted
-    line=result.replace('-Wl,','-Xlinker ');
+
     words=split_quoted(line);
     append_next_word = None
     for word in words[1:]:
@@ -366,7 +366,10 @@ def mpi_cxx_params(mpi_cxx,ext):
         elif word == "-rpath":
             append_next_word = ext.runtime_library_dirs
         elif word == "-Xlinker":
+            ext.extra_link_args.append(word)
             append_next_word = ext.extra_link_args
+        elif word.startswith("-Wl,"):
+            ext.extra_link_args.append(word)
         elif word == "-Xcompiler":
             append_next_word = ext.extra_compile_args
         elif switch == "-u":

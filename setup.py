@@ -1,5 +1,14 @@
-from distutils.core import Extension
-from distutils.core import setup
+try:
+    import setuptools
+except ImportError:
+    setuptools = None
+if setuptools:
+    from setuptools import Extension
+    from setuptools import setup
+    from setuptools import find_packages
+else:
+    from distutils.core import Extension
+    from distutils.core import setup
 
 
 def has_cxx_11():
@@ -462,19 +471,23 @@ except:
 
 
 
-cpp_files=[]
-import os
-cpp_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.cpp')]
 
-mapp_ext=Extension('mapp',sources=cpp_files);
+import os
+cpp_files=[]
+cpp_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.cpp')]
+h_files=[]
+h_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.h')]
+
+mapp_ext=Extension('mapp4py',sources=cpp_files);
 mapp_ext.extra_compile_args.append('-std=c++11');
-mapp_ext.extra_compile_args.append('-Wno-deprecated-register');
 numpy_params(mapp_ext);
 if cxx_11==True:
     mpi_cxx_params(mpi_cxx,mapp_ext);
 
-setup(name ='mapp',
-      version = '0.0.0.2',
+
+setup(name ='mapp4py',
+      version = '0.0.0',
+      headers = h_files,
       description = 'MIT Atomistic Parallel Package',
       author = 'Sina Moeini',
       author_email = 'sinam@mit.edu',

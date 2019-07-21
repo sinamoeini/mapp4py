@@ -5,7 +5,6 @@
 #include <numpy/arrayobject.h>
 #include "MAPP.h"
 #include <mpi.h>
-#include <dlfcn.h>
 #include "comm.h"
 #include "example.h"
 #include "atoms_styles.h"
@@ -130,7 +129,14 @@ PyObject* MAPP::init_module(void)
     MPI_Initialized(&mpi_initialized);
     if(!mpi_initialized)
     {
-        dlopen("libmpi.so.0",RTLD_GLOBAL | RTLD_LAZY);
+#ifdef LIBMPI_SONAME
+#include <dlfcn.h>
+        int mode = RTLD_NOW | RTLD_GLOBAL;
+#ifdef RTLD_NOLOAD
+        mode |= RTLD_NOLOAD;
+#endif
+        dlopen(LIBMPI_SONAME,mode);
+#endif
         MPI_Init(NULL,NULL);
     }
     

@@ -492,17 +492,22 @@ if cxx_11==True:
     mpi_cxx_params(mpi_cxx,mapp_ext);
 
 
+from os import path
+from os import path
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory,'README.md')) as f:
+    f.readline();
+    long_description=f.read()
+
 setup(name ='mapp4py',
       version = '0.0.0',
       description = 'MIT Atomistic Parallel Package',
+      long_description=long_description,
+      long_description_content_type='text/markdown; charset=UTF-8; variant=GFM',
       author = 'Sina Moeini',
       author_email = 'sinam@mit.edu',
       url = 'https://github.com/sinamoeini/mapp4py',
       ext_modules = [mapp_ext])
-
-
-
-
 
 
 

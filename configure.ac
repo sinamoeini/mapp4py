@@ -20,9 +20,9 @@ AC_LANG([C++])
 AX_MPICXX([],[AC_MSG_ERROR(could not find mpi library)])
 CXX=$MPICXX
 LIBS=$MPILIBS" "$LIBS
+AX_LIBMPI_SONAME_FUNC
 
 AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
-
 
 
 AX_PYTHON([AC_MSG_ERROR(could not find a bonafide version of python with numpy)])

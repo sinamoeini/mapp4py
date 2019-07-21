@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = mapp.so$(EXEEXT)
+bin_PROGRAMS = mapp4py.so$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
@@ -108,7 +108,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_mapp_so_OBJECTS = src/analysis.$(OBJEXT) src/atoms.$(OBJEXT) \
+am_mapp4py_so_OBJECTS = src/analysis.$(OBJEXT) src/atoms.$(OBJEXT) \
 	src/atoms_dmd.$(OBJEXT) src/atoms_md.$(OBJEXT) \
 	src/comm.$(OBJEXT) src/dae_bdf.$(OBJEXT) src/dae.$(OBJEXT) \
 	src/dae_imp.$(OBJEXT) src/dynamic.$(OBJEXT) \
@@ -136,8 +136,8 @@ am_mapp_so_OBJECTS = src/analysis.$(OBJEXT) src/atoms.$(OBJEXT) \
 	src/random.$(OBJEXT) src/sgcmc.$(OBJEXT) \
 	src/thermo_dynamics.$(OBJEXT) src/thermostat.$(OBJEXT) \
 	src/timer.$(OBJEXT) src/var.$(OBJEXT) src/xmath.$(OBJEXT)
-mapp_so_OBJECTS = $(am_mapp_so_OBJECTS)
-mapp_so_LDADD = $(LDADD)
+mapp4py_so_OBJECTS = $(am_mapp4py_so_OBJECTS)
+mapp4py_so_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -210,8 +210,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(mapp_so_SOURCES)
-DIST_SOURCES = $(mapp_so_SOURCES)
+SOURCES = $(mapp4py_so_SOURCES)
+DIST_SOURCES = $(mapp4py_so_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -369,7 +369,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-mapp_so_SOURCES = src/analysis.cpp src/analysis.h src/api.h \
+mapp4py_so_SOURCES = src/analysis.cpp src/analysis.h src/api.h \
 	src/atoms.cpp src/atoms_dmd.cpp src/atoms_dmd.h src/atoms.h \
 	src/atoms_md.cpp src/atoms_md.h src/atoms_styles.h src/cell.h \
 	src/comm.cpp src/comm.h src/dae_bdf.cpp src/dae_bdf.h \
@@ -619,9 +619,9 @@ src/timer.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/var.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/xmath.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 
-mapp.so$(EXEEXT): $(mapp_so_OBJECTS) $(mapp_so_DEPENDENCIES) $(EXTRA_mapp_so_DEPENDENCIES) 
-	@rm -f mapp.so$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(mapp_so_OBJECTS) $(mapp_so_LDADD) $(LIBS)
+mapp4py.so$(EXEEXT): $(mapp4py_so_OBJECTS) $(mapp4py_so_DEPENDENCIES) $(EXTRA_mapp4py_so_DEPENDENCIES) 
+	@rm -f mapp4py.so$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(mapp4py_so_OBJECTS) $(mapp4py_so_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

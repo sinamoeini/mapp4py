@@ -296,7 +296,7 @@ def find_mpi_cxx(cxx_11):
             environ['CC']=environ.get('MPICXX');
             environ['CXX']=environ.get('MPICXX');
             if has_cxx_11()==False:
-                raise Exception('default compiler does not supprt c++11, neither does any of provided c++ mpi compiler (MPICXX)');
+                raise Exception('default compiler does not supprt c++11, neither does the provided c++ mpi compiler ('+environ.get('MPICXX')+')');
             mpi_cxx=environ.get('MPICXX');
     else:
         if environ.get('MPICXX') is None:
@@ -387,55 +387,96 @@ def mpi_cxx_params(mpi_cxx,ext):
         else:
             ext.extra_compile_args.append(word)
 def get_libmpi_so(mpi_cxx):
-    f = open('helloworld.cpp','w');
-    
-    f.write('#include <stdio.h>\n');
-    f.write('#include <cstdlib>\n');
-    f.write('#include <iostream>\n');
-    f.write('#include <mpi.h>\n');
-    f.write('int main(int nargs,char* args[])\n');
-    f.write('{\n');
-    f.write('    MPI_Init(&nargs,&args);\n');
-    f.write('    int rank,size;\n');
-    f.write('    MPI_Comm_rank(MPI_COMM_WORLD,&rank);\n');
-    f.write('    MPI_Comm_size(MPI_COMM_WORLD,&size);\n');
-    f.write('    printf(\"Hello world I am proc %d out of %d\\n\",rank,size);\n');
-    f.write('    MPI_Finalize();\n');
-    f.write('    return EXIT_SUCCESS;\n');
-    f.write('}\n');
-    f.close();
-    
+    import tempfile,os,sys,subprocess
+    fd, fname=tempfile.mkstemp('.cpp','conftest', text=True)
+    f=os.fdopen(fd, 'w')
+    try:
+        f.write('#include <mpi.h>\n');
+        f.write('#ifdef OMPI_MAJOR_VERSION\n');
+        f.write('#if OMPI_MAJOR_VERSION < 3 || OMPI_MAJOR_VERSION >= 10\n');
+        f.write('#error \"needs dlopen\"\n');
+        f.write('#endif\n');
+        f.write('#endif\n');
+    finally:
+        f.close();
 
-    
+
+
+
+
+    devnull=open(os.devnull,'w')
+    oldstderr=os.dup(sys.stderr.fileno())
+    oldstdout=os.dup(sys.stdout.fileno())
+    os.dup2(devnull.fileno(),sys.stderr.fileno())
+    os.dup2(devnull.fileno(),sys.stdout.fileno())
     returncode=0;
-    cmd=mpi_cxx+' helloworld.cpp -o helloworld';
+    cmd=mpi_cxx+' -E '+fname;
+
     try:
         returncode=subprocess.call(cmd.split());
     except:
         pass;
-        raise Exception('could not excute \"'+cmd+'\"');
-    if returncode!=0:
-        raise Exception('could not excute \"'+cmd+'\"');
+    os.dup2(oldstdout, sys.stdout.fileno())
+    os.dup2(oldstderr, sys.stderr.fileno())
+    devnull.close()
+    if returncode==0:
+        return None;
 
+    fd, fname=tempfile.mkstemp('.cpp','conftest', text=True)
+    f=os.fdopen(fd, 'w')
+    try:
+        f.write('#include <cstdlib>\n');
+        f.write('#include <mpi.h>\n');
+        f.write('int main(int ,char* [])');
+        f.write('{\n');
+        f.write('    MPI_Init(NULL,NULL);\n');
+        f.write('    MPI_Finalize();\n');
+        f.write('    return EXIT_SUCCESS;\n');
+        f.write('}\n');
+    finally:
+        f.close();
+
+    fd_obj,fname_obj=tempfile.mkstemp('','conftest');
+
+
+    from sys import platform
+    cmd0=mpi_cxx+' -o '+fname_obj+' '+fname
     if platform=='darwin':
-        cmd='otool -L helloworld';
+        cmd1='otool -L '+fname_obj;
         ptrn='libmpi.*.dylib'
         regex_ptrn='libmpi.[0-9]*.dylib$'
     else:
-        cmd='ldd helloworld';
+        
+        cmd1='ldd '+fname_obj;
         ptrn='libmpi.so.*'
         regex_ptrn='libmpi.so.[0-9]*$'
 
 
+
+    devnull=open(os.devnull,'w')
+    oldstderr=os.dup(sys.stderr.fileno())
+    os.dup2(devnull.fileno(),sys.stderr.fileno())
+    result='';
     try:
+        cmd=cmd0;
+        subprocess.call(cmd.split());
+        cmd=cmd1;
         if sys.version_info < (3,0):
             result=subprocess.check_output(cmd.split());
         else:
             result=subprocess.check_output(cmd.split()).decode('utf-8');
+
     except:
         pass;
-        raise Exception('could not excute \"'+cmd+'\"')
+        os.dup2(oldstderr, sys.stderr.fileno())
+        devnull.close()
+        raise Exception('could not excute \"'+cmd+'\"');
 
+    os.dup2(oldstderr, sys.stderr.fileno())
+    devnull.close();
+
+
+    import re
     def find_ptrn(result,ptrn):
         for line in result.split():
             if re.search(ptrn,line):
@@ -445,16 +486,11 @@ def get_libmpi_so(mpi_cxx):
     so_file=find_ptrn(result,regex_ptrn);
     if(so_file==None):
         raise Exception('could not find file \"'+ptrn+'\"');
+    return so_file
 
-    cmd='rm -f helloworld.cpp helloworld';
-    try:
-        returncode=subprocess.call(cmd.split());
-    except:
-        pass;
-        raise Exception('could not excute \"'+cmd+'\"');
-    if returncode!=0:
-        raise Exception('could not excute \"'+cmd+'\"');
-    return so_file.split('/').pop()
+
+
+
 def numpy_params(ext):
     try:
         from numpy import __path__ as npy_path
@@ -474,14 +510,16 @@ try:
 except:
     raise;
 
-
+try:
+    libmpi_so=get_libmpi_so(mpi_cxx);
+except:
+    raise;
 
 
 import os
 cpp_files=[]
 cpp_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.cpp')]
-h_files=[]
-h_files+=['src/'+ each for each in os.listdir('src') if each.endswith('.h')]
+
 
 mapp_ext=Extension('mapp4py',
                    sources=cpp_files,
@@ -491,8 +529,11 @@ numpy_params(mapp_ext);
 if cxx_11==True:
     mpi_cxx_params(mpi_cxx,mapp_ext);
 
+if libmpi_so is not None:
+    mapp_ext.define_macros.append(('LIBMPI_SONAME','\"'+libmpi_so+'\"'))
 
-from os import path
+
+
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory,'README.md')) as f:

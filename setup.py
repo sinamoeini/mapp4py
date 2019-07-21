@@ -283,8 +283,8 @@ def find_mpi_cxx(cxx_11):
                 if find_executable(mpi_cxx_lst[i]) is not None:
                     found_any=True;
                     mpi_cxx=mpi_cxx_lst[i];
-                    environ['CC']=environ.get('MPICXX');
-                    environ['CXX']=environ.get('MPICXX');
+                    environ['CC']=mpi_cxx;
+                    environ['CXX']=mpi_cxx;
                     if has_cxx_11()==False:
                         mpi_cxx=None;
                 i+=1;

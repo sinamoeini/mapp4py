@@ -4,6 +4,9 @@
 #define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
 #include <numpy/arrayobject.h>
 #include "MAPP.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <mpi.h>
 #ifdef LIBMPI_SONAME
 #include <dlfcn.h>

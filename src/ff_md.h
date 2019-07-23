@@ -6,6 +6,8 @@ namespace MAPP_NS
     class ForceFieldMD : public ForceField
     {
     friend class DynamicMD;
+    template<bool,bool>
+    friend class NewDynamicMD;
     private:
         bool f_alloc;
         void reset();

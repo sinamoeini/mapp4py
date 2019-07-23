@@ -88,10 +88,6 @@ void DynamicMD::store_x0()
 /*--------------------------------------------
  
  --------------------------------------------*/
-#ifdef OLD_UPDATE
-inline
-#else
-#endif
 bool DynamicMD::decide()
 {
     type0 skin_sq=0.25*skin*skin;
@@ -108,73 +104,6 @@ bool DynamicMD::decide()
     if(succ) return true;
     return false;
 }
-#ifdef OLD_UPDATE
-/*--------------------------------------------
- update one vectors
- --------------------------------------------*/
-void DynamicMD::update(vec* updt_vec)
-{
-    update(&updt_vec,1);
-}
-/*--------------------------------------------
- update a number of vectors
- --------------------------------------------*/
-void DynamicMD::update(vec** updt_vecs,int nupdt_vecs)
-{
-    bool x_xst=false;
-    for(int ivec=0;x_xst==false && ivec<nupdt_vecs;ivec++)
-        if(updt_vecs[ivec]==atoms->x)
-            x_xst=true;
-    if(x_xst==false)
-    {
-        if(nupdt_vecs==1)
-            updt->update(updt_vecs[0],false);
-        else
-            updt->update(updt_vecs,nupdt_vecs,false);
-        return;
-    }
-    
-    
-    if(chng_box)
-    {
-        if(nupdt_vecs==1)
-            updt->update(atoms->x,true);
-        else
-            updt->update(updt_vecs,nupdt_vecs,true);
-
-        if(decide())
-            return;
-        
-        atoms->x2s_lcl();
-        xchng->full_xchng();
-        
-        updt->reset();
-        updt->list();
-        ff->neighbor->create_list(chng_box);
-        store_x0();
-    }
-    else
-    {
-        if(decide())
-        {
-            if(nupdt_vecs==1)
-                updt->update(atoms->x,true);
-            else
-                updt->update(updt_vecs,nupdt_vecs,true);
-            return;
-        }
-
-        atoms->x2s_lcl();
-        xchng->full_xchng();
-        
-        updt->list();
-        ff->neighbor->create_list(chng_box);
-        
-        store_x0();
-    }
-}
-#else
-#endif
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -193,8 +122,6 @@ void DynamicMD::fin_xchng()
     ff->neighbor->create_list(chng_box);
     store_x0();
 }
-#ifdef OLD_UPDATE
-#else
 /*--------------------------------------------
  
  --------------------------------------------*/
@@ -202,4 +129,3 @@ void DynamicMD::neighboring()
 {
     ff->neighbor->create_list(chng_box);
 }
-#endif

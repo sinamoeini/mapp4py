@@ -120,11 +120,7 @@ void MinCGDMD::init()
     {atoms->x_dof,atoms->alpha_dof,atoms->c_dof,h.vecs[0],h.vecs[1],x0.vecs[0],x0.vecs[1],x_d.vecs[0],x_d.vecs[1],f0.vecs[0],f0.vecs[1]},{});
 #endif
     dynamic->init();
-#ifdef OLD_UPDATE
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-#else
-#endif
+
     if(xprt)
     {
         try
@@ -149,11 +145,7 @@ void MinCGDMD::fin()
         xprt->fin();
         xprt->atoms=NULL;
     }
-#ifdef OLD_UPDATE
-    uvecs[1]=NULL;
-    uvecs[0]=NULL;
-#else
-#endif
+
     dynamic->fin();
     delete dynamic;
     dynamic=NULL;
@@ -196,11 +188,7 @@ type0 MinCGDMD::F(type0 alpha)
     if(chng_box)
         atoms->update_H();
 
-#ifdef OLD_UPDATE
-    dynamic->update(uvecs,2);
-#else
     dynamic->update<true,true>();
-#endif
     return ff->value();
 }
 /*--------------------------------------------
@@ -219,12 +207,8 @@ type0 MinCGDMD::dF(type0 alpha,type0& drev)
     
     if(chng_box)
         atoms->update_H();
-    
-#ifdef OLD_UPDATE
-    dynamic->update(uvecs,2);
-#else
+
     dynamic->update<true,true>();
-#endif
     force_calc();
     
     drev=-(f*h);
@@ -296,11 +280,9 @@ void MinCGDMD::F_reset()
         if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
     MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
     if(chng_box) atoms->update_H();
-#ifdef OLD_UPDATE
-    dynamic->update(uvecs,2);
-#else
+
     dynamic->update<true,true>();
-#endif
+
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

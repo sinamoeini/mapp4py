@@ -195,24 +195,16 @@ void DAE::min_error_true()
     VecTens<type0,2> f(atoms,true,ff->F_H,ff->f,ff->f_alpha);
     VecTens<type0,2> h(atoms,true,__dim__,c_dim);
 
-#ifdef OLD_UPDATE
-    vec* uvecs[2];
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-#endif
+
     type0 norm,res,res_sq;
     
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,true,__dim__,c_dim);
 /*
     auto J=[this](VecTens<type0,2>& dx,VecTens<type0,2>& Jdx)->void
     {
-#ifdef OLD_UPDATE
-        dynamic->update(dx.vecs[0],dx.A);
-        dynamic->update(dx.vecs[1]);
-#else
+
         dynamic->update(dx.A,dx.vecs[0],dx.vecs[1]);
-#endif
-        
+ 
         type0* __vec=ff->J(dx.vecs[0],dx.vecs[1],Jdx.vecs[0],Jdx.vecs[1]);
         Algebra::DyadicV_2_MLT(__vec,Jdx.A);
         
@@ -234,12 +226,7 @@ void DAE::min_error_true()
 */
     auto J=[this](VecTens<type0,2>& dx,VecTens<type0,2>& Jdx)->void
     {
-#ifdef OLD_UPDATE
-        dynamic->update(dx.vecs[0]);
-        dynamic->update(dx.vecs[1]);
-#else
         dynamic->update(dx.vecs[0],dx.vecs[1]);
-#endif
         const int n=atoms->natms_lcl+atoms->natms_ph;
         type0* __dx=dx.vecs[0]->begin();
         type0* __x=atoms->x->begin();
@@ -326,11 +313,8 @@ void DAE::min_error_true()
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
         
         atoms->update_H();
-#ifdef OLD_UPDATE
-        dynamic->update(uvecs,2);
-#else
+
         dynamic->update<true,true>();
-#endif
         
         
         ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
@@ -368,23 +352,14 @@ void DAE::min_error_false()
     VecTens<type0,2> f(atoms,false,ff->F_H,ff->f,ff->f_alpha);
     VecTens<type0,2> h(atoms,false,__dim__,c_dim);
 
-#ifdef OLD_UPDATE
-    vec* uvecs[2];
-    uvecs[0]=atoms->x;
-    uvecs[1]=atoms->alpha;
-#endif
+
     type0 norm,res,res_sq;
     
     __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,false,__dim__,c_dim);
     auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
     {
-#ifdef OLD_UPDATE
-        dynamic->update(x.vecs[0]);
-        dynamic->update(x.vecs[1]);
-#else
+
         dynamic->update(x.vecs[0],x.vecs[1]);
-#endif
-        
         ff->J(x.vecs[0],x.vecs[1],Jx.vecs[0],Jx.vecs[1]);
 
     };
@@ -431,11 +406,7 @@ void DAE::min_error_false()
             if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
         MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
 
-#ifdef OLD_UPDATE
-        dynamic->update(uvecs,2);
-#else
         dynamic->update<true,true>();
-#endif
         
         
         ff->prepJ_n_res(f.vecs[0],f.vecs[1]);

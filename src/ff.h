@@ -15,18 +15,12 @@ namespace MAPP_NS
     private:
     protected:
         Update* updt;
-#ifdef OLD_UPDATE
-        void update(vec* __v)
-        {
-            updt->update(__v,false);
-        }
-#else
+
         template<class...VS>
         void update(VS*&... __vs)
         {
             updt->update_wo_x(__vs...);
         }
-#endif
         const size_t nelems;
         virtual void __force_calc()=0;
         virtual void __energy_calc()=0;

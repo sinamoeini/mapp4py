@@ -4,12 +4,7 @@
 #include "MAPP.h"
 
 
-#ifdef OLD_UPDATE
-#include "atoms_dmd.h"
-#include "ff_styles.h"
-#include "neighbor_dmd.h"
-#else
-#endif
+
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -105,10 +100,6 @@ void DynamicDMD::store_x0()
 /*--------------------------------------------
  
  --------------------------------------------*/
-#ifdef OLD_UPDATE
-inline
-#else
-#endif
 bool DynamicDMD::decide()
 {
     int succ,succ_lcl=1;
@@ -133,82 +124,7 @@ bool DynamicDMD::decide()
     if(succ) return true;
     return false;
 }
-#ifdef OLD_UPDATE
-/*--------------------------------------------
- update one vectors
- --------------------------------------------*/
-void DynamicDMD::update(vec* updt_vec)
-{
-    update(&updt_vec,1);
-}
-/*--------------------------------------------
- update one vectors
- --------------------------------------------*/
-void DynamicDMD::update(vec* dx,type0 (*dH)[__dim__])
-{
-    updt->update(dx,dH);
-}
-/*--------------------------------------------
- update a number of vectors
- --------------------------------------------*/
-void DynamicDMD::update(vec** updt_vecs,int nupdt_vecs)
-{
-    bool x_xst=false;
-    for(int ivec=0;x_xst==false && ivec<nupdt_vecs;ivec++)
-        if(updt_vecs[ivec]==atoms->x)
-            x_xst=true;
-    if(x_xst==false)
-    {
-        if(nupdt_vecs==1)
-            updt->update(updt_vecs[0],false);
-        else
-            updt->update(updt_vecs,nupdt_vecs,false);
-        return;
-    }
-    
-    
-    if(chng_box)
-    {
-        if(nupdt_vecs==1)
-            updt->update(atoms->x,true);
-        else
-            updt->update(updt_vecs,nupdt_vecs,true);
 
-        if(decide())
-            return;
-        
-        atoms->x2s_lcl();
-        xchng->full_xchng();
-        atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-        updt->reset();
-        updt->list();
-        ff->neighbor->create_list(true);
-        store_x0();
-    }
-    else
-    {
-        if(decide())
-        {
-            if(nupdt_vecs==1)
-                updt->update(atoms->x,true);
-            else
-                updt->update(updt_vecs,nupdt_vecs,true);
-            return;
-        }
-
-        atoms->x2s_lcl();
-        xchng->full_xchng();
-        atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-        updt->reset();
-        updt->list();
-        ff->neighbor->create_list(true);
-        store_x0();
-    }
-}
-#else
-#endif
-#ifdef OLD_UPDATE
-#else
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____   _____    _   _   _____        _____   _____    _   _   _____        _____   _____    _   _   _____
 |_   _| |  _  \  | | | | | ____|      |_   _| |  _  \  | | | | | ____|      |_   _| |  _  \  | | | | | ____|
@@ -454,7 +370,6 @@ void NewDynamicDMD<false,false,false>::store_x0_alpha0()
 {
 }
 
-#endif
 
 
 

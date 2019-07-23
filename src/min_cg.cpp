@@ -261,11 +261,8 @@ type0 MinCG::F(type0 alpha)
     x=x0+alpha*x_d;
     if(chng_box)
     atoms->update_H();
-#ifdef OLD_UPDATE
-    dynamic->update(atoms->x);
-#else
+
     dynamic->update<true>();
-#endif
     return ff->value();
 }
 /*--------------------------------------------
@@ -276,11 +273,8 @@ type0 MinCG::dF(type0 alpha,type0& drev)
     x=x0+alpha*x_d;
     if(chng_box)
         atoms->update_H();
-#ifdef OLD_UPDATE
-    dynamic->update(atoms->x);
-#else
+
     dynamic->update<true>();
-#endif
     force_calc();
     
     drev=-(f*h);
@@ -335,11 +329,7 @@ void MinCG::F_reset()
 {
     x=x0;
     if(chng_box) atoms->update_H();
-#ifdef OLD_UPDATE
-    dynamic->update(atoms->x);
-#else
     dynamic->update<true>();
-#endif
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

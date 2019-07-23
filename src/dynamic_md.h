@@ -2,10 +2,7 @@
 #define __MAPP__dynamic_md__
 
 #include "dynamic.h"
-#ifdef OLD_UPDATE
-#else
 #include "atoms_md.h"
-#endif
 
 namespace MAPP_NS
 {
@@ -18,10 +15,7 @@ namespace MAPP_NS
         bool decide();
         class ForceFieldMD* ff;
         class AtomsMD* atoms;
-#ifdef OLD_UPDATE
-#else
         void neighboring();
-#endif
     protected:
         Vec<type0>* x0;
     public:        
@@ -33,10 +27,6 @@ namespace MAPP_NS
         void fin_xchng();
         void init();
         void fin();
-#ifdef OLD_UPDATE
-        void update(vec**,int);
-        void update(vec*);
-#else
         template<class...VS>
         void update_wo_x(VS*&... __vs)
         {
@@ -95,10 +85,8 @@ namespace MAPP_NS
         {
             Helper<X>::update(*this,__vs...);
         }
-#endif
     };
-#ifdef OLD_UPDATE
-#else
+
     template<>
     class DynamicMD::Helper<false>
     {
@@ -110,7 +98,6 @@ namespace MAPP_NS
         }
         
     };
-#endif
     
 }
 #endif

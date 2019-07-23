@@ -2,12 +2,9 @@
 #define __MAPP__dynamic_dmd__
 
 #include "dynamic.h"
-#ifdef OLD_UPDATE
-#else
 #include "atoms_dmd.h"
 #include "ff_styles.h"
 #include "neighbor_dmd.h"
-#endif
 
 namespace MAPP_NS
 {
@@ -31,11 +28,6 @@ namespace MAPP_NS
         DynamicDMD(class AtomsDMD*,class ForceFieldDMD*,bool,
         std::initializer_list<vec*>,std::initializer_list<vec*>,std::initializer_list<vec*> = {});
         ~DynamicDMD();
-#ifdef OLD_UPDATE
-        void update(vec**,int);
-        void update(vec*);
-        void update(vec*,type0 (*)[__dim__]);
-#else
         template<class...VS>
         void update_wo_x_wo_alpha(VS*&... __vs)
         {
@@ -106,14 +98,11 @@ namespace MAPP_NS
         {
             updt->update_w_x_w_dH(__dH,__v,__vs...);
         }
-#endif
         void init();
         void fin();
     };
 }
 
-#ifdef OLD_UPDATE
-#else
 template<>
 class DynamicDMD::Helper<false,false>
 {
@@ -125,17 +114,6 @@ public:
     }
     
 };
-
-#endif
-
-
-
-
-
-#ifdef OLD_UPDATE
-#else
-
-
 
 
 
@@ -354,7 +332,6 @@ void NewDynamicDMD<false,false,false>::update(VS*&... __vs)
 {
     updt->update_wo_x(__vs...);
 }
-#endif
 
 
 

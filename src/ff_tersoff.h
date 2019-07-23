@@ -9,7 +9,7 @@ namespace MAPP_NS
     {
     private:
         
-        type0*** lambda_2;
+        //type0*** lambda_2;
         type0 zeta_ij_k(const type0&,const type0&,
         const type0&,const type0&,const type0&,const type0&,
         const type0&,const type0&,const type0&,const type0&,

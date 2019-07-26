@@ -517,12 +517,13 @@ void  MinCG::__run(LS* ls,int nsteps)
 {
     
     MinMDHandler<BC,X> &handler=*reinterpret_cast<MinMDHandler<BC,X>*>(handler_ptr);
-
-    typename MinMDHandler<BC,X>::VECTENS1& f=handler.f;
-    typename MinMDHandler<BC,X>::VECTENS1& f0=handler.f0;
-    typename MinMDHandler<BC,X>::VECTENS1& h=handler.h;
-    typename MinMDHandler<BC,X>::VECTENS0& x0=handler.x0;
-    typename MinMDHandler<BC,X>::VECTENS0& x=handler.x;
+    typedef typename MinMDHandler<BC,X>::VECTENS0 VECTENS0;
+    typedef typename MinMDHandler<BC,X>::VECTENS1 VECTENS1;
+    VECTENS1& f=handler.f;
+    VECTENS1& f0=handler.f0;
+    VECTENS1& h=handler.h;
+    VECTENS0& x0=handler.x0;
+    VECTENS0& x=handler.x;
     type0& f_h=handler.f_h;
     
     ls->reset();

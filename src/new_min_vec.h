@@ -178,7 +178,7 @@ namespace MAPP_NS
         {
             VOP<I-1>::func_scl(natms_lcl,vt,scl,f);
             const int __v_size=natms_lcl*vt.vecs_dims[I-1];
-            type0* __v0=vt.vec[I-1]->begin();
+            type0* __v0=vt.vecs[I-1]->begin();
             for(int j=0;j<__v_size;j++) f(__v0[j],scl);
         }
     };

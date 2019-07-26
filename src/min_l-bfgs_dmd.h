@@ -1,9 +1,9 @@
-#ifndef __MAPP__min_l_bfgs__
-#define __MAPP__min_l_bfgs__
-#include "min_cg.h"
+#ifndef __MAPP__min_l_bfgs_dmd__
+#define __MAPP__min_l_bfgs_dmd__
+#include "min_cg_dmd.h"
 namespace MAPP_NS
 {
-    class MinLBFGS:public MinCG
+    class MinLBFGSDMD:public MinCGDMD
     {
     private:
     protected:
@@ -12,29 +12,29 @@ namespace MAPP_NS
         type0* alpha;
         void* s_ptr;
         void* y_ptr;
-
+        
     public:
-        MinLBFGS(int,type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
-        ~MinLBFGS();
+        MinLBFGSDMD(int,type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
+        ~MinLBFGSDMD();
         void run(int);
         void init();
         void fin();
         
-        template<bool BC,bool X>
+        template<bool BC,bool X,bool ALPHA,bool C>
         void  __init();
-        template<bool BC,bool X,class LS>
+        template<bool BC,bool X,bool ALPHA,bool C,class LS>
         void  __run(LS*,int);
-        template<bool BC,bool X>
+        template<bool BC,bool X,bool ALPHA,bool C>
         void  __fin();
         
         typedef struct
         {
             PyObject_HEAD
-            MinLBFGS* min;
+            MinLBFGSDMD* min;
             LineSearch::Object* ls;
-            ExportMD::Object* xprt;
+            ExportDMD::Object* xprt;
         }Object;
-
+        
         static PyTypeObject TypeObject;
         static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
         static int __init__(PyObject*, PyObject*,PyObject*);
@@ -55,31 +55,31 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X>
-void  MinLBFGS::__init()
+template<bool BC,bool X,bool ALPHA,bool C>
+void MinLBFGSDMD::__init()
 {
     
-    MinMDHandler<BC,X>* __handler_ptr=new MinMDHandler<BC,X>(atoms,ff,max_dx,H_dof);
+    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=new MinDMDHandler<BC,X,ALPHA,C>(atoms,ff,max_dx,max_dalpha,H_dof);
     handler_ptr=__handler_ptr;
     
     __handler_ptr->init();
-    typedef typename MinMDHandler<BC,X>::VECTENS1 VECTENS1;
+    typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1* __y_ptr=m==0 ? NULL:new VECTENS1[m];
     VECTENS1* __s_ptr=m==0 ? NULL:new VECTENS1[m];
-    
+    int c_dim=atoms->c_dim;
     for(int i=0;i<m;i++)
     {
         __y_ptr[i].~VECTENS1();
-        new (__y_ptr+i) VECTENS1(atoms,__dim__,X);
+        new (__y_ptr+i) VECTENS1(atoms,__dim__,X,c_dim,ALPHA,c_dim,C);
         
         __s_ptr[i].~VECTENS1();
-        new (__s_ptr+i) VECTENS1(atoms,__dim__,X);
+        new (__s_ptr+i) VECTENS1(atoms,__dim__,X,c_dim,ALPHA,c_dim,C);
     }
     
     s_ptr=__s_ptr;
     y_ptr=__y_ptr;
     
-    static constexpr int N1=MinMDHandler<BC,X>::N1;
+    static constexpr int N1=MinDMDHandler<BC,X,ALPHA,C>::N1;
     for(int i=0;i<m;i++)
     {
         Algebra::Do<N1>::func([&__s_ptr,&__y_ptr,&i,&__handler_ptr](int j)
@@ -93,7 +93,7 @@ void  MinLBFGS::__init()
     
     rho=m==0 ?NULL:new type0[m];
     alpha=m==0 ?NULL:new type0[m];
-
+    
     if(xprt)
     {
         try
@@ -103,7 +103,7 @@ void  MinLBFGS::__init()
         }
         catch(std::string& err_msg)
         {
-            __fin<BC,X>();
+            __fin<BC,X,ALPHA,C>();
             throw err_msg;
         }
     }
@@ -111,14 +111,14 @@ void  MinLBFGS::__init()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,class LS>
-void  MinLBFGS::__run(LS* ls,int nsteps)
+template<bool BC,bool X,bool ALPHA,bool C,class LS>
+void MinLBFGSDMD::__run(LS* ls,int nsteps)
 {
     
-    MinMDHandler<BC,X> &handler=*reinterpret_cast<MinMDHandler<BC,X>*>(handler_ptr);
-
-    typedef typename MinMDHandler<BC,X>::VECTENS0 VECTENS0;
-    typedef typename MinMDHandler<BC,X>::VECTENS1 VECTENS1;
+    MinDMDHandler<BC,X,ALPHA,C>& handler=*reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
+    
+    typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS0 VECTENS0;
+    typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
     VECTENS1& f0=handler.f0;
     VECTENS1& h=handler.h;
@@ -130,20 +130,19 @@ void  MinLBFGS::__run(LS* ls,int nsteps)
     
     ls->reset();
     int step=atoms->step;
-    
     handler.force_calc();
     
     int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
     if(nevery_xprt) xprt->write(step);
     
     ThermoDynamics thermo(6,
-      "PE",atoms->pe,
-      "S[0][0]",atoms->S_pe[0][0],
-      "S[1][1]",atoms->S_pe[1][1],
-      "S[2][2]",atoms->S_pe[2][2],
-      "S[1][2]",atoms->S_pe[2][1],
-      "S[2][0]",atoms->S_pe[2][0],
-      "S[0][1]",atoms->S_pe[1][0]);
+      "FE",atoms->fe,
+      "S[0][0]",atoms->S_fe[0][0],
+      "S[1][1]",atoms->S_fe[1][1],
+      "S[2][2]",atoms->S_fe[2][2],
+      "S[1][2]",atoms->S_fe[2][1],
+      "S[2][0]",atoms->S_fe[2][0],
+      "S[0][1]",atoms->S_fe[1][0]);
     
     if(ntally) thermo.init();
     if(ntally) thermo.print(step);
@@ -240,13 +239,13 @@ void  MinLBFGS::__run(LS* ls,int nsteps)
     if(ntally) fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
     
     atoms->step+=istep;
-
+    
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X>
-void  MinLBFGS::__fin()
+template<bool BC,bool X,bool ALPHA,bool C>
+void MinLBFGSDMD::__fin()
 {
     delete [] alpha;
     alpha=NULL;
@@ -258,9 +257,9 @@ void  MinLBFGS::__fin()
         xprt->fin();
         xprt->atoms=NULL;
     }
-    MinMDHandler<BC,X>* __handler_ptr=reinterpret_cast<MinMDHandler<BC,X>*>(handler_ptr);
+    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
     __handler_ptr->dynamic->fin();
-    typedef typename MinMDHandler<BC,X>::VECTENS1 VECTENS1;
+    typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1* __y_ptr=reinterpret_cast<VECTENS1*>(y_ptr);
     VECTENS1* __s_ptr=reinterpret_cast<VECTENS1*>(s_ptr);
     delete [] __s_ptr;
@@ -272,6 +271,7 @@ void  MinLBFGS::__fin()
     __handler_ptr->fin();
     delete __handler_ptr;
     handler_ptr=NULL;
+    
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef __MAPP__min_cg2__
-#define __MAPP__min_cg2__
+#ifndef __MAPP__min_cg__
+#define __MAPP__min_cg__
 #include "min.h"
 #include "new_min_vec.h"
 #include "ff_md.h"

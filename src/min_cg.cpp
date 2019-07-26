@@ -1,4 +1,4 @@
-#include "min_cg2.h"
+#include "min_cg.h"
 using namespace MAPP_NS;
 
 

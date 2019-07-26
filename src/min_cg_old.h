@@ -1,5 +1,5 @@
-#ifndef __MAPP__min_cg__
-#define __MAPP__min_cg__
+#ifndef __MAPP__min_cg_old__
+#define __MAPP__min_cg_old__
 #include "min.h"
 #include "min_vec.h"
 #include "ff_md.h"
@@ -9,7 +9,7 @@
 #include "thermo_dynamics.h"
 namespace MAPP_NS
 {
-    class MinCG:public Min
+    class MinCGOld:public Min
     {
     private:
     protected:
@@ -33,8 +33,8 @@ namespace MAPP_NS
         class ExportMD* xprt;
         
     public:
-        MinCG(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
-        ~MinCG();
+        MinCGOld(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
+        ~MinCGOld();
         virtual void run(int);
         template<class C>
         void run(C*,int);
@@ -57,7 +57,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            MinCG* min;
+            MinCGOld* min;
             LineSearch::Object* ls;
             ExportMD::Object* xprt;
         }Object;
@@ -88,7 +88,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<class C>
-void MinCG::run(C* ls,int nsteps)
+void MinCGOld::run(C* ls,int nsteps)
 {
     ls->reset();
     int step=atoms->step;

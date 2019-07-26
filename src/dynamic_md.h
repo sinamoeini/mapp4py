@@ -40,9 +40,7 @@ namespace MAPP_NS
             if(chng_box)
             {
                 updt->update_w_x(__vs...);
-                
                 if(decide()) return;
-                
                 atoms->x2s_lcl();
                 xchng->full_xchng();
                 
@@ -215,11 +213,8 @@ template<class...VS>
 void NewDynamicMD<true,true>::update(VS*&... __vs)
 {
     atoms->update_H();
-    
     updt->update_w_x(__vs...);
-    
     if(decide()) return;
-    
     
     
     atoms->x2s_lcl();

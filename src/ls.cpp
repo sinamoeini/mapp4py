@@ -1,4 +1,4 @@
-#include "min_cg.h"
+#include "min_cg_old.h"
 #include "min_cg_dmd.h"
 #include "ls.h"
 /*--------------------------------------------

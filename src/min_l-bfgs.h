@@ -1,9 +1,9 @@
 #ifndef __MAPP__min_l_bfgs_md__
 #define __MAPP__min_l_bfgs_md__
-#include "min_cg.h"
+#include "min_cg_old.h"
 namespace MAPP_NS
 {
-    class MinLBFGS:public MinCG
+    class MinLBFGS:public MinCGOld
     {
     private:
     protected:

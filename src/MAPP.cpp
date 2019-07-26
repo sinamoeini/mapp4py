@@ -278,8 +278,11 @@ PyObject* MAPP::MD::init_module(void)
     PyModule_AddObject(module_ob,"muvt",reinterpret_cast<PyObject*>(&MDMuVT::TypeObject));
     
     
+    if(MinCGOld::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCGOld::TypeObject));
+    
     if(MinCG::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
+    PyModule_AddObject(module_ob,"min_cg2",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
     
     
     if(MinLBFGS::setup_tp()<0) return NULL;

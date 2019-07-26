@@ -104,7 +104,7 @@ void GCMC::init()
     id_type* id=atoms->id->begin();
     for(int i=0;i<natms_lcl;i++)
         max_id_=MAX(id[i],max_id_);
-    MPI_Allreduce(&max_id_,&max_id,1,MPI_UNSIGNED,MPI_MAX,world);
+    MPI_Allreduce(&max_id_,&max_id,1,Vec<id_type>::MPI_T,MPI_MAX,world);
     for(int i=0;i<del_ids_sz;i++)
         max_id=MAX(max_id,del_ids[i]);
         

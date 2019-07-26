@@ -186,12 +186,9 @@ namespace MAPP_NS
             type0* hvec=h.vecs[0]->begin();
             type0* x_dvec=x_d.vecs[0]->begin();
             Algebra::MLT_mul_MLT(atoms->H,h.A,x_d.A);
-            
-            for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,x_dvec+=__dim__,hvec+=__dim__)
-            {
-                Algebra::V_eq<__dim__>(hvec,x_dvec);
+            memcpy(x_dvec,hvec,natms_lcl*__dim__*sizeof(type0));
+            for(int iatm=0;iatm<natms_lcl;iatm++,xvec+=__dim__,x_dvec+=__dim__)
                 Algebra::V_mul_MLT_add_in(xvec,h.A,x_dvec);
-            }
         }
         void prep_x_d_affine()
         {

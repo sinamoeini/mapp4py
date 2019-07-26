@@ -29,7 +29,7 @@ using namespace MAPP_NS;
  --------------------------------------------*/
 MinLBFGS::MinLBFGS(int __m,type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
-MinCG(__e_tol,__H_dof,__affine,__max_dx,__ls),
+MinCGOld(__e_tol,__H_dof,__affine,__max_dx,__ls),
 m(__m),
 rho(NULL),
 alpha(NULL),
@@ -270,7 +270,7 @@ int MinLBFGS::setup_tp()
     setup_tp_getset();
     TypeObject.tp_getset=getset;
     
-    TypeObject.tp_base=&MinCG::TypeObject;
+    TypeObject.tp_base=&MinCGOld::TypeObject;
     
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;

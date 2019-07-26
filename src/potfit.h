@@ -2,7 +2,7 @@
 #define __MAPP__potfit__
 #include "ff_eam_potfit.h"
 #include "atoms_md.h"
-#include "min_cg.h"
+#include "min_cg_old.h"
 #include "thermo_dynamics.h"
 #include "import_cfg.h"
 #include "random.h"
@@ -30,7 +30,7 @@ namespace MAPP_NS
     public:
         ForceFieldEAMPotFit<NELEMS>* ff;
         AtomsMD* atoms;
-        MinCG* min;
+        MinCGOld* min;
         LineSearchBrent* min_ls;
         
         int nconfigs;
@@ -56,13 +56,13 @@ namespace MAPP_NS
         PotFit(PyObject*,
         std::string*&&,std::string*&,int*&,
         type0(*&)[1+__nvoigt__],
-        MinCG**,
+        MinCGOld**,
         PyObject**,size_t,MPI_Comm&);
         ~PotFit();
         
         void init();
         void fin();
-        void assign_min(MinCG*);
+        void assign_min(MinCGOld*);
         void store_x0();
         void restore_x0();
         void full_reset();
@@ -88,7 +88,7 @@ namespace MAPP_NS
         {
             PyObject_HEAD
             class PotFit<FF,NELEMS>* potfit;
-            MinCG::Object** mins;
+            MinCGOld::Object** mins;
         }Object;
         
         static PyTypeObject TypeObject;
@@ -178,7 +178,7 @@ template<class FF,size_t NELEMS>
 PotFit<FF,NELEMS>::PotFit(PyObject* ff_args,
 std::string*&& __names_str,std::string*& files,int*& nprocs,
 type0(*& __targets)[1+__nvoigt__],
-MinCG** __mins,
+MinCGOld** __mins,
 PyObject** dof_funcs,size_t __nconfigs,
 MPI_Comm& __world):
 atoms(NULL),
@@ -302,7 +302,7 @@ void PotFit<FF,NELEMS>::fin()
  init
  --------------------------------------------*/
 template<class FF,size_t NELEMS>
-void PotFit<FF,NELEMS>::assign_min(MinCG* __min)
+void PotFit<FF,NELEMS>::assign_min(MinCGOld* __min)
 {
     if(min)
     {
@@ -838,7 +838,7 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Memory::alloc(targets,nconfigs);
     PyObject** funcs;
     Memory::alloc(funcs,nconfigs);
-    MinCG::Object** min_objs;
+    MinCGOld::Object** min_objs;
     Memory::alloc(min_objs,nconfigs);
     
     
@@ -849,7 +849,7 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
         FuncAPI<std::string,std::string,
         int,
         type0,symm<type0[__dim__][__dim__]>,
-        OP<MinCG>,
+        OP<MinCGOld>,
         OB<PyFunctionObject,PyFunction_Type>>
         conf("configuration tuple",{"name","cfg_file","nproc","pe_target","S_target","min_obj","dof_func"});
         
@@ -871,7 +871,7 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
         nprocs[i]=conf.val<2>();
         targets[i][0]=conf.val<3>();
         Algebra::MSY_2_DyadicV(conf.val<4>(),&targets[i][1]);
-        min_objs[i]=reinterpret_cast<MinCG::Object*>(conf.val<5>().ob);
+        min_objs[i]=reinterpret_cast<MinCGOld::Object*>(conf.val<5>().ob);
         funcs[i]=conf.val<6>();
         tot_nproc+=nprocs[i];
     }
@@ -894,7 +894,7 @@ int PotFit<FF,NELEMS>::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     
     
     
-    MinCG** mins;
+    MinCGOld** mins;
     Memory::alloc(mins,nconfigs);
     for(size_t i=0;i<nconfigs;i++) mins[i]=min_objs[i]->min;
     Object* __self=reinterpret_cast<Object*>(self);
@@ -1723,7 +1723,7 @@ void PotFit<FF,NELEMS>::getset_mins(PyGetSetDef& getset)
     {
         
         size_t __nconfigs=static_cast<size_t>(reinterpret_cast<Object*>(self)->potfit->nconfigs);
-        MinCG::Object** mins=reinterpret_cast<Object*>(self)->mins;
+        MinCGOld::Object** mins=reinterpret_cast<Object*>(self)->mins;
         
         PyObject* py_obj=PyList_New(__nconfigs);
         for(size_t i=0;i<__nconfigs;i++)
@@ -1733,7 +1733,7 @@ void PotFit<FF,NELEMS>::getset_mins(PyGetSetDef& getset)
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {
-        VarAPI<OP<MinCG>*> var("mins");
+        VarAPI<OP<MinCGOld>*> var("mins");
         if(var.set(val)!=0) return -1;
         Object* __self=reinterpret_cast<Object*>(self);
         PotFit<FF,NELEMS>* potfit=__self->potfit;
@@ -1744,15 +1744,15 @@ void PotFit<FF,NELEMS>::getset_mins(PyGetSetDef& getset)
             PyErr_SetString(PyExc_TypeError,"size mismatch");
             return -1;
         }
-        OP<MinCG>* __mins=var.val;
+        OP<MinCGOld>* __mins=var.val;
         
         for(int i=0;i<__nconfigs;i++)
         {
             if(i==__my_conf)
-                __self->potfit->assign_min(reinterpret_cast<MinCG::Object*>(__mins[i].ob)->min);
+                __self->potfit->assign_min(reinterpret_cast<MinCGOld::Object*>(__mins[i].ob)->min);
             
             Py_DECREF(__self->mins[i]);
-           __self->mins[i]=reinterpret_cast<MinCG::Object*>(__mins[i].ob);
+           __self->mins[i]=reinterpret_cast<MinCGOld::Object*>(__mins[i].ob);
            Py_INCREF(__self->mins[i]);
         }
 

@@ -1091,6 +1091,9 @@ namespace MAPP_NS
             Helper<0>::update_wo_x(*this,tot_byte_sz,__vs...);
             
         }
+        void update_wo_x()
+        {}
+
 
         void rm_rdndncy()
         {

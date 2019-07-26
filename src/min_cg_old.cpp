@@ -1,10 +1,10 @@
-#include "min_cg.h"
+#include "min_cg_old.h"
 #include <stdlib.h>
 using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCG::MinCG(type0 __e_tol,
+MinCGOld::MinCGOld(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
 atoms(NULL),
@@ -15,7 +15,7 @@ xprt(NULL)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinCG::~MinCG()
+MinCGOld::~MinCGOld()
 {
     atoms=NULL;
     ff=NULL;
@@ -23,14 +23,14 @@ MinCG::~MinCG()
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 MinCG::calc_ndofs()
+type0 MinCGOld::calc_ndofs()
 {
     return 0.0;
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::force_calc()
+void MinCGOld::force_calc()
 {
     ff->derivative();
     if(chng_box)
@@ -39,7 +39,7 @@ void MinCG::force_calc()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::prep()
+void MinCGOld::prep()
 {
     x_d=h;
     if(!chng_box) return;
@@ -68,7 +68,7 @@ void MinCG::prep()
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinCG::init()
+void MinCGOld::init()
 {
     x.~VecTens();
     new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
@@ -104,7 +104,7 @@ void MinCG::init()
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinCG::init(vec* ext_vec_0)
+void MinCGOld::init(vec* ext_vec_0)
 {
     x.~VecTens();
     new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
@@ -142,7 +142,7 @@ void MinCG::init(vec* ext_vec_0)
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
-void MinCG::fin()
+void MinCGOld::fin()
 {
     if(xprt)
     {
@@ -165,7 +165,7 @@ void MinCG::fin()
  ff_test
  --------------------------------------------*/
 #include "random.h"
-void MinCG::ff_test(int seed,type0 __max_dx,type0 __max_st,int __n_desc)
+void MinCGOld::ff_test(int seed,type0 __max_dx,type0 __max_st,int __n_desc)
 {
     
     bool __chng_box=chng_box;
@@ -242,7 +242,7 @@ void MinCG::ff_test(int seed,type0 __max_dx,type0 __max_st,int __n_desc)
 /*--------------------------------------------
  min
  --------------------------------------------*/
-void MinCG::run(int nsteps)
+void MinCGOld::run(int nsteps)
 {
     if(dynamic_cast<LineSearchGoldenSection*>(ls))
         return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
@@ -256,7 +256,7 @@ void MinCG::run(int nsteps)
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 MinCG::F(type0 alpha)
+type0 MinCGOld::F(type0 alpha)
 {
     x=x0+alpha*x_d;
     if(chng_box)
@@ -268,7 +268,7 @@ type0 MinCG::F(type0 alpha)
 /*--------------------------------------------
  inner product of f and h
  --------------------------------------------*/
-type0 MinCG::dF(type0 alpha,type0& drev)
+type0 MinCGOld::dF(type0 alpha,type0& drev)
 {
     x=x0+alpha*x_d;
     if(chng_box)
@@ -288,7 +288,7 @@ type0 MinCG::dF(type0 alpha,type0& drev)
  (x-x0)/alpha=sqrt(eps)/alpha
 
  --------------------------------------------*/
-void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
+void MinCGOld::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 {
     
     h_norm=h*h;
@@ -325,7 +325,7 @@ void MinCG::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 /*--------------------------------------------
  reset to initial position
  --------------------------------------------*/
-void MinCG::F_reset()
+void MinCGOld::F_reset()
 {
     x=x0;
     if(chng_box) atoms->update_H();
@@ -334,7 +334,7 @@ void MinCG::F_reset()
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinCG::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinCGOld::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -343,7 +343,7 @@ PyObject* MinCG::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinCGOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","ls"});
     f.noptionals=5;
@@ -371,7 +371,7 @@ int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<4>().ob);
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<4>().ob);
-    __self->min=new MinCG(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),&(__self->ls->ls));
+    __self->min=new MinCGOld(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),&(__self->ls->ls));
     __self->xprt=NULL;
 
     return 0;
@@ -379,7 +379,7 @@ int MinCG::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinCG::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinCGOld::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -392,7 +392,7 @@ PyObject* MinCG::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::__dealloc__(PyObject* self)
+void MinCGOld::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -404,9 +404,9 @@ void MinCG::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinCGOld::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int MinCG::setup_tp()
+int MinCGOld::setup_tp()
 {
     TypeObject.tp_name="mapp4py.md.min_cg";
     TypeObject.tp_doc=R"---(
@@ -463,9 +463,9 @@ int MinCG::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCG::getset[]=EmptyPyGetSetDef(8);
+PyGetSetDef MinCGOld::getset[]=EmptyPyGetSetDef(8);
 /*--------------------------------------------*/
-void MinCG::setup_tp_getset()
+void MinCGOld::setup_tp_getset()
 {
     getset_e_tol(getset[0]);
     getset_H_dof(getset[1]);
@@ -476,9 +476,9 @@ void MinCG::setup_tp_getset()
     getset_export(getset[6]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCG::methods[]=EmptyPyMethodDef(3);
+PyMethodDef MinCGOld::methods[]=EmptyPyMethodDef(3);
 /*--------------------------------------------*/
-void MinCG::setup_tp_methods()
+void MinCGOld::setup_tp_methods()
 {
     ml_run(methods[0]);
     ml_ff_test(methods[1]);
@@ -486,7 +486,7 @@ void MinCG::setup_tp_methods()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::getset_export(PyGetSetDef& getset)
+void MinCGOld::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
@@ -515,7 +515,7 @@ void MinCG::getset_export(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::ml_run(PyMethodDef& tp_methods)
+void MinCGOld::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";
@@ -592,7 +592,7 @@ void MinCG::ml_run(PyMethodDef& tp_methods)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG::ml_ff_test(PyMethodDef& tp_methods)
+void MinCGOld::ml_ff_test(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="ff_test";

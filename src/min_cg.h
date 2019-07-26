@@ -292,7 +292,6 @@ void MinMDHandler<BC,X>::fin()
     delete dynamic;
     dynamic=NULL;
     
-    
     x_d.~VECTENS0();
     x0.~VECTENS0();
     x.~VECTENS0();

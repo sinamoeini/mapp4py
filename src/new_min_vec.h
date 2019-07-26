@@ -215,7 +215,7 @@ namespace MAPP_NS
         static void func_scl(const int& natms_lcl,E& vt,const type0& scl,F&& f)
         {
             const int __v_size=natms_lcl*vt.vecs_dims[0];
-            type0* __v0=vt.vec[0]->begin();
+            type0* __v0=vt.vecs[0]->begin();
             for(int j=0;j<__v_size;j++) f(__v0[j],scl);
         }
     };
@@ -546,7 +546,6 @@ namespace MAPP_NS
             Algebra::zero<__dim__*__dim__>(A_arr[0]);
         }
         
-        
         VT(const VT& r)
         {
             this->atoms=r.atoms;
@@ -556,7 +555,7 @@ namespace MAPP_NS
                 this->vecs_dims[i]=r.vecs_dims[i];
                 this->vecs_alloc[i]=true;
                 this->vecs[i]=new Vec<type0>(this->atoms,this->vecs_dims[i]);
-                memcpy(r.vecs_ptrs[i],this->vecs_ptrs[i],natms_lcl*(this->vecs_dims[i])*sizeof(type0));
+                memcpy(r.vecs[i]->begin(),this->vecs[i]->begin(),natms_lcl*(this->vecs_dims[i])*sizeof(type0));
             });
             
             this->A=this->A_arr;
@@ -888,5 +887,51 @@ namespace MAPP_NS
     {
         return VTMulScl<VT<H_DOF,N>>(scl,vt);
     }
+    
+    template<bool H_DOF,int N>
+    void cyclic_shift(VT<H_DOF,N>* vs,int n)
+    {
+        Vec<type0>* __vecs[N];
+        Algebra::V_eq<N>(vs[n-1].vecs,__vecs);
+        for(int i=n-1;i>0;i--)
+            Algebra::V_eq<N>(vs[i-1].vecs,vs[i].vecs);
+        Algebra::V_eq<N>(__vecs,vs[0].vecs);
+    }
+    
+    template<int N>
+    void cyclic_shift(VT<true,N>* vs,int n)
+    {
+        Vec<type0>* __vecs[N];
+        type0 __A[__dim__][__dim__];
+        Algebra::V_eq<N>(vs[n-1].vecs,__vecs);
+        Algebra::V_eq<__dim__*__dim__>(vs[n-1].A[0],__A[0]);
+        
+        for(int i=n-1;i>0;i--)
+        {
+            Algebra::V_eq<N>(vs[i-1].vecs,vs[i].vecs);
+            Algebra::V_eq<__dim__*__dim__>(vs[i-1].A[0],vs[i].A[0]);
+        }
+        Algebra::V_eq<N>(__vecs,vs[0].vecs);
+        Algebra::V_eq<__dim__*__dim__>(__A[0],vs[0].A[0]);
+    }
+    
+    template<bool H_DOF>
+    void cyclic_shift(VT<H_DOF,0>* ,int)
+    {}
+    
+    inline void cyclic_shift(VT<true,0>* vs,int n)
+    {
+        
+        type0 __A[__dim__][__dim__];
+        Algebra::V_eq<__dim__*__dim__>(vs[n-1].A[0],__A[0]);
+        
+        for(int i=n-1;i>0;i--)
+        {
+            Algebra::V_eq<__dim__*__dim__>(vs[i-1].A[0],vs[i].A[0]);
+        }
+        Algebra::V_eq<__dim__*__dim__>(__A[0],vs[0].A[0]);
+    }
+    
+    
 }
 #endif

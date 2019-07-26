@@ -401,7 +401,6 @@ void MinDMDHandler<BC,X,ALPHA,C>::init()
         dynamic->add_xchng(x0.vecs[i]);
     });
     if(BC) dynamic->add_xchng(x_d.vecs[0]);
-    
 }
 /*--------------------------------------------
  
@@ -411,7 +410,6 @@ void MinDMDHandler<BC,X,ALPHA,C>::fin()
 {
     delete dynamic;
     dynamic=NULL;
-    
     
     x_d.~VECTENS0();
     x0.~VECTENS0();

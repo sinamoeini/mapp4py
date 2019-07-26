@@ -157,7 +157,7 @@ PyTypeObject MinCG::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
 int MinCG::setup_tp()
 {
-    TypeObject.tp_name="mapp4py.md.min_cg2";
+    TypeObject.tp_name="mapp4py.md.min_cg_new";
     TypeObject.tp_doc=R"---(
     __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,ls=mapp4py.ls_bt())
     

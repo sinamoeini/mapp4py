@@ -13,7 +13,7 @@
  new_alpha_i=alpha_i
  new_beta=beta
  --------------------------------------------*/
-#include "min_l-bfgs_old.h"
+#include "min_l-bfgs.h"
 #include <stdlib.h>
 #include "ff.h"
 #include "thermo_dynamics.h"
@@ -27,128 +27,60 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinLBFGSOld::MinLBFGSOld(int __m,type0 __e_tol,
+MinLBFGS::MinLBFGS(int __m,type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
-MinCGOld(__e_tol,__H_dof,__affine,__max_dx,__ls),
+MinCG(__e_tol,__H_dof,__affine,__max_dx,__ls),
 m(__m),
 rho(NULL),
 alpha(NULL),
-s(NULL),
-y(NULL)
+s_ptr(NULL),
+y_ptr(NULL)
 {
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinLBFGSOld::~MinLBFGSOld()
+MinLBFGS::~MinLBFGS()
 {
 }
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinLBFGSOld::init()
+void MinLBFGS::init()
 {
-    x.~VecTens();
-    new (&x) VecTens<type0,1>(atoms,chng_box,atoms->H,atoms->x);
-    f.~VecTens();
-    new (&f) VecTens<type0,1>(atoms,chng_box,ff->F_H,ff->f);
-    h.~VecTens();
-    new (&h) VecTens<type0,1>(atoms,chng_box,__dim__);
-    x0.~VecTens();
-    new (&x0) VecTens<type0,1>(atoms,chng_box,__dim__);
-    x_d.~VecTens();
-    new (&x_d) VecTens<type0,1>(atoms,chng_box,__dim__);
-    f0.~VecTens();
-    new (&f0) VecTens<type0,1>(atoms,chng_box,__dim__);
-    
-    if(m)
+    chng_box=false;
+    Algebra::DoLT<__dim__>::func([this](int i,int j)
     {
-        s=new VecTens<type0,1>[m];
-        y=new VecTens<type0,1>[m];
-        for(int i=0;i<m;i++)
-        {
-            s[i].~VecTens();
-            new (s+i) VecTens<type0,1>(atoms,chng_box,__dim__);
-            y[i].~VecTens();
-            new (y+i) VecTens<type0,1>(atoms,chng_box,__dim__);
-        }
-    }
+        if(H_dof[i][j]) chng_box=true;
+    });
     
-    dynamic=new DynamicMD(atoms,ff,chng_box,{},{atoms->x_dof,h.vecs[0],x0.vecs[0],f0.vecs[0]},{atoms->x_d});
-    
-    for(int i=0;i<m;i++)
+    try
     {
-        dynamic->add_xchng(s[i].vecs[0]);
-        dynamic->add_xchng(y[i].vecs[0]);
+        MinMDHelper::CondB<>::init(*this,chng_box,X_DOF);
     }
-    
-    dynamic->init();
-    
-    Memory::alloc(rho,m);
-    Memory::alloc(alpha,m);
-    
-    if(xprt)
+    catch(std::string& err_msg)
     {
-        try
-        {
-            xprt->atoms=atoms;
-            xprt->init();
-        }
-        catch(std::string& err_msg)
-        {
-            fin();
-            throw err_msg;
-        }
+        throw err_msg;
     }
-}
-/*--------------------------------------------
- fin after a run
- --------------------------------------------*/
-void MinLBFGSOld::fin()
-{
-    if(xprt)
-    {
-        xprt->fin();
-        xprt->atoms=NULL;
-    }
-    
-    Memory::dealloc(alpha);
-    Memory::dealloc(rho);
-    rho=alpha=NULL;
-    
-    dynamic->fin();
-    delete dynamic;
-    dynamic=NULL;
-    
-    delete [] s;
-    delete [] y;
-    s=y=NULL;
-    
-    f0.~VecTens();
-    x_d.~VecTens();
-    x0.~VecTens();
-    h.~VecTens();
-    f.~VecTens();
-    x.~VecTens();
 }
 /*--------------------------------------------
  run
  --------------------------------------------*/
-void MinLBFGSOld::run(int nsteps)
+void MinLBFGS::run(int nsteps)
 {
-    if(dynamic_cast<LineSearchGoldenSection*>(ls))
-        return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
-    
-    if(dynamic_cast<LineSearchBrent*>(ls))
-        return run(dynamic_cast<LineSearchBrent*>(ls),nsteps);
-    
-    if(dynamic_cast<LineSearchBackTrack*>(ls))
-        return run(dynamic_cast<LineSearchBackTrack*>(ls),nsteps);
+    MinMDHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF);
+}
+/*--------------------------------------------
+ fin after a run
+ --------------------------------------------*/
+void MinLBFGS::fin()
+{
+    MinMDHelper::CondB<>::fin(*this,chng_box,X_DOF);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinLBFGSOld::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinLBFGS::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -157,7 +89,7 @@ PyObject* MinLBFGSOld::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinLBFGSOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinLBFGS::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     
     FuncAPI<int,type0,symm<bool[__dim__][__dim__]>,bool,type0,OP<LineSearch>> f("__init__",{"m","e_tol","H_dof","affine","max_dx","ls"});
@@ -188,7 +120,7 @@ int MinLBFGSOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<5>().ob);
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
-    __self->min=new MinLBFGSOld(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
+    __self->min=new MinLBFGS(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;
@@ -196,7 +128,7 @@ int MinLBFGSOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinLBFGSOld::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinLBFGS::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -209,7 +141,7 @@ PyObject* MinLBFGSOld::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinLBFGSOld::__dealloc__(PyObject* self)
+void MinLBFGS::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -221,9 +153,9 @@ void MinLBFGSOld::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinLBFGSOld::TypeObject ={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinLBFGS::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int MinLBFGSOld::setup_tp()
+int MinLBFGS::setup_tp()
 {
     TypeObject.tp_name="mapp4py.md.min_lbfgs";
     TypeObject.tp_doc=R"---(
@@ -270,7 +202,7 @@ int MinLBFGSOld::setup_tp()
     setup_tp_getset();
     TypeObject.tp_getset=getset;
     
-    TypeObject.tp_base=&MinCGOld::TypeObject;
+    TypeObject.tp_base=&MinCG::TypeObject;
     
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
@@ -279,22 +211,22 @@ int MinLBFGSOld::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyMethodDef MinLBFGSOld::methods[]=EmptyPyMethodDef(1);
+PyMethodDef MinLBFGS::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
-void MinLBFGSOld::setup_tp_methods()
+void MinLBFGS::setup_tp_methods()
 {
 }
 /*--------------------------------------------*/
-PyGetSetDef MinLBFGSOld::getset[]=EmptyPyGetSetDef(2);
+PyGetSetDef MinLBFGS::getset[]=EmptyPyGetSetDef(2);
 /*--------------------------------------------*/
-void MinLBFGSOld::setup_tp_getset()
+void MinLBFGS::setup_tp_getset()
 {
     getset_m(getset[0]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinLBFGSOld::getset_m(PyGetSetDef& getset)
+void MinLBFGS::getset_m(PyGetSetDef& getset)
 {
     getset.name=(char*)"m";
     getset.doc=(char*)R"---(

@@ -1,5 +1,5 @@
 #include "min_cg_old.h"
-#include "min_cg_dmd.h"
+#include "min_cg_dmd_old.h"
 #include "ls.h"
 /*--------------------------------------------
  constructor

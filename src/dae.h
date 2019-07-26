@@ -29,7 +29,7 @@ namespace MAPP_NS
         class DynamicDMD* dynamic;
 #ifdef MINCG_W_NEWTON
         class LineSearchBrent* ls;
-        class MinCGDMD* min;
+        class MinCGDMDOld* min;
 #endif
     public:
         int max_nnewton_iters;

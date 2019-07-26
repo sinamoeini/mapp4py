@@ -337,14 +337,14 @@ PyObject* MAPP::DMD::init_module(void)
     PyModule_AddObject(module_ob,"atoms",reinterpret_cast<PyObject*>(&AtomsDMD::TypeObject));
     
     
-    if(MinCGDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
+    if(MinCGDMDOld::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMDOld::TypeObject));
     
     if(MinCG3DMD::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"min_cg3",reinterpret_cast<PyObject*>(&MinCG3DMD::TypeObject));
     
-    if(MinLBFGSDMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMD::TypeObject));
+    if(MinLBFGSDMDOld::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMDOld::TypeObject));
     
     
     if(DAEBDF::setup_tp()<0) return NULL;

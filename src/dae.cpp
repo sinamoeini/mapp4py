@@ -6,7 +6,7 @@
 #include "memory.h"
 #include "min_vec.h"
 #ifdef MINCG_W_NEWTON
-#include "min_cg_dmd.h"
+#include "min_cg_dmd_old.h"
 #endif
 using namespace MAPP_NS;
 /*--------------------------------------------
@@ -125,7 +125,7 @@ void DAE::init()
     ls=new LineSearchBrent();
     bool __H_dof[__dim__][__dim__];
     for(int i=0;i<__dim__;i++) for(int j=0;j<__dim__;j++) __H_dof[i][j]=false;
-    min= new MinCGDMD(1.0e-9,__H_dof,false,1.0,0.1,ls);
+    min= new MinCGDMDOld(1.0e-9,__H_dof,false,1.0,0.1,ls);
     min->atoms=atoms;
     min->ff=ff;
     min->init();

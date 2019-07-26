@@ -1,4 +1,4 @@
-#include "min_l-bfgs_dmd.h"
+#include "min_l-bfgs_dmd_old.h"
 #include "memory.h"
 #include "dynamic_dmd.h"
 #include "thermo_dynamics.h"
@@ -8,9 +8,9 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinLBFGSDMD::MinLBFGSDMD(int __m,type0 __e_tol,
+MinLBFGSDMDOld::MinLBFGSDMDOld(int __m,type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
-MinCGDMD(__e_tol,__H_dof,__affine,__max_dx,__max_dalpha,__ls),
+MinCGDMDOld(__e_tol,__H_dof,__affine,__max_dx,__max_dalpha,__ls),
 m(__m),
 rho(NULL),
 alpha(NULL),
@@ -21,13 +21,13 @@ y(NULL)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinLBFGSDMD::~MinLBFGSDMD()
+MinLBFGSDMDOld::~MinLBFGSDMDOld()
 {
 }
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinLBFGSDMD::init()
+void MinLBFGSDMDOld::init()
 {
     const int c_dim=atoms->c->dim;
     x.~VecTens();
@@ -88,7 +88,7 @@ void MinLBFGSDMD::init()
 /*--------------------------------------------
  fin after a run
  --------------------------------------------*/
-void MinLBFGSDMD::fin()
+void MinLBFGSDMDOld::fin()
 {
     
     if(xprt)
@@ -119,7 +119,7 @@ void MinLBFGSDMD::fin()
 /*--------------------------------------------
  run
  --------------------------------------------*/
-void MinLBFGSDMD::run(int nsteps)
+void MinLBFGSDMDOld::run(int nsteps)
 {
     if(dynamic_cast<LineSearchGoldenSection*>(ls))
         return run(dynamic_cast<LineSearchGoldenSection*>(ls),nsteps);
@@ -133,7 +133,7 @@ void MinLBFGSDMD::run(int nsteps)
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinLBFGSDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinLBFGSDMDOld::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -142,7 +142,7 @@ PyObject* MinLBFGSDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinLBFGSDMDOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<int,type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,OP<LineSearch>> f("__init__",{"m","e_tol","H_dof","affine","max_dx","max_dalpha","ls"});
     f.noptionals=7;
@@ -174,7 +174,7 @@ int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<6>().ob);
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<6>().ob);
-    __self->min=new MinLBFGSDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),f.val<5>(),&(__self->ls->ls));
+    __self->min=new MinLBFGSDMDOld(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),f.val<5>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;
@@ -182,7 +182,7 @@ int MinLBFGSDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinLBFGSDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinLBFGSDMDOld::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -195,7 +195,7 @@ PyObject* MinLBFGSDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinLBFGSDMD::__dealloc__(PyObject* self)
+void MinLBFGSDMDOld::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -207,9 +207,9 @@ void MinLBFGSDMD::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinLBFGSDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinLBFGSDMDOld::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int MinLBFGSDMD::setup_tp()
+int MinLBFGSDMDOld::setup_tp()
 {
     TypeObject.tp_name="mapp4py.dmd.min_lbfgs";
     TypeObject.tp_doc=R"---(
@@ -252,7 +252,7 @@ int MinLBFGSDMD::setup_tp()
     setup_tp_getset();
     TypeObject.tp_getset=getset;
     
-    TypeObject.tp_base=&MinCGDMD::TypeObject;
+    TypeObject.tp_base=&MinCGDMDOld::TypeObject;
     
     int ichk=PyType_Ready(&TypeObject);
     if(ichk<0) return ichk;
@@ -261,22 +261,22 @@ int MinLBFGSDMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinLBFGSDMD::getset[]=EmptyPyGetSetDef(2);
+PyGetSetDef MinLBFGSDMDOld::getset[]=EmptyPyGetSetDef(2);
 /*--------------------------------------------*/
-void MinLBFGSDMD::setup_tp_getset()
+void MinLBFGSDMDOld::setup_tp_getset()
 {
     getset_m(getset[0]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinLBFGSDMD::methods[]=EmptyPyMethodDef(1);
+PyMethodDef MinLBFGSDMDOld::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
-void MinLBFGSDMD::setup_tp_methods()
+void MinLBFGSDMDOld::setup_tp_methods()
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinLBFGSDMD::getset_m(PyGetSetDef& getset)
+void MinLBFGSDMDOld::getset_m(PyGetSetDef& getset)
 {
     getset.name=(char*)"m";
     getset.doc=(char*)R"---(

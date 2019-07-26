@@ -1,31 +1,60 @@
-#ifndef __MAPP__min_l_bfgs_dmd__
-#define __MAPP__min_l_bfgs_dmd__
-#include "min_cg_dmd.h"
+#ifndef __MAPP__min_cg_dmd_old__
+#define __MAPP__min_cg_dmd_old__
+#include "min.h"
+#include "min_vec.h"
+#include "ff_dmd.h"
+#include "atoms_dmd.h"
+#include "dynamic_dmd.h"
+#include "MAPP.h"
+#include "thermo_dynamics.h"
 namespace MAPP_NS
 {
-    class MinLBFGSDMD:public MinCGDMD
+    class MinCGDMDOld:public Min
     {
+#ifdef MINCG_W_NEWTON
+    friend class DAE;
+#endif
     private:
     protected:
-        int m;
-        type0* rho;
-        type0* alpha;
+        type0 max_dalpha;
         
-        VecTens<type0,2>* s;
-        VecTens<type0,2>* y;
+        void prep();
+        type0 calc_ndofs();
+        type0 ndofs;
+        
+        VecTens<type0,2> h;
+        VecTens<type0,2> x;
+        VecTens<type0,2> x0;
+        VecTens<type0,2> x_d;
+        VecTens<type0,2> f;
+        VecTens<type0,2> f0;
+        
+        class AtomsDMD* atoms;
+        class ForceFieldDMD* ff;
+        class DynamicDMD* dynamic;
+        class ExportDMD* xprt;
+        void print_error();
+        void pre_run_chk(AtomsDMD*,ForceFieldDMD*);
+        
     public:
-        MinLBFGSDMD(int,type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
-        ~MinLBFGSDMD();
-        void run(int);
+        MinCGDMDOld(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
+        ~MinCGDMDOld();
+        virtual void run(int);
         template<class C>
         void run(C*,int);
-        void init();
-        void fin();
+        virtual void init();
+        virtual void fin();
         
+        void force_calc();
+        
+        type0 F(type0);
+        type0 dF(type0,type0&);
+        void ls_prep(type0&,type0&,type0&);
+        void F_reset();
         typedef struct
         {
             PyObject_HEAD
-            MinLBFGSDMD* min;
+            MinCGDMDOld* min;
             LineSearch::Object* ls;
             ExportDMD::Object* xprt;
         }Object;
@@ -38,20 +67,26 @@ namespace MAPP_NS
         
         static PyMethodDef methods[];
         static void setup_tp_methods();
+        static void ml_run(PyMethodDef&);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
-        static void getset_m(PyGetSetDef&);
+        static void getset_max_dalpha(PyGetSetDef&);
+        static void getset_export(PyGetSetDef&);
         
         static int setup_tp();
+        
+        
+        
     };
+
 }
 using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
 template<class C>
-void MinLBFGSDMD::run(C* ls,int nsteps)
+void MinCGDMDOld::run(C* ls,int nsteps)
 {
     ls->reset();
     int step=atoms->step;
@@ -70,39 +105,27 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
     "S[2][0]",atoms->S_fe[2][0],
     "S[0][1]",atoms->S_fe[1][0]);
     
-    
     if(ntally) thermo.init();
     if(ntally) thermo.print(step);
     
     
     type0 e_prev,e_curr=atoms->fe;
-        
-    type0 alpha_m,gamma;
-    type0 inner0,inner1;
-    
-    
-    
-    int k=0;
-    gamma=1.0;
+    type0 f0_f0,f_f,f_f0;
+    type0 ratio,alpha;
     int err=nsteps==0? MIN_F_MAX_ITER:LS_S;
-    
-
+    h=f;
+    f0_f0=f*f;
     int istep=0;
-    for(;istep<nsteps && err==LS_S;istep++)
+    for(;err==LS_S;istep++)
     {
-        x0=x;
-        h=f0=f;
-        
-        for(int i=0;i<k;i++)
+        if(f0_f0==0.0)
         {
-            alpha[i]=-rho[i]*(s[i]*h);
-            h+=alpha[i]*y[i];
+            err=LS_F_GRAD0;
+            continue;
         }
         
-        h*=gamma;
-        
-        for(int i=k-1;i>-1;i--)
-        h+=(-alpha[i]-rho[i]*(y[i]*h))*s[i];
+        x0=x;
+        f0=f;
         
         e_prev=e_curr;
         
@@ -111,11 +134,10 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
         if(f_h<0.0)
         {
             h=f;
-            k=0;
-            f_h=f*f;
+            f_h=f0_f0;
         }
         prep();
-        err=ls->min(this,e_curr,alpha_m,0);
+        err=ls->min(this,e_curr,alpha,1);
         
         if(err!=LS_S)
         {
@@ -137,38 +159,24 @@ void MinLBFGSDMD::run(C* ls,int nsteps)
         if(istep+1==nsteps) err=MIN_F_MAX_ITER;
         if(err) continue;
         
-        if(m)
-        {
-            if(k!=m) k++;
-            
-            s[0].cyclic_shift(k);
-            y[0].cyclic_shift(k);
-            
-            for(int i=m-1;i>0;i--)
-                rho[i]=rho[i-1];
-            
-            s[0]=x-x0;
-            y[0]=f0-f;
-            
-            inner0=s[0]*y[0];
-            inner1=y[0]*y[0];
-            
-            gamma=inner0/inner1;
-            rho[0]=1.0/inner0;
-        }
-        else
-            gamma=(x*f0-x*f-x0*f0+x0*f)/(f*f+f0*f0-2.0*(f*f0));
+        f_f=f*f;
+        f_f0=f*f0;
+        
+        ratio=(f_f-f_f0)/(f0_f0);
+        
+        h=ratio*h+f;
+        f0_f0=f_f;
     }
     
     if(ntally && istep%ntally)
         thermo.print(step+istep);
-
-    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
     
+    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
+
     if(ntally) thermo.fin();
     
     if(ntally) fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
     
     atoms->step+=istep;
 }
-#endif 
+#endif

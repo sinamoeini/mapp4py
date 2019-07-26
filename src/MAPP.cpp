@@ -285,8 +285,8 @@ PyObject* MAPP::MD::init_module(void)
     PyModule_AddObject(module_ob,"min_cg2",reinterpret_cast<PyObject*>(&MinCG::TypeObject));
     
     
-    if(MinLBFGS::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGS::TypeObject));
+    if(MinLBFGSOld::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSOld::TypeObject));
     
     
     if(ExportMD::setup_tp()<0) return NULL;

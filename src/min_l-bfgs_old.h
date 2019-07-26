@@ -1,9 +1,9 @@
-#ifndef __MAPP__min_l_bfgs_md__
-#define __MAPP__min_l_bfgs_md__
+#ifndef __MAPP__min_l_bfgs_old__
+#define __MAPP__min_l_bfgs_old__
 #include "min_cg_old.h"
 namespace MAPP_NS
 {
-    class MinLBFGS:public MinCGOld
+    class MinLBFGSOld:public MinCGOld
     {
     private:
     protected:
@@ -14,8 +14,8 @@ namespace MAPP_NS
         VecTens<type0,1>* s;
         VecTens<type0,1>* y;
     public:
-        MinLBFGS(int,type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
-        ~MinLBFGS();
+        MinLBFGSOld(int,type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
+        ~MinLBFGSOld();
         void run(int);
         template<class C>
         void run(C*,int);
@@ -25,7 +25,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            MinLBFGS* min;
+            MinLBFGSOld* min;
             LineSearch::Object* ls;
             ExportMD::Object* xprt;
         }Object;
@@ -51,7 +51,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<class C>
-void MinLBFGS::run(C* ls,int nsteps)
+void MinLBFGSOld::run(C* ls,int nsteps)
 {
     ls->reset();
     int step=atoms->step;

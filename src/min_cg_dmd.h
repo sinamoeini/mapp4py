@@ -1,5 +1,5 @@
-#ifndef __MAPP__min_cg3_dmd__
-#define __MAPP__min_cg3_dmd__
+#ifndef __MAPP__min_cg_dmd__
+#define __MAPP__min_cg_dmd__
 #include "min.h"
 #include "new_min_vec.h"
 #include "ff_dmd.h"
@@ -648,7 +648,7 @@ void MinDMDHandler<BC,X,ALPHA,C>::aprop_c()
 /*------------------------------------------------------------------------------------------------*/
 namespace MAPP_NS
 {
-    class MinCG3DMD:public Min
+    class MinCGDMD:public Min
     {
     private:
     protected:
@@ -661,8 +661,8 @@ namespace MAPP_NS
         class ExportDMD* xprt;
         void pre_run_chk(AtomsDMD*,ForceFieldDMD*);
     public:
-        MinCG3DMD(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
-        ~MinCG3DMD();
+        MinCGDMD(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
+        ~MinCGDMD();
         virtual void run(int);
         virtual void init();
         virtual void fin();
@@ -677,7 +677,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            MinCG3DMD* min;
+            MinCGDMD* min;
             LineSearch::Object* ls;
             ExportDMD::Object* xprt;
         }Object;
@@ -712,7 +712,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<bool BC,bool X,bool ALPHA,bool C>
-void MinCG3DMD::__init()
+void MinCGDMD::__init()
 {
     
     MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=new MinDMDHandler<BC,X,ALPHA,C>(atoms,ff,max_dx,max_dalpha,H_dof);
@@ -741,7 +741,7 @@ void MinCG3DMD::__init()
  
  --------------------------------------------*/
 template<bool BC,bool X,bool ALPHA,bool C,class LS>
-void MinCG3DMD::__run(LS* ls,int nsteps)
+void MinCGDMD::__run(LS* ls,int nsteps)
 {
     
     MinDMDHandler<BC,X,ALPHA,C>& handler=*reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
@@ -848,7 +848,7 @@ void MinCG3DMD::__run(LS* ls,int nsteps)
  
  --------------------------------------------*/
 template<bool BC,bool X,bool ALPHA,bool C>
-void MinCG3DMD::__fin()
+void MinCGDMD::__fin()
 {
     if(xprt)
     {

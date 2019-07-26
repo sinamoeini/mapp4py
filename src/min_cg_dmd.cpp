@@ -1,4 +1,4 @@
-#include "min_cg3_dmd.h"
+#include "min_cg_dmd.h"
 #include <stdlib.h>
 
 
@@ -9,7 +9,7 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-MinCG3DMD::MinCG3DMD(type0 __e_tol,
+MinCGDMD::MinCGDMD(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
 X_DOF(true),
@@ -24,7 +24,7 @@ xprt(NULL)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-MinCG3DMD::~MinCG3DMD()
+MinCGDMD::~MinCGDMD()
 {
     atoms=NULL;
     ff=NULL;
@@ -32,7 +32,7 @@ MinCG3DMD::~MinCG3DMD()
 /*--------------------------------------------
  pre run check it throw excepctions
  --------------------------------------------*/
-void MinCG3DMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
+void MinCGDMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
 {
     //check if configuration is loaded
     if(!__atoms)
@@ -108,7 +108,7 @@ void MinCG3DMD::pre_run_chk(AtomsDMD* __atoms,ForceFieldDMD* __ff)
 /*--------------------------------------------
  init before a run
  --------------------------------------------*/
-void MinCG3DMD::init()
+void MinCGDMD::init()
 {
     chng_box=false;
     Algebra::DoLT<__dim__>::func([this](int i,int j)
@@ -128,21 +128,21 @@ void MinCG3DMD::init()
 /*--------------------------------------------
  min
  --------------------------------------------*/
-void MinCG3DMD::run(int nsteps)
+void MinCGDMD::run(int nsteps)
 {
     MinDMDHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF);
 }
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
-void MinCG3DMD::fin()
+void MinCGDMD::fin()
 {
     MinDMDHelper::CondB<>::fin(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* MinCG3DMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* MinCGDMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -151,7 +151,7 @@ PyObject* MinCG3DMD::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int MinCGDMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<type0,symm<bool[__dim__][__dim__]>,bool,type0,type0,OP<LineSearch>> f("__init__",{"e_tol","H_dof","affine","max_dx","max_dalpha","ls"});
     f.noptionals=6;
@@ -181,7 +181,7 @@ int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
     Object* __self=reinterpret_cast<Object*>(self);
     Py_INCREF(f.val<5>().ob);
     __self->ls=reinterpret_cast<LineSearch::Object*>(f.val<5>().ob);
-    __self->min=new MinCG3DMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
+    __self->min=new MinCGDMD(f.val<0>(),f.val<1>(),f.val<2>(),f.val<3>(),f.val<4>(),&(__self->ls->ls));
     __self->xprt=NULL;
     
     return 0;
@@ -189,7 +189,7 @@ int MinCG3DMD::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* MinCG3DMD::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* MinCGDMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -202,7 +202,7 @@ PyObject* MinCG3DMD::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::__dealloc__(PyObject* self)
+void MinCGDMD::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->min;
@@ -214,11 +214,11 @@ void MinCG3DMD::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject MinCG3DMD::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject MinCGDMD::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int MinCG3DMD::setup_tp()
+int MinCGDMD::setup_tp()
 {
-    TypeObject.tp_name="mapp4py.dmd.min_cg3";
+    TypeObject.tp_name="mapp4py.dmd.min_cg_new";
     TypeObject.tp_doc=R"---(
     __init__(e_tol=1.0e-8,H_dof=[[False],[False,False],[False,False,False]],affine=False,max_dx=1.0,max_dalpha=0.1,ls=mapp4py.dmd.ls_bt())
     
@@ -264,9 +264,9 @@ int MinCG3DMD::setup_tp()
     return ichk;
 }
 /*--------------------------------------------*/
-PyGetSetDef MinCG3DMD::getset[]=EmptyPyGetSetDef(11);
+PyGetSetDef MinCGDMD::getset[]=EmptyPyGetSetDef(11);
 /*--------------------------------------------*/
-void MinCG3DMD::setup_tp_getset()
+void MinCGDMD::setup_tp_getset()
 {
     getset_e_tol(getset[0]);
     getset_H_dof(getset[1]);
@@ -280,16 +280,16 @@ void MinCG3DMD::setup_tp_getset()
     getset_c_dof(getset[9]);
 }
 /*--------------------------------------------*/
-PyMethodDef MinCG3DMD::methods[]=EmptyPyMethodDef(2);
+PyMethodDef MinCGDMD::methods[]=EmptyPyMethodDef(2);
 /*--------------------------------------------*/
-void MinCG3DMD::setup_tp_methods()
+void MinCGDMD::setup_tp_methods()
 {
     ml_run(methods[0]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_max_dalpha(PyGetSetDef& getset)
+void MinCGDMD::getset_max_dalpha(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_dalpha";
     getset.doc=(char*)R"---(
@@ -314,7 +314,7 @@ void MinCG3DMD::getset_max_dalpha(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_export(PyGetSetDef& getset)
+void MinCGDMD::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
@@ -343,7 +343,7 @@ void MinCG3DMD::getset_export(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_x_dof(PyGetSetDef& getset)
+void MinCGDMD::getset_x_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"x_dof";
     getset.doc=(char*)R"---(
@@ -366,7 +366,7 @@ void MinCG3DMD::getset_x_dof(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_alpha_dof(PyGetSetDef& getset)
+void MinCGDMD::getset_alpha_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"alpha_dof";
     getset.doc=(char*)R"---(
@@ -389,7 +389,7 @@ void MinCG3DMD::getset_alpha_dof(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::getset_c_dof(PyGetSetDef& getset)
+void MinCGDMD::getset_c_dof(PyGetSetDef& getset)
 {
     getset.name=(char*)"c_dof";
     getset.doc=(char*)R"---(
@@ -412,7 +412,7 @@ void MinCG3DMD::getset_c_dof(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void MinCG3DMD::ml_run(PyMethodDef& tp_methods)
+void MinCGDMD::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";

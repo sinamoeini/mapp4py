@@ -340,8 +340,8 @@ PyObject* MAPP::DMD::init_module(void)
     if(MinCGDMDOld::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"min_cg",reinterpret_cast<PyObject*>(&MinCGDMDOld::TypeObject));
     
-    if(MinCG3DMD::setup_tp()<0) return NULL;
-    PyModule_AddObject(module_ob,"min_cg3",reinterpret_cast<PyObject*>(&MinCG3DMD::TypeObject));
+    if(MinCGDMD::setup_tp()<0) return NULL;
+    PyModule_AddObject(module_ob,"min_cg_new",reinterpret_cast<PyObject*>(&MinCGDMD::TypeObject));
     
     if(MinLBFGSDMDOld::setup_tp()<0) return NULL;
     PyModule_AddObject(module_ob,"min_lbfgs",reinterpret_cast<PyObject*>(&MinLBFGSDMDOld::TypeObject));

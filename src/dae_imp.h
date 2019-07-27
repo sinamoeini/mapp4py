@@ -1,9 +1,9 @@
 #ifndef __MAPP__dae_imp__
 #define __MAPP__dae_imp__
-#include "dae.h"
+#include "dae_old.h"
 namespace MAPP_NS
 {
-    class DAEImplicit:public DAE
+    class DAEImplicit:public DAEOld
     {
     private:
     protected:

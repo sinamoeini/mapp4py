@@ -303,7 +303,7 @@ bool DAEBDF::integrate()
     }
 
     memcpy(c,c_0,ncs*sizeof(type0));
-    dynamic->update(atoms->c);
+    update(atoms->c);
     ninteg_rej++;
     return false;
 }
@@ -555,7 +555,7 @@ void DAEBDF::newton_fail()
     }
     
     memcpy(c,c_0,ncs*sizeof(type0));
-    dynamic->update(atoms->c);
+    update(atoms->c);
 }
 /*--------------------------------------------
  

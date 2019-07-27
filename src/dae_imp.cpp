@@ -10,7 +10,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 DAEImplicit::DAEImplicit():
-DAE(),
+DAEOld(),
 y_0(NULL),
 c_0(NULL),
 a(NULL),
@@ -36,7 +36,7 @@ DAEImplicit::~DAEImplicit()
  --------------------------------------------*/
 void DAEImplicit::init_static()
 {
-    DAE::init_static();
+    DAEOld::init_static();
     Memory::alloc(y_0,3*ncs);
     c_0=y_0+ncs;
     a=y_0+2*ncs;
@@ -61,14 +61,14 @@ void DAEImplicit::fin_static()
     del_c=NULL;
     Memory::dealloc(y_0);
     y_0=c_0=a=NULL;
-    DAE::fin_static();
+    DAEOld::fin_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void DAEImplicit::init()
 {
-    DAE::init();
+    DAEOld::init();
     
     //static related
 
@@ -82,7 +82,7 @@ void DAEImplicit::fin()
 
     
     
-    DAE::fin();
+    DAEOld::fin();
 }
 /*--------------------------------------------
  
@@ -190,7 +190,7 @@ bool DAEImplicit::newton()
         gmres->solve(Jacobain_calc,F_ptr,res_tol,norm,del_c_ptr);
         
         ratio=update_c();
-        dynamic->update(atoms->c);
+        update(atoms->c);
         
         delta=fabs(ratio*norm/denom);
         
@@ -223,7 +223,7 @@ bool DAEImplicit::newton()
         return true;
     }
     memcpy(c,c_0,ncs*sizeof(type0));
-    dynamic->update(atoms->c);
+    update(atoms->c);
     nnonlin_rej++;
     return false;
 }

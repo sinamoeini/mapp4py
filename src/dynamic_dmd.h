@@ -12,6 +12,7 @@ namespace MAPP_NS
     template<typename> class Vec;
     class DynamicDMD: public Dynamic
     {
+    friend class DAEOld;
     private:
         const int c_dim;
         const type0 alpha_scale;
@@ -125,6 +126,7 @@ namespace MAPP_NS
     template<bool BC,bool X,bool ALPHA>
     class NewDynamicDMD: public NewDynamic
     {
+    friend class DAEOld;
     private:
         const int c_dim;
         const type0 alpha_scale;

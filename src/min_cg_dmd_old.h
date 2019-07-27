@@ -12,7 +12,7 @@ namespace MAPP_NS
     class MinCGDMDOld:public Min
     {
 #ifdef MINCG_W_NEWTON
-    friend class DAE;
+    friend class DAEOld;
 #endif
     private:
     protected:

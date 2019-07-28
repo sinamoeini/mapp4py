@@ -88,6 +88,9 @@ namespace MAPP_NS
         virtual void prepJ_n_res(Vec<type0>*,Vec<type0>*);
         type0* J(Vec<type0>*,Vec<type0>*,Vec<type0>*,Vec<type0>*);
         
+        void Jnew(type0 (*)[__dim__],Vec<type0>*,Vec<type0>*,type0 (*)[__dim__],Vec<type0>*,Vec<type0>*);
+        void Jnew(Vec<type0>*,Vec<type0>*,Vec<type0>*,Vec<type0>*);
+
         void calc_thermo();
         type0 err_sq_alpha;
         type0 err_sq_x;

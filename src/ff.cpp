@@ -5,7 +5,6 @@
 #include "ff.h"
 #include "MAPP.h"
 #include "elements.h"
-#include "timer.h"
 #include "memory.h"
 #include "atoms.h"
 #include "comm.h"

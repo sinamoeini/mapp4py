@@ -539,7 +539,44 @@ void ForceFieldDMD::prepJ_n_res(Vec<type0>* x_ptr,Vec<type0>* alpha_ptr)
     norm_sq(x_ptr->begin(),err_sq_x,alpha_ptr->begin(),err_sq_alpha);
     
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::Jnew(
+Vec<type0>* x_ptr,Vec<type0>* alpha_ptr,
+Vec<type0>* Jx_ptr,Vec<type0>* Jalpha_ptr)
+{
+    update(x_ptr,alpha_ptr);
+    
+    Algebra::zero<__nvoigt__+2>(__vec_lcl);
+    __J(x_ptr,alpha_ptr,Jx_ptr,Jalpha_ptr);
+    impose_dof(Jx_ptr->begin(),Jalpha_ptr->begin());
+    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__,Vec<type0>::MPI_T,MPI_SUM,world);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void ForceFieldDMD::Jnew(
+type0 (*A)[__dim__],Vec<type0>* x_ptr,Vec<type0>* alpha_ptr,
+type0 (*JA)[__dim__],Vec<type0>* Jx_ptr,Vec<type0>* Jalpha_ptr)
+{
+    /*
+     the reason I am able to modify dx with impunity
+     is that after this operation inside GMRES
+     the values are not used and only its allocated
+     memory is used
+     */
+    //similar to MinDMDHandler<BC,X,ALPHA,C>::prep_x_d()
+    const int natms_lcl=atoms->natms_lcl;
+    type0* dxvec=x_ptr->begin();
+    type0* xvec=atoms->x->begin();
+    for(int i=0;i<natms_lcl;i++,dxvec+=__dim__,xvec+=__dim__)
+        Algebra::V_mul_MLT_add_in(xvec,A,dxvec);
+    
+    Jnew(x_ptr,alpha_ptr,Jx_ptr,Jalpha_ptr);
+    
+    Algebra::DyadicV_2_MLT(__vec,JA);
+}
 
 
 

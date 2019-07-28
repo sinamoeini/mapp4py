@@ -2,7 +2,6 @@
 #include "dynamic_md.h"
 #include "atoms_md.h"
 #include "xmath.h"
-#include "timer.h"
 #include "MAPP.h"
 #include "ff_styles.h"
 #include "neighbor_md.h"

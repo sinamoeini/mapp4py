@@ -1,18 +1,19 @@
-#include "dae_old.h"
+#include "dae.h"
 #include "MAPP.h"
 #include "atoms_dmd.h"
 #include "dynamic_dmd.h"
 #include "ff_dmd.h"
 #include "memory.h"
+#include "min_cg_dmd.h"
 #include "min_vec.h"
 #ifdef MINCG_W_NEWTON
-#include "min_cg_dmd_old.h"
+
 #endif
 using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-DAEOld::DAEOld():
+DAE::DAE():
 x_err_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 alpha_err_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 ncs(0),
@@ -35,13 +36,13 @@ c_d(NULL)
 /*--------------------------------------------
  
  --------------------------------------------*/
-DAEOld::~DAEOld()
+DAE::~DAE()
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
+void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
 {
     //check if configuration is loaded
     if(!__atoms)
@@ -95,7 +96,7 @@ void DAEOld::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::init_static()
+void DAE::init_static()
 {
     //static related
     ncs=atoms->natms_lcl*c_dim;
@@ -107,7 +108,7 @@ void DAEOld::init_static()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::fin_static()
+void DAE::fin_static()
 {
     //static related
     c=c_d=NULL;
@@ -115,60 +116,22 @@ void DAEOld::fin_static()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::init()
+void DAE::init()
 {
-    nerr_mins=0;
-    c_dim=atoms->c_dim;
-    ff->c_d->fill();
-#ifdef MINCG_W_NEWTON
-    ls=new LineSearchBrent();
-    bool __H_dof[__dim__][__dim__];
-    for(int i=0;i<__dim__;i++) for(int j=0;j<__dim__;j++) __H_dof[i][j]=false;
-    min= new MinCGDMDOld(1.0e-9,__H_dof,false,1.0,0.1,ls);
-    min->atoms=atoms;
-    min->ff=ff;
-    min->init();
-    min->ntally=0;
-    dynamic=min->dynamic;
-#else
-    dynamic=new DynamicDMD(atoms,ff,chng_box,{atoms->c_dof},{atoms->x_dof,atoms->alpha_dof},{});
-    dynamic->init();
-#endif
-    
-    ff->calc_ndof();
-    a_tol_sqrt_nc_dof=a_tol*sqrt(static_cast<type0>(ff->nc_dof));
-    int n=ff->nx_dof+ff->nalpha_dof;
-    Algebra::DoLT<__dim__>::func([this,&n](int i,int j)
-    {if(!std::isnan(S[i][j])) ++n;});
-    sqrt_nx_nalpha_nS_dof=sqrt(static_cast<type0>(n));
-    a_tol_sqrt_nx_nalpha_nS_dof=a_tol*sqrt_nx_nalpha_nS_dof;
-    x_err_tol_sqrt_ndof=x_err_tol*sqrt(static_cast<type0>(ff->nx_dof));
-    alpha_err_tol_sqrt_ndof=alpha_err_tol*sqrt(static_cast<type0>(ff->nalpha_dof));
+
     
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::fin()
+void DAE::fin()
 {
-#ifdef MINCG_W_NEWTON
-    min->fin();
-    min->ff=NULL;
-    min->atoms=NULL;
-    delete min;
-    min=NULL;
-    delete ls;
-    ls=NULL;
-#else
-    dynamic->fin();
-    delete dynamic;
-#endif
-    dynamic=NULL;
+
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 DAEOld::calc_err()
+type0 DAE::calc_err()
 {
     if(!chng_box) return sqrt(ff->err_sq_x+ff->err_sq_alpha)/sqrt_nx_nalpha_nS_dof;
     type0 err_sq=0.0;
@@ -182,37 +145,22 @@ type0 DAEOld::calc_err()
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::min_error_true()
+void DAE::min_error_true()
 {
-#ifdef MINCG_W_NEWTON
-    int __step=atoms->step;
-    min->run(10000);
-    atoms->step=__step;
-#endif
+    MinDMDHandler<true,true,true,false> handler(atoms,ff,100.0,100.0,S_dof);
+    typedef typename MinDMDHandler<true,true,true,false>::VECTENS0 VECTENS0;
+    typedef typename MinDMDHandler<true,true,true,false>::VECTENS1 VECTENS1;
+    VECTENS1& f=handler.f;
+    VECTENS1& h=handler.h;
+    VECTENS0& x=handler.x;
     
-    VecTens<type0,2> x(atoms,true,atoms->H,atoms->x,atoms->alpha);
-    VecTens<type0,2> f(atoms,true,ff->F_H,ff->f,ff->f_alpha);
-    VecTens<type0,2> h(atoms,true,__dim__,c_dim);
-
-
-    type0 norm,res,res_sq;
     
-    __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,true,__dim__,c_dim);
-    auto J=[this](VecTens<type0,2>& dx,VecTens<type0,2>& Jdx)->void
+    __GMRES__<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
+    auto J=[this](VECTENS1& dx,VECTENS1& Jdx)->void
     {
-        dynamic->update(dx.vecs[0],dx.vecs[1]);
-        const int n=atoms->natms_lcl+atoms->natms_ph;
-        type0* __dx=dx.vecs[0]->begin();
-        type0* __x=atoms->x->begin();
-        for(int i=0;i<n;i++,__dx+=__dim__,__x+=__dim__)
-            Algebra::V_mul_MLT_add_in(__x,dx.A,__dx);
-        
-        
-        type0* __vec=ff->J(dx.vecs[0],dx.vecs[1],Jdx.vecs[0],Jdx.vecs[1]);
-        Algebra::DyadicV_2_MLT(__vec,Jdx.A);
+        ff->Jnew(dx.A,dx.vecs[0],dx.vecs[1],Jdx.A,Jdx.vecs[0],Jdx.vecs[1]);
         
         type0 dlog_vol=0.0;
-    
         Algebra::Do<__dim__>::func([&dx,&dlog_vol](int i)
         {
             dlog_vol+=dx.A[i][i];
@@ -226,78 +174,15 @@ void DAEOld::min_error_true()
         });
     };
     
-    ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
-    res_sq=ff->err_sq_x+ff->err_sq_alpha;
-    type0 vol_neg=-atoms->vol;
-    Algebra::DoLT<__dim__>::func([&res_sq,&f,this,&vol_neg](int i,int j)
-     {
-         if(!std::isnan(S[i][j]))
-         {
-             f.A[i][j]=ff->F_H[i][j]-S[i][j]*vol_neg;
-             res_sq+=f.A[i][j]*f.A[i][j];
-         }
-         else
-             f.A[i][j]=0.0;
-     });
     
-    
-    res=sqrt(res_sq);
-    type0 r;
-    int istep=0;
-    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_nS_dof>1.0;istep++)
+    auto get_res=[this,&f]()->type0
     {
-        gmres.solve(J,f,0.005*a_tol_sqrt_nx_nalpha_nS_dof,norm,h);
-        
-        const int n0=atoms->natms_lcl;
-        type0* __x=atoms->x->begin();
-        type0* __dx=h.vecs[0]->begin();
-        for(int i=0;i<n0;i++,__dx+=__dim__,__x+=__dim__)
-            Algebra::V_mul_MLT_add_in(__x,h.A,__dx);
-        Algebra::MLT_mul_MLT(atoms->H,h.A,h.A);
-        
-        const int n=atoms->natms_lcl*c_dim;
-        type0* alpha_vec=atoms->alpha->begin();
-        type0*  halpha_vec=h.vecs[1]->begin();
-        type0 r_lcl=1.0,tmp;
-        for(int i=0;i<n;i++)
-        {
-            tmp=alpha_vec[i]+r_lcl*halpha_vec[i];
-            if(tmp<0.0)
-            {
-                r_lcl=-alpha_vec[i]/halpha_vec[i];
-                while(alpha_vec[i]+r_lcl*halpha_vec[i]<=0.0)
-                    r_lcl=nextafter(r_lcl,0.0);
-            }
-        }
-        MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
-        
-        if(r==1.0)
-            x+=h;
-        else
-        {
-            r*=0.5;
-            x+=r*h;
-        }
-        type0 max_alpha_lcl=0.0;
-        
-        
-        type0* c_vec=atoms->c->begin();
-        for(int i=0;i<n;i++)
-            if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-        
-        atoms->update_H();
-
-        dynamic->update<true,true>();
-        
-        
         ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
-        res_sq=ff->err_sq_x+ff->err_sq_alpha;
+        type0 res_sq=ff->err_sq_x+ff->err_sq_alpha;
         type0 vol_neg=-atoms->vol;
-        
         Algebra::DoLT<__dim__>::func([&res_sq,&f,this,&vol_neg](int i,int j)
          {
-             if(!std::isnan(S[i][j]))
+             if(S_dof[i][j])
              {
                  f.A[i][j]=ff->F_H[i][j]-S[i][j]*vol_neg;
                  res_sq+=f.A[i][j]*f.A[i][j];
@@ -305,66 +190,30 @@ void DAEOld::min_error_true()
              else
                  f.A[i][j]=0.0;
          });
-
-        res=sqrt(res_sq);
-        
-    }
-    if(istep) nerr_mins++;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void DAEOld::min_error_false()
-{
-#ifdef MINCG_W_NEWTON
-    int __step=atoms->step;
-    min->run(10000);
-    atoms->step=__step;
-#endif
-    
-    VecTens<type0,2> x(atoms,false,atoms->H,atoms->x,atoms->alpha);
-    VecTens<type0,2> f(atoms,false,ff->F_H,ff->f,ff->f_alpha);
-    VecTens<type0,2> h(atoms,false,__dim__,c_dim);
-
-
-    type0 norm,res,res_sq;
-    
-    __GMRES__<VecTens<type0,2>> gmres(max_ngmres_iters,atoms,false,__dim__,c_dim);
-    auto J=[this](VecTens<type0,2>& x,VecTens<type0,2>& Jx)->void
-    {
-
-        dynamic->update(x.vecs[0],x.vecs[1]);
-        ff->J(x.vecs[0],x.vecs[1],Jx.vecs[0],Jx.vecs[1]);
-
+        return sqrt(res_sq);
     };
     
-    ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
-    res_sq=ff->err_sq_x+ff->err_sq_alpha;
-    res=sqrt(res_sq);
     
-    type0 r;
+    
+    type0 r,norm,res=get_res();
     int istep=0;
     for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_nS_dof>1.0;istep++)
     {
         gmres.solve(J,f,0.005*a_tol_sqrt_nx_nalpha_nS_dof,norm,h);
         
+        //similar to MinDMDHandler<BC,X,ALPHA,C>::prep_x_d()
+        const int natms_lcl=atoms->natms_lcl;
+        type0* xvec=atoms->x->begin();
+        type0* dxvec=h.vecs[0]->begin();
+        Algebra::MLT_mul_MLT(atoms->H,h.A,h.A);
+        for(int i=0;i<natms_lcl;i++,dxvec+=__dim__,xvec+=__dim__)
+            Algebra::V_mul_MLT_add_in(xvec,h.A,dxvec);
         
-        const int n=atoms->natms_lcl*c_dim;
-        type0* alpha_vec=atoms->alpha->begin();
-        type0*  halpha_vec=h.vecs[1]->begin();
-        type0 r_lcl=1.0,tmp;
-        for(int i=0;i<n;i++)
-        {
-            tmp=alpha_vec[i]+r_lcl*halpha_vec[i];
-            if(tmp<0.0)
-            {
-                r_lcl=-alpha_vec[i]/halpha_vec[i];
-                while(alpha_vec[i]+r_lcl*halpha_vec[i]<=0.0)
-                    r_lcl=nextafter(r_lcl,0.0);
-            }
-        }
+        handler.max_dalpha=std::numeric_limits<type0>::infinity();
+        type0 r_lcl=1.0;
+        handler.max_alpha_lcl_alpha(r_lcl,h.vecs[1]->begin());
         MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
-
+        
         if(r==1.0)
             x+=h;
         else
@@ -372,20 +221,62 @@ void DAEOld::min_error_false()
             r*=0.5;
             x+=r*h;
         }
-        type0 max_alpha_lcl=0.0;
         
+        handler.dynamic->update();
+        res=get_res();
         
-        type0* c_vec=atoms->c->begin();
-        for(int i=0;i<n;i++)
-            if(c_vec[i]>=0.0) max_alpha_lcl=MAX(max_alpha_lcl,alpha_vec[i]);
-        MPI_Allreduce(&max_alpha_lcl,&atoms->max_alpha,1,Vec<type0>::MPI_T,MPI_MAX,atoms->world);
-
-        dynamic->update<true,true>();
-        
-        
+    }
+    if(istep) nerr_mins++;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void DAE::min_error_false()
+{
+    MinDMDHandler<false,true,true,false> handler(atoms,ff,100.0,100.0,S_dof);
+    typedef typename MinDMDHandler<false,true,true,false>::VECTENS0 VECTENS0;
+    typedef typename MinDMDHandler<false,true,true,false>::VECTENS1 VECTENS1;
+    VECTENS1& f=handler.f;
+    VECTENS1& h=handler.h;
+    VECTENS0& x=handler.x;
+    
+    
+    __GMRES__<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
+    auto J=[this](VECTENS1& dx,VECTENS1& Jdx)->void
+    {
+        ff->Jnew(dx.vecs[0],dx.vecs[1],Jdx.vecs[0],Jdx.vecs[1]);
+    };
+    
+    
+    auto get_res=[this,&f]()->type0
+    {
         ff->prepJ_n_res(f.vecs[0],f.vecs[1]);
-        res_sq=ff->err_sq_x+ff->err_sq_alpha;
-        res=sqrt(res_sq);
+        type0 res_sq=ff->err_sq_x+ff->err_sq_alpha;
+        return sqrt(res_sq);
+    };
+    
+    
+    type0 r,norm,res=get_res();
+    int istep=0;
+    for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_nS_dof>1.0;istep++)
+    {
+        gmres.solve(J,f,0.005*a_tol_sqrt_nx_nalpha_nS_dof,norm,h);
+                
+        handler.max_dalpha=std::numeric_limits<type0>::infinity();
+        type0 r_lcl=1.0;
+        handler.max_alpha_lcl_alpha(r_lcl,h.vecs[1]->begin());
+        MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
+        
+        if(r==1.0)
+            x+=h;
+        else
+        {
+            r*=0.5;
+            x+=r*h;
+        }
+        
+        handler.dynamic->update();
+        res=get_res();
         
     }
     if(istep) nerr_mins++;
@@ -393,7 +284,7 @@ void DAEOld::min_error_false()
 /*------------------------------------------------------------------------------------------------------------------------------------
  
  ------------------------------------------------------------------------------------------------------------------------------------*/
-PyObject* DAEOld::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
+PyObject* DAE::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 {
     Object* __self=reinterpret_cast<Object*>(type->tp_alloc(type,0));
     PyObject* self=reinterpret_cast<PyObject*>(__self);
@@ -402,13 +293,13 @@ PyObject* DAEOld::__new__(PyTypeObject* type,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-int DAEOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
+int DAE::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 {
     FuncAPI<> f("__init__");
     
     if(f(args,kwds)==-1) return -1;
     Object* __self=reinterpret_cast<Object*>(self);
-    __self->dae=new DAEOld();
+    __self->dae=new DAE();
     __self->xprt=NULL;
     
     return 0;
@@ -416,7 +307,7 @@ int DAEOld::__init__(PyObject* self,PyObject* args,PyObject* kwds)
 /*--------------------------------------------
  
  --------------------------------------------*/
-PyObject* DAEOld::__alloc__(PyTypeObject* type,Py_ssize_t)
+PyObject* DAE::__alloc__(PyTypeObject* type,Py_ssize_t)
 {
     Object* __self=new Object;
     Py_TYPE(__self)=type;
@@ -428,7 +319,7 @@ PyObject* DAEOld::__alloc__(PyTypeObject* type,Py_ssize_t)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::__dealloc__(PyObject* self)
+void DAE::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
     delete __self->dae;
@@ -438,9 +329,9 @@ void DAEOld::__dealloc__(PyObject* self)
     delete __self;
 }
 /*--------------------------------------------*/
-PyTypeObject DAEOld::TypeObject={PyObject_HEAD_INIT(NULL)};
+PyTypeObject DAE::TypeObject={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
-int DAEOld::setup_tp()
+int DAE::setup_tp()
 {
     TypeObject.tp_name="mapp4py.dmd.dae";
     TypeObject.tp_doc="chemical integration";
@@ -464,9 +355,9 @@ int DAEOld::setup_tp()
     
 }
 /*--------------------------------------------*/
-PyGetSetDef DAEOld::getset[]=EmptyPyGetSetDef(8);
+PyGetSetDef DAE::getset[]=EmptyPyGetSetDef(8);
 /*--------------------------------------------*/
-void DAEOld::setup_tp_getset()
+void DAE::setup_tp_getset()
 {
     getset_a_tol(getset[0]);
     getset_max_nsteps(getset[1]);
@@ -477,15 +368,15 @@ void DAEOld::setup_tp_getset()
     getset_export(getset[6]);
 }
 /*--------------------------------------------*/
-PyMethodDef DAEOld::methods[]=EmptyPyMethodDef(1);
+PyMethodDef DAE::methods[]=EmptyPyMethodDef(1);
 /*--------------------------------------------*/
-void DAEOld::setup_tp_methods()
+void DAE::setup_tp_methods()
 {
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_a_tol(PyGetSetDef& getset)
+void DAE::getset_a_tol(PyGetSetDef& getset)
 {
     getset.name=(char*)"a_tol";
     getset.doc=(char*)R"---(
@@ -510,7 +401,7 @@ void DAEOld::getset_a_tol(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_max_nsteps(PyGetSetDef& getset)
+void DAE::getset_max_nsteps(PyGetSetDef& getset)
 {
     getset.name=(char*)"max_nsteps";
     getset.doc=(char*)R"---(
@@ -535,7 +426,7 @@ void DAEOld::getset_max_nsteps(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_min_dt(PyGetSetDef& getset)
+void DAE::getset_min_dt(PyGetSetDef& getset)
 {
     getset.name=(char*)"min_dt";
     getset.doc=(char*)R"---(
@@ -560,7 +451,7 @@ void DAEOld::getset_min_dt(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_nreset(PyGetSetDef& getset)
+void DAE::getset_nreset(PyGetSetDef& getset)
 {
     getset.name=(char*)"nreset";
     getset.doc=(char*)R"---(
@@ -586,7 +477,7 @@ void DAEOld::getset_nreset(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_ntally(PyGetSetDef& getset)
+void DAE::getset_ntally(PyGetSetDef& getset)
 {
     getset.name=(char*)"ntally";
     getset.doc=(char*)R"---(
@@ -611,7 +502,7 @@ void DAEOld::getset_ntally(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_S(PyGetSetDef& getset)
+void DAE::getset_S(PyGetSetDef& getset)
 {
     getset.name=(char*)"S";
     getset.doc=(char*)R"---(
@@ -655,7 +546,7 @@ void DAEOld::getset_S(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::getset_export(PyGetSetDef& getset)
+void DAE::getset_export(PyGetSetDef& getset)
 {
     getset.name=(char*)"export";
     getset.doc=(char*)R"---(
@@ -684,7 +575,7 @@ void DAEOld::getset_export(PyGetSetDef& getset)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void DAEOld::ml_run(PyMethodDef& tp_methods)
+void DAE::ml_run(PyMethodDef& tp_methods)
 {
     tp_methods.ml_flags=METH_VARARGS | METH_KEYWORDS;
     tp_methods.ml_name="run";    

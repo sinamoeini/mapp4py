@@ -1,12 +1,12 @@
-#ifndef __MAPP__dae_old__
-#define __MAPP__dae_old__
+#ifndef __MAPP__dae__
+#define __MAPP__dae__
 #include "api.h"
 #include "export_styles.h"
 #include "exchange.h"
 namespace MAPP_NS
 {
     template<typename> class Vec;
-    class DAEOld
+    class DAE
     {
     private:
     protected:
@@ -59,8 +59,8 @@ namespace MAPP_NS
         
         
         
-        DAEOld();
-        virtual ~DAEOld();
+        DAE();
+        virtual ~DAE();
         virtual void init_static();
         virtual void fin_static();
         virtual void run(type0){};
@@ -74,7 +74,7 @@ namespace MAPP_NS
         typedef struct
         {
             PyObject_HEAD
-            DAEOld* dae;
+            DAE* dae;
             ExportDMD::Object* xprt;
         }Object;
         

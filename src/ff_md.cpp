@@ -1,5 +1,4 @@
 #include "ff_md.h"
-#include "timer.h"
 #include "neighbor_md.h"
 #include "atoms_md.h"
 #include "xmath.h"

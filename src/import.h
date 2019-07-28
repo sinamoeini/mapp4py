@@ -1,6 +1,6 @@
 #ifndef __MAPP__import__
 #define __MAPP__import__
-#include <mpi.h>
+#include "mpi_compat.h"
 namespace MAPP_NS
 {
     class Import

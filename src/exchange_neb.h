@@ -2,7 +2,7 @@
 #define __MAPP__exchange_neb__
 #include "atoms.h"
 #include "global.h"
-#include <mpi.h>
+#include "mpi_compat.h"
 #include "xmath.h"
 /*------------------------------------------------------------------
  _____  __    __  _____   _   _       ___   __   _   _____   _____

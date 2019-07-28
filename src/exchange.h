@@ -1,7 +1,7 @@
 #ifndef __MAPP__exchange__
 #define __MAPP__exchange__
 #include "global.h"
-#include <mpi.h>
+#include "mpi_compat.h"
 #ifdef OLD_UPDATE
 /*------------------------------------------------------------------
  _____  __    __  _____   _   _       ___   __   _   _____   _____  

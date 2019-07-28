@@ -1,5 +1,5 @@
 #include "var.h"
-#include <mpi.h>
+#include "mpi_compat.h"
 /*--------------------------------------------*/
 Var** Var::var_stack=NULL;
 size_t Var::stack_size=0;

@@ -33,7 +33,7 @@ PyObject* MAPP_MPI::__alloc__(PyTypeObject* type,Py_ssize_t)
     Object* __self=new Object;
     Py_TYPE(__self)=type;
     Py_REFCNT(__self)=1;
-    __self->world=NULL;
+    __self->world=MPI_COMM_NULL;
     return reinterpret_cast<PyObject*>(__self);
 }
 /*--------------------------------------------

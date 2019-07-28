@@ -6,7 +6,7 @@
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
 #include <numpy/arrayobject.h>
-#include <mpi.h>
+#include "mpi_compat.h"
 #include "print.h"
 #include "global.h"
 /*------------------------------------------------------------------------------------------------------------------------------------

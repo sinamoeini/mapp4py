@@ -1,7 +1,7 @@
 #include "api.h"
 #include <stdio.h>
 #include <iostream>
-#include <mpi.h>
+#include "mpi_compat.h"
 #include "MAPP.h"
 /*
  note that this file is just running the package without

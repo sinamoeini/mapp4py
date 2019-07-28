@@ -3,7 +3,7 @@
  Copyright (c) 2013 MIT. All rights reserved.
  --------------------------------------------*/
 #include "elements.h"
-#include <mpi.h>
+#include "mpi_compat.h"
 #include "gcmc.h"
 #include "memory.h"
 #include "random.h"

@@ -1,7 +1,7 @@
 #ifndef __MAPP__md_nvt__
 #define __MAPP__md_nvt__
 #include "api.h"
-#include <mpi.h>
+#include "mpi_compat.h"
 #include <stdio.h>
 #include <iostream>
 #include <limits.h>

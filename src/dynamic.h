@@ -2,7 +2,7 @@
 #define __MAPP__dynamic__
 
 #include <initializer_list>
-#include <mpi.h>
+#include "mpi_compat.h"
 #include "global.h"
 #include "exchange.h"
 

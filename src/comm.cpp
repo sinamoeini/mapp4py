@@ -42,8 +42,7 @@ PyObject* MAPP_MPI::__alloc__(PyTypeObject* type,Py_ssize_t)
 void MAPP_MPI::__dealloc__(PyObject* self)
 {
     Object* __self=reinterpret_cast<Object*>(self);
-    if(__self->world!=MPI_COMM_WORLD)
-        MPI_Comm_free(&(__self->world));
+    __self->world=MPI_COMM_NULL;
 }
 /*--------------------------------------------*/
 PyTypeObject MAPP_MPI::TypeObject ={PyObject_HEAD_INIT(NULL)};

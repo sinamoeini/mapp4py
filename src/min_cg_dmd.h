@@ -9,8 +9,26 @@
 #include "thermo_dynamics.h"
 namespace MAPP_NS
 {
+    
+    
+    
     namespace MinDMDHelper
     {
+        template<template<bool ...> class F,int N,bool ...BS>
+        class MaxSizeAlign
+        {
+        public:
+            static constexpr int MaxS=(MaxSizeAlign<F,N-1,BS...,true>::MaxS > MaxSizeAlign<F,N-1,BS...,false>::MaxS) ? MaxSizeAlign<F,N-1,BS...,true>::MaxS : MaxSizeAlign<F,N-1,BS...,false>::MaxS;
+        };
+        
+        template<template<bool ...> class F,bool ...BS>
+        class MaxSizeAlign<F,0,BS...>
+        {
+        public:
+            static constexpr int MaxS=sizeof(F<BS...>);
+        };
+        
+        
         template<bool...Bs0>
         class CondB
         {

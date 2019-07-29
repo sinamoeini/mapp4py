@@ -9,96 +9,8 @@
 #include "thermo_dynamics.h"
 namespace MAPP_NS
 {
-    
-    
-    
     namespace MinMDHelper
     {
-        template<bool...Bs0>
-        class CondB
-        {
-        public:
-            template<class F,class LS>
-            static void run(F& f,int n,LS* ls)
-            {
-                return f.template __run<Bs0...>(ls,n);
-            }
-            
-            template<class F,class LS, class... Bs>
-            static void run(F& f,int n,LS* ls,bool b0,Bs...bs)
-            {
-                if(b0==true)
-                    return CondB<Bs0...,true>::run(f,n,ls,bs...);
-                else
-                    return CondB<Bs0...,false>::run(f,n,ls,bs...);
-            }
-            
-            
-            template<class F>
-            static void init(F& f)
-            {
-                return f.template __init<Bs0...>();
-            }
-            
-            template<class F, class... Bs>
-            static void init(F& f,bool b0,Bs...bs)
-            {
-                if(b0==true)
-                    return CondB<Bs0...,true>::init(f,bs...);
-                else
-                    return CondB<Bs0...,false>::init(f,bs...);
-            }
-            
-            template<class F>
-            static void fin(F& f)
-            {
-                return f.template __fin<Bs0...>();
-            }
-            
-            template<class F, class... Bs>
-            static void fin(F& f,bool b0,Bs...bs)
-            {
-                if(b0==true)
-                    return CondB<Bs0...,true>::fin(f,bs...);
-                else
-                    return CondB<Bs0...,false>::fin(f,bs...);
-            }
-            
-        };
-        
-        
-        template<class LS0,class... LSs>
-        class CondLS
-        {
-        public:
-            template<class F,class LS00, class... Bs>
-            static void run(F& f,int n,LS00* ls,Bs...bs)
-            {
-                if(dynamic_cast<LS0*>(ls)!=NULL)
-                    return CondB<>::run(f,n,dynamic_cast<LS0*>(ls),bs...);
-                return CondLS<LSs...>::run(f,n,ls,bs...);
-                
-            }
-        };
-        
-        template<class LS0>
-        class CondLS<LS0>
-        {
-        public:
-            template<class F,class LS00, class... Bs>
-            static void run(F& f,int n,LS00* ls,Bs...bs)
-            {
-                return CondB<>::run(f,n,dynamic_cast<LS0*>(ls),bs...);
-            }
-        };
-        
-        
-        
-        
-        
-        
-        
-        
         template<bool X>
         class GetMaxAlphaX
         {
@@ -191,17 +103,16 @@ namespace MAPP_NS
         
         
         type0 f_h;
-        class NewDynamicMD<BC,BC||X>* dynamic;
+        NewDynamicMD<BC,BC||X> dynamic;
         VECTENS0 x,x0,x_d;
         VECTENS1 h,f,f0;
         
         MinMDHandler(AtomsMD*,ForceFieldMD*,type0,bool (&)[__dim__][__dim__]);
-        MinMDHandler();
-        
+        ~MinMDHandler(){};
         void add_extra_vec(VECTENS1& __v)
         {
             new (&__v) VECTENS1(atoms,__dim__,X);
-            Algebra::Do<N1>::func([this,&__v](int i){dynamic->add_xchng(__v.vecs[i]);});
+            Algebra::Do<N1>::func([this,&__v](int i){dynamic.add_xchng(__v.vecs[i]);});
         }
         
         void rm_extra_vec(VECTENS1& __v){__v.~VECTENS1();}
@@ -232,21 +143,9 @@ bool (&__H_dof)[__dim__][__dim__]):
 ff(__ff),
 atoms(__atoms),
 max_dx(__max_dx),
-dynamic(NULL)
+dynamic(atoms,ff,{},{atoms->x_dof},{})
 {
     Algebra::V_eq<__dim__*__dim__>(__H_dof[0],H_dof[0]);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<bool BC,bool X>
-MinMDHandler<BC,X>::MinMDHandler():
-atoms(NULL),
-ff(NULL),
-max_dx(0.0),
-dynamic(NULL)
-{
-    Algebra::set<__dim__*__dim__>(H_dof[0],false);
 }
 /*--------------------------------------------
  
@@ -270,18 +169,18 @@ void MinMDHandler<BC,X>::init()
     x_d.~VECTENS0();
     new (&x_d) VECTENS0(atoms,h,__dim__,X||BC,X,X&&!BC);
     
-    dynamic=new NewDynamicMD<BC,BC||X>(atoms,ff,{},{atoms->x_dof},{});
+    
     
     Algebra::Do<N1>::func([this](int i)
     {
-      dynamic->add_xchng(h.vecs[i]);
-      dynamic->add_xchng(f0.vecs[i]);
+      dynamic.add_xchng(h.vecs[i]);
+      dynamic.add_xchng(f0.vecs[i]);
     });
     
     Algebra::Do<N0>::func([this](int i)
-    {dynamic->add_xchng(x0.vecs[i]);});
+    {dynamic.add_xchng(x0.vecs[i]);});
     
-    if(BC) dynamic->add_xchng(x_d.vecs[0]);
+    if(BC) dynamic.add_xchng(x_d.vecs[0]);
 }
 /*--------------------------------------------
  
@@ -289,9 +188,7 @@ void MinMDHandler<BC,X>::init()
 template<bool BC,bool X>
 void MinMDHandler<BC,X>::fin()
 {
-    delete dynamic;
-    dynamic=NULL;
-    
+   
     x_d.~VECTENS0();
     x0.~VECTENS0();
     x.~VECTENS0();
@@ -355,7 +252,7 @@ type0 MinMDHandler<BC,X>::F(type0 __alpha)
 {
     
     x=x0+__alpha*x_d;
-    dynamic->update();
+    dynamic.update();
     return ff->value();
 }
 /*--------------------------------------------
@@ -365,7 +262,7 @@ template<bool BC,bool X>
 void MinMDHandler<BC,X>::F_reset()
 {
     x=x0;
-    dynamic->update();
+    dynamic.update();
 }
 /*--------------------------------------------
  
@@ -429,8 +326,11 @@ namespace MAPP_NS
     {
     private:
     protected:
+        static constexpr int MaxS=MinHelper::MaxSizeAlign<MinMDHandler,2>::MaxS;
+        static constexpr int MaxA=MinHelper::MaxSizeAlign<MinMDHandler,2>::MaxA;
+        typedef std::aligned_storage<MaxS,MaxA>::type MemT;
         bool B_DOF,X_DOF;
-        void* handler_ptr;
+        MemT handler_buff;
 
         class AtomsMD* atoms;
         class ForceFieldMD* ff;
@@ -487,11 +387,9 @@ template<bool BC,bool X>
 void  MinCG::__init()
 {
     
-    MinMDHandler<BC,X>* __handler_ptr=new MinMDHandler<BC,X>(atoms,ff,max_dx,H_dof);
-    handler_ptr=__handler_ptr;
-    
+    MinMDHandler<BC,X>* __handler_ptr=new (&handler_buff) MinMDHandler<BC,X>(atoms,ff,max_dx,H_dof);
     __handler_ptr->init();
-    __handler_ptr->dynamic->init();
+    __handler_ptr->dynamic.init();
     
     
     
@@ -516,7 +414,7 @@ template<bool BC,bool X,class LS>
 void  MinCG::__run(LS* ls,int nsteps)
 {
     
-    MinMDHandler<BC,X> &handler=*reinterpret_cast<MinMDHandler<BC,X>*>(handler_ptr);
+    MinMDHandler<BC,X> &handler=*reinterpret_cast<MinMDHandler<BC,X>*>(&handler_buff);
     typedef typename MinMDHandler<BC,X>::VECTENS0 VECTENS0;
     typedef typename MinMDHandler<BC,X>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
@@ -629,10 +527,10 @@ void  MinCG::__fin()
         xprt->fin();
         xprt->atoms=NULL;
     }
-    MinMDHandler<BC,X>* __handler_ptr=reinterpret_cast<MinMDHandler<BC,X>*>(handler_ptr);
-    __handler_ptr->dynamic->fin();
+    MinMDHandler<BC,X>* __handler_ptr=reinterpret_cast<MinMDHandler<BC,X>*>(&handler_buff);
+    __handler_ptr->dynamic.fin();
     __handler_ptr->fin();
-    delete __handler_ptr;
-    handler_ptr=NULL;
+    __handler_ptr->~MinMDHandler();
+
 }
 #endif

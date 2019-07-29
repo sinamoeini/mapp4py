@@ -59,7 +59,7 @@ void MinCG::init()
     
     try
     {
-        MinMDHelper::CondB<>::init(*this,chng_box,X_DOF);
+        MinHelper::CondB<>::init(*this,chng_box,X_DOF);
     }
     catch(std::string& err_msg)
     {
@@ -71,14 +71,14 @@ void MinCG::init()
  --------------------------------------------*/
 void MinCG::run(int nsteps)
 {
-    MinMDHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void MinCG::fin()
 {
-    MinMDHelper::CondB<>::fin(*this,chng_box,X_DOF);
+    MinHelper::CondB<>::fin(*this,chng_box,X_DOF);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

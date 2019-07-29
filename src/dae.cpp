@@ -147,9 +147,9 @@ type0 DAE::calc_err()
  --------------------------------------------*/
 void DAE::min_error_true()
 {
-    MinDMDHandler<true,true,true,false> handler(atoms,ff,100.0,100.0,S_dof);
-    typedef typename MinDMDHandler<true,true,true,false>::VECTENS0 VECTENS0;
-    typedef typename MinDMDHandler<true,true,true,false>::VECTENS1 VECTENS1;
+    MinDMDHandler<false,true,true,false,true> handler(atoms,ff,100.0,100.0,S_dof);
+    typedef typename MinDMDHandler<false,true,true,false,true>::VECTENS0 VECTENS0;
+    typedef typename MinDMDHandler<false,true,true,false,true>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
     VECTENS1& h=handler.h;
     VECTENS0& x=handler.x;
@@ -222,7 +222,7 @@ void DAE::min_error_true()
             x+=r*h;
         }
         
-        handler.dynamic->update();
+        handler.dynamic.update();
         res=get_res();
         
     }
@@ -275,7 +275,7 @@ void DAE::min_error_false()
             x+=r*h;
         }
         
-        handler.dynamic->update();
+        handler.dynamic.update();
         res=get_res();
         
     }

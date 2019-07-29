@@ -118,7 +118,7 @@ void MinCGDMD::init()
     
     try
     {
-        MinDMDHelper::CondB<>::init(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+        MinHelper::CondB<>::init(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
     }
     catch(std::string& err_msg)
     {
@@ -130,14 +130,14 @@ void MinCGDMD::init()
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
 {
-    MinDMDHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF);
 }
 /*--------------------------------------------
  finishing minimization
  --------------------------------------------*/
 void MinCGDMD::fin()
 {
-    MinDMDHelper::CondB<>::fin(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+    MinHelper::CondB<>::fin(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

@@ -59,9 +59,7 @@ template<bool BC,bool X,bool ALPHA,bool C>
 void MinLBFGSDMD::__init()
 {
     
-    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=new MinDMDHandler<BC,X,ALPHA,C>(atoms,ff,max_dx,max_dalpha,H_dof);
-    handler_ptr=__handler_ptr;
-    
+    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=new (&handler_buff) MinDMDHandler<BC,X,ALPHA,C>(atoms,ff,max_dx,max_dalpha,H_dof);
     __handler_ptr->init();
     typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1* __y_ptr=m==0 ? NULL:new VECTENS1[m];
@@ -84,12 +82,12 @@ void MinLBFGSDMD::__init()
     {
         Algebra::Do<N1>::func([&__s_ptr,&__y_ptr,&i,&__handler_ptr](int j)
         {
-            __handler_ptr->dynamic->add_xchng(__y_ptr[i].vecs[j]);
-            __handler_ptr->dynamic->add_xchng(__s_ptr[i].vecs[j]);
+            __handler_ptr->dynamic.add_xchng(__y_ptr[i].vecs[j]);
+            __handler_ptr->dynamic.add_xchng(__s_ptr[i].vecs[j]);
             
         });
     }
-    __handler_ptr->dynamic->init();
+    __handler_ptr->dynamic.init();
     
     rho=m==0 ?NULL:new type0[m];
     alpha=m==0 ?NULL:new type0[m];
@@ -115,8 +113,7 @@ template<bool BC,bool X,bool ALPHA,bool C,class LS>
 void MinLBFGSDMD::__run(LS* ls,int nsteps)
 {
     
-    MinDMDHandler<BC,X,ALPHA,C>& handler=*reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
-    
+    MinDMDHandler<BC,X,ALPHA,C>& handler=*reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(&handler_buff);
     typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS0 VECTENS0;
     typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
@@ -257,8 +254,8 @@ void MinLBFGSDMD::__fin()
         xprt->fin();
         xprt->atoms=NULL;
     }
-    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
-    __handler_ptr->dynamic->fin();
+    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(&handler_buff);
+    __handler_ptr->dynamic.fin();
     typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1* __y_ptr=reinterpret_cast<VECTENS1*>(y_ptr);
     VECTENS1* __s_ptr=reinterpret_cast<VECTENS1*>(s_ptr);
@@ -269,9 +266,7 @@ void MinLBFGSDMD::__fin()
     y_ptr=NULL;
     
     __handler_ptr->fin();
-    delete __handler_ptr;
-    handler_ptr=NULL;
-    
+    __handler_ptr->~MinDMDHandler();    
 }
 
 #endif

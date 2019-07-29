@@ -8,106 +8,9 @@
 #include "MAPP.h"
 #include "thermo_dynamics.h"
 namespace MAPP_NS
-{
-    
-    
-    
+{    
     namespace MinDMDHelper
     {
-        template<template<bool ...> class F,int N,bool ...BS>
-        class MaxSizeAlign
-        {
-        public:
-            static constexpr int MaxS=(MaxSizeAlign<F,N-1,BS...,true>::MaxS > MaxSizeAlign<F,N-1,BS...,false>::MaxS) ? MaxSizeAlign<F,N-1,BS...,true>::MaxS : MaxSizeAlign<F,N-1,BS...,false>::MaxS;
-        };
-        
-        template<template<bool ...> class F,bool ...BS>
-        class MaxSizeAlign<F,0,BS...>
-        {
-        public:
-            static constexpr int MaxS=sizeof(F<BS...>);
-        };
-        
-        
-        template<bool...Bs0>
-        class CondB
-        {
-        public:
-            template<class F,class LS>
-            static void run(F& f,int n,LS* ls)
-            {
-                return f.template __run<Bs0...>(ls,n);
-            }
-            
-            template<class F,class LS, class... Bs>
-            static void run(F& f,int n,LS* ls,bool b0,Bs...bs)
-            {
-                if(b0==true)
-                    return CondB<Bs0...,true>::run(f,n,ls,bs...);
-                else
-                    return CondB<Bs0...,false>::run(f,n,ls,bs...);
-            }
-            
-            
-            template<class F>
-            static void init(F& f)
-            {
-                return f.template __init<Bs0...>();
-            }
-            
-            template<class F, class... Bs>
-            static void init(F& f,bool b0,Bs...bs)
-            {
-                if(b0==true)
-                    return CondB<Bs0...,true>::init(f,bs...);
-                else
-                    return CondB<Bs0...,false>::init(f,bs...);
-            }
-            
-            template<class F>
-            static void fin(F& f)
-            {
-                return f.template __fin<Bs0...>();
-            }
-            
-            template<class F, class... Bs>
-            static void fin(F& f,bool b0,Bs...bs)
-            {
-                if(b0==true)
-                    return CondB<Bs0...,true>::fin(f,bs...);
-                else
-                    return CondB<Bs0...,false>::fin(f,bs...);
-            }
-            
-        };
-        
-        
-        template<class LS0,class... LSs>
-        class CondLS
-        {
-        public:
-            template<class F,class LS00, class... Bs>
-            static void run(F& f,int n,LS00* ls,Bs...bs)
-            {
-                if(dynamic_cast<LS0*>(ls)!=NULL)
-                    return CondB<>::run(f,n,dynamic_cast<LS0*>(ls),bs...);
-                return CondLS<LSs...>::run(f,n,ls,bs...);
-                
-            }
-        };
-        
-        template<class LS0>
-        class CondLS<LS0>
-        {
-        public:
-            template<class F,class LS00, class... Bs>
-            static void run(F& f,int n,LS00* ls,Bs...bs)
-            {
-                return CondB<>::run(f,n,dynamic_cast<LS0*>(ls),bs...);
-            }
-        };
-        
-        
         template<bool C>
         class GetMaxAlphaC
         {
@@ -185,13 +88,13 @@ namespace MAPP_NS
             static void F(__F& f,type0& __alpha)
             {
                 f.x=f.x0+__alpha*f.x_d;
-                f.dynamic->update();
+                f.dynamic.update();
             }
             template<class F>
             static void F_reset(F& f)
             {
                 f.x=f.x0;
-                f.dynamic->update();
+                f.dynamic.update();
             }
         };
         
@@ -204,13 +107,13 @@ namespace MAPP_NS
             {
                 f.x=f.x0+__alpha*f.x_d;
                 f.aprop_c();
-                f.dynamic->update(f.atoms->c);
+                f.dynamic.update(f.atoms->c);
             }
             template<class F>
             static void F_reset(F& f)
             {
                 f.x=f.x0;
-                f.dynamic->update(f.atoms->c);
+                f.dynamic.update(f.atoms->c);
             }
         };
         
@@ -292,7 +195,7 @@ namespace MAPP_NS
     
     
     
-    template<bool BC,bool X,bool ALPHA,bool C>
+    template<bool BC,bool X,bool ALPHA,bool C,bool DBC=BC>
     class MinDMDHandler
     {
     protected:
@@ -310,18 +213,17 @@ namespace MAPP_NS
         
         type0 f_h;
         int c_dim;
-        class NewDynamicDMD<BC,BC||X,ALPHA>* dynamic;
+        NewDynamicDMD<DBC,BC||X,ALPHA> dynamic;
         VECTENS0 x,x0,x_d;
         VECTENS1 h,f,f0;
         
         
         MinDMDHandler(AtomsDMD*,ForceFieldDMD*,type0,type0,bool (&)[__dim__][__dim__]);
-        MinDMDHandler();
-
+        ~MinDMDHandler(){}
         void add_extra_vec(VECTENS1& __v)
         {
             new (&__v) VECTENS1(atoms,__dim__,X,c_dim,ALPHA,c_dim,C);
-            Algebra::Do<N1>::func([this,&__v](int i){dynamic->add_xchng(__v.vecs[i]);});
+            Algebra::Do<N1>::func([this,&__v](int i){dynamic.add_xchng(__v.vecs[i]);});
         }
         
         void rm_extra_vec(VECTENS1& __v){__v.~VECTENS1();}
@@ -351,8 +253,8 @@ using namespace MAPP_NS;
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-MinDMDHandler<BC,X,ALPHA,C>::MinDMDHandler(
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+MinDMDHandler<BC,X,ALPHA,C,DBC>::MinDMDHandler(
 AtomsDMD* __atoms,
 ForceFieldDMD* __ff,
 type0 __max_dx,
@@ -364,29 +266,15 @@ atoms(__atoms),
 max_dx(__max_dx),
 max_dalpha(__max_dalpha),
 c_dim(__atoms->c_dim),
-dynamic(NULL)
+dynamic(__atoms,__ff,{},{__atoms->x_dof,__atoms->alpha_dof,__atoms->c_dof},{})
 {
     Algebra::V_eq<__dim__*__dim__>(__H_dof[0],H_dof[0]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-MinDMDHandler<BC,X,ALPHA,C>::MinDMDHandler():
-atoms(NULL),
-ff(NULL),
-max_dx(0.0),
-max_dalpha(0.0),
-c_dim(0),
-dynamic(NULL)
-{
-    Algebra::set<__dim__*__dim__>(H_dof[0],false);
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::init()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::init()
 {
     
     f.~VECTENS1();
@@ -406,28 +294,25 @@ void MinDMDHandler<BC,X,ALPHA,C>::init()
                         c_dim,ALPHA,ALPHA,ALPHA,
                         c_dim,C,C,C);
     
-    dynamic=new NewDynamicDMD<BC,BC||X,ALPHA>(atoms,ff,{},{atoms->x_dof,atoms->alpha_dof,atoms->c_dof},{});
     
     Algebra::Do<N1>::func([this](int i)
     {
-        dynamic->add_xchng(h.vecs[i]);
-        dynamic->add_xchng(f0.vecs[i]);
+        dynamic.add_xchng(h.vecs[i]);
+        dynamic.add_xchng(f0.vecs[i]);
     });
     
     Algebra::Do<N0>::func([this](int i)
     {
-        dynamic->add_xchng(x0.vecs[i]);
+        dynamic.add_xchng(x0.vecs[i]);
     });
-    if(BC) dynamic->add_xchng(x_d.vecs[0]);
+    if(BC) dynamic.add_xchng(x_d.vecs[0]);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::fin()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::fin()
 {
-    delete dynamic;
-    dynamic=NULL;
     
     x_d.~VECTENS0();
     x0.~VECTENS0();
@@ -442,8 +327,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::fin()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::max_alpha_lcl_x
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::max_alpha_lcl_x
 (type0& max_a_lcl,type0* x_d_xvec)
 {
     type0 max_x_d_lcl=0.0;
@@ -458,8 +343,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::max_alpha_lcl_x
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::max_alpha_lcl_alpha(type0& max_a_lcl,type0* x_d_alphavec)
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::max_alpha_lcl_alpha(type0& max_a_lcl,type0* x_d_alphavec)
 {
     
     int n=atoms->natms_lcl*c_dim;
@@ -476,8 +361,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::max_alpha_lcl_alpha(type0& max_a_lcl,type0* x_
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::max_alpha_lcl_c(type0& max_a_lcl,type0* x_d_cvec)
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::max_alpha_lcl_c(type0& max_a_lcl,type0* x_d_cvec)
 {
     type0 max_c_ratio=max_a_lcl,dc_i=0.0,dh_i=0.0;
     type0* cvec=atoms->c->begin();
@@ -543,8 +428,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::max_alpha_lcl_c(type0& max_a_lcl,type0* x_d_cv
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 {
     
     h_norm=h*h;
@@ -574,8 +459,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::ls_prep(type0& dfa,type0& h_norm,type0& max_a)
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-type0 MinDMDHandler<BC,X,ALPHA,C>::F(type0 __alpha)
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+type0 MinDMDHandler<BC,X,ALPHA,C,DBC>::F(type0 __alpha)
 {
     MinDMDHelper::Update<C>::F(*this,__alpha);
     return ff->new_value<C>();
@@ -583,16 +468,16 @@ type0 MinDMDHandler<BC,X,ALPHA,C>::F(type0 __alpha)
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::F_reset()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::F_reset()
 {
     return MinDMDHelper::Update<C>::F_reset(*this);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-type0 MinDMDHandler<BC,X,ALPHA,C>::force_calc()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+type0 MinDMDHandler<BC,X,ALPHA,C,DBC>::force_calc()
 {
     type0 ans=*ff->new_derivative<C>();
     MinDMDHelper::PostForceCalcBC<BC>::func(*this);
@@ -601,8 +486,8 @@ type0 MinDMDHandler<BC,X,ALPHA,C>::force_calc()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::prep()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::prep()
 {
     MinDMDHelper::Prep<BC,X>::func(*this);
     
@@ -610,8 +495,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::prep()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::prep_x_d()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::prep_x_d()
 {
     const int natms_lcl=atoms->natms_lcl;
     type0* xvec=x0.vecs[0]->begin();
@@ -625,8 +510,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::prep_x_d()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::prep_x_d_affine()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::prep_x_d_affine()
 {
     const int natms_lcl=atoms->natms_lcl;
     type0* xvec=x0.vecs[0]->begin();
@@ -638,8 +523,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::prep_x_d_affine()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::post_force_calc_box()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::post_force_calc_box()
 {
     type0 (&S_fe)[__dim__][__dim__]=atoms->S_fe;
     type0 neg_v=-atoms->vol;
@@ -649,8 +534,8 @@ void MinDMDHandler<BC,X,ALPHA,C>::post_force_calc_box()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C>
-void MinDMDHandler<BC,X,ALPHA,C>::aprop_c()
+template<bool BC,bool X,bool ALPHA,bool C,bool DBC>
+void MinDMDHandler<BC,X,ALPHA,C,DBC>::aprop_c()
 {
     const int n=atoms->natms_lcl*c_dim;
     type0* c_vec=atoms->c->begin();
@@ -670,9 +555,12 @@ namespace MAPP_NS
     {
     private:
     protected:
+        static constexpr int MaxS=MinHelper::MaxSizeAlign<MinDMDHandler,4>::MaxS;
+        static constexpr int MaxA=MinHelper::MaxSizeAlign<MinDMDHandler,4>::MaxA;
+        typedef std::aligned_storage<MaxS,MaxA>::type MemT;
         bool B_DOF,X_DOF,ALPHA_DOF,C_DOF;
         type0 max_dalpha;
-        void* handler_ptr;
+        MemT handler_buff;
 
         class AtomsDMD* atoms;
         class ForceFieldDMD* ff;
@@ -733,11 +621,9 @@ template<bool BC,bool X,bool ALPHA,bool C>
 void MinCGDMD::__init()
 {
     
-    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=new MinDMDHandler<BC,X,ALPHA,C>(atoms,ff,max_dx,max_dalpha,H_dof);
-    handler_ptr=__handler_ptr;
-    
+    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=new (&handler_buff) MinDMDHandler<BC,X,ALPHA,C>(atoms,ff,max_dx,max_dalpha,H_dof);
     __handler_ptr->init();
-    __handler_ptr->dynamic->init();
+    __handler_ptr->dynamic.init();
     
     
     
@@ -762,7 +648,7 @@ template<bool BC,bool X,bool ALPHA,bool C,class LS>
 void MinCGDMD::__run(LS* ls,int nsteps)
 {
     
-    MinDMDHandler<BC,X,ALPHA,C>& handler=*reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
+    MinDMDHandler<BC,X,ALPHA,C>& handler=*reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(&handler_buff);
     typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS0 VECTENS0;
     typedef typename MinDMDHandler<BC,X,ALPHA,C>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
@@ -874,11 +760,9 @@ void MinCGDMD::__fin()
         xprt->fin();
         xprt->atoms=NULL;
     }
-    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(handler_ptr);
-    __handler_ptr->dynamic->fin();
+    MinDMDHandler<BC,X,ALPHA,C>* __handler_ptr=reinterpret_cast<MinDMDHandler<BC,X,ALPHA,C>*>(&handler_buff);
+    __handler_ptr->dynamic.fin();
     __handler_ptr->fin();
-    delete __handler_ptr;
-    handler_ptr=NULL;
-    
+    __handler_ptr->~MinDMDHandler();
 }
 #endif

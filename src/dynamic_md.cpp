@@ -168,6 +168,19 @@ bool NewDynamicMD<true,true>::decide()
     if(succ) return true;
     return false;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicMD<true,true>::reset()
+{
+    atoms->x2s_lcl();
+    xchng->full_xchng();
+    updt->reset();
+    updt->list();
+    ff->neighbor->create_list(true);
+    store_x0();
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____       ___   _       _____   _____        _____   _____    _   _   _____        _____       ___   _       _____   _____
 |  ___|     /   | | |     /  ___/ | ____|      |_   _| |  _  \  | | | | | ____|      |  ___|     /   | | |     /  ___/ | ____|
@@ -207,6 +220,18 @@ bool NewDynamicMD<false,true>::decide()
     MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
     if(succ) return true;
     return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicMD<false,true>::reset()
+{
+    atoms->x2s_lcl();
+    xchng->full_xchng();
+    updt->list();
+    ff->neighbor->create_list(false);
+    store_x0();
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____       ___   _       _____   _____        _____       ___   _       _____   _____        _____       ___   _       _____   _____

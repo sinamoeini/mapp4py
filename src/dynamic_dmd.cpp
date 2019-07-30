@@ -175,6 +175,20 @@ bool NewDynamicDMD<true,true,true>::decide()
     if(succ) return true;
     return false;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicDMD<true,true,true>::reset()
+{
+    atoms->x2s_lcl();
+    xchng->full_xchng();
+    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
+    updt->reset();
+    updt->list();
+    ff->neighbor->create_list(true);
+    store_x0_alpha0();
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____       ___   _       _____   _____        _____   _____    _   _   _____        _____   _____    _   _   _____
 |  ___|     /   | | |     /  ___/ | ____|      |_   _| |  _  \  | | | | | ____|      |_   _| |  _  \  | | | | | ____|
@@ -225,6 +239,20 @@ bool NewDynamicDMD<false,true,true>::decide()
     if(succ) return true;
     return false;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicDMD<false,true,true>::reset()
+{
+    atoms->x2s_lcl();
+    xchng->full_xchng();
+    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
+    updt->reset();
+    updt->list();
+    ff->neighbor->create_list(true);
+    store_x0_alpha0();
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____   _____    _   _   _____        _____   _____    _   _   _____        _____       ___   _       _____   _____
 |_   _| |  _  \  | | | | | ____|      |_   _| |  _  \  | | | | | ____|      |  ___|     /   | | |     /  ___/ | ____|
@@ -265,6 +293,19 @@ bool NewDynamicDMD<true,true,false>::decide()
     if(succ) return true;
     return false;
 }
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicDMD<true,true,false>::reset()
+{
+    atoms->x2s_lcl();
+    xchng->full_xchng();
+    updt->reset();
+    updt->list();
+    ff->neighbor->create_list(true);
+    store_x0_alpha0();
+}
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____       ___   _       _____   _____        _____   _____    _   _   _____        _____       ___   _       _____   _____
 |  ___|     /   | | |     /  ___/ | ____|      |_   _| |  _  \  | | | | | ____|      |  ___|     /   | | |     /  ___/ | ____|
@@ -304,6 +345,18 @@ bool NewDynamicDMD<false,true,false>::decide()
     MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
     if(succ) return true;
     return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicDMD<false,true,false>::reset()
+{
+    atoms->x2s_lcl();
+    xchng->full_xchng();
+    updt->list();
+    ff->neighbor->create_list(false);
+    store_x0_alpha0();
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____       ___   _       _____   _____        _____       ___   _       _____   _____        _____   _____    _   _   _____
@@ -349,6 +402,22 @@ bool NewDynamicDMD<false,false,true>::decide()
     MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
     if(succ) return true;
     return false;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<>
+void NewDynamicDMD<false,false,true>::reset()
+{
+    atoms->update_max_alpha();
+    
+    atoms->x2s_lcl();
+    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
+    xchng->full_xchng_static();
+    updt->reset();
+    updt->list();
+    ff->neighbor->create_list(true);
+    store_x0_alpha0();
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  _____       ___   _       _____   _____        _____       ___   _       _____   _____        _____       ___   _       _____   _____

@@ -220,13 +220,15 @@ namespace MAPP_NS
         {
             
         }
+        void reset(){};
         
     };
 
 }
 using namespace MAPP_NS;
-
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicDMD<true,true,true>::update(VS*&... __vs)
@@ -237,16 +239,11 @@ void NewDynamicDMD<true,true,true>::update(VS*&... __vs)
     updt->update_w_x(atoms->alpha,__vs...);
     
     if(decide()) return;
-    
-    atoms->x2s_lcl();
-    xchng->full_xchng();
-    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-    updt->reset();
-    updt->list();
-    ff->neighbor->create_list(true);
-    store_x0_alpha0();
+    reset();
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicDMD<false,true,true>::update(VS*&... __vs)
@@ -258,17 +255,11 @@ void NewDynamicDMD<false,true,true>::update(VS*&... __vs)
         updt->update_w_x(atoms->alpha,__vs...);
         return;
     }
-    
-
-    atoms->x2s_lcl();
-    xchng->full_xchng();
-    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-    updt->reset();
-    updt->list();
-    ff->neighbor->create_list(true);
-    store_x0_alpha0();
+    reset();
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicDMD<true,true,false>::update(VS*&... __vs)
@@ -278,17 +269,11 @@ void NewDynamicDMD<true,true,false>::update(VS*&... __vs)
     updt->update_w_x(__vs...);
     
     if(decide()) return;
-    
-    
-    
-    atoms->x2s_lcl();
-    xchng->full_xchng();
-    updt->reset();
-    updt->list();
-    ff->neighbor->create_list(true);
-    store_x0_alpha0();
+    reset();
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicDMD<false,true,false>::update(VS*&... __vs)
@@ -298,36 +283,25 @@ void NewDynamicDMD<false,true,false>::update(VS*&... __vs)
         updt->update_w_x(__vs...);
         return;
     }
-    
-    
-    atoms->x2s_lcl();
-    xchng->full_xchng();
-    updt->list();
-    ff->neighbor->create_list(false);
-    store_x0_alpha0();
+    reset();
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicDMD<false,false,true>::update(VS*&... __vs)
 {
-    
     if(decide())
     {
         updt->update_wo_x(atoms->alpha,__vs...);
         return;
     }
-    atoms->update_max_alpha();
-    
-    atoms->x2s_lcl();
-    atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-    xchng->full_xchng_static();
-    updt->reset();
-    updt->list();
-    ff->neighbor->create_list(true);
-    store_x0_alpha0();
+    reset();
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicDMD<false,false,false>::update(VS*&... __vs)

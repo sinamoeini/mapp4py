@@ -147,12 +147,22 @@ type0 DAE::calc_err()
  --------------------------------------------*/
 void DAE::min_error_true()
 {
-    MinDMDHandler<false,true,true,false,true> handler(atoms,ff,100.0,100.0,S_dof);
-    typedef typename MinDMDHandler<false,true,true,false,true>::VECTENS0 VECTENS0;
-    typedef typename MinDMDHandler<false,true,true,false,true>::VECTENS1 VECTENS1;
+    MinDMDHandler<false,true,true,false> handler(atoms,ff,100.0,100.0,S_dof);
+    typedef typename MinDMDHandler<false,true,true,false>::VECTENS0 VECTENS0;
+    typedef typename MinDMDHandler<false,true,true,false>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
     VECTENS1& h=handler.h;
     VECTENS0& x=handler.x;
+    
+    
+    /*
+     some vile hackery so I do not need to create another dynamic object or cast
+     */
+    static_assert(sizeof(NewDynamicDMD<true,true,true>)==sizeof(NewDynamicDMD<false,true,true>),"DynamicDMD size mismatch");
+    static_assert(alignof(NewDynamicDMD<true,true,true>)==alignof(NewDynamicDMD<false,true,true>),"DynamicDMD align mismatch");
+    NewDynamicDMD<true,true,true>& dynamic=*reinterpret_cast<NewDynamicDMD<true,true,true>*>(&handler.dynamic);
+    dynamic.reset();
+    
     
     
     __GMRES__<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
@@ -193,8 +203,6 @@ void DAE::min_error_true()
         return sqrt(res_sq);
     };
     
-    
-    
     type0 r,norm,res=get_res();
     int istep=0;
     for(;istep<max_nnewton_iters && res/a_tol_sqrt_nx_nalpha_nS_dof>1.0;istep++)
@@ -222,7 +230,7 @@ void DAE::min_error_true()
             x+=r*h;
         }
         
-        handler.dynamic.update();
+        dynamic.update();
         res=get_res();
         
     }

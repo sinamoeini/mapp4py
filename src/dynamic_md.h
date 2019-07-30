@@ -197,17 +197,15 @@ namespace MAPP_NS
         {
             
         }
+        void reset(){};
         
     };
 
 }
 using namespace MAPP_NS;
-
-
-
-
-
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicMD<true,true>::update(VS*&... __vs)
@@ -215,16 +213,11 @@ void NewDynamicMD<true,true>::update(VS*&... __vs)
     atoms->update_H();
     updt->update_w_x(__vs...);
     if(decide()) return;
-    
-    
-    atoms->x2s_lcl();
-    xchng->full_xchng();
-    updt->reset();
-    updt->list();
-    ff->neighbor->create_list(true);
-    store_x0();
+    reset();
 }
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicMD<false,true>::update(VS*&... __vs)
@@ -234,17 +227,11 @@ void NewDynamicMD<false,true>::update(VS*&... __vs)
         updt->update_w_x(__vs...);
         return;
     }
-    
-    
-    atoms->x2s_lcl();
-    xchng->full_xchng();
-    updt->list();
-    ff->neighbor->create_list(false);
-    store_x0();
+    reset();
 }
-
-
-
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
 template<>
 template<class...VS>
 void NewDynamicMD<false,false>::update(VS*&... __vs)

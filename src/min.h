@@ -5,6 +5,7 @@
 #include "global.h"
 #include "atoms_styles.h"
 #include "export_styles.h"
+#include "xmath.h"
 namespace MAPP_NS
 {
     namespace MinHelper
@@ -103,6 +104,27 @@ namespace MAPP_NS
             static constexpr int MaxA=alignof(F<BS...>);
         };
         
+        inline void prep_x_d(const int natms_lcl,
+        type0* x,type0 (*x_A)[__dim__],
+        type0* h,type0 (*h_A)[__dim__],
+        type0* x_d,type0 (*x_d_A)[__dim__])
+        {
+
+            Algebra::MLT_mul_MLT(x_A,h_A,x_d_A);
+            memcpy(x_d,h,natms_lcl*__dim__*sizeof(type0));
+            for(int iatm=0;iatm<natms_lcl;iatm++,x+=__dim__,x_d+=__dim__)
+                Algebra::V_mul_MLT_add_in(x,h_A,x_d);
+        }
+        inline void prep_x_d_affine(const int natms_lcl,
+        type0* x,type0 (*x_A)[__dim__],
+        type0 (*h_A)[__dim__],
+        type0* x_d,type0 (*x_d_A)[__dim__])
+        {
+
+            Algebra::MLT_mul_MLT(x_A,h_A,x_d_A);
+            for(int iatm=0;iatm<natms_lcl;iatm++,x+=__dim__,x_d+=__dim__)
+                Algebra::V_mul_MLT(x,h_A,x_d);
+        }
         
     }
     class Min

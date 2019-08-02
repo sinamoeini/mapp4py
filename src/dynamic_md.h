@@ -110,9 +110,10 @@ namespace MAPP_NS
     template<typename> class Vec;
     
     template<bool BC,bool X>
-    class NewDynamicMD: public NewDynamic
+    class NewDynamicMD
     {
     private:
+        NewDynamic dynamic_sub;
         class ForceFieldMD* ff;
         class AtomsMD* atoms;
 
@@ -129,7 +130,7 @@ namespace MAPP_NS
         std::initializer_list<vec*> __updt_vecs,
         std::initializer_list<vec*> __xchng_comp_vecs,
         std::initializer_list<vec*> __arch_vecs):
-        NewDynamic(__atoms,__ff,
+        dynamic_sub(__atoms,__ff,
         {__atoms->x,__atoms->elem},__updt_vecs,
         {__atoms->id},__xchng_comp_vecs,
         {},__arch_vecs),
@@ -145,21 +146,20 @@ namespace MAPP_NS
         void init()
         {
             
-            store_arch_vecs();
-            create_dynamic_vecs();
+            dynamic_sub.store_arch_vecs();
+            dynamic_sub.create_dynamic_vecs();
             alloc_x0();
             ff->init();
             ff->neighbor->init();
             atoms->max_cut=ff->max_cut+atoms->comm.skin;
             
-            xchng=new Exchange(atoms,nxchng_vecs_full);
-            updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+            dynamic_sub.create_updt_xchng();
             
-            ff->updt=updt;
+            ff->updt=dynamic_sub.updt;
             atoms->x2s_lcl();
-            xchng->full_xchng();
-            updt->reset();
-            updt->list();
+            dynamic_sub.xchng->full_xchng();
+            dynamic_sub.updt->reset();
+            dynamic_sub.updt->list();
             ff->neighbor->create_list(true);
             store_x0();
         }
@@ -168,28 +168,14 @@ namespace MAPP_NS
             ff->neighbor->fin();
             ff->fin();
             
-            delete updt;
-            updt=NULL;
-            delete xchng;
-            xchng=NULL;
+            dynamic_sub.destroy_updt_xchng();
+            
             delete x0;
             x0=NULL;
             
-            restore_arch_vecs();
-            delete [] atoms->dynamic_vecs;
-            atoms->dynamic_vecs=NULL;
-            atoms->ndynamic_vecs=0;
-            
-            destroy_dynamic_vecs();
-            restore_arch_vecs();
-            
-            for(int ivec=0;ivec<atoms->nvecs;ivec++)
-                if(!atoms->vecs[ivec]->is_empty())
-                {
-                    atoms->vecs[ivec]->vec_sz=atoms->natms_lcl;
-                    atoms->vecs[ivec]->shrink_to_fit();
-                }
-            atoms->natms_ph=0;
+            dynamic_sub.restore_arch_vecs();
+            dynamic_sub.destroy_dynamic_vecs();
+            dynamic_sub.shrink_to_fit_all();
         }
         
         template<class...VS>
@@ -198,6 +184,10 @@ namespace MAPP_NS
             
         }
         void reset(){};
+        
+        
+        void add_xchng(vec* v){dynamic_sub.add_xchng(v);};
+        void add_updt(vec* v){dynamic_sub.add_updt(v);};
         
     };
 
@@ -211,7 +201,7 @@ template<class...VS>
 void NewDynamicMD<true,true>::update(VS*&... __vs)
 {
     atoms->update_H();
-    updt->update_w_x(__vs...);
+    dynamic_sub.updt->update_w_x(__vs...);
     if(decide()) return;
     reset();
 }
@@ -224,7 +214,7 @@ void NewDynamicMD<false,true>::update(VS*&... __vs)
 {
     if(decide())
     {
-        updt->update_w_x(__vs...);
+        dynamic_sub.updt->update_w_x(__vs...);
         return;
     }
     reset();
@@ -236,6 +226,6 @@ template<>
 template<class...VS>
 void NewDynamicMD<false,false>::update(VS*&... __vs)
 {
-    updt->update_wo_x(__vs...);
+    dynamic_sub.updt->update_wo_x(__vs...);
 }
 #endif

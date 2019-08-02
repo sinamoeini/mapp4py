@@ -156,20 +156,20 @@ void Cell<M>::DO(bool chng_box,F0 pre,F1 mid,F2 post)
         head_atm[i]=-1;
     
     const int natms_lcl=atoms->natms_lcl;
-    const int nall=atoms->natms_ph+natms_lcl;
+    const int nall_lcl=atoms->natms_ph+natms_lcl;
     
     int* next_vec=NULL;
     int* cell_vec=NULL;
-    if(nall)
+    if(nall_lcl)
     {
-        next_vec=new int[nall];
-        cell_vec=new int[nall];
+        next_vec=new int[nall_lcl];
+        cell_vec=new int[nall_lcl];
     }
     
     const int s_dim=atoms->x->dim;
-    type0* s=atoms->x->begin()+(nall-1)*s_dim;
+    type0* s=atoms->x->begin()+(nall_lcl-1)*s_dim;
 
-    for(int i=nall-1,cell_no;i>natms_lcl-1;i--,s-=s_dim)
+    for(int i=nall_lcl-1,cell_no;i>natms_lcl-1;i--,s-=s_dim)
     {
         cell_no=0;
         Algebra::Do<__dim__>::func([&s,&cell_no,this](int i){

@@ -168,10 +168,10 @@ bool NewDynamicDMD<true,true,true>::decide()
         for(int i=0;i<c_dim;i++)
             dalpha=MAX(dalpha,alpha_vec[i]-alpha0_vec[i]);
         
-        if(dr+dalpha*alpha_scale>0.5*skin) succ_lcl=0;
+        if(dr+dalpha*alpha_scale>0.5*dynamic_sub.skin) succ_lcl=0;
     }
     
-    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,dynamic_sub.world);
     if(succ) return true;
     return false;
 }
@@ -182,10 +182,10 @@ template<>
 void NewDynamicDMD<true,true,true>::reset()
 {
     atoms->x2s_lcl();
-    xchng->full_xchng();
+    dynamic_sub.xchng->full_xchng();
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-    updt->reset();
-    updt->list();
+    dynamic_sub.updt->reset();
+    dynamic_sub.updt->list();
     ff->neighbor->create_list(true);
     store_x0_alpha0();
 }
@@ -232,10 +232,10 @@ bool NewDynamicDMD<false,true,true>::decide()
         for(int i=0;i<c_dim;i++)
             dalpha=MAX(dalpha,alpha_vec[i]-alpha0_vec[i]);
         
-        if(dr+dalpha*alpha_scale>0.5*skin) succ_lcl=0;
+        if(dr+dalpha*alpha_scale>0.5*dynamic_sub.skin) succ_lcl=0;
     }
     
-    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,dynamic_sub.world);
     if(succ) return true;
     return false;
 }
@@ -246,10 +246,10 @@ template<>
 void NewDynamicDMD<false,true,true>::reset()
 {
     atoms->x2s_lcl();
-    xchng->full_xchng();
+    dynamic_sub.xchng->full_xchng();
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-    updt->reset();
-    updt->list();
+    dynamic_sub.updt->reset();
+    dynamic_sub.updt->list();
     ff->neighbor->create_list(true);
     store_x0_alpha0();
 }
@@ -280,7 +280,7 @@ void NewDynamicDMD<true,true,false>::store_x0_alpha0()
 template<>
 bool NewDynamicDMD<true,true,false>::decide()
 {
-    type0 skin_sq=0.25*skin*skin;
+    type0 skin_sq=0.25*Algebra::pow<2>(dynamic_sub.skin);
     int succ,succ_lcl=1;
     type0* x_vec=atoms->x->begin();
     type0* x0_vec=x0->begin();
@@ -289,7 +289,7 @@ bool NewDynamicDMD<true,true,false>::decide()
         if(Algebra::RSQ<__dim__>(x0_vec,x_vec)>skin_sq)
             succ_lcl=0;
     
-    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,dynamic_sub.world);
     if(succ) return true;
     return false;
 }
@@ -300,9 +300,9 @@ template<>
 void NewDynamicDMD<true,true,false>::reset()
 {
     atoms->x2s_lcl();
-    xchng->full_xchng();
-    updt->reset();
-    updt->list();
+    dynamic_sub.xchng->full_xchng();
+    dynamic_sub.updt->reset();
+    dynamic_sub.updt->list();
     ff->neighbor->create_list(true);
     store_x0_alpha0();
 }
@@ -333,7 +333,7 @@ void NewDynamicDMD<false,true,false>::store_x0_alpha0()
 template<>
 bool NewDynamicDMD<false,true,false>::decide()
 {
-    type0 skin_sq=0.25*skin*skin;
+    type0 skin_sq=0.25*Algebra::pow<2>(dynamic_sub.skin);
     int succ,succ_lcl=1;
     type0* x_vec=atoms->x->begin();
     type0* x0_vec=x0->begin();
@@ -342,7 +342,7 @@ bool NewDynamicDMD<false,true,false>::decide()
         if(Algebra::RSQ<__dim__>(x0_vec,x_vec)>skin_sq)
             succ_lcl=0;
     
-    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,dynamic_sub.world);
     if(succ) return true;
     return false;
 }
@@ -353,8 +353,8 @@ template<>
 void NewDynamicDMD<false,true,false>::reset()
 {
     atoms->x2s_lcl();
-    xchng->full_xchng();
-    updt->list();
+    dynamic_sub.xchng->full_xchng();
+    dynamic_sub.updt->list();
     ff->neighbor->create_list(false);
     store_x0_alpha0();
 }
@@ -396,10 +396,10 @@ bool NewDynamicDMD<false,false,true>::decide()
         for(int i=1;i<c_dim;i++)
             dalpha=MAX(dalpha,alpha_vec[i]-alpha0_vec[i]);
         
-        if(dalpha*alpha_scale>0.5*skin) succ_lcl=0;
+        if(dalpha*alpha_scale>0.5*dynamic_sub.skin) succ_lcl=0;
     }
     
-    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,world);
+    MPI_Allreduce(&succ_lcl,&succ,1,MPI_INT,MPI_MIN,dynamic_sub.world);
     if(succ) return true;
     return false;
 }
@@ -413,9 +413,9 @@ void NewDynamicDMD<false,false,true>::reset()
     
     atoms->x2s_lcl();
     atoms->max_cut=ff->max_cut+atoms->comm.skin+alpha_scale*sqrt_2*atoms->max_alpha;
-    xchng->full_xchng_static();
-    updt->reset();
-    updt->list();
+    dynamic_sub.xchng->full_xchng_static();
+    dynamic_sub.updt->reset();
+    dynamic_sub.updt->list();
     ff->neighbor->create_list(true);
     store_x0_alpha0();
 }

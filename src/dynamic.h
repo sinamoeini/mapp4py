@@ -66,20 +66,16 @@ namespace MAPP_NS
     template<typename> class Vec;
     class NewDynamic
     {
+    template<bool,bool,bool>
+    friend class NewDynamicDMD;
+    template<bool,bool>
+    friend class NewDynamicMD;
     private:
         void store_x0();
         bool decide();
         class ForceField* ff;
         class Atoms* atoms;
         
-        
-    protected:
-        void store_arch_vecs();
-        void restore_arch_vecs();
-        
-        void create_dynamic_vecs();
-        void destroy_dynamic_vecs();
-                
         vec** arch_vecs;
         int narch_vecs;
         vec** xchng_comp_vecs;
@@ -99,15 +95,47 @@ namespace MAPP_NS
 
         const type0 skin;
         
+        void store_arch_vecs();
+        void restore_arch_vecs();
+        
+        void create_dynamic_vecs();
+        void destroy_dynamic_vecs();
+        
+        void create_updt_xchng()
+        {
+            xchng=new Exchange(atoms,nxchng_vecs_full);
+            updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+        }
+        
+        void destroy_updt_xchng()
+        {
+            delete updt;
+            updt=NULL;
+            delete xchng;
+            xchng=NULL;
+        }
+        
+        void add_xchng(vec*);
+        void add_updt(vec*);
+        void shrink_to_fit_all()
+        {
+            for(int ivec=0;ivec<atoms->nvecs;ivec++)
+                if(!atoms->vecs[ivec]->is_empty())
+                {
+                    atoms->vecs[ivec]->vec_sz=atoms->natms_lcl;
+                    atoms->vecs[ivec]->shrink_to_fit();
+                }
+            atoms->natms_ph=0;
+        }
+        
     public:
         NewDynamic(class Atoms*,class ForceField*,
         std::initializer_list<vec*>,std::initializer_list<vec*>,
         std::initializer_list<vec*>,std::initializer_list<vec*>,
         std::initializer_list<vec*>,std::initializer_list<vec*>);
-        virtual ~NewDynamic();
+        ~NewDynamic();
         
-        virtual void add_xchng(vec*);
-        virtual void add_updt(vec*);
+        
 
 
         

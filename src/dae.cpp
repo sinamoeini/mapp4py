@@ -160,8 +160,8 @@ void DAE::min_error_true()
      */
     static_assert(sizeof(NewDynamicDMD<true,true,true>)==sizeof(NewDynamicDMD<false,true,true>),"DynamicDMD size mismatch");
     static_assert(alignof(NewDynamicDMD<true,true,true>)==alignof(NewDynamicDMD<false,true,true>),"DynamicDMD align mismatch");
-    NewDynamicDMD<true,true,true>& dynamic=*reinterpret_cast<NewDynamicDMD<true,true,true>*>(&handler.dynamic);
-    dynamic.reset();
+    NewDynamicDMD<true,true,true>* dynamic_ptr=reinterpret_cast<NewDynamicDMD<true,true,true>*>(&handler.dynamic);
+    dynamic_ptr->reset();
     
     
     
@@ -230,11 +230,13 @@ void DAE::min_error_true()
             x+=r*h;
         }
         
-        dynamic.update();
+        dynamic_ptr->update();
         res=get_res();
         
     }
     if(istep) nerr_mins++;
+    
+    handler.dynamic.reset();
 }
 /*--------------------------------------------
  
@@ -247,6 +249,9 @@ void DAE::min_error_false()
     VECTENS1& f=handler.f;
     VECTENS1& h=handler.h;
     VECTENS0& x=handler.x;
+    
+    
+    NewDynamicDMD<false,true,true>* dynamic_ptr=&handler.dynamic;
     
     
     __GMRES__<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
@@ -283,7 +288,7 @@ void DAE::min_error_false()
             x+=r*h;
         }
         
-        handler.dynamic.update();
+        dynamic_ptr->update();
         res=get_res();
         
     }

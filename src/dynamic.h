@@ -89,7 +89,8 @@ namespace MAPP_NS
         
         
         MPI_Comm& world;
-
+        typedef std::aligned_storage<sizeof(Exchange)+sizeof(Update),MAX(alignof(Exchange),alignof(Update))>::type MemT;
+        MemT updt_xchng_data;
         Exchange* xchng;
         Update* updt;
 
@@ -103,16 +104,20 @@ namespace MAPP_NS
         
         void create_updt_xchng()
         {
-            xchng=new Exchange(atoms,nxchng_vecs_full);
-            updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+            xchng=new(&updt_xchng_data) Exchange(atoms,nxchng_vecs_full);
+            updt=new(&updt_xchng_data+sizeof(Exchange)) Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
+            //xchng=new Exchange(atoms,nxchng_vecs_full);
+            //updt=new Update(atoms,nupdt_vecs_full,nxchng_vecs_full);
         }
         
         void destroy_updt_xchng()
         {
-            delete updt;
-            updt=NULL;
-            delete xchng;
-            xchng=NULL;
+            //delete updt;
+            //updt=NULL;
+            //delete xchng;
+            //xchng=NULL;
+            updt->~Update();
+            xchng->~Exchange();
         }
         
         void add_xchng(vec*);

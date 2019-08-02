@@ -145,7 +145,7 @@ void MinLBFGSDMD::__run(LS* ls,int nsteps)
     if(ntally) thermo.print(step);
     
     
-    type0 e_prev,e_curr=atoms->pe;
+    type0 e_prev,e_curr=atoms->fe;
     type0 alpha_m,gamma;
     type0 inner0,inner1,scl0;
     int k=0;

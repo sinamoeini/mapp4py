@@ -51,7 +51,7 @@ void MinLBFGSDMD::init()
  --------------------------------------------*/
 void MinLBFGSDMD::run(int nsteps)
 {
-    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF,ntally!=0,xprt!=NULL);
 }
 /*--------------------------------------------
  fin after a run

@@ -6,6 +6,7 @@
 #include "atoms_styles.h"
 #include "export_styles.h"
 #include "xmath.h"
+#include "thermo_dynamics.h"
 namespace MAPP_NS
 {
     namespace MinHelper
@@ -125,10 +126,98 @@ namespace MAPP_NS
             for(int iatm=0;iatm<natms_lcl;iatm++,x+=__dim__,x_d+=__dim__)
                 Algebra::V_mul_MLT(x,h_A,x_d);
         }
+
+        
+        template<bool>
+        class ThermoHandler
+        {
+        public:
+            template<class F>
+            static void init(F&,int&)
+            {}
+            template<class F>
+            static void print(F&,int&,int&)
+            {}
+            template<class F>
+            static void fin(F&,int&,int&,FILE*&,const char*&)
+            {}
+        };
+        
+        template<>
+        class ThermoHandler<true>
+        {
+        public:
+            template<class F>
+            static void init(F& f,int& step)
+            {
+                f.create_thermo();
+                f.thermo->init();
+                f.thermo->print(step);
+            }
+            template<class F>
+            static void print(F& f,int& step,int& istep)
+            {
+                if((istep+1)%f.ntally==0)
+                    f.thermo->print(step+istep+1);
+            }
+            
+            template<class F>
+            static void fin(F& f,int& step,int& istep,FILE*& __out,const char*& __err)
+            {
+                if(istep%f.ntally)
+                    f.thermo->print(step+istep);
+                f.thermo->fin();
+                fprintf(__out,"%s",__err);
+            }
+            
+        };
+        
+        template<bool>
+        class ExportHandler
+        {
+        public:
+            template<class F>
+            static void init(F&,int&)
+            {}
+            template<class F>
+            static void print(F&,int&,int&)
+            {}
+            template<class F>
+            static void fin(F&,int&,int&)
+            {}
+            
+        };
+        
+        template<>
+        class ExportHandler<true>
+        {
+        public:
+            template<class F>
+            static void init(F& f,int& step)
+            {
+                f.xprt->write(step);
+            }
+            template<class F>
+            static void print(F& f,int& step,int& istep)
+            {
+                if((istep+1)%f.xprt->nevery==0) f.xprt->write(step+istep+1);
+            }
+            
+            template<class F>
+            static void fin(F& f,int& step,int& istep)
+            {
+                if(istep%f.xprt->nevery) f.xprt->write(step+istep);
+            }
+            
+        };
         
     }
     class Min
     {
+    template<bool>
+    friend class MinHelper::ThermoHandler;
+    template<bool>
+    friend class MinHelper::ExportHandler;
     private:
     protected:
         static const char* err_msgs[];
@@ -140,6 +229,10 @@ namespace MAPP_NS
         bool H_dof[__dim__][__dim__];
         int ntally;
         class LineSearch* ls;
+        typedef std::aligned_storage<sizeof(ThermoDynamics),alignof(ThermoDynamics)>::type MemThermoDynamics;
+        MemThermoDynamics thermo_mem;
+        ThermoDynamics* thermo;
+        
         
         void pre_run_chk(Atoms*,ForceField*);
     public:

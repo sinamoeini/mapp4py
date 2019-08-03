@@ -130,7 +130,8 @@ void MinCGDMD::init()
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
 {
-    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF
+    ,ntally!=0,xprt!=NULL);
 }
 /*--------------------------------------------
  finishing minimization
@@ -138,6 +139,27 @@ void MinCGDMD::run(int nsteps)
 void MinCGDMD::fin()
 {
     MinHelper::CondB<>::fin(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCGDMD::create_thermo()
+{
+    thermo=new(&thermo_mem) ThermoDynamics(6,
+    "FE",atoms->fe,
+    "S[0][0]",atoms->S_fe[0][0],
+    "S[1][1]",atoms->S_fe[1][1],
+    "S[2][2]",atoms->S_fe[2][2],
+    "S[1][2]",atoms->S_fe[2][1],
+    "S[2][0]",atoms->S_fe[2][0],
+    "S[0][1]",atoms->S_fe[1][0]);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void MinCGDMD::destroy_thermo()
+{
+    thermo->~ThermoDynamics();
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

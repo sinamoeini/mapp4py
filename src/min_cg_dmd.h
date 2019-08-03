@@ -553,6 +553,10 @@ namespace MAPP_NS
 {
     class MinCGDMD:public Min
     {
+    template<bool>
+    friend class MinHelper::ThermoHandler;
+    template<bool>
+    friend class MinHelper::ExportHandler;
     private:
     protected:
         static constexpr int MaxS=MinHelper::MaxSizeAlign<MinDMDHandler,4>::MaxS;
@@ -566,6 +570,8 @@ namespace MAPP_NS
         class ForceFieldDMD* ff;
         class ExportDMD* xprt;
         void pre_run_chk(AtomsDMD*,ForceFieldDMD*);
+        void create_thermo();
+        void destroy_thermo();
     public:
         MinCGDMD(type0,bool(&)[__dim__][__dim__],bool,type0,type0,class LineSearch*);
         ~MinCGDMD();
@@ -575,7 +581,7 @@ namespace MAPP_NS
         
         template<bool BC,bool X,bool ALPHA,bool C>
         void  __init();
-        template<bool BC,bool X,bool ALPHA,bool C,class LS>
+        template<bool BC,bool X,bool ALPHA,bool C,bool OUT,bool XOUT,class LS>
         void  __run(LS*,int);
         template<bool BC,bool X,bool ALPHA,bool C>
         void  __fin();
@@ -644,7 +650,7 @@ void MinCGDMD::__init()
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X,bool ALPHA,bool C,class LS>
+template<bool BC,bool X,bool ALPHA,bool C,bool OUT,bool XOUT,class LS>
 void MinCGDMD::__run(LS* ls,int nsteps)
 {
     
@@ -662,21 +668,8 @@ void MinCGDMD::__run(LS* ls,int nsteps)
     int step=atoms->step;
     handler.force_calc();
     
-    int nevery_xprt=xprt==NULL ? 0:xprt->nevery;
-    if(nevery_xprt) xprt->write(step);
-    
-    ThermoDynamics thermo(6,
-      "FE",atoms->fe,
-      "S[0][0]",atoms->S_fe[0][0],
-      "S[1][1]",atoms->S_fe[1][1],
-      "S[2][2]",atoms->S_fe[2][2],
-      "S[1][2]",atoms->S_fe[2][1],
-      "S[2][0]",atoms->S_fe[2][0],
-      "S[0][1]",atoms->S_fe[1][0]);
-    
-    if(ntally) thermo.init();
-    if(ntally) thermo.print(step);
-    
+    MinHelper::ThermoHandler<OUT>::init(*this,step);
+    MinHelper::ExportHandler<XOUT>::init(*this,step);
     
     type0 e_prev,e_curr=atoms->fe;
     type0 f0_f0,f_f,f_f0;
@@ -718,10 +711,8 @@ void MinCGDMD::__run(LS* ls,int nsteps)
         
         handler.force_calc();
         
-        if(ntally && (istep+1)%ntally==0)
-            thermo.print(step+istep+1);
-        
-        if(nevery_xprt && (istep+1)%nevery_xprt==0) xprt->write(step+istep+1);
+        MinHelper::ThermoHandler<OUT>::print(*this,step,istep);
+        MinHelper::ExportHandler<XOUT>::print(*this,step,istep);
         
         //this was a successfull step but the last one
         if(e_prev-e_curr<e_tol) err=MIN_S_TOLERANCE;
@@ -737,17 +728,10 @@ void MinCGDMD::__run(LS* ls,int nsteps)
         f0_f0=f_f;
     }
     
-    if(ntally && istep%ntally)
-        thermo.print(step+istep);
-    
-    if(nevery_xprt && istep%nevery_xprt) xprt->write(step+istep);
-    
-    if(ntally) thermo.fin();
-    
-    if(ntally) fprintf(MAPP::mapp_out,"%s",err_msgs[err]);
-    
+    MinHelper::ThermoHandler<OUT>::fin(*this,step,istep,MAPP::mapp_out,err_msgs[err]);
+    MinHelper::ExportHandler<XOUT>::fin(*this,step,istep);
+
     atoms->step+=istep;
-    
 }
 /*--------------------------------------------
  

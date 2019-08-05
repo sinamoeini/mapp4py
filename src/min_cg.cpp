@@ -1,14 +1,11 @@
 #include "min_cg.h"
 using namespace MAPP_NS;
-
-
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
 MinCG::MinCG(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
-X_DOF(true),
 atoms(NULL),
 ff(NULL),
 xprt(NULL)
@@ -59,7 +56,7 @@ void MinCG::init()
     
     try
     {
-        MinHelper::CondB<>::init(*this,chng_box,X_DOF);
+        MinHelper::CondB<>::init(*this,chng_box,!affine);
     }
     catch(std::string& err_msg)
     {
@@ -71,14 +68,14 @@ void MinCG::init()
  --------------------------------------------*/
 void MinCG::run(int nsteps)
 {
-    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ntally!=0,xprt!=NULL);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,!affine,ntally!=0,xprt!=NULL);
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void MinCG::fin()
 {
-    MinHelper::CondB<>::fin(*this,chng_box,X_DOF);
+    MinHelper::CondB<>::fin(*this,chng_box,!affine);
 }
 /*--------------------------------------------
  
@@ -232,7 +229,7 @@ void MinCG::setup_tp_getset()
     getset_ls(getset[3]);
     getset_ntally(getset[4]);
     getset_export(getset[5]);
-    getset_x_dof(getset[6]);
+    getset_affine(getset[6]);
     
 }
 /*--------------------------------------------*/
@@ -268,29 +265,6 @@ void MinCG::getset_export(PyGetSetDef& getset)
         if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
         Py_INCREF(xprt.val.ob);
         reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportMD::Object*>(xprt.val.ob);
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCG::getset_x_dof(PyGetSetDef& getset)
-{
-    getset.name=(char*)"x_dof";
-    getset.doc=(char*)R"---(
-    (bool) if set true position of atoms will considered as degrees of freedom
-    
-    If set true position of atoms will considered as degrees of freedom
-    )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->min->X_DOF);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<bool> x_dof("x_dof");
-        if(x_dof.set(op)==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->X_DOF=x_dof.val;
         return 0;
     };
 }

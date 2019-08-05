@@ -38,27 +38,26 @@ void MinLBFGSDMD::init()
     
     try
     {
-        MinHelper::CondB<>::init(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+        MinHelper::CondB<>::init(*this,chng_box,!affine,ALPHA_DOF,C_DOF);
     }
     catch(std::string& err_msg)
     {
         throw err_msg;
     }
 }
-
 /*--------------------------------------------
  run
  --------------------------------------------*/
 void MinLBFGSDMD::run(int nsteps)
 {
-    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF,ntally!=0,xprt!=NULL);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,!affine,ALPHA_DOF,C_DOF,ntally!=0,xprt!=NULL);
 }
 /*--------------------------------------------
  fin after a run
  --------------------------------------------*/
 void MinLBFGSDMD::fin()
 {
-    MinHelper::CondB<>::fin(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+    MinHelper::CondB<>::fin(*this,chng_box,!affine,ALPHA_DOF,C_DOF);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

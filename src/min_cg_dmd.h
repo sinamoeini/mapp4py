@@ -562,7 +562,7 @@ namespace MAPP_NS
         static constexpr int MaxS=MinHelper::MaxSizeAlign<MinDMDHandler,4>::MaxS;
         static constexpr int MaxA=MinHelper::MaxSizeAlign<MinDMDHandler,4>::MaxA;
         typedef std::aligned_storage<MaxS,MaxA>::type MemT;
-        bool B_DOF,X_DOF,ALPHA_DOF,C_DOF;
+        bool ALPHA_DOF,C_DOF;
         type0 max_dalpha;
         MemT handler_buff;
 

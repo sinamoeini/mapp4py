@@ -1,18 +1,12 @@
 #include "min_cg_dmd.h"
 #include <stdlib.h>
-
-
-
 using namespace MAPP_NS;
-
-
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
 MinCGDMD::MinCGDMD(type0 __e_tol,
 bool(&__H_dof)[__dim__][__dim__],bool __affine,type0 __max_dx,type0 __max_dalpha,LineSearch* __ls):
 Min(__e_tol,__H_dof,__affine,__max_dx,__ls),
-X_DOF(true),
 ALPHA_DOF(true),
 C_DOF(false),
 max_dalpha(__max_dalpha),
@@ -118,7 +112,7 @@ void MinCGDMD::init()
     
     try
     {
-        MinHelper::CondB<>::init(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+        MinHelper::CondB<>::init(*this,chng_box,!affine,ALPHA_DOF,C_DOF);
     }
     catch(std::string& err_msg)
     {
@@ -130,7 +124,7 @@ void MinCGDMD::init()
  --------------------------------------------*/
 void MinCGDMD::run(int nsteps)
 {
-    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ALPHA_DOF,C_DOF
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,!affine,ALPHA_DOF,C_DOF
     ,ntally!=0,xprt!=NULL);
 }
 /*--------------------------------------------
@@ -138,7 +132,7 @@ void MinCGDMD::run(int nsteps)
  --------------------------------------------*/
 void MinCGDMD::fin()
 {
-    MinHelper::CondB<>::fin(*this,chng_box,X_DOF,ALPHA_DOF,C_DOF);
+    MinHelper::CondB<>::fin(*this,chng_box,!affine,ALPHA_DOF,C_DOF);
 }
 /*--------------------------------------------
  
@@ -297,7 +291,7 @@ void MinCGDMD::setup_tp_getset()
     getset_ls(getset[4]);
     getset_ntally(getset[5]);
     getset_export(getset[6]);
-    getset_x_dof(getset[7]);
+    getset_affine(getset[7]);
     getset_alpha_dof(getset[8]);
     getset_c_dof(getset[9]);
 }
@@ -359,29 +353,6 @@ void MinCGDMD::getset_export(PyGetSetDef& getset)
         if(reinterpret_cast<Object*>(self)->xprt) Py_DECREF(reinterpret_cast<Object*>(self)->xprt);
         Py_INCREF(xprt.val.ob);
         reinterpret_cast<Object*>(self)->xprt=reinterpret_cast<ExportDMD::Object*>(xprt.val.ob);
-        return 0;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void MinCGDMD::getset_x_dof(PyGetSetDef& getset)
-{
-    getset.name=(char*)"x_dof";
-    getset.doc=(char*)R"---(
-    (bool) if set true position of atoms will considered as degrees of freedom
-    
-    If set true position of atoms will considered as degrees of freedom
-    )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<bool>::build(reinterpret_cast<Object*>(self)->min->X_DOF);
-    };
-    getset.set=[](PyObject* self,PyObject* op,void*)->int
-    {
-        VarAPI<bool> x_dof("x_dof");
-        if(x_dof.set(op)==-1) return -1;
-        reinterpret_cast<Object*>(self)->min->X_DOF=x_dof.val;
         return 0;
     };
 }

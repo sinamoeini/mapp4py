@@ -56,7 +56,7 @@ void MinLBFGS::init()
     
     try
     {
-        MinHelper::CondB<>::init(*this,chng_box,X_DOF);
+        MinHelper::CondB<>::init(*this,chng_box,!affine);
     }
     catch(std::string& err_msg)
     {
@@ -68,14 +68,14 @@ void MinLBFGS::init()
  --------------------------------------------*/
 void MinLBFGS::run(int nsteps)
 {
-    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,X_DOF,ntally!=0,xprt!=NULL);
+    MinHelper::CondLS<LineSearchBrent,LineSearchGoldenSection,LineSearchBackTrack>::run(*this,nsteps,ls,chng_box,!affine,ntally!=0,xprt!=NULL);
 }
 /*--------------------------------------------
  fin after a run
  --------------------------------------------*/
 void MinLBFGS::fin()
 {
-    MinHelper::CondB<>::fin(*this,chng_box,X_DOF);
+    MinHelper::CondB<>::fin(*this,chng_box,!affine);
 }
 /*------------------------------------------------------------------------------------------------------------------------------------
  

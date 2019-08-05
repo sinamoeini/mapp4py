@@ -333,7 +333,6 @@ namespace MAPP_NS
         static constexpr int MaxS=MinHelper::MaxSizeAlign<MinMDHandler,2>::MaxS;
         static constexpr int MaxA=MinHelper::MaxSizeAlign<MinMDHandler,2>::MaxA;
         typedef std::aligned_storage<MaxS,MaxA>::type MemT;
-        bool B_DOF,X_DOF;
         MemT handler_buff;
 
         class AtomsMD* atoms;

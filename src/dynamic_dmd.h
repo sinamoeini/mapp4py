@@ -133,14 +133,13 @@ namespace MAPP_NS
         class AtomsDMD* atoms;
         const int c_dim;
         const type0 alpha_scale;
-
+        Vec<type0>* x0;
+        Vec<type0>* alpha0;
+        
         bool decide();
         void store_x0_alpha0();
         void alloc_x0_alpha0();
     protected:
-        Vec<type0>* x0;
-        Vec<type0>* alpha0;
-    
     public:
   
         NewDynamicDMD(AtomsDMD* __atoms,ForceFieldDMD* __ff,

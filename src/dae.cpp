@@ -74,12 +74,6 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
             for(int j=i;j<__dim__;j++)
                 if(S_dof[i][j] && __dof[i])
                 {
-                    /*
-                     if(!err_msg.empty()) err_msg+="\n";
-                     err_msg+="cannot impose stress component ["+Print::to_string(i)+"]["+Print::to_string(j)
-                     +"] while any of the atoms do not have degree freedom in "+Print::to_string(i)
-                     +" direction";
-                     */
                     err_msg+="\nyou have atoms that do not have degree freedom in "+Print::to_string(i)
                     +" direction they will be deformed affinely due to defined degrees of freedom H_dof["+Print::to_string(i)+"]["+Print::to_string(j)+"]";
                 }
@@ -154,10 +148,16 @@ void DAE::min_error_true()
     VECTENS1& h=handler.h;
     VECTENS0& x=handler.x;
     
-    
     /*
+     dynamic_sub;
+     ff;
+     atoms;
+     c_dim;
+     alpha_scale;
+     x0;
+     alpha0;
      some vile hackery so I do not need to create another dynamic object or cast
-     */
+     */   
     static_assert(sizeof(NewDynamicDMD<true,true,true>)==sizeof(NewDynamicDMD<false,true,true>),"DynamicDMD size mismatch");
     static_assert(alignof(NewDynamicDMD<true,true,true>)==alignof(NewDynamicDMD<false,true,true>),"DynamicDMD align mismatch");
     NewDynamicDMD<true,true,true>* dynamic_ptr=reinterpret_cast<NewDynamicDMD<true,true,true>*>(&handler.dynamic);

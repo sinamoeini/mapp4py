@@ -121,9 +121,8 @@ namespace MAPP_NS
         bool decide();
         void store_x0();
         void alloc_x0();
-    protected:
         Vec<type0>* x0;
-    
+    protected:
     public:
   
         NewDynamicMD(AtomsMD* __atoms,ForceFieldMD* __ff,

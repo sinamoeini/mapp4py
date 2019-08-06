@@ -73,8 +73,6 @@ namespace MAPP_NS
         type0 new_value();
         
         
-        type0* derivative_gp();
-        type0 value_gp();
         
         virtual void init_static()=0;
         virtual void fin_static()=0;

@@ -364,36 +364,6 @@ type0* ForceFieldDMD::new_derivative<true>()
     
     return __vec;
 }
-/*--------------------------------------------
- 
- --------------------------------------------*/
-type0* ForceFieldDMD::derivative_gp()
-{
-    reset();
-    __force_calc_gp();
-    MPI_Allreduce(__vec_lcl,__vec,__nvoigt__+3,Vec<type0>::MPI_T,MPI_SUM,world);
-    Algebra::Do<__nvoigt__>::func([this](int i){__vec[i+1]*=-1.0;});
-    Algebra::DyadicV_2_MSY(__vec+1,F_H);
-    atoms->gp=__vec[0];
-    atoms->fe=__vec[1+__nvoigt__];
-    atoms->pe=__vec[2+__nvoigt__];
-    type0 vol_neg=-atoms->vol;
-    Algebra::Do<__nvoigt__>::func([this,&vol_neg](int i){__vec[i+1]/=vol_neg;});
-    Algebra::DyadicV_2_MSY(__vec+1,atoms->S_fe);
-    impose_dof(f->begin(),f_alpha->begin());
-    return __vec;
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-type0 ForceFieldDMD::value_gp()
-{
-    __vec_lcl[0]=0.0;
-    __energy_calc_gp();
-    type0 en;
-    MPI_Allreduce(&__vec_lcl[0],&en,1,Vec<type0>::MPI_T,MPI_SUM,world);
-    return en;
-}
 #include "dynamic_dmd.h"
 /*--------------------------------------------
  

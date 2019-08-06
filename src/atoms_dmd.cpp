@@ -7,7 +7,6 @@ AtomsDMD::AtomsDMD(MPI_Comm& world,int __c_dim,int __N):
 Atoms(world),
 S_fe{DESIG2(__dim__,__dim__,NAN)},
 fe(NAN),
-gp(NAN),
 pe(NAN),
 s(NAN),
 c_dim(__c_dim),
@@ -338,7 +337,7 @@ int AtomsDMD::setup_tp()
 /*--------------------------------------------*/
 
 
-PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(23);
+PyGetSetDef AtomsDMD::getset[]=EmptyPyGetSetDef(22);
 
 /*--------------------------------------------*/
 void AtomsDMD::setup_tp_getset()
@@ -359,12 +358,11 @@ void AtomsDMD::setup_tp_getset()
     getset_temp(getset[13]);
     getset_fe(getset[14]);
     getset_pe(getset[15]);
-    getset_gp(getset[16]);
-    getset_S_fe(getset[17]);
-    getset_s(getset[18]);
-    getset_ave_mu(getset[19]);
-    getset_ext_mu(getset[20]);
-    getset_ave_comp(getset[21]);
+    getset_S_fe(getset[16]);
+    getset_s(getset[17]);
+    getset_ave_mu(getset[18]);
+    getset_ext_mu(getset[19]);
+    getset_ave_comp(getset[20]);
 
 }
 /*--------------------------------------------*/
@@ -466,27 +464,6 @@ void AtomsDMD::getset_pe(PyGetSetDef& getset)
     getset.get=[](PyObject* self,void*)->PyObject*
     {
         return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->pe);
-    };
-    getset.set=[](PyObject* self,PyObject* val,void*)->int
-    {
-        PyErr_SetString(PyExc_TypeError,"readonly attribute");
-        return -1;
-    };
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-void AtomsDMD::getset_gp(PyGetSetDef& getset)
-{
-    getset.name=(char*)"gp";
-    getset.doc=(char*)R"---(
-    (double) grand potential
-    
-    Grand potential
-    )---";
-    getset.get=[](PyObject* self,void*)->PyObject*
-    {
-        return var<type0>::build(reinterpret_cast<Object*>(self)->atoms->gp);
     };
     getset.set=[](PyObject* self,PyObject* val,void*)->int
     {

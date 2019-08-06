@@ -12,7 +12,7 @@ namespace MAPP_NS
     protected:
     public:
         type0 S_fe[__dim__][__dim__];
-        type0 fe,gp,pe;
+        type0 fe,pe;
         type0 s;
 
         type0 max_alpha;
@@ -57,7 +57,6 @@ namespace MAPP_NS
         static void getset_S_fe(PyGetSetDef&);
         static void getset_fe(PyGetSetDef&);
         static void getset_pe(PyGetSetDef&);
-        static void getset_gp(PyGetSetDef&);
         static void getset_s(PyGetSetDef&);
         static void getset_ave_mu(PyGetSetDef&);
         static void getset_ave_comp(PyGetSetDef&);

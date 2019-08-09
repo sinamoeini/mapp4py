@@ -9,6 +9,7 @@ namespace MAPP_NS
     friend class DynamicDMD;
     template<bool,bool,bool>
     friend class NewDynamicDMD;
+    friend class DAE;
     private:
         void reset();
         void reset_c_d();

@@ -6,7 +6,7 @@
  --------------------------------------------*/
 namespace MAPP_NS
 {
-    class GMRES
+    class __GMRES
     {
     private:
         const int m;
@@ -29,8 +29,8 @@ namespace MAPP_NS
         MPI_Comm& world;
     protected:
     public:
-        GMRES(Atoms*,int,int);
-        ~GMRES();
+        __GMRES(Atoms*,int,int);
+        ~__GMRES();
         template<class KERNEL>
         bool solve(KERNEL&,Vec<type0>*,type0,type0&,Vec<type0>*);
         
@@ -41,7 +41,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 template<class KERNEL>
-bool GMRES::solve(KERNEL& A,Vec<type0>* Ax,type0 tol,type0& norm,Vec<type0>* x)
+bool __GMRES::solve(KERNEL& A,Vec<type0>* Ax,type0 tol,type0& norm,Vec<type0>* x)
 {
     type0* __Ax=Ax->begin();
     type0* __x=x->begin();

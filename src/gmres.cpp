@@ -3,7 +3,7 @@
 /*--------------------------------------------
  
  --------------------------------------------*/
-GMRES::GMRES(Atoms* __atoms,int __m,int __dim):
+__GMRES::__GMRES(Atoms* __atoms,int __m,int __dim):
 m(__m),
 n(__dim*__atoms->natms_lcl),
 world(__atoms->world)
@@ -23,7 +23,7 @@ world(__atoms->world)
 /*--------------------------------------------
  
  --------------------------------------------*/
-GMRES::~GMRES()
+__GMRES::~__GMRES()
 {
     Memory::dealloc(Q);
     Memory::dealloc(x_hat);
@@ -35,7 +35,7 @@ GMRES::~GMRES()
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 GMRES::calc(type0* Ax,type0* x)
+type0 __GMRES::calc(type0* Ax,type0* x)
 {
     type0 norm_sq_lcl=0.0,norm;
     for(int i=0;i<n;i++)
@@ -55,7 +55,7 @@ type0 GMRES::calc(type0* Ax,type0* x)
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 GMRES::calc(int iter,type0* RESTRICT Ax,type0* RESTRICT x)
+type0 __GMRES::calc(int iter,type0* RESTRICT Ax,type0* RESTRICT x)
 {
     type0* h=A_hat[iter];
     int ivec=iter+1;
@@ -118,7 +118,7 @@ type0 GMRES::calc(int iter,type0* RESTRICT Ax,type0* RESTRICT x)
 /*--------------------------------------------
  
  --------------------------------------------*/
-type0 GMRES::solve_y(int nvecs,type0* x)
+type0 __GMRES::solve_y(int nvecs,type0* x)
 {
     /*
      printf("H={");

@@ -5,10 +5,6 @@
 #include "ff_dmd.h"
 #include "memory.h"
 #include "min_cg_dmd.h"
-#include "min_vec.h"
-#ifdef MINCG_W_NEWTON
-
-#endif
 using namespace MAPP_NS;
 /*--------------------------------------------
  
@@ -16,10 +12,8 @@ using namespace MAPP_NS;
 DAE::DAE():
 x_err_tol(sqrt(std::numeric_limits<type0>::epsilon())),
 alpha_err_tol(sqrt(std::numeric_limits<type0>::epsilon())),
-ncs(0),
+ncs_lcl(0),
 chng_box(false),
-S_dof{DESIG2(__dim__,__dim__,false)},
-S{DESIG2(__dim__,__dim__,NAN)},
 xprt(NULL),
 max_nnewton_iters(5),
 max_ngmres_iters(5),
@@ -31,6 +25,8 @@ min_dt(std::numeric_limits<type0>::epsilon()),
 c(NULL),
 c_d(NULL)
 {
+    Algebra::set<__dim__*__dim__>(S_dof[0],false);
+    Algebra::set<__dim__*__dim__>(S[0],std::numeric_limits<type0>::quiet_NaN());
     Algebra::set<__dim__*__dim__>(S_err_tol[0],std::numeric_limits<type0>::epsilon());
 }
 /*--------------------------------------------
@@ -63,11 +59,13 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
     if(chng_box && !__atoms->x_dof->is_empty())
     {
         bool* dof=__atoms->x_dof->begin();
-        int __dof_lcl[__dim__]{DESIG(__dim__,0)};
+        int __dof_lcl[__dim__];
+        Algebra::set<__dim__>(__dof_lcl,0);
         for(int i=0;i<__atoms->natms_lcl;i++,dof+=__dim__)
             Algebra::Do<__dim__>::func([&dof,&__dof_lcl](int i){ if(!dof[i]) __dof_lcl[i]=1;});
         
-        int __dof[__dim__]{DESIG(__dim__,0)};
+        int __dof[__dim__];
+        Algebra::set<__dim__>(__dof,0);
         MPI_Allreduce(__dof_lcl,__dof,__dim__,MPI_INT,MPI_MAX,__atoms->world);
         std::string err_msg=std::string();
         for(int i=0;i<__dim__;i++)
@@ -93,7 +91,7 @@ void DAE::pre_run_chk(AtomsDMD* __atoms, ForceFieldDMD* __ff)
 void DAE::init_static()
 {
     //static related
-    ncs=atoms->natms_lcl*c_dim;
+    ncs_lcl=atoms->natms_lcl*c_dim;
     //a_tol_sqrt_nc_dofs=a_tol*sqrt(static_cast<type0>(calc_ndofs(atoms)));
     c=atoms->c->begin();
     c_d=ff->c_d->begin();
@@ -112,15 +110,43 @@ void DAE::fin_static()
  --------------------------------------------*/
 void DAE::init()
 {
-
+    nerr_mins=0;
+    c_dim=atoms->c_dim;
+    ff->c_d->fill();
+    ls=new LineSearchBrent();
+    bool __H_dof[__dim__][__dim__];
+    Algebra::set<__dim__*__dim__>(__H_dof[0],false);
+    min=new MinCGDMD(1.0e-9,__H_dof,false,1.0,0.1,ls);
+    min->atoms=atoms;
+    min->ff=ff;
+    min->init();
+    min->ntally=0;
+    min->__init<false,true,true,false>();
+    updt=ff->updt;
     
+    ff->calc_ndof();
+    a_tol_sqrt_nc_dof=a_tol*sqrt(static_cast<type0>(ff->nc_dof));
+    int n=ff->nx_dof+ff->nalpha_dof;
+    Algebra::DoLT<__dim__>::func([this,&n](int i,int j)
+    {if(!std::isnan(S[i][j])) ++n;});
+    sqrt_nx_nalpha_nS_dof=sqrt(static_cast<type0>(n));
+    a_tol_sqrt_nx_nalpha_nS_dof=a_tol*sqrt_nx_nalpha_nS_dof;
+    x_err_tol_sqrt_ndof=x_err_tol*sqrt(static_cast<type0>(ff->nx_dof));
+    alpha_err_tol_sqrt_ndof=alpha_err_tol*sqrt(static_cast<type0>(ff->nalpha_dof));
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void DAE::fin()
 {
-
+    updt=NULL;
+    min->__fin<false,true,true,false>();
+    min->ff=NULL;
+    min->atoms=NULL;
+    delete min;
+    min=NULL;
+    delete ls;
+    ls=NULL;
 }
 /*--------------------------------------------
  
@@ -141,7 +167,8 @@ type0 DAE::calc_err()
  --------------------------------------------*/
 void DAE::min_error_true()
 {
-    MinDMDHandler<false,true,true,false> handler(atoms,ff,100.0,100.0,S_dof);
+    min->__run<false,true,true,false,false,false>(ls,1000);
+    MinDMDHandler<false,true,true,false> &handler=*reinterpret_cast<MinDMDHandler<false,true,true,false>*>(&min->handler_buff);
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS0 VECTENS0;
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
@@ -165,7 +192,7 @@ void DAE::min_error_true()
     
     
     
-    __GMRES__<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
+    GMRES<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
     auto J=[this](VECTENS1& dx,VECTENS1& Jdx)->void
     {
         ff->Jnew(dx.A,dx.vecs[0],dx.vecs[1],Jdx.A,Jdx.vecs[0],Jdx.vecs[1]);
@@ -243,7 +270,8 @@ void DAE::min_error_true()
  --------------------------------------------*/
 void DAE::min_error_false()
 {
-    MinDMDHandler<false,true,true,false> handler(atoms,ff,100.0,100.0,S_dof);
+    min->__run<false,true,true,false,false,false>(ls,1000);
+    MinDMDHandler<false,true,true,false> &handler=*reinterpret_cast<MinDMDHandler<false,true,true,false>*>(&min->handler_buff);
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS0 VECTENS0;
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
@@ -254,7 +282,7 @@ void DAE::min_error_false()
     NewDynamicDMD<false,true,true>* dynamic_ptr=&handler.dynamic;
     
     
-    __GMRES__<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
+    GMRES<VECTENS1> gmres(max_ngmres_iters,atoms,__dim__,true,c_dim,true,c_dim,false);
     auto J=[this](VECTENS1& dx,VECTENS1& Jdx)->void
     {
         ff->Jnew(dx.vecs[0],dx.vecs[1],Jdx.vecs[0],Jdx.vecs[1]);

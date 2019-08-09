@@ -115,6 +115,16 @@ namespace MAPP_NS
             Algebra::Do<N1>::func([this,&__v](int i){dynamic.add_xchng(__v.vecs[i]);});
         }
         
+        template<class V,class...Vs>
+        void add_xchng(V*& v,Vs*&... vs)
+        {
+            dynamic.add_xchng(v);
+            add_xchng(vs...);
+        }
+        
+        
+        void add_xchng(){}
+        
         void rm_extra_vec(VECTENS1& __v){__v.~VECTENS1();}
         void init();
         void fin();
@@ -344,12 +354,15 @@ namespace MAPP_NS
     public:
         MinCG(type0,bool(&)[__dim__][__dim__],bool,type0,class LineSearch*);
         ~MinCG();
+        template<class...Vs>
+        void init(Vs*&...);
         virtual void run(int);
         virtual void init();
         virtual void fin();
 
-        template<bool BC,bool X>
-        void  __init();
+
+        template<bool BC,bool X,class...Vs>
+        void  __init(Vs*&...);
         template<bool BC,bool X,bool OUT,bool XOUT,class LS>
         void  __run(LS*,int);
         template<bool BC,bool X>
@@ -388,8 +401,29 @@ namespace MAPP_NS
 /*--------------------------------------------
  
  --------------------------------------------*/
-template<bool BC,bool X>
-void  MinCG::__init()
+template<class...Vs>
+void MinCG::init(Vs*&... vs)
+{
+    chng_box=false;
+    Algebra::DoLT<__dim__>::func([this](int i,int j)
+    {
+        if(H_dof[i][j]) chng_box=true;
+    });
+    
+    try
+    {
+        MinHelper::CondB<>::init(*this,chng_box,!affine,vs...);
+    }
+    catch(std::string& err_msg)
+    {
+        throw err_msg;
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<bool BC,bool X,class...Vs>
+void  MinCG::__init(Vs*&... vs)
 {
     
     MinMDHandler<BC,X>* __handler_ptr=new (&handler_buff) MinMDHandler<BC,X>(atoms,ff,max_dx,H_dof);
@@ -411,6 +445,8 @@ void  MinCG::__init()
             throw err_msg;
         }
     }
+    
+    __handler_ptr->add_xchng(vs...);
 }
 /*--------------------------------------------
  

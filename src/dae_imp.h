@@ -1,9 +1,9 @@
 #ifndef __MAPP__dae_imp__
 #define __MAPP__dae_imp__
-#include "dae_old.h"
+#include "dae.h"
 namespace MAPP_NS
 {
-    class DAEImplicit:public DAEOld
+    class DAEImplicit:public DAE
     {
     private:
     protected:
@@ -32,7 +32,7 @@ namespace MAPP_NS
         
         
         
-        class GMRES* gmres;
+        class __GMRES* gmres;
         
         DAEImplicit();
         virtual ~DAEImplicit();

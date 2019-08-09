@@ -10,7 +10,7 @@ using namespace MAPP_NS;
  
  --------------------------------------------*/
 DAEImplicit::DAEImplicit():
-DAEOld(),
+DAE(),
 y_0(NULL),
 c_0(NULL),
 a(NULL),
@@ -36,15 +36,15 @@ DAEImplicit::~DAEImplicit()
  --------------------------------------------*/
 void DAEImplicit::init_static()
 {
-    DAEOld::init_static();
-    Memory::alloc(y_0,3*ncs);
-    c_0=y_0+ncs;
-    a=y_0+2*ncs;
+    DAE::init_static();
+    Memory::alloc(y_0,3*ncs_lcl);
+    c_0=y_0+ncs_lcl;
+    a=y_0+2*ncs_lcl;
     del_c_ptr=new Vec<type0>(atoms,c_dim);
     del_c=del_c_ptr->begin();
     F_ptr=new Vec<type0>(atoms,c_dim);
     F=F_ptr->begin();
-    gmres=new GMRES(atoms,max_ngmres_iters,c_dim);
+    gmres=new __GMRES(atoms,max_ngmres_iters,c_dim);
 }
 /*--------------------------------------------
  
@@ -61,14 +61,14 @@ void DAEImplicit::fin_static()
     del_c=NULL;
     Memory::dealloc(y_0);
     y_0=c_0=a=NULL;
-    DAEOld::fin_static();
+    DAE::fin_static();
 }
 /*--------------------------------------------
  
  --------------------------------------------*/
 void DAEImplicit::init()
 {
-    DAEOld::init();
+    DAE::init();
     
     //static related
 
@@ -82,7 +82,7 @@ void DAEImplicit::fin()
 
     
     
-    DAEOld::fin();
+    DAE::fin();
 }
 /*--------------------------------------------
  
@@ -91,7 +91,7 @@ inline type0 DAEImplicit::update_c()
 {
     type0 tmp;
     type0 r,r_lcl=1.0;
-    for(int i=0;i<ncs;i++)
+    for(int i=0;i<ncs_lcl;i++)
     {
         if(c[i]>=0.0)
         {
@@ -117,7 +117,7 @@ inline type0 DAEImplicit::update_c()
     MPI_Allreduce(&r_lcl,&r,1,Vec<type0>::MPI_T,MPI_MIN,atoms->world);
     volatile type0 c0;
     
-    for(int i=0;i<ncs;i++)
+    for(int i=0;i<ncs_lcl;i++)
     {
         c0=c[i]-r*del_c[i];
         --++c0;
@@ -150,7 +150,7 @@ bool DAEImplicit::newton()
         ff->c_d_calc();
         type0 F_norm_lcl=0.0;
         type0 beta_inv=1.0/beta;
-        for(int i=0;i<ncs;i++)
+        for(int i=0;i<ncs_lcl;i++)
         {
             F[i]=beta_inv*c[i]+a[i]-c_d[i];
             F_norm_lcl+=F[i]*F[i];
@@ -166,7 +166,7 @@ bool DAEImplicit::newton()
         type0* __Jx=Jx->begin();
         type0* __x=x->begin();
         type0 beta_inv=1.0/beta;
-        for(int i=0;i<ncs;i++)
+        for(int i=0;i<ncs_lcl;i++)
             __Jx[i]=-__Jx[i]+beta_inv*__x[i];
     };
     
@@ -222,7 +222,7 @@ bool DAEImplicit::newton()
         if(iter) nnonlin_acc++;
         return true;
     }
-    memcpy(c,c_0,ncs*sizeof(type0));
+    memcpy(c,c_0,ncs_lcl*sizeof(type0));
     update(atoms->c);
     nnonlin_rej++;
     return false;

@@ -43,8 +43,8 @@ DAEBDF::~DAEBDF()
 void DAEBDF::init_static()
 {
     DAEImplicit::init_static();
-    Memory::alloc(dy,(max_q+2)*ncs);
-    z=dy+ncs;
+    Memory::alloc(dy,(max_q+2)*ncs_lcl);
+    z=dy+ncs_lcl;
     
     ff->derivative();
     ff->neighbor->init_static();
@@ -243,7 +243,7 @@ void DAEBDF::run(type0 t_tot)
  --------------------------------------------*/
 bool DAEBDF::integrate()
 {
-    memcpy(c_0,c,ncs*sizeof(type0));
+    memcpy(c_0,c,ncs_lcl*sizeof(type0));
     while(true)
     {
         /*
@@ -290,7 +290,7 @@ bool DAEBDF::integrate()
      */
     
     type0 norm_lcl=0.0,norm;
-    for(int i=0;i<ncs;i++)
+    for(int i=0;i<ncs_lcl;i++)
         norm_lcl+=(c[i]-y_0[i])*(c[i]-y_0[i]);
     MPI_Allreduce(&norm_lcl,&norm,1,Vec<type0>::MPI_T,MPI_SUM,atoms->world);
     err=err_fac*sqrt(norm)/a_tol_sqrt_nc_dof;
@@ -302,7 +302,7 @@ bool DAEBDF::integrate()
         return true;
     }
 
-    memcpy(c,c_0,ncs*sizeof(type0));
+    memcpy(c,c_0,ncs_lcl*sizeof(type0));
     update(atoms->c);
     ninteg_rej++;
     return false;
@@ -341,15 +341,15 @@ bool DAEBDF::interpolate()
     bool in_domain=true;
     switch(q)
     {
-        case 1: in_domain=DAEBDFMath::interpolate<1>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 1: in_domain=DAEBDFMath::interpolate<1>(ncs_lcl,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 2: in_domain=DAEBDFMath::interpolate<2>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 2: in_domain=DAEBDFMath::interpolate<2>(ncs_lcl,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 3: in_domain=DAEBDFMath::interpolate<3>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 3: in_domain=DAEBDFMath::interpolate<3>(ncs_lcl,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        case 4: in_domain=DAEBDFMath::interpolate<4>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        case 4: in_domain=DAEBDFMath::interpolate<4>(ncs_lcl,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
             break;
-        default: in_domain=DAEBDFMath::interpolate<max_q>(ncs,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
+        default: in_domain=DAEBDFMath::interpolate<max_q>(ncs_lcl,beta,A_bar[0],&A_bar[1][1],z,y_0,a);
     }
     
     int domain_err,domain_err_lcl=in_domain ? 0:1;
@@ -381,7 +381,7 @@ void DAEBDF::prep_for_next()
     if(q<max_q)
     {
         type0 norm_lcl=0.0;
-        for(int i=0;i<ncs;i++)
+        for(int i=0;i<ncs_lcl;i++)
         {
             if(c[i]>=0.0)
             {
@@ -399,7 +399,7 @@ void DAEBDF::prep_for_next()
     {
         type0* __z=z;
         type0 norm_lcl=0.0;
-        for(int i=0;i<ncs;i++)
+        for(int i=0;i<ncs_lcl;i++)
         {
             if(c[i]>=0.0)
             {
@@ -415,7 +415,7 @@ void DAEBDF::prep_for_next()
     }
     
     
-    for(int i=0;i<ncs;i++)
+    for(int i=0;i<ncs_lcl;i++)
     {
         dy[i]=c[i]-y_0[i];
     }
@@ -489,30 +489,30 @@ void DAEBDF::update_z()
     {
         switch(q)
         {
-            case 1: DAEBDFMath::update_z_inc<1>(ncs,A_bar[0],z,dy,l);
+            case 1: DAEBDFMath::update_z_inc<1>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            case 2: DAEBDFMath::update_z_inc<2>(ncs,A_bar[0],z,dy,l);
+            case 2: DAEBDFMath::update_z_inc<2>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            case 3: DAEBDFMath::update_z_inc<3>(ncs,A_bar[0],z,dy,l);
+            case 3: DAEBDFMath::update_z_inc<3>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            case 4: DAEBDFMath::update_z_inc<4>(ncs,A_bar[0],z,dy,l);
+            case 4: DAEBDFMath::update_z_inc<4>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            default: DAEBDFMath::update_z_inc<max_q>(ncs,A_bar[0],z,dy,l);
+            default: DAEBDFMath::update_z_inc<max_q>(ncs_lcl,A_bar[0],z,dy,l);
         }
     }
     else
     {
         switch(q+dq)
         {
-            case 1: DAEBDFMath::update_z<1>(ncs,A_bar[0],z,dy,l);
+            case 1: DAEBDFMath::update_z<1>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            case 2: DAEBDFMath::update_z<2>(ncs,A_bar[0],z,dy,l);
+            case 2: DAEBDFMath::update_z<2>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            case 3: DAEBDFMath::update_z<3>(ncs,A_bar[0],z,dy,l);
+            case 3: DAEBDFMath::update_z<3>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            case 4: DAEBDFMath::update_z<4>(ncs,A_bar[0],z,dy,l);
+            case 4: DAEBDFMath::update_z<4>(ncs_lcl,A_bar[0],z,dy,l);
                 break;
-            default: DAEBDFMath::update_z<max_q>(ncs,A_bar[0],z,dy,l);
+            default: DAEBDFMath::update_z<max_q>(ncs_lcl,A_bar[0],z,dy,l);
 
         }
     }
@@ -554,7 +554,7 @@ void DAEBDF::newton_fail()
         }
     }
     
-    memcpy(c,c_0,ncs*sizeof(type0));
+    memcpy(c,c_0,ncs_lcl*sizeof(type0));
     update(atoms->c);
 }
 /*--------------------------------------------
@@ -587,7 +587,7 @@ void DAEBDF::reset()
     type0 norm=ff->c_dd_norm()/a_tol_sqrt_nc_dof;
     type0 max_dt_lcl=std::numeric_limits<type0>::infinity();
     type0* __z=z;
-    for(int i=0;i<ncs;i++,__z+=max_q+1)
+    for(int i=0;i<ncs_lcl;i++,__z+=max_q+1)
     {
         if(c[i]>=0.0)
         {
@@ -608,7 +608,7 @@ void DAEBDF::reset()
     q=1;
     dt=MAX(MIN(MIN(sqrt(2.0/norm),(t_fin-t_cur)*0.001),max_dt),min_dt);
     Algebra::zero<max_q+1>(t);
-    memset(dy,0,ncs*sizeof(type0));
+    memset(dy,0,ncs_lcl*sizeof(type0));
 }
 /*--------------------------------------------
  

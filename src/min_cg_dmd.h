@@ -557,6 +557,7 @@ namespace MAPP_NS
     friend class MinHelper::ThermoHandler;
     template<bool>
     friend class MinHelper::ExportHandler;
+    friend class DAE;
     private:
     protected:
         static constexpr int MaxS=MinHelper::MaxSizeAlign<MinDMDHandler,4>::MaxS;

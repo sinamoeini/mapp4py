@@ -37,6 +37,12 @@ namespace MAPP_NS
                 return f.template __init<Bs0...>();
             }
             
+            template<class F,class... Vs>
+            static void init_var(F& f,Vs*&... vs)
+            {
+                return f.template __init<Bs0...>(vs...);
+            }
+            
             template<class F, class... Bs>
             static void init(F& f,bool b0,Bs...bs)
             {
@@ -44,6 +50,15 @@ namespace MAPP_NS
                     return CondB<Bs0...,true>::init(f,bs...);
                 else
                     return CondB<Bs0...,false>::init(f,bs...);
+            }
+            
+            template<class F, class... Bs,class... Vs>
+            static void init_var(F& f,bool b0,Bs...bs,Vs*&... vs)
+            {
+                if(b0==true)
+                    return CondB<Bs0...,true>::init_var(f,bs...,vs...);
+                else
+                    return CondB<Bs0...,false>::init_var(f,bs...,vs...);
             }
             
             template<class F>

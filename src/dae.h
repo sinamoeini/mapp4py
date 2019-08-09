@@ -17,7 +17,7 @@ namespace MAPP_NS
         void pre_run_chk(class AtomsDMD*,class ForceFieldDMD*);
         type0 calc_err();
         int c_dim;
-        int ncs;
+        int ncs_lcl;
         int nerr_mins;
         
         bool chng_box;
@@ -27,17 +27,14 @@ namespace MAPP_NS
         class AtomsDMD* atoms;
         class ForceFieldDMD* ff;
         class ExportDMD* xprt;
-        class DynamicDMD* dynamic;
         class Update* updt;
+        class LineSearchBrent* ls;
+        class MinCGDMD* min;
         template<class...VS>
         void update(VS*&... __vs)
         {
             updt->update_wo_x(__vs...);
         }
-#ifdef MINCG_W_NEWTON
-        class LineSearchBrent* ls;
-        class MinCGDMDOld* min;
-#endif
     public:
         int max_nnewton_iters;
         int max_ngmres_iters;

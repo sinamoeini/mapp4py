@@ -852,7 +852,7 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         int x_dim=__self->atoms->x->dim;
         int natms_lcl=__self->atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,x+=x_dim)
-            Algebra::V_mul_MLT(x,F,x);
+            Algebra::V_mul_MLT(x,F);
         */
         Py_RETURN_NONE;
     });

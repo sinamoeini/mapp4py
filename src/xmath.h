@@ -215,715 +215,6 @@ namespace MAPP_NS
         }
     };
 }
-/*------------------------------------------------------------------------------------------------------------------------------------
- 
- ------------------------------------------------------------------------------------------------------------------------------------*/
-namespace MAPP_NS
-{
-    namespace XMatrixVector
-    {
-        const float precision_f(sqrt(2.0*std::numeric_limits<float>::epsilon()));
-        const double precision_d(sqrt(2.0*std::numeric_limits<double>::epsilon()));
-        const long double precision_ld(sqrt(2.0*std::numeric_limits<long double>::epsilon()));
-        
-        template<class T>
-        class precision
-        {};
-        
-        template<>
-        class precision<float>
-        {public: static float val(){return precision_f;};};
-        template<>
-        class precision<double>
-        {public: static float val(){return precision_d;};};
-        template<>
-        class precision<long double>
-        {public: static long double val(){return precision_ld;};};
-        
-        
-        template<const int dim>
-        class _zero_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* v)
-            {
-                *v=0;
-                _zero_<dim-1>::func(v+1);
-            }
-        };
-        template<>
-        class _zero_<0>
-        {
-        public:
-            template<typename T>
-            static inline void func(T*)
-            {
-            }
-        };
-        
-        template<const int i>
-        class _rsq_
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return _rsq_<i-1>::func(V0+1,V1+1)+(*V0-*V1)*(*V0-*V1);
-            }
-        };
-        
-        template<>
-        class _rsq_<1>
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return (*V0-*V1)*(*V0-*V1);
-            }
-        };
-        
-        template<const int i>
-        class _V_V_
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return _V_V_<i-1>::func(V0+1,V1+1)+(*V0)*(*V1);
-            }
-        };
-        
-        template<>
-        class _V_V_<1>
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return (*V0)*(*V1);
-            }
-        };
-        template<>
-        class _V_V_<0>
-        {
-        public:
-            template<typename T>
-            static inline T func(T*,T*)
-            {
-                return 0;
-            }
-        };
-        
-        template<const int stride,const int i>
-        class _V_V_str_
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return _V_V_str_<stride,i-1>::func(V0+stride,V1+1)+(*V0)*(*V1);
-            }
-        };
-        
-        template<const int stride>
-        class _V_V_str_<stride,1>
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return (*V0)*(*V1);
-            }
-        };
-        
-        template<const int stride,const int i>
-        class _V_str_V_str_
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return _V_str_V_str_<stride,i-1>::func(V0+stride,V1+stride)+(*V0)*(*V1);
-            }
-        };
-        
-        template<const int stride>
-        class _V_str_V_str_<stride,1>
-        {
-        public:
-            template<typename T>
-            static inline T func(T* V0,T* V1)
-            {
-                return (*V0)*(*V1);
-            }
-        };
-        
-        
-        template<const int dim,const int i>
-        class _V_Mlt_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* Mlt,T* V)
-            {
-                *V=_V_V_str_<dim,i>::func(Mlt,V);
-                _V_Mlt_<dim,i-1>::func(Mlt+dim+1,V+1);
-            }
-        };
-        
-        template<const int dim>
-        class _V_Mlt_<dim,1>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* Mlt,T* V)
-            {
-                *V*=*Mlt;
-            }
-        };
-        
-        template<const int dim,const int i>
-        class _V_V_Mlt_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* V1,T* Mlt,T* V0)
-            {
-                *V1=_V_V_str_<dim,i>::func(Mlt,V0);
-                _V_V_Mlt_<dim,i-1>::func(V1+1,Mlt+dim+1,V0+1);
-            }
-        };
-        
-        template<const int dim>
-        class _V_V_Mlt_<dim,1>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* V1, T* Mlt,T* V0)
-            {
-                *V1*=*V0 * *Mlt;
-            }
-        };
-        
-        
-        template<const int dim,const int i>
-        class _x2s_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* Mlt,T* V)
-            {
-                *V=_V_V_str_<dim,i>::func(Mlt,V);
-                while(*V<0.0)
-                    (*V)++;
-                while(*V>=1.0)
-                    (*V)--;
-                _x2s_<dim,i-1>::func(Mlt+dim+1,V+1);
-            }
-        };
-        
-        template<const int dim>
-        class _x2s_<dim,1>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* Mlt,T* V)
-            {
-                *V*=*Mlt;
-                while(*V<0.0)
-                    (*V)++;
-                while(*V>=1.0)
-                    (*V)--;
-            }
-        };
-        
-        
-        template<const int dim,const int i,const int j>
-        class _Mlt_inv_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M,T* Minv)
-            {
-                *Minv=-_V_V_str_<dim,i-j>::func(Minv-(i-j)*dim,M)*(*(Minv+i-j));
-                _Mlt_inv_<dim,i,j-1>::func(M-1,Minv-1);
-            }
-        };
-        
-        template<const int dim,const int i>
-        class _Mlt_inv_<dim,i,i>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M,T* Minv)
-            {
-                *Minv=1.0/(*M);
-                _Mlt_inv_<dim,i,i-1>::func(M-1,Minv-1);
-            }
-        };
-        template<const int dim,const int i>
-        class _Mlt_inv_<dim,i,0>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M,T* Minv)
-            {
-                *Minv=-_V_V_str_<dim,i>::func(Minv-i*dim,M)*(*(Minv+i));
-                _Mlt_inv_<dim,i+1,i+1>::func(M+dim+i+1,Minv+dim+i+1);
-            }
-        };
-        
-        template<const int dim>
-        class _Mlt_inv_<dim,dim,dim>
-        {
-        public:
-            template<typename T>
-            static inline void func(T*,T*)
-            {}
-        };
-
-        template<const int dim,const int i,const int j>
-        class _M_2_Mlt_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M_old,T* M_new)
-            {
-                
-                M_new[i*dim+j]=(_V_V_<dim>::func(M_old+j*dim,M_old+i*dim)-
-                _V_V_<j>::func(M_new+j*dim,M_new+i*dim))/M_new[j*(dim+1)];
-                _M_2_Mlt_<dim,i,j+1>::func(M_old,M_new);
-            }
-        };
-        
-        template<const int dim,const int i>
-        class _M_2_Mlt_<dim,i,i>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M_old,T* M_new)
-            {
-                M_new[i*dim+i]=sqrt(_V_V_<dim>::func(M_old+i*dim,M_old+i*dim)-
-                    _V_V_<i>::func(M_new+i*dim,M_new+i*dim));
-                
-                _zero_<dim-i-1>::func(M_new+i*(dim+1)+1);
-                _M_2_Mlt_<dim,i+1,0>::func(M_old,M_new);
-            }
-        };
-        
-        template<const int dim>
-        class _M_2_Mlt_<dim,dim,0>
-        {
-        public:
-            template<typename T>
-            static inline void func(T*,T*)
-            {}
-        };
-        
-        template<const int dim,const int i,const int j>
-        class _Mlt_Mlt_
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M0,T* M1,T* B)
-            {
-                *B=_V_V_str_<dim,i-j+1>::func(M1-(i-j)*dim,M0);
-                _Mlt_Mlt_<dim,i,j+1>::func(M0+1,M1+1,B+1);
-            }
-        };
-        
-        template<const int dim,const int i>
-        class _Mlt_Mlt_<dim,i,i>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* M0,T* M1,T* B)
-            {
-                *B=(*M0)*(*M1);
-                _Mlt_Mlt_<dim,i+1,0>::func(M0+dim-i,M1+dim-i,B+dim-i);
-            }
-        };
-        template<const int dim>
-        class _Mlt_Mlt_<dim,dim,0>
-        {
-        public:
-            template<typename T>
-            static inline void func(T*,T*,T*)
-            {}
-        };
-        
-        
-        template<int dim,int i>
-        class __depth__
-        {
-        public:
-            template<typename T>
-            static inline void func(T* A,T* d)
-            {
-                *d=sqrt(_V_str_V_str_<dim,i>::func(A,A));
-                __depth__<dim,i-1>::func(A+dim+1,d+1);
-            }
-        };
-        
-        template<int dim>
-        class __depth__<dim,1>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* A,T* d)
-            {
-                *d=abs(*A);
-            }
-        };
-        
-        template <int i,int dim>
-        class __trace__
-        {
-        public:
-            template<typename T>
-            static inline T func(T* A)
-            {
-                return *A+__trace__<i-1,dim>::func(A+dim+1);
-            }
-        };
-        template <int dim>
-        class __trace__<1,dim>
-        {
-        public:
-            template<typename T>
-            static inline T func(T* A)
-            {
-                return *A;
-            }
-        };
-        
-        
-    
-        template<int i,int dim>
-        class __dyadic
-        {
-        public:
-            template<typename T>
-            static inline void func(T& scl,T* x,T* v)
-            {
-                *v=*x*x[i]*scl;
-                __dyadic<i+1,dim>::func(scl,x,v+1);
-            }
-        };
-        
-        template<int dim>
-        class __dyadic<dim,dim>
-        {
-        public:
-            template<typename T>
-            static inline void func(T& scl,T* x,T* v)
-            {
-                __dyadic<0,dim-1>::func(scl,x+1,v);
-            }
-        };
-        
-        template<>
-        class __dyadic<0,0>
-        {
-        public:
-            template<typename T>
-            static inline void func(T&,T*,T*)
-            {
-            }
-        };
-        
-        template<int i,int j,int dim>
-        class __SymmVec_2_Mlt
-        {
-        public:
-            template<typename T>
-            static inline void func(T* v,T* A)
-            {
-                *A=*v;
-                __SymmVec_2_Mlt<i+1,j,dim>::func(v+1,A+dim+1);
-            }
-        };
-        
-
-        template<int j,int dim>
-        class __SymmVec_2_Mlt<dim,j,dim>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* v,T* A)
-            {
-                *A=*v;
-                __SymmVec_2_Mlt<j+1,j+1,dim>::func(v+1,A+(j-dim+1)*(dim+1)+1);
-            }
-        };
-        
-        template<int dim>
-        class __SymmVec_2_Mlt<dim,dim,dim>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* v,T* A)
-            {
-                *A=*v;
-            }
-        };
-        
-        
-        
-        /*-------------------------------------------------------------------*/
-        template <const int i>
-        class UnrolledLoop
-        {
-        public:
-            template < typename FuncType >
-            static inline void Do(FuncType func)
-            {
-                UnrolledLoop <i-1>::Do( func);
-                func(i-1);
-            }
-        };
-        template <>
-        class UnrolledLoop<1>
-        {
-        public:
-            template < typename FuncType >
-            static inline void Do(FuncType func){func(0);}
-        };
-        
-        template<const int dim,typename T>
-        inline T rsq(T* V0,T* V1)
-        {
-            return _rsq_<dim>::func(V0,V1);
-        }
-        
-        template<const int dim,typename T>
-        inline T V_V(T* V0,T* V1)
-        {
-            return _V_V_<dim>(V0,V1);
-        }
-        
-        template<const int dim,typename T>
-        inline void V_Mlt(T* V,T** Mlt)
-        {
-            _V_Mlt_<dim,dim>::func(*Mlt,V);
-        }
-        template<const int dim,typename T>
-        static inline void V_Mlt(T* V,T (&Mlt)[dim][dim])
-        {
-            _V_Mlt_<dim,dim>::func((T*)Mlt,V);
-        }
-        
-        template<const int dim,typename T>
-        inline void V_Mlt(T* V,T** Mlt,T* ans)
-        {
-            _V_V_Mlt_<dim,dim>::func(ans,*Mlt,V);
-        }
-        template<const int dim,typename T>
-        static inline void V_Mlt(T* V,T (&Mlt)[dim][dim],T* ans)
-        {
-            _V_V_Mlt_<dim,dim>::func(ans,(T*)Mlt,V);
-        }
-        
-        template<const int dim,typename T>
-        static inline T Tr(T(&A)[dim][dim])
-        {
-            return __trace__<dim,dim>::func((T*)A);
-        }
-        
-        template<const int dim,typename T>
-        inline void s2x(T* s,T (&H)[dim][dim])
-        {
-            _V_Mlt_<dim,dim>::func(&H[0][0],s);
-        }
-        
-        template<const int dim,typename T>
-        inline void s2x(T* s,T** H)
-        {
-            _V_Mlt_<dim,dim>::func(*H,s);
-        }
-        
-        template<const int dim,typename T>
-        inline void x2s(T* x,T (&B)[dim][dim])
-        {
-            _x2s_<dim,dim>::func(&B[0][0],x);
-        }
-        
-        template<const int dim,typename T>
-        inline void x2s(T* x,T** B)
-        {
-            _x2s_<dim,dim>::func(*B,x);
-        }
-        
-        template<const int dim,typename T>
-        inline void Mlt_inv(T** A,T** Ainv)
-        {
-            **Ainv=1.0/(**A);
-            _Mlt_inv_<dim,1,1>::func(*A+dim+1,*Ainv+dim+1);
-        }
-        
-        template<const int dim,typename T>
-        inline void Mlt_inv(T (&A)[dim][dim],T (&Ainv)[dim][dim])
-        {
-            **Ainv=1.0/(**A);
-            _Mlt_inv_<dim,1,1>::func((T*)A+dim+1,(T*)Ainv+dim+1);
-        }
-        
-        template<const int dim,typename T>
-        inline void Mlt_Mlt(T** M0,T** M1,T** B)
-        {
-            _Mlt_Mlt_<dim,0,0>::func(*M0,*M1,*B);
-        }
-        
-        template<const int dim,typename T>
-        inline void Mlt_Mlt(T (&M0)[dim][dim],T (&M1)[dim][dim],T (&B)[dim][dim])
-        {
-            _Mlt_Mlt_<dim,0,0>::func((T*)M0,(T*)M1,(T*)B);
-        }
-        
-        template<const int dim,typename T>
-        inline void M_2_Mlt(T** &M0,T** M1)
-        {
-            _M_2_Mlt_<dim,0,0>::func(*M0,*M1);
-        }
-        
-        template<const int dim,typename T>
-        inline void M_2_Mlt(T (&M0)[dim][dim],T (&M1)[dim][dim])
-        {
-            _M_2_Mlt_<dim,0,0>::func((T*)M0,(T*)M1);
-        }
-        
-        
-        template<const int dim,typename T>
-        inline void depth(T (&A)[dim][dim],T (&d)[dim])
-        {
-            __depth__<dim,dim>::func((T*)A,d);
-        }
-
-        template<const int dim,typename T>
-        inline void dyadic(T& scl,T* x,T (&v)[dim*(dim+1)/2])
-        {
-            __dyadic<0,dim>::func(scl,x,v);
-        }
-        
-        template<const int dim,typename T>
-        inline void SymmVec_2_Mlt(T (&v)[dim*(dim+1)/2],T(&A)[dim][dim])
-        {
-            __SymmVec_2_Mlt<0,0,dim-1>::func(v,&A[0][0]);
-        }
-        
-        template<const int dim,typename T>
-        inline void zero(T(&v)[dim])
-        {
-            _zero_<dim>::func(v);
-        }
-
-        template<const int dim,const int idim>
-        class _opt_comm_grid_
-        {
-        public:
-            static void func(const type0 (&h)[dim],int no,int(&curr_grid)[dim],int(&opt_grid)[dim],type0& opt_size)
-            {
-                for(int i=1;i<=no;i++)
-                    if(no%i==0)
-                    {
-                        curr_grid[idim-1]=i;
-                        _opt_comm_grid_<dim,idim-1>::func(h,no/i,curr_grid,opt_grid,opt_size);
-                    }
-            }
-        };
-        
-        template<const int dim>
-        class _opt_comm_grid_<dim,1>
-        {
-        public:
-            static void func(const type0 (&h)[dim],int no,int(&curr_grid)[dim],int(&opt_grid)[dim],type0& opt_size)
-            {
-                curr_grid[0]=no;
-                type0 curr_size=0.0;
-                for(int i=0;i<dim;i++) curr_size+=static_cast<type0>(curr_grid[i])/h[i];
-                if(opt_size==0.0 || curr_size<opt_size)
-                {
-                    opt_size=curr_size;
-                    memcpy(opt_grid,curr_grid,dim*sizeof(int));
-                }
-            }
-        };
-        
-        
-        class __opt_comm_grid__
-        {
-        public:
-            static void func(const int idim,const int dim,const type0* h,int no,int* curr_grid,int* opt_grid,type0& opt_size)
-            {
-                if(idim==1)
-                {
-                    curr_grid[0]=no;
-                    type0 curr_size=0.0;
-                    for(int i=0;i<dim;i++) curr_size+=static_cast<type0>(curr_grid[i])/h[i];
-                    if(opt_size==0.0 || curr_size<opt_size)
-                    {
-                        opt_size=curr_size;
-                        for(int i=0;i<dim;i++)
-                            opt_grid[i]=curr_grid[i];
-                    }
-                    return;
-                }
-                
-                for(int i=1;i<=no;i++)
-                    if(no%i==0)
-                    {
-                        curr_grid[idim-1]=i;
-                        __opt_comm_grid__::func(idim-1,dim,h,no/i,curr_grid,opt_grid,opt_size);
-                    }
-            }
-        };
-        
-        template<const int dim>
-        inline void opt_comm_grid(const type0 (&h)[dim],int no,int (&opt_grid)[dim])
-        {
-            if(no==1)
-            {
-                for(int i=0;i<dim;i++)
-                    opt_grid[i]=1;
-                return;
-            }
-            
-            int curr_grid[dim];
-            type0 opt_size=0.0;
-            _opt_comm_grid_<dim,dim>::func(h,no,curr_grid,opt_grid,opt_size);
-            
-        }
-        
-        inline void opt_comm_grid(const type0 (&)[1],int no,int (&opt_grid)[1])
-        {
-            opt_grid[0]=no;
-        }
-        
-
-        inline void opt_comm_grid(const int dim,const type0* h,int no,int* opt_grid)
-        {
-            if(dim==1)
-            {
-                opt_grid[0]=no;
-                return;
-            }
-            
-            if(no==1)
-            {
-                for(int i=0;i<dim;i++)
-                    opt_grid[i]=1;
-                return;
-            }
-            
-            int* curr_grid =new int[dim];
-            type0 opt_size=0.0;
-            __opt_comm_grid__::func(dim,dim,h,no,curr_grid,opt_grid,opt_size);
-            delete [] curr_grid;
-        }
-    }
-}
 /*--------------------------------------------
  quick sort algorithm
  
@@ -1252,7 +543,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline bool func(T* v0,T* v1)
+            static inline bool func(T* RESTRICT v0,T* RESTRICT v1)
             {
                 if(*v0!=*v1) return false;
                 return ___is_same<dim-1>::func(v0+1,v1+1);
@@ -1264,7 +555,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline bool func(T* v0,T* v1)
+            static inline bool func(T* RESTRICT v0,T* RESTRICT v1)
             {
                 if(*v0!=*v1) return false;
                 return true;
@@ -1276,7 +567,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T const * src,T* dst)
+            static inline void func(T const * RESTRICT src,T* RESTRICT dst)
             {
                 *dst=*src;
                 __V_eq<dim-1>::func(src+1,dst+1);
@@ -1288,7 +579,7 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T const * src,T* dst)
+            static inline void func(T const * RESTRICT src,T* RESTRICT dst)
             {
                 *dst=*src;
             }
@@ -1304,12 +595,6 @@ namespace MAPP_NS
                 *dst+=*src;
                 __V_add<dim-1>::func(src+1,dst+1);
             }
-            template<typename T>
-            static inline void func2(T const * src0,T const * src1,T* dst)
-            {
-                *dst+=(*src0+*src1);
-                __V_add<dim-1>::func2(src0+1,src1+1,dst+1);
-            }
         };
         
         template<>
@@ -1320,11 +605,6 @@ namespace MAPP_NS
             static inline void func(T const * src,T* dst)
             {
                 *dst+=*src;
-            }
-            template<typename T>
-            static inline void func2(T const * src0,T const * src1,T* dst)
-            {
-                *dst+=(*src0+*src1);
             }
         };
         
@@ -1338,12 +618,6 @@ namespace MAPP_NS
                 *dst-=*src;
                 __V_sub<dim-1>::func(src+1,dst+1);
             }
-            template<typename T>
-            static inline void func2(T const * src0,T const * src1,T* dst)
-            {
-                *dst-=(*src0+*src1);
-                __V_sub<dim-1>::func2(src0+1,src1+1,dst+1);
-            }
         };
         
         template<>
@@ -1354,11 +628,6 @@ namespace MAPP_NS
             static inline void func(T const * src,T* dst)
             {
                 *dst-=*src;
-            }
-            template<typename T>
-            static inline void func2(T const * src0,T const * src1,T* dst)
-            {
-                *dst-=(*src0+*src1);
             }
         };
         
@@ -1658,16 +927,28 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T* V,T* MLT,T* VMLT)
+            static inline void func(T* RESTRICT V,T* RESTRICT MLT,T* RESTRICT VMLT)
             {
                 *VMLT=__V_strd_mul_V<i,dim>::func(MLT,V);
                 __V_mul_MLT<i-1,dim>::func(V+1,MLT+dim+1,VMLT+1);
             }
             template<typename T>
-            static inline void add_in(T* V,T* MLT,T* VMLT)
+            static inline void func(T* RESTRICT V,T* RESTRICT MLT)
+            {
+                *V=__V_strd_mul_V<i,dim>::func(MLT,V);
+                __V_mul_MLT<i-1,dim>::func(V+1,MLT+dim+1);
+            }
+            template<typename T>
+            static inline void add_in(T* RESTRICT V,T* RESTRICT MLT,T* RESTRICT VMLT)
             {
                 *VMLT+=__V_strd_mul_V<i,dim>::func(MLT,V);
                 __V_mul_MLT<i-1,dim>::add_in(V+1,MLT+dim+1,VMLT+1);
+            }
+            template<typename T>
+            static inline void add_in(T* RESTRICT V,T* RESTRICT MLT)
+            {
+                *V+=__V_strd_mul_V<i,dim>::func(MLT,V);
+                __V_mul_MLT<i-1,dim>::add_in(V+1,MLT+dim+1);
             }
         };
         
@@ -1676,14 +957,24 @@ namespace MAPP_NS
         {
         public:
             template<typename T>
-            static inline void func(T* V,T* MLT,T* VMLT)
+            static inline void func(T* RESTRICT V,T* RESTRICT MLT,T* RESTRICT VMLT)
             {
                 *VMLT=*V**MLT;
             }
             template<typename T>
-            static inline void add_in(T* V,T* MLT,T* VMLT)
+            static inline void func(T* RESTRICT V,T* RESTRICT MLT)
+            {
+                *V=*V**MLT;
+            }
+            template<typename T>
+            static inline void add_in(T* RESTRICT V,T* RESTRICT MLT,T* RESTRICT VMLT)
             {
                 *VMLT+=*V**MLT;
+            }
+            template<typename T>
+            static inline void add_in(T* RESTRICT V,T* RESTRICT MLT)
+            {
+                *V+=*V**MLT;
             }
         };
         
@@ -3350,7 +2641,7 @@ namespace MAPP_NS
         
         /*==========================================================================*/
         template<const int dim,typename T>
-        bool is_same(T* v0,T* v1)
+        bool is_same(T* RESTRICT v0,T* RESTRICT v1)
         {
             return ___is_same<dim>::func(v0,v1);
         }
@@ -3424,6 +2715,11 @@ namespace MAPP_NS
         void V_mul_MLT(T* V,T (*MLT)[dim],T* VMLT)
         {
             __V_mul_MLT<dim,dim>::func(V,&MLT[0][0],VMLT);
+        }
+        template<const int dim,typename T>
+        void V_mul_MLT(T* V,T (*MLT)[dim])
+        {
+            __V_mul_MLT<dim,dim>::func(V,&MLT[0][0]);
         }
         /*==========================================================================*/
         template<typename T,const int dim>
@@ -3680,7 +2976,7 @@ namespace MAPP_NS
         }
         /*==========================================================================*/
         template<const int dim,typename T>
-        void V_eq(T const * src,T* dst)
+        void V_eq(T const * RESTRICT src,T* RESTRICT dst)
         {
             __V_eq<dim>::func(src,dst);
         }
@@ -3690,21 +2986,11 @@ namespace MAPP_NS
         {
             __V_add<dim>::func(src,dst);
         }
-        template<const int dim,typename T>
-        void V_add2(T const * src0,T const * src1,T* dst)
-        {
-            __V_add<dim>::func2(src0,src1,dst);
-        }
         /*==========================================================================*/
         template<const int dim,typename T>
         void V_sub(T const * src,T* dst)
         {
             __V_sub<dim>::func(src,dst);
-        }
-        template<const int dim,typename T>
-        void V_sub2(T const * src0,T const * src1,T* dst)
-        {
-            __V_sub<dim>::func2(src0,src1,dst);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

@@ -580,7 +580,7 @@ AtomsMD* ImportCFGMD::operator()(const char* file)
         type0* x_d=atoms_md->x_d->begin();
         int natms_lcl=atoms->natms_lcl;
         for(int i=0;i<natms_lcl;i++,x_d+=__dim__)
-            Algebra::V_mul_MLT(x_d,M,x_d);
+            Algebra::V_mul_MLT(x_d,M);
     }
 
     delete vec_list[3];

@@ -240,7 +240,9 @@ void DAE::min_error_true()
         const int natms_lcl=atoms->natms_lcl;
         type0* xvec=atoms->x->begin();
         type0* dxvec=h.vecs[0]->begin();
-        Algebra::MLT_mul_MLT(atoms->H,h.A,h.A);
+        type0 __A[__dim__][__dim__];
+        Algebra::V_eq<__dim__*__dim__>(&h.A[0][0],&__A[0][0]);
+        Algebra::MLT_mul_MLT(atoms->H,__A,h.A);
         for(int i=0;i<natms_lcl;i++,dxvec+=__dim__,xvec+=__dim__)
             Algebra::V_mul_MLT_add_in(xvec,h.A,dxvec);
         

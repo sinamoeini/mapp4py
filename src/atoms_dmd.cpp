@@ -147,7 +147,7 @@ type0 AtomsDMD::vac_msd()
         Algebra::X2S<__dim__>(B[0],__xi);
         Algebra::S2X<__dim__>(H[0],__xi);
         cv_vals_lcl[__dim__]+=cv*Algebra::V_mul_V<__dim__>(__xi,__xi);
-        Algebra::V_add_x_mul_V<__dim__>(cv,__xi,cv_vals_lcl);
+        Algebra::SCL_mul_V_add<__dim__>(cv,__xi,cv_vals_lcl);
         cv_vals_lcl[__dim__+1]+=cv;
     }
     

@@ -111,7 +111,7 @@ void ForceFieldTersoff::__force_calc()
             jatm=neighbor_list[iatm][j];
             if(jatm<iatm) continue;
             jelem=evec[jatm];
-            rsq_ij=Algebra::DX_RSQ(x_i,x+jatm*__dim__,dx_ij);
+            rsq_ij=Algebra::DX_RSQ<__dim__>(x_i,x+jatm*__dim__,dx_ij);
         }
     }
     

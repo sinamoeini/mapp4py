@@ -93,15 +93,15 @@ void ForceFieldEAMFunc::__force_calc()
         {
             jatm=neighbor_list[iatm][j];
             jelem=elem_map[evec[jatm]];
-            rsq=Algebra::DX_RSQ(x+iatm*__dim__,x+jatm*__dim__,dx_ij);
+            rsq=Algebra::DX_RSQ<__dim__>(x+iatm*__dim__,x+jatm*__dim__,dx_ij);
             if(rsq>=cut_sq[ielem][jelem]) continue;
             r=sqrt(rsq);
             fpair=eam_func->fpair(ielem,jelem,rho[iatm],rho[jatm],r);
             
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,fvec+iatm*__dim__);
+            Algebra::SCL_mul_V_add<__dim__>(fpair,dx_ij,fvec+iatm*__dim__);
             if(jatm<natms_lcl)
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+jatm*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair,dx_ij,fvec+jatm*__dim__);
             else
                 fpair*=0.5;
             

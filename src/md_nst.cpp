@@ -92,12 +92,18 @@ void MDNST::update_x_d__x__x_d(type0 xi)
     for(int i=0;i<natms0;++i)
     {
         m_inv=1.0/m[*elem];
-        MDMath::____NONAME0<__dim__,__dim__>::func(xi,x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
-        MDMath::____NONAME1<__dim__,__dim__>::func(x,&V_H[0][0],x_d,v0);
-        MDMath::____NONAME2<__dim__,__dim__>::func(v0,&MLT2[0][0]);
+        //MDMath::____NONAME0<__dim__,__dim__>::func(xi,x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        //MDMath::____NONAME1<__dim__,__dim__>::func(x,&V_H[0][0],x_d,v0);
+        //MDMath::____NONAME2<__dim__,__dim__>::func(v0,&MLT2[0][0]);
         
-        Algebra::V_add<__dim__>(v0,x);
-        Algebra::V_add<__dim__>(v0,dx_lcl);
+        Algebra::SCL_V_mul_MLT(xi,x_d,MLT0);
+        Algebra::SCL_V_mul_MLT_add(m_inv,f,MLT1,x_d);
+        Algebra::V_mul_MLT(x,V_H,v0);
+        Algebra::V_add_V<__dim__>(v0,x_d);
+        Algebra::V_mul_MLT(v0,MLT2);
+        
+        Algebra::V_add_V<__dim__>(x,v0);
+        Algebra::V_add_V<__dim__>(dx_lcl,v0);
         
         f+=__dim__;
         x_d+=__dim__;
@@ -114,9 +120,9 @@ void MDNST::update_x_d__x__x_d(type0 xi)
         Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
     
     
-    Algebra::MLT_mul_MLT(MLT2,V_H,MLT2);
+    Algebra::MLT_mul_MLT(MLT2,V_H);
     Algebra::Do<__dim__>::func([this](int i){MLT2[i][i]++;});
-    Algebra::MLT_mul_MLT(atoms->H,MLT2,atoms->H);
+    Algebra::MLT_mul_MLT(atoms->H,MLT2);
     atoms->update_H();
     
     dynamic->update<true>();
@@ -133,7 +139,9 @@ void MDNST::update_x_d__x__x_d(type0 xi)
         m_i=m[*elem];
         m_inv=1.0/m_i;
         
-        MDMath::____NONAME0<__dim__,__dim__>::func(x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        //MDMath::____NONAME0<__dim__,__dim__>::func(x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        Algebra::V_mul_MLT(x_d,MLT0);
+        Algebra::SCL_V_mul_MLT_add(m_inv,f,MLT1,x_d);
         Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
         
         f+=__dim__;
@@ -165,13 +173,21 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
     {
         m_inv=1.0/m[*elem];
         Algebra::V_eq<__dim__>(x_d,__x_d);
-        MDMath::____NONAME0<__dim__,__dim__>::func(xi,x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
-        Algebra::Do<__dim__>::func([&__x_d,&x_d,&dof](const int j){if(!dof[j]) x_d[j]=__x_d[j];});
-        MDMath::____NONAME1<__dim__,__dim__>::func(x,&V_H[0][0],x_d,v0);
-        MDMath::____NONAME2<__dim__,__dim__>::func(v0,&MLT2[0][0]);
         
-        Algebra::V_add<__dim__>(v0,x);
-        Algebra::V_add<__dim__>(v0,dx_lcl);
+        //MDMath::____NONAME0<__dim__,__dim__>::func(xi,x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        //Algebra::Do<__dim__>::func([&__x_d,&x_d,&dof](const int j){if(!dof[j]) x_d[j]=__x_d[j];});
+        //MDMath::____NONAME1<__dim__,__dim__>::func(x,&V_H[0][0],x_d,v0);
+        //MDMath::____NONAME2<__dim__,__dim__>::func(v0,&MLT2[0][0]);
+        
+        Algebra::SCL_V_mul_MLT(xi,x_d,MLT0);
+        Algebra::SCL_V_mul_MLT_add(m_inv,f,MLT1,x_d);
+        Algebra::Do<__dim__>::func([&__x_d,&x_d,&dof](const int j){if(!dof[j]) x_d[j]=__x_d[j];});
+        Algebra::V_mul_MLT(x,V_H,v0);
+        Algebra::V_add_V<__dim__>(v0,x_d);
+        Algebra::V_mul_MLT(v0,MLT2);
+        
+        Algebra::V_add_V<__dim__>(x,v0);
+        Algebra::V_add_V<__dim__>(dx_lcl,v0);
         
         f+=__dim__;
         x_d+=__dim__;
@@ -189,9 +205,9 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
         Algebra::Do<__dim__>::func([&dx,&x](const int j){x[j]-=dx[j];});
     
     
-    Algebra::MLT_mul_MLT(MLT2,V_H,MLT2);
+    Algebra::MLT_mul_MLT(MLT2,V_H);
     Algebra::Do<__dim__>::func([this](int i){MLT2[i][i]++;});
-    Algebra::MLT_mul_MLT(atoms->H,MLT2,atoms->H);
+    Algebra::MLT_mul_MLT(atoms->H,MLT2);
     atoms->update_H();
 
     dynamic->update<true>();
@@ -210,7 +226,9 @@ void MDNST::update_x_d__x__x_d_w_dof(type0 xi)
         m_inv=1.0/m_i;
         
         Algebra::V_eq<__dim__>(x_d,__x_d);
-        MDMath::____NONAME0<__dim__,__dim__>::func(x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        //MDMath::____NONAME0<__dim__,__dim__>::func(x_d,&MLT0[0][0],m_inv,f,&MLT1[0][0]);
+        Algebra::V_mul_MLT(x_d,MLT0);
+        Algebra::SCL_V_mul_MLT_add(m_inv,f,MLT1,x_d);
         Algebra::Do<__dim__>::func([&__x_d,&x_d,&dof](const int j){if(!dof[j]) x_d[j]=__x_d[j];});
         Algebra::DyadicV<__dim__>(m_i,x_d,__vec_lcl);
         

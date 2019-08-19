@@ -181,7 +181,7 @@ void ForceFieldLJ::__force_calc()
         {
             jatm=neighbor_list[iatm][j];
             jelem=evec[jatm];
-            rsq=Algebra::DX_RSQ(x_i,x+jatm*__dim__,dx_ij);
+            rsq=Algebra::DX_RSQ<__dim__>(x_i,x+jatm*__dim__,dx_ij);
             if(rsq>=cut_sq[ielem][jelem]) continue;
             
             type0 sig2=sigma[ielem][jelem]*sigma[ielem][jelem]/rsq;
@@ -191,10 +191,10 @@ void ForceFieldLJ::__force_calc()
             type0 fpair=24.0*eps*sig6*(2.0*sig6-1.0)/rsq;
             type0 en=4.0*eps*sig6*(sig6-1.0)+offset[ielem][jelem];
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
+            Algebra::SCL_mul_V_add<__dim__>(fpair,dx_ij,f_i);
             
             if(jatm<natms_lcl)
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+__dim__*jatm);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair,dx_ij,fvec+__dim__*jatm);
             else
             {
                 fpair*=0.5;
@@ -204,7 +204,7 @@ void ForceFieldLJ::__force_calc()
             Algebra::DyadicV<__dim__>(-fpair,dx_ij,&__vec_lcl[1]);
         }
         
-        Algebra::V_add<__dim__>(f_i,fvec+iatm*__dim__);
+        Algebra::V_add_V<__dim__>(fvec+iatm*__dim__,f_i);
     }
 }
 /*--------------------------------------------

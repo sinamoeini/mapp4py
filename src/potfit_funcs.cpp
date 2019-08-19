@@ -462,7 +462,7 @@ const type0& x_lo,const type0& x_hi,type0& max_alpha)
     for(int it=0;it<NMAX_ALPHA_SHRNK_ATTMPS && trial;it++)
     {
         Algebra::V_eq<4>(c0,c);
-        Algebra::V_add_x_mul_V<4>(max_alpha,dc,c);
+        Algebra::SCL_mul_V_add<4>(max_alpha,dc,c);
         
         if(c[0]!=0.0)
         {

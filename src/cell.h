@@ -126,7 +126,7 @@ template<const int M>
 void Cell<M>::setup()
 {
     ncells=1;
-    Algebra::V_eq_x_mul_V<__dim__>(atoms->max_cut,atoms->depth_inv,cut_s);
+    Algebra::SCL_mul_V<__dim__>(atoms->max_cut,atoms->depth_inv,cut_s);
     Algebra::V_eq<__dim__>(atoms->s_hi,s_hi);
     Algebra::V_eq<__dim__>(atoms->s_lo,s_lo);
     for(int i=0;i<__dim__;i++)

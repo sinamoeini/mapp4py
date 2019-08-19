@@ -378,9 +378,9 @@ void ForceFieldEAMPotFit<NELEMS>::__force_calc()
             
             if(fpair==0.0) continue;
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,fvec+iatm*__dim__);
+            Algebra::SCL_mul_V_add<__dim__>(fpair,dx_ij,fvec+iatm*__dim__);
             if(jatm<natms_lcl)
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+jatm*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair,dx_ij,fvec+jatm*__dim__);
             else
                 fpair*=0.5;
             
@@ -390,14 +390,14 @@ void ForceFieldEAMPotFit<NELEMS>::__force_calc()
     type0 f_sum_lcl[__dim__];
     Algebra::zero<__dim__>(f_sum_lcl);
     for(int i=0;i<natms_lcl;i++)
-        Algebra::V_add<__dim__>(fvec+__dim__*i,f_sum_lcl);
+        Algebra::V_add_V<__dim__>(f_sum_lcl,fvec+__dim__*i);
 
     type0 f_corr[__dim__];
     MPI_Allreduce(f_sum_lcl,f_corr,__dim__,Vec<type0>::MPI_T,MPI_SUM,world);
     type0 a=-1.0/static_cast<type0>(atoms->natms);
     Algebra::Do<__dim__>::func([&a,&f_corr](int i){f_corr[i]*=a;});
     for(int i=0;i<natms_lcl;i++)
-        Algebra::V_add<__dim__>(f_corr,fvec+__dim__*i);
+        Algebra::V_add_V<__dim__>(fvec+__dim__*i,f_corr);
 }
 /*--------------------------------------------
  energy calculation

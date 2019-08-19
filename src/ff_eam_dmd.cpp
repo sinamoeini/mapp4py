@@ -331,11 +331,11 @@ void ForceFieldEAMDMD::__force_calc()
             mu_i+=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
             if(j<n) mu_vec[j]+=c_i*(rho_phi[istart]+rho_phi[istart+2]*dE_i);
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
+            Algebra::SCL_mul_V_add<__dim__>(fpair,dx_ij,f_i);
             f_alpha_i+=alpha_i*apair;
             if(j<n)
             {
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,fvec+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair,dx_ij,fvec+(j/c_dim)*__dim__);
                 f_alphavec[j]+=alpha[j]*apair;
             }
             else
@@ -348,7 +348,7 @@ void ForceFieldEAMDMD::__force_calc()
         mu_vec[i]+=mu_i;
         
         if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
+            Algebra::V_add_V<__dim__>(fvec+__dim__*(i/c_dim),f_i);
     }
     
     type0 norm_sq_lcl=0.0;
@@ -637,12 +637,12 @@ void ForceFieldEAMDMD::__prepJ_n_res(Vec<type0>* fvec_ptr,Vec<type0>* f_alphavec
             fpair=(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart]);
             apair=(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart]);
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair*c[j]*f_coef[i],dx_ij,f_i);
+            Algebra::SCL_mul_V_add<__dim__>(fpair*c[j]*f_coef[i],dx_ij,f_i);
             f_alpha_i+=alpha_i*apair*c[j];
             
             if(j<n)
             {
-                Algebra::V_add_x_mul_V<__dim__>(-fpair*c_i*f_coef[j],dx_ij,fvec+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair*c_i*f_coef[j],dx_ij,fvec+(j/c_dim)*__dim__);
                 f_alphavec[j]+=alpha[j]*apair*c_i;
             }
             else
@@ -656,7 +656,7 @@ void ForceFieldEAMDMD::__prepJ_n_res(Vec<type0>* fvec_ptr,Vec<type0>* f_alphavec
         f_alphavec[i]+=f_alpha_i;
         
         if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
+            Algebra::V_add_V<__dim__>(fvec+__dim__*(i/c_dim),f_i);
     }
 }
 /*--------------------------------------------
@@ -751,15 +751,15 @@ void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>*
             
             
             deltadE[i]+=(a*drho_phi_dr[istart+2]+b*drho_phi_dalpha[istart+2])*ddE[i]*c[j];
-            Algebra::V_add_x_mul_V<__dim__>(df_pair*c[j]*f_coef[i],dx_ij,Adx_i);
-            Algebra::V_add_x_mul_V<__dim__>(f_pair*c[j]*f_coef[i],ddx_ij,Adx_i);
+            Algebra::SCL_mul_V_add<__dim__>(df_pair*c[j]*f_coef[i],dx_ij,Adx_i);
+            Algebra::SCL_mul_V_add<__dim__>(f_pair*c[j]*f_coef[i],ddx_ij,Adx_i);
             Adalpha_i+=c[j]*(pair_alpha_0*alpha_i+pair_alpha_1*dalpha_i);
             
             if(j<n)
             {
                 deltadE[j]+=(a*drho_phi_dr[istart+1]+b*drho_phi_dalpha[istart+1])*ddE[j]*c[i];
-                Algebra::V_add_x_mul_V<__dim__>(-df_pair*c[i]*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
-                Algebra::V_add_x_mul_V<__dim__>(-f_pair*c[i]*f_coef[j],ddx_ij,Adx+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-df_pair*c[i]*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-f_pair*c[i]*f_coef[j],ddx_ij,Adx+(j/c_dim)*__dim__);
                 Adalpha[j]+=c[i]*(pair_alpha_0*alpha[j]+pair_alpha_1*dalpha[j]);
             }
             else
@@ -776,7 +776,7 @@ void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>*
         
         Adalpha[i]+=Adalpha_i;
         if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
+            Algebra::V_add_V<__dim__>(Adx+__dim__*(i/c_dim),Adx_i);
     }
     
     update(E_ptr);
@@ -808,12 +808,12 @@ void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>*
             df_pair=-(drho_phi_dr[istart+2]*deltadE[i]+drho_phi_dr[istart+1]*deltadE[j]);
             pair_alpha_0=-(drho_phi_dalpha[istart+2]*deltadE[i]+drho_phi_dalpha[istart+1]*deltadE[j]);
             
-            Algebra::V_add_x_mul_V<__dim__>(df_pair*c[j]*f_coef[i],dx_ij,Adx_i);
+            Algebra::SCL_mul_V_add<__dim__>(df_pair*c[j]*f_coef[i],dx_ij,Adx_i);
             Adalpha_i+=alpha_i*pair_alpha_0*c[j];
             
             if(j<n)
             {
-                Algebra::V_add_x_mul_V<__dim__>(-df_pair*c_i*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-df_pair*c_i*f_coef[j],dx_ij,Adx+(j/c_dim)*__dim__);
                 Adalpha[j]+=alpha[j]*pair_alpha_0*c_i;
             }
             else
@@ -826,7 +826,7 @@ void ForceFieldEAMDMD::__J(Vec<type0>* dx_ptr,Vec<type0>* dalpha_ptr,Vec<type0>*
         
         Adalpha[i]+=Adalpha_i-3.0*kBT*dalpha_i/(alpha_i*alpha_i);
         if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(Adx_i,Adx+__dim__*(i/c_dim));
+            Algebra::V_add_V<__dim__>(Adx+__dim__*(i/c_dim),Adx_i);
     }
 }
 /*--------------------------------------------
@@ -1252,13 +1252,13 @@ void ForceFieldEAMDMD::calc_mu()
             fpair=(drho_phi_dr[istart+2]*dE_i+drho_phi_dr[istart+1]*dE[j]+drho_phi_dr[istart]);
             apair=(drho_phi_dalpha[istart+2]*dE_i+drho_phi_dalpha[istart+1]*dE[j]+drho_phi_dalpha[istart]);
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair*c[j]*fcoef[i],dx_ij,f_i);
+            Algebra::SCL_mul_V_add<__dim__>(fpair*c[j]*fcoef[i],dx_ij,f_i);
             f_alpha_i+=alpha_i*apair*c[j];
             
             if(j<n)
             {
                 mu_vec[j]+=c[i]*(rho_phi[istart]+rho_phi[istart+2]*dE[i]);
-                Algebra::V_add_x_mul_V<__dim__>(-fpair*c_i*fcoef[j],dx_ij,fvec+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair*c_i*fcoef[j],dx_ij,fvec+(j/c_dim)*__dim__);
                 falpha[j]+=alpha[j]*apair*c_i;
                 __vec_lcl[0]+=c[i]*c[j]*rho_phi[istart];
             }
@@ -1270,7 +1270,7 @@ void ForceFieldEAMDMD::calc_mu()
         falpha[i]+=f_alpha_i;
         
         if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(f_i,fvec+__dim__*(i/c_dim));
+            Algebra::V_add_V<__dim__>(fvec+__dim__*(i/c_dim),f_i);
         
     }
 

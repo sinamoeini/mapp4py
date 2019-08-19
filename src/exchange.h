@@ -809,7 +809,7 @@ namespace MAPP_NS
                 {
                     type0* x_vec=__x->end()-__dim__;
                     for(int iatm=0;iatm<rcv_atms_lst_sz[idim][idir][icomm];iatm++,x_vec-=__dim__)
-                        f(__H,x_vec);
+                        f(x_vec,__H);
                 }
             }
         }
@@ -881,8 +881,8 @@ namespace MAPP_NS
             template<class... VS>
             static void update_w_x(Update& update,int& tot_byte_sz,type0 (*__H)[__dim__],VS*&... vs)
             {
-                update.__update<idim,0>(Algebra::V_add<idim+1,type0>,tot_byte_sz,*__H,vs...);
-                update.__update<idim,1>(Algebra::V_sub<idim+1,type0>,tot_byte_sz,*__H,vs...);
+                update.__update<idim,0>(Algebra::V_add_V<idim+1,type0>,tot_byte_sz,*__H,vs...);
+                update.__update<idim,1>(Algebra::V_sub_V<idim+1,type0>,tot_byte_sz,*__H,vs...);
                 Helper<idim+1>::update_w_x(update,tot_byte_sz,__H+1,vs...);
             }
             template<class... VS>

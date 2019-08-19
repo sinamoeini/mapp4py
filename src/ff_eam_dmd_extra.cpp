@@ -206,11 +206,11 @@ void ForceFieldEAMDMD::__force_calc_gp()
             __f_c_i-=c[j]*(rho_phi[istart]+rho_phi[istart+1]*dE[j]);
             if(j<n) __f_c[j]-=c_i*(rho_phi[istart]+rho_phi[istart+2]*dE_i);
             
-            Algebra::V_add_x_mul_V<__dim__>(fpair,dx_ij,f_i);
+            Algebra::SCL_mul_V_add<__dim__>(fpair,dx_ij,f_i);
             f_alpha_i+=alpha_i*apair;
             if(j<n)
             {
-                Algebra::V_add_x_mul_V<__dim__>(-fpair,dx_ij,__f_x+(j/c_dim)*__dim__);
+                Algebra::SCL_mul_V_add<__dim__>(-fpair,dx_ij,__f_x+(j/c_dim)*__dim__);
                 __f_alpha[j]+=alpha[j]*apair;
             }
             else
@@ -222,7 +222,7 @@ void ForceFieldEAMDMD::__force_calc_gp()
         __f_c[i]+=__f_c_i;
         
         if((i+1)%c_dim==0)
-            Algebra::V_add<__dim__>(f_i,__f_x+__dim__*(i/c_dim));
+            Algebra::V_add_V<__dim__>(__f_x+__dim__*(i/c_dim),f_i);
     }
     
     __f_alpha=f_alpha->begin();

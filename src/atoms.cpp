@@ -937,7 +937,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
             Algebra::V_mul_MLT(I,H,dx);
             for(int j=0;j<natms_lcl;j++)
             {
-                Algebra::V_add<__dim__>(dx,__x);
+                Algebra::V_add_V<__dim__>(__x,dx);
                 *__id+=did;
                 __x+=__dim__;
                 ++__id;
@@ -1149,14 +1149,14 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
             Algebra::zero<__dim__>(dx);
             Algebra::Do<__dim__>::func([&dx,&is,&H0](int i)
             {
-                Algebra::V_add_x_mul_V<__dim__>(static_cast<type0>(is[i]),H0[i],dx);
+                Algebra::SCL_mul_V_add<__dim__>(static_cast<type0>(is[i]),H0[i],dx);
             });
             
             
             id_type did=static_cast<id_type>(icurs)*(max_id+1);
             for(int j=0;j<natms_lcl;j++)
             {
-                Algebra::V_add<__dim__>(dx,__x);
+                Algebra::V_add_V<__dim__>(__x,dx);
                 *__id+=did;
                 __x+=__dim__;
                 ++__id;

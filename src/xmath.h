@@ -2212,78 +2212,6 @@ namespace MAPP_NS
             }
         };
         
-        
-        
-        template<const int i,const int j,const int dim>
-        class __NONAME_DyadicV_mul_MLT
-        {
-        public:
-            template<typename T>
-            static inline void func(T* dyad,T* MLT,T* ANS)
-            {
-                *ANS=__V_strd_mul_V<i,dim>::func(MLT,dyad);
-                __NONAME_DyadicV_mul_MLT<i-1,j,dim>::func(dyad+1,MLT+dim+1,ANS+dim);
-            }
-        };
-        
-        template<const int j,const int dim>
-        class __NONAME_DyadicV_mul_MLT<1,j,dim>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* dyad,T* MLT,T* ANS)
-            {
-                *ANS=*MLT**dyad;
-                __NONAME_DyadicV_mul_MLT<j-1,j-1,dim>::func(dyad+1,MLT-(j-2)*(dim+1),ANS-(j-2)*dim+1);
-            }
-        };
-        
-        template<const int dim>
-        class __NONAME_DyadicV_mul_MLT<1,1,dim>
-        {
-        public:
-            template<typename T>
-            static inline void func(T* dyad,T* MLT,T* ANS)
-            {
-                *ANS=*MLT**dyad;
-            }
-        };
-        
-        
-        template<int i,int j,int dim>
-        class __NONAME_DyadicV_2_MLT
-        {
-        public:
-            template<class T>
-            static void func(T* x)
-            {
-                x[(i-j)*(dim-1)+j*(j-1)/2]=*x;
-                __NONAME_DyadicV_2_MLT<i-1,j,dim>::func(x-1);
-            };
-        };
-        
-        template<int i,int dim>
-        class __NONAME_DyadicV_2_MLT<i,i,dim>
-        {
-        public:
-            template<class T>
-            static void func(T* x)
-            {
-                x[i*(i-1)/2]=*x;
-                __NONAME_DyadicV_2_MLT<dim,i-1,dim>::func(x-1);
-            };
-        };
-        
-        template<int dim>
-        class __NONAME_DyadicV_2_MLT<1,1,dim>
-        {
-        public:
-            template<class T>
-            static void func(T*)
-            {
-            };
-        };
-        
         template<const int i,const int j,const int dim>
         class __DyadicV_2_MUT
         {
@@ -3075,23 +3003,6 @@ namespace MAPP_NS
             T min=MLT[0][0];
             Algebra::DoLT<dim>::func([&min,&MLT](int i,int j){min=min>MLT[i][j]?MLT[i][j]:min;});
             return min;
-        }
-        /*==========================================================================*/
-        template<const int dim,typename T>
-        void NONAME_DyadicV_mul_MLT(T* DyadicV,T(&MLT)[dim][dim],T(&ANS)[dim][dim])
-        {
-            __NONAME_DyadicV_mul_MLT<dim,dim,dim>::func(DyadicV,&MLT[0][0],&ANS[0][0]);
-        }
-        template<const int dim,typename T>
-        void NONAME_DyadicV_mul_MLT(T* DyadicV,T(&MLT)[dim][dim],T(*&ANS)[dim])
-        {
-            __NONAME_DyadicV_mul_MLT<dim,dim,dim>::func(DyadicV,&MLT[0][0],&ANS[0][0]);
-        }
-        /*==========================================================================*/
-        template<int dim,class T>
-        void NONAME_DyadicV_2_MLT(T(&MLT)[dim][dim])
-        {
-            __NONAME_DyadicV_2_MLT<dim,dim,dim>::func(&MLT[0][0]+dim*(dim+1)/2-1);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

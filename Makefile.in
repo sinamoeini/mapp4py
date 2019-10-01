@@ -108,34 +108,33 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_mapp4py_so_OBJECTS = src/analysis.$(OBJEXT) src/atoms.$(OBJEXT) \
-	src/atoms_dmd.$(OBJEXT) src/atoms_md.$(OBJEXT) \
-	src/comm.$(OBJEXT) src/dae_bdf.$(OBJEXT) src/dae.$(OBJEXT) \
-	src/dae_imp.$(OBJEXT) src/dynamic.$(OBJEXT) \
-	src/dynamic_dmd.$(OBJEXT) src/dynamic_md.$(OBJEXT) \
-	src/elements.$(OBJEXT) src/example.$(OBJEXT) \
-	src/exchange.$(OBJEXT) src/exchange_neb.$(OBJEXT) \
+am_mapp4py_so_OBJECTS = src/MAPP.$(OBJEXT) src/analysis.$(OBJEXT) \
+	src/atoms.$(OBJEXT) src/atoms_dmd.$(OBJEXT) \
+	src/atoms_md.$(OBJEXT) src/comm.$(OBJEXT) src/dae.$(OBJEXT) \
+	src/dae_bdf.$(OBJEXT) src/dae_imp.$(OBJEXT) \
+	src/dynamic.$(OBJEXT) src/dynamic_dmd.$(OBJEXT) \
+	src/dynamic_md.$(OBJEXT) src/elements.$(OBJEXT) \
+	src/example.$(OBJEXT) src/exchange.$(OBJEXT) \
+	src/exchange_neb.$(OBJEXT) src/export.$(OBJEXT) \
 	src/export_cfg_dmd.$(OBJEXT) src/export_cfg_md.$(OBJEXT) \
-	src/export.$(OBJEXT) src/ff.$(OBJEXT) src/ff_dmd.$(OBJEXT) \
-	src/ff_eam.$(OBJEXT) src/ff_eam_dmd.$(OBJEXT) \
-	src/ff_eam_dmd_extra.$(OBJEXT) src/ff_eam_func.$(OBJEXT) \
-	src/ff_eam_potfit.$(OBJEXT) src/ff_fs.$(OBJEXT) \
-	src/ff_lj.$(OBJEXT) src/ff_md.$(OBJEXT) src/ff_meam.$(OBJEXT) \
-	src/ff_tersoff.$(OBJEXT) src/gcmc.$(OBJEXT) \
-	src/gmres.$(OBJEXT) src/import_cfg.$(OBJEXT) \
-	src/import.$(OBJEXT) src/import_eam.$(OBJEXT) \
+	src/ff.$(OBJEXT) src/ff_dmd.$(OBJEXT) src/ff_eam.$(OBJEXT) \
+	src/ff_eam_dmd.$(OBJEXT) src/ff_eam_dmd_extra.$(OBJEXT) \
+	src/ff_eam_func.$(OBJEXT) src/ff_eam_potfit.$(OBJEXT) \
+	src/ff_fs.$(OBJEXT) src/ff_lj.$(OBJEXT) src/ff_md.$(OBJEXT) \
+	src/ff_meam.$(OBJEXT) src/ff_tersoff.$(OBJEXT) \
+	src/gcmc.$(OBJEXT) src/gmres.$(OBJEXT) src/import.$(OBJEXT) \
+	src/import_cfg.$(OBJEXT) src/import_eam.$(OBJEXT) \
 	src/logics.$(OBJEXT) src/ls.$(OBJEXT) src/main.$(OBJEXT) \
-	src/MAPP.$(OBJEXT) src/md_muvt.$(OBJEXT) src/md_nst.$(OBJEXT) \
-	src/md_nvt.$(OBJEXT) src/min_cg2_dmd.$(OBJEXT) \
-	src/min_cg3_dmd.$(OBJEXT) src/min_cg.$(OBJEXT) \
-	src/min_cg_dmd.$(OBJEXT) src/min.$(OBJEXT) \
-	src/min_l-bfgs.$(OBJEXT) src/min_l-bfgs_dmd.$(OBJEXT) \
-	src/neighbor.$(OBJEXT) src/neighbor_dmd.$(OBJEXT) \
-	src/neighbor_md.$(OBJEXT) src/pgcmc.$(OBJEXT) \
-	src/potfit.$(OBJEXT) src/potfit_funcs.$(OBJEXT) \
-	src/random.$(OBJEXT) src/sgcmc.$(OBJEXT) \
-	src/thermo_dynamics.$(OBJEXT) src/thermostat.$(OBJEXT) \
-	src/timer.$(OBJEXT) src/var.$(OBJEXT) src/xmath.$(OBJEXT)
+	src/md_muvt.$(OBJEXT) src/md_nst.$(OBJEXT) \
+	src/md_nvt.$(OBJEXT) src/min.$(OBJEXT) src/min_cg.$(OBJEXT) \
+	src/min_cg_dmd.$(OBJEXT) src/min_cg_dmd_old.$(OBJEXT) \
+	src/min_cg_old.$(OBJEXT) src/min_l-bfgs.$(OBJEXT) \
+	src/min_l-bfgs_dmd.$(OBJEXT) src/neighbor.$(OBJEXT) \
+	src/neighbor_dmd.$(OBJEXT) src/neighbor_md.$(OBJEXT) \
+	src/pgcmc.$(OBJEXT) src/potfit.$(OBJEXT) \
+	src/potfit_funcs.$(OBJEXT) src/random.$(OBJEXT) \
+	src/sgcmc.$(OBJEXT) src/thermo_dynamics.$(OBJEXT) \
+	src/thermostat.$(OBJEXT) src/var.$(OBJEXT) src/xmath.$(OBJEXT)
 mapp4py_so_OBJECTS = $(am_mapp4py_so_OBJECTS)
 mapp4py_so_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -175,15 +174,15 @@ am__depfiles_remade = src/$(DEPDIR)/MAPP.Po src/$(DEPDIR)/analysis.Po \
 	src/$(DEPDIR)/main.Po src/$(DEPDIR)/md_muvt.Po \
 	src/$(DEPDIR)/md_nst.Po src/$(DEPDIR)/md_nvt.Po \
 	src/$(DEPDIR)/min.Po src/$(DEPDIR)/min_cg.Po \
-	src/$(DEPDIR)/min_cg2_dmd.Po src/$(DEPDIR)/min_cg3_dmd.Po \
-	src/$(DEPDIR)/min_cg_dmd.Po src/$(DEPDIR)/min_l-bfgs.Po \
+	src/$(DEPDIR)/min_cg_dmd.Po src/$(DEPDIR)/min_cg_dmd_old.Po \
+	src/$(DEPDIR)/min_cg_old.Po src/$(DEPDIR)/min_l-bfgs.Po \
 	src/$(DEPDIR)/min_l-bfgs_dmd.Po src/$(DEPDIR)/neighbor.Po \
 	src/$(DEPDIR)/neighbor_dmd.Po src/$(DEPDIR)/neighbor_md.Po \
 	src/$(DEPDIR)/pgcmc.Po src/$(DEPDIR)/potfit.Po \
 	src/$(DEPDIR)/potfit_funcs.Po src/$(DEPDIR)/random.Po \
 	src/$(DEPDIR)/sgcmc.Po src/$(DEPDIR)/thermo_dynamics.Po \
-	src/$(DEPDIR)/thermostat.Po src/$(DEPDIR)/timer.Po \
-	src/$(DEPDIR)/var.Po src/$(DEPDIR)/xmath.Po
+	src/$(DEPDIR)/thermostat.Po src/$(DEPDIR)/var.Po \
+	src/$(DEPDIR)/xmath.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -198,18 +197,6 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
-CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
 SOURCES = $(mapp4py_so_SOURCES)
 DIST_SOURCES = $(mapp4py_so_SOURCES)
 am__can_run_installinfo = \
@@ -369,46 +356,25 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-mapp4py_so_SOURCES = src/analysis.cpp src/analysis.h src/api.h \
-	src/atoms.cpp src/atoms_dmd.cpp src/atoms_dmd.h src/atoms.h \
-	src/atoms_md.cpp src/atoms_md.h src/atoms_styles.h src/cell.h \
-	src/comm.cpp src/comm.h src/dae_bdf.cpp src/dae_bdf.h \
-	src/dae.cpp src/dae.h src/dae_imp.cpp src/dae_imp.h \
-	src/dae_styles.h src/dynamic.cpp src/dynamic_dmd.cpp \
-	src/dynamic_dmd.h src/dynamic.h src/dynamic_md.cpp \
-	src/dynamic_md.h src/elements.cpp src/elements.h \
-	src/example.cpp src/example.h src/exchange.cpp src/exchange.h \
-	src/exchange_neb.cpp src/exchange_neb.h src/export_cfg_dmd.cpp \
-	src/export_cfg_dmd.h src/export_cfg_md.cpp src/export_cfg_md.h \
-	src/export.cpp src/export.h src/export_styles.h src/ff.cpp \
-	src/ff_dmd.cpp src/ff_dmd.h src/ff_eam.cpp src/ff_eam_dmd.cpp \
-	src/ff_eam_dmd_extra.cpp src/ff_eam_dmd.h src/ff_eam_func.cpp \
-	src/ff_eam_func.h src/ff_eam.h src/ff_eam_potfit.cpp \
-	src/ff_eam_potfit.h src/ff_fs.cpp src/ff_fs.h src/ff.h \
-	src/ff_lj.cpp src/ff_lj.h src/ff_md.cpp src/ff_md.h \
-	src/ff_meam.cpp src/ff_meam.h src/ff_styles.h \
-	src/ff_tersoff.cpp src/ff_tersoff.h src/gcmc.cpp src/gcmc.h \
-	src/global.h src/gmres.cpp src/gmres.h src/import_cfg.cpp \
-	src/import_cfg.h src/import.cpp src/import_eam.cpp \
-	src/import_eam.h src/import.h src/import_styles.h \
-	src/logics.cpp src/logics.h src/ls.cpp src/ls.h \
-	src/macro_extra.h src/macros.h src/main.cpp src/MAPP.cpp \
-	src/mapp_func.h src/MAPP.h src/md_muvt.cpp src/md_muvt.h \
-	src/md_nst.cpp src/md_nst.h src/md_nvt.cpp src/md_nvt.h \
-	src/md_styles.h src/memory.h src/min_cg2_dmd.cpp \
-	src/min_cg2_dmd.h src/min_cg3_dmd.cpp src/min_cg3_dmd.h \
-	src/min_cg.cpp src/min_cg_dmd.cpp src/min_cg_dmd.h \
-	src/min_cg.h src/min.cpp src/min.h src/min_l-bfgs.cpp \
-	src/min_l-bfgs_dmd.cpp src/min_l-bfgs_dmd.h src/min_l-bfgs.h \
-	src/min_styles.h src/min_vec.h src/neighbor.cpp \
-	src/neighbor_dmd.cpp src/neighbor_dmd.h src/neighbor.h \
-	src/neighbor_md.cpp src/neighbor_md.h src/new_min_vec.h \
-	src/pgcmc.cpp src/pgcmc.h src/potfit.cpp src/potfit_funcs.cpp \
-	src/potfit_funcs.h src/potfit.h src/print.h src/py_compat.h \
-	src/random.cpp src/random.h src/sgcmc.cpp src/sgcmc.h \
-	src/thermo_dynamics.cpp src/thermo_dynamics.h \
-	src/thermostat.cpp src/thermostat.h src/timer.cpp src/timer.h \
-	src/var.cpp src/var.h src/var_op.h src/xmath.cpp src/xmath.h
+mapp4py_so_SOURCES = src/MAPP.cpp src/analysis.cpp src/atoms.cpp \
+	src/atoms_dmd.cpp src/atoms_md.cpp src/comm.cpp src/dae.cpp \
+	src/dae_bdf.cpp src/dae_imp.cpp src/dynamic.cpp \
+	src/dynamic_dmd.cpp src/dynamic_md.cpp src/elements.cpp \
+	src/example.cpp src/exchange.cpp src/exchange_neb.cpp \
+	src/export.cpp src/export_cfg_dmd.cpp src/export_cfg_md.cpp \
+	src/ff.cpp src/ff_dmd.cpp src/ff_eam.cpp src/ff_eam_dmd.cpp \
+	src/ff_eam_dmd_extra.cpp src/ff_eam_func.cpp \
+	src/ff_eam_potfit.cpp src/ff_fs.cpp src/ff_lj.cpp \
+	src/ff_md.cpp src/ff_meam.cpp src/ff_tersoff.cpp src/gcmc.cpp \
+	src/gmres.cpp src/import.cpp src/import_cfg.cpp \
+	src/import_eam.cpp src/logics.cpp src/ls.cpp src/main.cpp \
+	src/md_muvt.cpp src/md_nst.cpp src/md_nvt.cpp src/min.cpp \
+	src/min_cg.cpp src/min_cg_dmd.cpp src/min_cg_dmd_old.cpp \
+	src/min_cg_old.cpp src/min_l-bfgs.cpp src/min_l-bfgs_dmd.cpp \
+	src/neighbor.cpp src/neighbor_dmd.cpp src/neighbor_md.cpp \
+	src/pgcmc.cpp src/potfit.cpp src/potfit_funcs.cpp \
+	src/random.cpp src/sgcmc.cpp src/thermo_dynamics.cpp \
+	src/thermostat.cpp src/var.cpp src/xmath.cpp
 ACLOCAL_AMFLAGS = -I m4 --install 
 AM_LDFLAGS = -shared
 all: config.h
@@ -512,6 +478,7 @@ src/$(am__dirstamp):
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/MAPP.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/analysis.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/atoms.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
@@ -520,9 +487,9 @@ src/atoms_dmd.$(OBJEXT): src/$(am__dirstamp) \
 src/atoms_md.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/comm.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/dae.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/dae_bdf.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/dae.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/dae_imp.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/dynamic.$(OBJEXT): src/$(am__dirstamp) \
@@ -539,11 +506,11 @@ src/exchange.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/exchange_neb.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/export.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/export_cfg_dmd.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/export_cfg_md.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/export.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/ff.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/ff_dmd.$(OBJEXT): src/$(am__dirstamp) \
@@ -567,9 +534,9 @@ src/ff_tersoff.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/gcmc.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/gmres.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/import_cfg.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/import.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/import_cfg.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/import_eam.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -577,22 +544,21 @@ src/logics.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/ls.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/main.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/MAPP.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/md_muvt.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/md_nst.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/md_nvt.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/min_cg2_dmd.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/min_cg3_dmd.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/min.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/min_cg.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/min_cg_dmd.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/min.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/min_cg_dmd_old.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/min_cg_old.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/min_l-bfgs.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/min_l-bfgs_dmd.$(OBJEXT): src/$(am__dirstamp) \
@@ -615,7 +581,6 @@ src/thermo_dynamics.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/thermostat.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/timer.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/var.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/xmath.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 
@@ -674,9 +639,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/md_nvt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_cg.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_cg2_dmd.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_cg3_dmd.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_cg_dmd.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_cg_dmd_old.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_cg_old.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_l-bfgs.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/min_l-bfgs_dmd.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/neighbor.Po@am__quote@ # am--include-marker
@@ -689,7 +654,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/sgcmc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/thermo_dynamics.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/thermostat.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/timer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/var.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/xmath.Po@am__quote@ # am--include-marker
 
@@ -1029,9 +993,9 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/md_nvt.Po
 	-rm -f src/$(DEPDIR)/min.Po
 	-rm -f src/$(DEPDIR)/min_cg.Po
-	-rm -f src/$(DEPDIR)/min_cg2_dmd.Po
-	-rm -f src/$(DEPDIR)/min_cg3_dmd.Po
 	-rm -f src/$(DEPDIR)/min_cg_dmd.Po
+	-rm -f src/$(DEPDIR)/min_cg_dmd_old.Po
+	-rm -f src/$(DEPDIR)/min_cg_old.Po
 	-rm -f src/$(DEPDIR)/min_l-bfgs.Po
 	-rm -f src/$(DEPDIR)/min_l-bfgs_dmd.Po
 	-rm -f src/$(DEPDIR)/neighbor.Po
@@ -1044,7 +1008,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/sgcmc.Po
 	-rm -f src/$(DEPDIR)/thermo_dynamics.Po
 	-rm -f src/$(DEPDIR)/thermostat.Po
-	-rm -f src/$(DEPDIR)/timer.Po
 	-rm -f src/$(DEPDIR)/var.Po
 	-rm -f src/$(DEPDIR)/xmath.Po
 	-rm -f Makefile
@@ -1138,9 +1101,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/md_nvt.Po
 	-rm -f src/$(DEPDIR)/min.Po
 	-rm -f src/$(DEPDIR)/min_cg.Po
-	-rm -f src/$(DEPDIR)/min_cg2_dmd.Po
-	-rm -f src/$(DEPDIR)/min_cg3_dmd.Po
 	-rm -f src/$(DEPDIR)/min_cg_dmd.Po
+	-rm -f src/$(DEPDIR)/min_cg_dmd_old.Po
+	-rm -f src/$(DEPDIR)/min_cg_old.Po
 	-rm -f src/$(DEPDIR)/min_l-bfgs.Po
 	-rm -f src/$(DEPDIR)/min_l-bfgs_dmd.Po
 	-rm -f src/$(DEPDIR)/neighbor.Po
@@ -1153,7 +1116,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/sgcmc.Po
 	-rm -f src/$(DEPDIR)/thermo_dynamics.Po
 	-rm -f src/$(DEPDIR)/thermostat.Po
-	-rm -f src/$(DEPDIR)/timer.Po
 	-rm -f src/$(DEPDIR)/var.Po
 	-rm -f src/$(DEPDIR)/xmath.Po
 	-rm -f Makefile

@@ -20,10 +20,15 @@ AC_LANG([C++])
 AX_MPICXX([],[AC_MSG_ERROR(could not find mpi library)])
 CXX=$MPICXX
 LIBS=$MPILIBS" "$LIBS
-AX_LIBMPI_SONAME_FUNC
 
 AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
 
+AC_ARG_ENABLE([user-site],
+  AS_HELP_STRING([--enable-user-site],
+  [use user site-packages directory for installation, if disable use root directory (default is enable)]),
+  ,
+  [enable_user_site=yes]
+)
 
 AX_PYTHON([AC_MSG_ERROR(could not find a bonafide version of python with numpy)])
 

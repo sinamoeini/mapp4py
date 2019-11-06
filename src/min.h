@@ -182,7 +182,8 @@ namespace MAPP_NS
                 if(istep%f.ntally)
                     f.thermo->print(step+istep);
                 f.thermo->fin();
-                fprintf(__out,"%s",__err);
+                //fprintf(__out,"%s",__err);
+                PySys_WriteStdout("%s",__err);
             }
             
         };

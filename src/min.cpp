@@ -106,7 +106,7 @@ void Min::pre_run_chk(Atoms* __atoms,ForceField* __ff)
         if(!err_msg.empty() && ntally)
         {
             err_msg="Warning:"+err_msg+"\n";
-            fprintf(MAPP::mapp_out,"%s",err_msg.c_str());
+            MAPP::print_stdout("%s",err_msg.c_str());
         }
     }
 }

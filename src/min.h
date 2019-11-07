@@ -183,7 +183,7 @@ namespace MAPP_NS
                 if(istep%f.ntally)
                     f.thermo->print(step+istep);
                 f.thermo->fin();
-                fprintf(MAPP::mapp_out,"%s",__err);
+                MAPP::print_stdout("%s",__err);
             }
             
         };

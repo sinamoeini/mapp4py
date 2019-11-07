@@ -1,6 +1,12 @@
 #ifndef __MAPP__MAPP__
 #define __MAPP__MAPP__
+#include <Python.h>
+#include "py_compat.h"
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
+#include <numpy/arrayobject.h>
 #include <stdio.h>
+
 struct _object;
 typedef _object PyObject;
 typedef struct PyMethodDef PyMethodDef;
@@ -26,11 +32,18 @@ namespace MAPP_NS
         
         static FILE* mapp_out;
         static FILE* mapp_err;
+
+        static void print_stdout(const char* str)
+        {
+            //fprintf(mapp_out,"%s",str);
+            PySys_FormatStdout("%s",str);
+        }
         
         template <class... Vs>
-        static void mapp_printf(const char* format,Vs... vs)
+        static void print_stdout(const char* format,Vs... vs)
         {
-            fprintf(mapp_out,format,vs...);
+            //fprintf(mapp_out,format,vs...);
+            PySys_FormatStdout(format,vs...);
         }
         
         

@@ -226,13 +226,13 @@ void DAEBDF::run(type0 t_tot)
     
     if(ntally)
     {
-        fprintf(MAPP::mapp_out,"nonlinear equations:\taccepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
-        fprintf(MAPP::mapp_out,"interpolations:\t\taccepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
-        fprintf(MAPP::mapp_out,"integrations:\t\taccepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
-        fprintf(MAPP::mapp_out,"error minimizations:\t%d\n",nerr_mins);
-        fprintf(MAPP::mapp_out,"maximum order: %d\n",__max_q);
-        fprintf(MAPP::mapp_out,"maximum timestep: %e\n",__max_dt);
-        fprintf(MAPP::mapp_out,"minimum timestep: %e\n",__min_dt);
+        MAPP::print_stdout("nonlinear equations:\taccepted = %d rejected = %d\n",nnonlin_acc,nnonlin_rej);
+        MAPP::print_stdout("interpolations:\t\taccepetd = %d rejected = %d\n",nintpol_acc,nintpol_rej);
+        MAPP::print_stdout("integrations:\t\taccepetd = %d rejected = %d\n",ninteg_acc,ninteg_rej);
+        MAPP::print_stdout("error minimizations:\t%d\n",nerr_mins);
+        MAPP::print_stdout("maximum order: %d\n",__max_q);
+        MAPP::print_stdout("maximum timestep: %e\n",__max_dt);
+        MAPP::print_stdout("minimum timestep: %e\n",__min_dt);
     }
     
     

@@ -31,34 +31,34 @@ ThermoDynamics::~ThermoDynamics()
 void ThermoDynamics::init()
 {
     int n=nqs*(l_double+1)+l_int+1+nqs;
-    fprintf(MAPP::mapp_out," ");
+    MAPP::print_stdout(" ");
     for(int i=0;i<n;i++)
-        fprintf(MAPP::mapp_out,THERMO_LINE);
-    fprintf(MAPP::mapp_out," \n");
+        MAPP::print_stdout(THERMO_LINE);
+    MAPP::print_stdout(" \n");
     
     
-    fprintf(MAPP::mapp_out,THERMO_DLMTR);
+    MAPP::print_stdout(THERMO_DLMTR);
     print_header(MAPP::mapp_out,"step",l_int+1);
     
     for(int i=0;i<nqs;i++)
     {
-        fprintf(MAPP::mapp_out,THERMO_DLMTR);
+        MAPP::print_stdout(THERMO_DLMTR);
         qs[i].print_header(MAPP::mapp_out,l_double+1);
     }
-    fprintf(MAPP::mapp_out,THERMO_DLMTR"\n");
+    MAPP::print_stdout(THERMO_DLMTR"\n");
     
     
-    fprintf(MAPP::mapp_out,THERMO_DLMTR);
+    MAPP::print_stdout(THERMO_DLMTR);
     for(int i=0;i<l_int+1;i++)
-        fprintf(MAPP::mapp_out,THERMO_LINE);
+        MAPP::print_stdout(THERMO_LINE);
     for(int i=0;i<nqs;i++)
     {
-        fprintf(MAPP::mapp_out,THERMO_DLMTR);
+        MAPP::print_stdout(THERMO_DLMTR);
         for(int j=0;j<l_double+1;j++)
-            fprintf(MAPP::mapp_out,THERMO_LINE);
+            MAPP::print_stdout(THERMO_LINE);
     }
     
-    fprintf(MAPP::mapp_out,THERMO_DLMTR"\n");
+    MAPP::print_stdout(THERMO_DLMTR"\n");
     
 }
 /*--------------------------------------------
@@ -66,11 +66,11 @@ void ThermoDynamics::init()
  --------------------------------------------*/
 void ThermoDynamics::print(int step_no)
 {
-    fprintf(MAPP::mapp_out,THERMO_DLMTR" %0*d ",l_int-1,step_no);
+    MAPP::print_stdout(THERMO_DLMTR" %0*d ",l_int-1,step_no);
     for(int i=0;i<nqs;i++)
-        fprintf(MAPP::mapp_out,THERMO_DLMTR"%+*.*e ",l_double,precision,*qs[i].ptr);
+        MAPP::print_stdout(THERMO_DLMTR"%+*.*e ",l_double,precision,*qs[i].ptr);
     
-    fprintf(MAPP::mapp_out,THERMO_DLMTR"\n");
+    MAPP::print_stdout(THERMO_DLMTR"\n");
 }
 /*--------------------------------------------
  finish after a run
@@ -78,10 +78,10 @@ void ThermoDynamics::print(int step_no)
 void ThermoDynamics::fin()
 {
     int n=nqs*(l_double+1)+l_int+1+nqs;
-    fprintf(MAPP::mapp_out," ");
+    MAPP::print_stdout(" ");
     for(int i=0;i<n;i++)
-        fprintf(MAPP::mapp_out,THERMO_LINE);
-    fprintf(MAPP::mapp_out," \n");
+        MAPP::print_stdout(THERMO_LINE);
+    MAPP::print_stdout(" \n");
 }
 /*--------------------------------------------
  

@@ -27,6 +27,13 @@ namespace MAPP_NS
         static FILE* mapp_out;
         static FILE* mapp_err;
         
+        template <class... Vs>
+        static void mapp_printf(const char* format,Vs... vs)
+        {
+            fprintf(mapp_out,format,vs...);
+        }
+        
+        
         static PyObject* pause_out(PyObject* =NULL);
         static PyObject* resume_out(PyObject* =NULL);
         

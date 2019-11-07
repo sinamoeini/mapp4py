@@ -529,7 +529,7 @@ void  MinCG::__run(LS* ls,int nsteps)
         f0_f0=f_f;
     }
     
-    MinHelper::ThermoHandler<OUT>::fin(*this,step,istep,MAPP::mapp_out,err_msgs[err]);
+    MinHelper::ThermoHandler<OUT>::fin(*this,step,istep,err_msgs[err]);
     MinHelper::ExportHandler<XOUT>::fin(*this,step,istep);
     
     atoms->step+=istep;

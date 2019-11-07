@@ -7,6 +7,7 @@
 #include "export_styles.h"
 #include "xmath.h"
 #include "thermo_dynamics.h"
+#include "MAPP.h"
 namespace MAPP_NS
 {
     namespace MinHelper
@@ -154,7 +155,7 @@ namespace MAPP_NS
             static void print(F&,int&,int&)
             {}
             template<class F>
-            static void fin(F&,int&,int&,FILE*&,const char*&)
+            static void fin(F&,int&,int&,const char*&)
             {}
         };
         
@@ -177,12 +178,12 @@ namespace MAPP_NS
             }
             
             template<class F>
-            static void fin(F& f,int& step,int& istep,FILE*& __out,const char*& __err)
+            static void fin(F& f,int& step,int& istep,const char*& __err)
             {
                 if(istep%f.ntally)
                     f.thermo->print(step+istep);
                 f.thermo->fin();
-                fprintf(__out,"%s",__err);
+                fprintf(MAPP::mapp_out,"%s",__err);
             }
             
         };

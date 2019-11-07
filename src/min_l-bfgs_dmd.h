@@ -211,7 +211,7 @@ void MinLBFGSDMD::__run(LS* ls,int nsteps)
             gamma=alpha_m*(h*f0-h*f)/(f*f+f0*f0-2.0*(f*f0));
     }
     
-    MinHelper::ThermoHandler<OUT>::fin(*this,step,istep,MAPP::mapp_out,err_msgs[err]);
+    MinHelper::ThermoHandler<OUT>::fin(*this,step,istep,err_msgs[err]);
     MinHelper::ExportHandler<XOUT>::fin(*this,step,istep);
     
     atoms->step+=istep;

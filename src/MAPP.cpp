@@ -1,4 +1,8 @@
 #include "MAPP.h"
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
+#include <numpy/arrayobject.h>
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

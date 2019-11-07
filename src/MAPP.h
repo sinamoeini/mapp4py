@@ -2,9 +2,6 @@
 #define __MAPP__MAPP__
 #include <Python.h>
 #include "py_compat.h"
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#define PY_ARRAY_UNIQUE_SYMBOL ARRAY_API
-#include <numpy/arrayobject.h>
 #include <stdio.h>
 
 struct _object;

@@ -2,6 +2,7 @@
 #define __MAPP__thermo_dynamics__
 #include "global.h"
 #include <string>
+#include "MAPP.h"
 
 namespace MAPP_NS
 {
@@ -22,7 +23,7 @@ namespace MAPP_NS
         const char* name;
         const int name_lngth;
         type0 const * const ptr;
-        void print_header(FILE*,int);
+        void print_header(int);
     };
 }
 
@@ -74,12 +75,12 @@ namespace MAPP_NS
         
         
         template<int N>
-        static void print_header(FILE* __out,const char (&name)[N],int lngth)
+        static void print_header(const char (&name)[N],int lngth)
         {
             if(N-1<=lngth)
-                fprintf(__out,"%*s%*s",(lngth-lngth/2)+(N-1)/2,name,lngth/2-(N-1)/2,"");
+                MAPP::print_stdout("%*s%*s",(lngth-lngth/2)+(N-1)/2,name,lngth/2-(N-1)/2,"");
             else
-                for(int i=0;i<lngth;i++) fprintf(__out,"%c",name[i]);
+                for(int i=0;i<lngth;i++) MAPP::print_stdout("%c",name[i]);
         }
         
     };

@@ -1,5 +1,4 @@
 #include "thermo_dynamics.h"
-#include "MAPP.h"
 #include "memory.h"
 #include "print.h"
 #include <math.h>
@@ -38,12 +37,12 @@ void ThermoDynamics::init()
     
     
     MAPP::print_stdout(THERMO_DLMTR);
-    print_header(MAPP::mapp_out,"step",l_int+1);
+    print_header("step",l_int+1);
     
     for(int i=0;i<nqs;i++)
     {
         MAPP::print_stdout(THERMO_DLMTR);
-        qs[i].print_header(MAPP::mapp_out,l_double+1);
+        qs[i].print_header(l_double+1);
     }
     MAPP::print_stdout(THERMO_DLMTR"\n");
     
@@ -146,12 +145,12 @@ ThermoQuantity& ThermoQuantity::operator =(ThermoQuantity&& r)
 /*--------------------------------------------
  
  --------------------------------------------*/
-void ThermoQuantity::print_header(FILE* __out,int lngth)
+void ThermoQuantity::print_header(int lngth)
 {
     
     if(name_lngth<=lngth)
-        fprintf(__out,"%*s%*s",(lngth-lngth/2)+name_lngth/2,name,lngth/2-name_lngth/2,"");
+        MAPP::print_stdout("%*s%*s",(lngth-lngth/2)+name_lngth/2,name,lngth/2-name_lngth/2,"");
     else
-        for(int i=0;i<lngth;i++) fprintf(__out,"%c",name[i]);
+        for(int i=0;i<lngth;i++) MAPP::print_stdout("%c",name[i]);
 }
 

@@ -33,14 +33,14 @@ namespace MAPP_NS
         static void print_stdout(const char* str)
         {
             //fprintf(mapp_out,"%s",str);
-            PySys_FormatStdout("%s",str);
+            PySys_WriteStdout("%s",str);
         }
         
         template <class... Vs>
         static void print_stdout(const char* format,Vs... vs)
         {
             //fprintf(mapp_out,format,vs...);
-            PySys_FormatStdout(format,vs...);
+            PySys_WriteStdout(format,vs...);
         }
         
         

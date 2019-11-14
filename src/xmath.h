@@ -1197,7 +1197,7 @@ namespace MAPP_NS
             {
                 T MC[dim-1][dim-1];
                 __cofac<0,0,dim-i,dim-1>::func(M,MC[0]);
-                return __POW<dim-i>::func(-1)*M[i]*__MSQ_det<dim-1,dim-1>::func(MC[0])+
+                return __POW<dim-i>::func(-1)*M[dim-i]*__MSQ_det<dim-1,dim-1>::func(MC[0])+
                 __MSQ_det<i-1,dim>::func(M);
             }
         };

@@ -1097,13 +1097,13 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
             int* __N=N[i];
             Algebra::Do<__dim__>::func([&min_cell,&__N,&len_cell](int j)
             {
-                if(__N[j]>0)
+                if(__N[j]>=0)
                 {
                     len_cell[j]+=__N[j];
                 }
                 else
                 {
-                    min_cell[j]+=__N[j];
+                    min_cell[j]+=__N[j]+1;
                     len_cell[j]-=__N[j];
                 }
             });

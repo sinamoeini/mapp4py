@@ -79,6 +79,42 @@ ndynamic_vecs(0)
     x_dof->empty(true);
 }
 /*--------------------------------------------
+copy constructor
+--------------------------------------------*/
+Atoms::Atoms(const Atoms& other):
+elements(Elements()),
+comm(other.comm),
+world(comm.world),
+s_lo(comm.s_lo),
+s_hi(comm.s_hi),
+comm_size(Communication::get_size(comm.world)),
+comm_rank(Communication::get_rank(comm.world)),
+natms_lcl(other.natms_lcl),
+natms_ph(other.natms_ph),
+natms(other.natms),
+step(other.step),
+kB(other.kB),
+hP(other.hP),
+vol(other.vol),
+depth_inv{DESIG(__dim__,0.0)},
+H{DESIG2(__dim__,__dim__,0.0)},
+B{DESIG2(__dim__,__dim__,0.0)},
+vecs(NULL),
+nvecs(0),
+dynamic_vecs(NULL),
+ndynamic_vecs(0)
+{
+    memcpy(&depth_inv[0],&other.depth_inv[0],__dim__*sizeof(type0));
+    memcpy(&H[0][0],&other.H[0][0],__dim__*__dim__*sizeof(type0));
+    memcpy(&B[0][0],&other.B[0][0],__dim__*__dim__*sizeof(type0));
+    memcpy(&__h,&other.__h[0],__nvoigt__*sizeof(type0));
+    memcpy(&__b,&other.__b[0],__nvoigt__*sizeof(type0));
+
+    x=new Vec<type0>(this,*other.x);
+    id= new Vec<id_type>(this,*other.id);
+    x_dof=new Vec<bool>(this,*other.x_dof);
+}
+/*--------------------------------------------
  destructor
  --------------------------------------------*/
 Atoms::~Atoms()

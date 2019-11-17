@@ -41,6 +41,7 @@ namespace MAPP_NS
         void* end()const{return data+vec_sz*byte_sz;};
 
         vec(class Atoms*,int,size_t,const char*);
+        vec(class Atoms*,const vec&);
         virtual ~vec();
         
         void change_dim(int);
@@ -73,6 +74,7 @@ namespace MAPP_NS
         virtual void init_dump();
         virtual void fin_dump();
         virtual void print(FILE*,int)=0;
+        byte* def_val_buff(){return NULL;};
     };
 }
 #include <cstring>
@@ -87,11 +89,24 @@ inline void vec::change_dim(int new_dim)
     int new_byte_sz=(byte_sz/dim)*new_dim;
     int min_byte_sz=MIN(new_byte_sz,byte_sz);
     byte* __data=new byte[new_byte_sz*vec_cpcty];
-    for(int i=0;i<vec_sz;i++)
-        memcpy(__data+i*new_byte_sz,data+i*byte_sz,min_byte_sz);
-    
-    delete [] data;
-    data=__data;
+    if(!is_empty())
+    {
+        byte* __def_val_buff=def_val_buff();
+        if(__def_val_buff && new_dim > dim)
+        {
+            int chnk=byte_sz/dim;
+            for(int i=0;i<vec_sz*new_dim;i++)
+                memcpy(__data+i*chnk,__def_val_buff,chnk);
+        }
+        delete [] __def_val_buff;
+        
+        for(int i=0;i<vec_sz;i++)
+            memcpy(__data+i*new_byte_sz,data+i*byte_sz,min_byte_sz);
+        
+        
+        delete [] data;
+        data=__data;
+    }
     byte_sz=new_byte_sz;
     dim=new_dim;
 }
@@ -399,6 +414,7 @@ namespace MAPP_NS
         T empty_val;
         Vec(Atoms*,int,const char*);
         Vec(Atoms*,int);
+        Vec(Atoms*,const Vec&);
         ~Vec();
         unsigned int size()const{return dim*vec_sz;}
         static MPI_Datatype MPI_T;
@@ -499,6 +515,7 @@ namespace MAPP_NS
         int ndynamic_vecs;
         
         Atoms(MPI_Comm&);
+        Atoms(const Atoms&);
         virtual ~Atoms();
         vec* find_vec(const char*);
         void push(vec*);
@@ -595,6 +612,27 @@ data_dump(NULL)
     resize(atoms->natms_lcl);
 }
 /*--------------------------------------------
+  copy constructor
+ --------------------------------------------*/
+inline vec::vec(Atoms* __atoms,const vec& other):
+__is_empty__(other.__is_empty__),
+dim(other.dim),
+byte_sz(other.byte_sz),
+vec_sz(other.vec_sz),
+vec_cpcty(other.vec_cpcty),
+atoms(__atoms),
+name(other.name),
+data(NULL),
+data_dump(NULL)
+{
+    atoms->push(this);
+    if(!other.is_empty() && vec_cpcty)
+    {
+        data=new byte[vec_cpcty*byte_sz];
+        memcpy(data,other.data,byte_sz*vec_sz);
+    }
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
 inline vec::~vec()
@@ -641,6 +679,15 @@ template<typename T>
 Vec<T>::Vec(Atoms* __atoms,int __dim):
 vec(__atoms,__dim,sizeof(T),NULL)
 {}
+/*--------------------------------------------
+ constructor without name;
+ --------------------------------------------*/
+template<typename T>
+Vec<T>::Vec(Atoms* __atoms,const Vec<T>& other):
+vec(__atoms,other)
+{
+    empty_val=other.empty_val;
+}
 /*--------------------------------------------
  destructor
  --------------------------------------------*/

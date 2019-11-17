@@ -13,6 +13,18 @@ pe(NAN)
     x_d->empty(0.0);
 }
 /*--------------------------------------------
+ copy constructor
+ --------------------------------------------*/
+AtomsMD::AtomsMD(const AtomsMD& other):
+Atoms(other),
+S_pe{DESIG2(__dim__,__dim__,NAN)},
+pe(other.pe)
+{
+    memcpy(&S_pe[0][0],&other.S_pe[0][0],__dim__*__dim__*sizeof(type0));
+    elem=new Vec<elem_type>(this,*other.elem);
+    x_d=new Vec<type0>(this,*other.x_d);
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
 AtomsMD::~AtomsMD()

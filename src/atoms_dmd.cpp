@@ -9,6 +9,7 @@ S_fe{DESIG2(__dim__,__dim__,NAN)},
 fe(NAN),
 pe(NAN),
 s(NAN),
+max_alpha(NAN),
 c_dim(__c_dim),
 N(__N),
 xi(new type0[__N]),
@@ -24,6 +25,46 @@ temp(NAN)
 
     alpha_dof->empty(true);
     c_dof->empty(true);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+AtomsDMD::AtomsDMD(const AtomsDMD& other,int __c_dim):
+Atoms(other),
+S_fe{DESIG2(__dim__,__dim__,NAN)},
+fe(other.fe),
+pe(other.pe),
+s(other.s),
+max_alpha(other.max_alpha),
+c_dim(__c_dim),
+N(other.N),
+xi(new type0[other.N]),
+wi(new type0[other.N]),
+temp(other.temp)
+{
+    memcpy(&S_fe[0][0],&other.S_fe[0][0],__dim__*__dim__*sizeof(type0));
+    XMath::quadrature_hg(N,xi,wi);
+    elem=new Vec<elem_type>(this,*other.elem);
+    alpha=new DMDVec<type0>(this,*other.alpha);
+    c=new DMDVec<type0>(this,*other.c);
+    alpha_dof=new DMDVec<bool>(this,*other.alpha_dof);
+    c_dof=new DMDVec<bool>(this,*other.c_dof);
+    
+    if(c_dim!=other.c_dim)
+    {
+        elem->change_dim(c_dim);
+        alpha->change_dim(c_dim);
+        c->change_dim(c_dim);
+        alpha_dof->change_dim(c_dim);
+        c_dof->change_dim(c_dim);
+    }
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+AtomsDMD::AtomsDMD(const AtomsDMD& other):
+AtomsDMD(other,other.c_dim)
+{
 }
 /*--------------------------------------------
  

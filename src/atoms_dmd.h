@@ -29,6 +29,8 @@ namespace MAPP_NS
 
         void DO(PyObject*);
         AtomsDMD(MPI_Comm&,int,int);
+        AtomsDMD(const AtomsDMD&,int);
+        AtomsDMD(const AtomsDMD&);
         ~AtomsDMD();
         void update_max_alpha();
         AtomsDMD& operator=(const Atoms&);
@@ -88,8 +90,8 @@ namespace MAPP_NS
     public:
         const T def_val;
         DMDVec(class AtomsDMD*,T,const char*);
-    
         DMDVec(class AtomsDMD*,T);
+        DMDVec(class AtomsDMD*,const DMDVec&);
         ~DMDVec(){}
         int ndim_dump()const{return static_cast<int>(atoms_dmd->elements.nelems);};
         void init_dump();
@@ -97,6 +99,7 @@ namespace MAPP_NS
         void init_do();
         void fin_do();
         void print(FILE*,int);
+        byte* def_val_buff();
     };
 }
 /*--------------------------------------------
@@ -117,6 +120,16 @@ inline DMDVec<T>::DMDVec(class AtomsDMD* __atoms,T __def_val):
 Vec<T>(__atoms,__atoms->c_dim),
 def_val(__def_val),
 atoms_dmd(__atoms)
+{
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline DMDVec<T>::DMDVec(class AtomsDMD* __atoms,const DMDVec& other):
+Vec<T>(__atoms,other),
+atoms_dmd(__atoms),
+def_val(other.def_val)
 {
 }
 /*--------------------------------------------
@@ -227,6 +240,16 @@ inline void DMDVec<T>::fin_do()
     vec::byte_sz=(vec::byte_sz*vec::dim)/dump_dim;
     delete [] vec::data_dump;
     vec::data_dump=NULL;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+template<typename T>
+inline byte* DMDVec<T>::def_val_buff()
+{
+    byte* __def_val_buff=new byte[sizeof(T)];
+    memcpy(__def_val_buff,&def_val,sizeof(T));
+    return __def_val_buff;
 }
 /*------------------------------------------------------------------------------------------------
  

@@ -17,6 +17,7 @@ namespace MAPP_NS
         int count_elem(elem_type);
         void DO(PyObject*);
         AtomsMD(MPI_Comm&);
+        AtomsMD(const AtomsMD&);
         ~AtomsMD();
         AtomsMD& operator=(const Atoms&);
         void x_d2s_d_dump();

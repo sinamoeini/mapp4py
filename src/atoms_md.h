@@ -19,6 +19,8 @@ namespace MAPP_NS
         AtomsMD(MPI_Comm&);
         AtomsMD(const AtomsMD&);
         ~AtomsMD();
+        AtomsMD& operator=(const AtomsMD&);
+        void add(const AtomsMD&);
         AtomsMD& operator=(const Atoms&);
         void x_d2s_d_dump();
         typedef struct
@@ -33,6 +35,7 @@ namespace MAPP_NS
         static int __init__(PyObject*, PyObject*,PyObject*);
         static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
         static void __dealloc__(PyObject*);
+        static PyObject* __add__(PyObject*,PyObject*,PyObject*);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();
@@ -45,6 +48,7 @@ namespace MAPP_NS
         static void ml_add_elem(PyMethodDef&);
         static void ml_import_cfg(PyMethodDef&);
         static void ml_rdf(PyMethodDef&);
+        
         
         static int setup_tp();
     };

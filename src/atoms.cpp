@@ -126,6 +126,51 @@ Atoms::~Atoms()
     while(nvecs) delete vecs[0];
 }
 /*--------------------------------------------
+
+ --------------------------------------------*/
+Atoms& Atoms::operator=(const Atoms& r)
+{
+    this->~Atoms();
+    new (this) Atoms(r);
+    return *this;
+}
+/*--------------------------------------------
+
+ --------------------------------------------*/
+Atoms& Atoms::operator+(const Atoms& r)
+{
+    if(natms_ph!=0 || r.natms_ph!=0)
+        throw std::string("atom objects have phantom atoms");
+    int is_same;
+    MPI_Comm_compare(world,r.world,&is_same);
+    if(is_same!=MPI_IDENT)
+        throw std::string("atom objects do not belong to same world");
+        
+    add(r);
+    natms_lcl+=r.natms_lcl;
+    natms+=r.natms;
+    for(int ivec=0;ivec<nvecs;ivec++)
+        vecs[ivec]->resize(natms_lcl);
+
+    reset_domain();
+    return *this;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void Atoms::add(const Atoms& other)
+{
+    id_type max_id=get_max_id();
+    x->append(*other.x,0.0);
+    id->append(*other.id,0);
+    x_dof->append(*other.x_dof,true);
+    
+    id_type* id_ptr=id->begin()+natms_lcl;
+    for(int iatm=0;iatm<other.natms_lcl;iatm++)
+        id_ptr[iatm]+=max_id;
+    
+}
+/*--------------------------------------------
  use this function after changing H
  --------------------------------------------*/
 void Atoms::update_H()
@@ -260,6 +305,18 @@ void Atoms::s2x_all()
 void Atoms::x2s_dump()
 {
     Algebra::X2S<__dim__>(__b,natms,x->begin_dump());
+}
+/*--------------------------------------------
+
+--------------------------------------------*/
+id_type Atoms::get_max_id()
+{
+    id_type* __id=id->begin();
+    id_type max_id_lcl=0;
+    id_type max_id;
+    for(int i=0;i<natms_lcl;i++) max_id_lcl=MAX(max_id_lcl,__id[i]);
+    MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<id_type>::MPI_T,MPI_MAX,world);
+    return max_id;
 }
 /*--------------------------------------------
  insert a number of atoms
@@ -930,14 +987,6 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
         int n=1;
         Algebra::Do<__dim__>::func([&n,&N](int i){n*=N[i];});
         
-        id_type* __id=atoms->id->begin();
-        int natms_lcl=atoms->natms_lcl;
-        id_type max_id_lcl=0;
-        id_type max_id;
-        for(int i=0;i<natms_lcl;i++) max_id_lcl=MAX(max_id_lcl,__id[i]);
-        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<id_type>::MPI_T,MPI_MAX,atoms->world);
-        
-        
         
         int nvecs=atoms->nvecs;
         vec** vecs=atoms->vecs;
@@ -953,7 +1002,9 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
             P[__dim__-2-i]*=N[__dim__-1-j];
         });
         
-        
+        id_type max_id=atoms->get_max_id();
+        id_type* __id=atoms->id->begin();
+        int natms_lcl=atoms->natms_lcl;
         int no;
         id_type did;
         type0* __x=atoms->x->begin()+natms_lcl*__dim__;
@@ -1091,19 +1142,16 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
          rotating the atoms for the new coordinates system
          finding the maximum id
          */
-        id_type* __id=atoms->id->begin();
+        
         type0* __x=atoms->x->begin();
         type0 __x_tmp[__dim__];
         int natms_lcl=atoms->natms_lcl;
-        id_type max_id_lcl=0;
-        id_type max_id;
+        id_type max_id=atoms->get_max_id();
         for(int i=0;i<natms_lcl;i++,__x+=__dim__)
         {
             Algebra::V_eq<__dim__>(__x,__x_tmp);
             Algebra::MSQ_mul_V(Q,__x_tmp,__x);
-            max_id_lcl=MAX(max_id_lcl,__id[i]);
         }
-        MPI_Allreduce(&max_id_lcl,&max_id,1,Vec<id_type>::MPI_T,MPI_MAX,atoms->world);
         
         
         
@@ -1157,7 +1205,7 @@ void Atoms::ml_cell_change(PyMethodDef& tp_methods)
         
         int is[__dim__];
         type0 dx[__dim__];
-        __id=atoms->id->begin();
+        id_type* __id=atoms->id->begin();
         __x=atoms->x->begin();
         int icurs=1;
         for(int i=0;i<tot_cell;i++)

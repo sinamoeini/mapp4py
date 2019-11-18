@@ -33,6 +33,36 @@ AtomsMD::~AtomsMD()
     delete elem;
 }
 /*--------------------------------------------
+
+ --------------------------------------------*/
+AtomsMD& AtomsMD::operator=(const AtomsMD& r)
+{
+    this->~AtomsMD();
+    new (this) AtomsMD(r);
+    return *this;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsMD::add(const AtomsMD& other)
+{
+    Atoms::add(other);
+    
+    elem->append(*other.elem,0);
+    x_d->append(*other.x_d,0.0);
+    
+    int __nelems=static_cast<int>(other.elements.__nelems);
+    elem_type* elem_map=__nelems==0? NULL:new elem_type[__nelems];
+    for(int i=0;i<__nelems;i++)
+        elem_map[i]=elements.add_type(other.elements.masses[i],other.elements.names[i].c_str());
+    
+    elem_type* elem_ptr=elem->begin()+natms_lcl;
+    for(int iatm=0;iatm<other.natms_lcl;iatm++)
+        elem_ptr[iatm]=elem_map[elem_ptr[iatm]];
+    
+    delete [] elem_map;
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
 AtomsMD& AtomsMD::operator=(const Atoms& r)
@@ -240,6 +270,14 @@ void AtomsMD::__dealloc__(PyObject* self)
     delete __self->atoms;
     delete __self;
 }
+/*--------------------------------------------
+
+--------------------------------------------*/
+PyObject* AtomsMD::__add__(PyObject* self,PyObject* args,PyObject* kwds)
+{
+
+    return self;
+}
 /*--------------------------------------------*/
 PyTypeObject AtomsMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 /*--------------------------------------------*/
@@ -247,7 +285,7 @@ int AtomsMD::setup_tp()
 {
     TypeObject.tp_name="mapp4py.md.atoms";
     TypeObject.tp_doc="container class";
-    
+    PyNumberMethods
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
     TypeObject.tp_basicsize=sizeof(Object);
     

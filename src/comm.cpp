@@ -127,22 +127,34 @@ world(__world)
 /*--------------------------------------------
  
  --------------------------------------------*/
-Communication::Communication(const Communication& r):
-rank(r.rank),
-size(r.size),
-skin(r.skin),
-xchng_id(r.xchng_id),
-world(r.world)
+Communication::Communication(const Communication& other):
+rank(other.rank),
+size(other.size),
+skin(other.skin),
+xchng_id(other.xchng_id),
+world(other.world)
 {
-    for(int i=0;i<__dim__;i++)
-    {
-        coords[i]=r.coords[i];
-        dims[i]=r.dims[i];
-        neigh[i][0]=r.neigh[i][0];
-        neigh[i][1]=r.neigh[i][1];
-        s_lo[i]=r.s_lo[i];
-        s_hi[i]=r.s_hi[i];
-    }
+    Algebra::V_eq<__dim__>(other.coords,coords);
+    Algebra::V_eq<__dim__>(other.dims,dims);
+    Algebra::V_eq<2*__dim__>(&other.neigh[0][0],&neigh[0][0]);
+    Algebra::V_eq<__dim__>(other.s_lo,s_lo);
+    Algebra::V_eq<__dim__>(other.s_hi,s_hi);
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+Communication::Communication(Communication&& other):
+rank(other.rank),
+size(other.size),
+skin(other.skin),
+xchng_id(other.xchng_id),
+world(other.world)
+{
+    Algebra::V_eq<__dim__>(other.coords,coords);
+    Algebra::V_eq<__dim__>(other.dims,dims);
+    Algebra::V_eq<2*__dim__>(&other.neigh[0][0],&neigh[0][0]);
+    Algebra::V_eq<__dim__>(other.s_lo,s_lo);
+    Algebra::V_eq<__dim__>(other.s_hi,s_hi);
 }
 /*--------------------------------------------
  

@@ -16,7 +16,7 @@ namespace MAPP_NS
         type0 s;
 
         type0 max_alpha;
-        const int c_dim;
+        int c_dim;
         
         const int N;
         type0* xi;
@@ -29,11 +29,14 @@ namespace MAPP_NS
 
         void DO(PyObject*);
         AtomsDMD(MPI_Comm&,int,int);
-        AtomsDMD(const AtomsDMD&,int);
         AtomsDMD(const AtomsDMD&);
         ~AtomsDMD();
+        AtomsDMD& operator=(const AtomsDMD&);
+        AtomsDMD& operator+(const AtomsDMD&);
+        void add(const AtomsDMD&);
         void update_max_alpha();
         AtomsDMD& operator=(const Atoms&);
+        
         
         type0 vac_msd();
         type0* ave_comp();

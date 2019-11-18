@@ -50,6 +50,7 @@ namespace MAPP_NS
         Communication(MPI_Comm,type0(&)[__dim__][__dim__],type0=0.5);
         Communication(MPI_Comm,type0=0.5);
         Communication(const Communication&);
+        Communication(Communication&&);
         Communication& operator=(const Communication&);
     };
 }

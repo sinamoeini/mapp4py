@@ -74,7 +74,6 @@ namespace MAPP_NS
         virtual void init_dump();
         virtual void fin_dump();
         virtual void print(FILE*,int)=0;
-        byte* def_val_buff(){return NULL;};
     };
 }
 #include <cstring>
@@ -91,19 +90,8 @@ inline void vec::change_dim(int new_dim)
     byte* __data=new byte[new_byte_sz*vec_cpcty];
     if(!is_empty())
     {
-        byte* __def_val_buff=def_val_buff();
-        if(__def_val_buff && new_dim > dim)
-        {
-            int chnk=byte_sz/dim;
-            for(int i=0;i<vec_sz*new_dim;i++)
-                memcpy(__data+i*chnk,__def_val_buff,chnk);
-        }
-        delete [] __def_val_buff;
-        
         for(int i=0;i<vec_sz;i++)
             memcpy(__data+i*new_byte_sz,data+i*byte_sz,min_byte_sz);
-        
-        
         delete [] data;
         data=__data;
     }
@@ -424,6 +412,9 @@ namespace MAPP_NS
         T* begin_dump()const{return reinterpret_cast<T*>(data_dump);};
         void empty(const T);
         void fill();
+        void change_dim(int,const T);
+        void append(const Vec&,const T);
+        void resize(int,const T);
         virtual void print(FILE*,int);
     };
 }
@@ -517,6 +508,10 @@ namespace MAPP_NS
         Atoms(MPI_Comm&);
         Atoms(const Atoms&);
         virtual ~Atoms();
+        Atoms& operator=(const Atoms&);
+        Atoms& operator+(const Atoms&);
+        
+        void add(const Atoms&);
         vec* find_vec(const char*);
         void push(vec*);
         void pop(vec*);
@@ -527,6 +522,7 @@ namespace MAPP_NS
         void x2s_all();
         void s2x_all();
         void x2s_dump();
+        id_type get_max_id();
         
         void insert(byte*,vec**,int,int);
         void add();
@@ -716,7 +712,7 @@ inline void Vec<T>::fill()
     if(__is_empty__)
     {
         reserve(atoms->natms_lcl+atoms->natms_ph);
-        resize(atoms->natms_lcl);
+        vec::resize(atoms->natms_lcl);
     }
     
     
@@ -724,6 +720,76 @@ inline void Vec<T>::fill()
     T* __data=begin();
     for(int i=0;i<dim*vec_sz;i++) __data[i]=empty_val;
     __is_empty__=false;
+}
+/*--------------------------------------------
+ this function changes dimension of the vector
+ if __dim is bigger than the original it will
+ assign fill_val to the rest of components.
+ Otherwise, it will discard extra ones.
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::change_dim(int __dim,const T fill_val)
+{
+    int old_dim=dim;
+    vec::change_dim(__dim);
+    if(__dim<=old_dim)
+        return;
+    
+    T* __data=reinterpret_cast<T*>(data);
+    for(int i=0;i<vec_sz;i++,__data+=dim)
+        for(int j=old_dim;j<dim;j++)
+            __data[j]=fill_val;
+}
+/*--------------------------------------------
+ like regular resize, but extra values will
+ be filled in
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::resize(int n,const T fill_val)
+{
+    int n0=vec_sz*dim;
+    vec::resize(n);
+    T* __data=reinterpret_cast<T*>(data);
+    int n1=vec_sz*dim;
+    for(int i=n0;i<n1;i++)
+        __data[i]=fill_val;
+}
+/*--------------------------------------------
+ append a vec to the bottom of this vec
+ 
+ high level function
+ NOT EFFICIENT DO NOT USE FREQUENTLY
+ --------------------------------------------*/
+template<typename T>
+inline void Vec<T>::append(const Vec<T>& other,const T fill_val)
+{
+    if((is_empty()&& other.is_empty()) && empty_val==other.empty_val)
+        return;
+    
+    if(is_empty()) fill();
+    if(other.is_empty())
+    {
+        resize(vec_sz+other.atoms->natms_lcl,other.empty_val);
+        return;
+    }
+    
+    int __vec_sz=vec_sz;
+    resize(vec_sz+other.vec_sz,fill_val);
+    T* __data=reinterpret_cast<T*>(data)+__vec_sz*dim;
+    T* __other_data=reinterpret_cast<T*>(other.data);
+    if(dim==other.dim)
+    {
+        memcpy(__data,__other_data,dim*other.vec_sz*sizeof(T));
+        return;
+    }
+
+    int min_dim=MIN(dim,other.dim);
+    for(int i=0;i<other.vec_sz;i++)
+    {
+        memcpy(__data,__other_data,min_dim*sizeof(T));
+        __data+=dim;
+        __other_data+=other.dim;
+    }
 }
 /*--------------------------------------------
 

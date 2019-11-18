@@ -29,14 +29,14 @@ temp(NAN)
 /*--------------------------------------------
  
  --------------------------------------------*/
-AtomsDMD::AtomsDMD(const AtomsDMD& other,int __c_dim):
+AtomsDMD::AtomsDMD(const AtomsDMD& other):
 Atoms(other),
 S_fe{DESIG2(__dim__,__dim__,NAN)},
 fe(other.fe),
 pe(other.pe),
 s(other.s),
 max_alpha(other.max_alpha),
-c_dim(__c_dim),
+c_dim(other.c_dim),
 N(other.N),
 xi(new type0[other.N]),
 wi(new type0[other.N]),
@@ -49,22 +49,6 @@ temp(other.temp)
     c=new DMDVec<type0>(this,*other.c);
     alpha_dof=new DMDVec<bool>(this,*other.alpha_dof);
     c_dof=new DMDVec<bool>(this,*other.c_dof);
-    
-    if(c_dim!=other.c_dim)
-    {
-        elem->change_dim(c_dim);
-        alpha->change_dim(c_dim);
-        c->change_dim(c_dim);
-        alpha_dof->change_dim(c_dim);
-        c_dof->change_dim(c_dim);
-    }
-}
-/*--------------------------------------------
- 
- --------------------------------------------*/
-AtomsDMD::AtomsDMD(const AtomsDMD& other):
-AtomsDMD(other,other.c_dim)
-{
 }
 /*--------------------------------------------
  
@@ -79,6 +63,74 @@ AtomsDMD::~AtomsDMD()
     
     delete [] wi;
     delete [] xi;
+}
+/*--------------------------------------------
+
+ --------------------------------------------*/
+AtomsDMD& AtomsDMD::operator=(const AtomsDMD& r)
+{
+    this->~AtomsDMD();
+    new (this) AtomsDMD(r);
+    return *this;
+}
+/*--------------------------------------------
+
+ --------------------------------------------*/
+AtomsDMD& AtomsDMD::operator+(const AtomsDMD& r)
+{
+    if(natms_ph!=0 || r.natms_ph!=0)
+        throw std::string("atom objects have phantom atoms");
+    int is_same;
+    MPI_Comm_compare(world,r.world,&is_same);
+    if(is_same!=MPI_IDENT)
+        throw std::string("atom objects do not belong to same world");
+        
+    add(r);
+    natms_lcl+=r.natms_lcl;
+    natms+=r.natms;
+    for(int ivec=0;ivec<nvecs;ivec++)
+        vecs[ivec]->resize(natms_lcl);
+    max_alpha=MAX(max_alpha,r.max_alpha);
+    reset_domain();
+    return *this;
+}
+/*--------------------------------------------
+ 
+ --------------------------------------------*/
+void AtomsDMD::add(const AtomsDMD& other)
+{
+    Atoms::add(other);
+    
+    int max_c_dim=MAX(this->c_dim,other.c_dim);
+    if(max_c_dim!=this->c_dim)
+    {
+        elem->vec::change_dim(max_c_dim);
+        alpha->change_dim(max_c_dim,0.0);
+        c->change_dim(max_c_dim,-1.0);
+        alpha_dof->change_dim(max_c_dim,true);
+        c_dof->change_dim(max_c_dim,true);
+    }
+    
+    c_dim=max_c_dim;
+    elem->append(*other.elem,0);
+    alpha->append(*other.alpha,0.0);
+    c->append(*other.c,-1.0);
+    alpha_dof->append(*other.alpha_dof,true);
+    c_dof->append(*other.c_dof,true);
+    
+    
+    int __nelems=static_cast<int>(other.elements.__nelems);
+    elem_type* elem_map=__nelems==0? NULL:new elem_type[__nelems];
+    for(int i=0;i<__nelems;i++)
+        elem_map[i]=elements.add_type(other.elements.masses[i],other.elements.names[i].c_str());
+    
+    elem_type* elem_ptr=elem->begin()+natms_lcl*c_dim;
+    type0* c_ptr=c->begin()+natms_lcl*c_dim;
+    for(int iatm=0;iatm<other.natms_lcl;iatm++,elem_ptr+=c_dim,c_ptr+=c_dim)
+        for(int i=0;i<c_dim && c_ptr[i]>=0.0;i++)
+            elem_ptr[i]=elem_map[elem_ptr[i]];
+    
+    delete [] elem_map;
 }
 /*--------------------------------------------
  use this function after changing H

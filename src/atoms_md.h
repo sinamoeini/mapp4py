@@ -20,7 +20,9 @@ namespace MAPP_NS
         AtomsMD(const AtomsMD&);
         ~AtomsMD();
         AtomsMD& operator=(const AtomsMD&);
-        void add(const AtomsMD&);
+        AtomsMD& operator+(const AtomsMD&);
+        AtomsMD& operator+=(const AtomsMD&);
+        void import_vecs(const AtomsMD&);
         AtomsMD& operator=(const Atoms&);
         void x_d2s_d_dump();
         typedef struct
@@ -31,11 +33,13 @@ namespace MAPP_NS
         }Object;
         
         static PyTypeObject TypeObject;
+        static PyNumberMethods NumberMethods;
         static PyObject* __new__(PyTypeObject*,PyObject*, PyObject*);
         static int __init__(PyObject*, PyObject*,PyObject*);
         static PyObject* __alloc__(PyTypeObject*,Py_ssize_t);
         static void __dealloc__(PyObject*);
-        static PyObject* __add__(PyObject*,PyObject*,PyObject*);
+        static PyObject* __add__(PyObject*,PyObject*);
+        static PyObject* __iadd__(PyObject*,PyObject*);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();

@@ -42,11 +42,33 @@ AtomsMD& AtomsMD::operator=(const AtomsMD& r)
     return *this;
 }
 /*--------------------------------------------
+
+ --------------------------------------------*/
+AtomsMD& AtomsMD::operator+(const AtomsMD& r)
+{
+    import_vecs(r);
+    natms_lcl+=r.natms_lcl;
+    natms+=r.natms;
+    for(int ivec=0;ivec<nvecs;ivec++)
+        vecs[ivec]->resize(natms_lcl);
+    
+    reset_domain();
+    return *this;
+}
+/*--------------------------------------------
+
+ --------------------------------------------*/
+AtomsMD& AtomsMD::operator+=(const AtomsMD& r)
+{
+    this->operator+(r);
+    return *this;
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
-void AtomsMD::add(const AtomsMD& other)
+void AtomsMD::import_vecs(const AtomsMD& other)
 {
-    Atoms::add(other);
+    Atoms::import_vecs(other);
     
     elem->append(*other.elem,0);
     x_d->append(*other.x_d,0.0);
@@ -273,19 +295,56 @@ void AtomsMD::__dealloc__(PyObject* self)
 /*--------------------------------------------
 
 --------------------------------------------*/
-PyObject* AtomsMD::__add__(PyObject* self,PyObject* args,PyObject* kwds)
+PyObject* AtomsMD::__add__(PyObject* l,PyObject* r)
 {
+    PyObject* __l=__new__(&TypeObject,NULL,NULL);
+    reinterpret_cast<Object*>(__l)->atoms=new AtomsMD(*(reinterpret_cast<Object*>(l)->atoms));
+    PyObject* ans=__iadd__(__l,r);
+    Py_DECREF(__l);
+    return ans;
+}
+/*--------------------------------------------
 
-    return self;
+--------------------------------------------*/
+PyObject* AtomsMD::__iadd__(PyObject* l,PyObject* r)
+{
+    VarAPI<OP<AtomsMD>> var("rhs");
+    if(!var.set_nothrow(r))
+    {
+        PyErr_Format(PyExc_TypeError,"unsupported operand type(s) for %s: \'%s\' and \'%s\'","+",l->ob_type->tp_name,r->ob_type->tp_name);
+        return NULL;
+    }
+    Object* __l=reinterpret_cast<Object*>(l);
+    AtomsMD* atoms_l=__l->atoms;
+    Object* __r=reinterpret_cast<Object*>(r);
+    AtomsMD* atoms_r=__r->atoms;
+    
+    if(atoms_l->natms_ph!=0 || atoms_r->natms_ph!=0)
+    {
+        PyErr_SetString(PyExc_TypeError,"atom objects have phantom atoms");
+        return NULL;
+    }
+    int is_same;
+    MPI_Comm_compare(atoms_l->world,atoms_r->world,&is_same);
+    if(is_same!=MPI_IDENT)
+    {
+        PyErr_SetString(PyExc_TypeError,"atom objects do not belong to same world");
+        return NULL;
+    }
+        
+    *(__l->atoms)+=*(__r->atoms);
+    Py_INCREF(l);
+    return l;
 }
 /*--------------------------------------------*/
 PyTypeObject AtomsMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
+PyNumberMethods AtomsMD::NumberMethods={};
 /*--------------------------------------------*/
 int AtomsMD::setup_tp()
 {
     TypeObject.tp_name="mapp4py.md.atoms";
     TypeObject.tp_doc="container class";
-    PyNumberMethods
+    
     TypeObject.tp_flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
     TypeObject.tp_basicsize=sizeof(Object);
     
@@ -293,6 +352,10 @@ int AtomsMD::setup_tp()
     TypeObject.tp_init=__init__;
     TypeObject.tp_alloc=__alloc__;
     TypeObject.tp_dealloc=__dealloc__;
+    
+    NumberMethods.nb_add=__add__;
+    NumberMethods.nb_inplace_add=__iadd__;
+    TypeObject.tp_as_number=&NumberMethods;
     
     setup_tp_getset();
     TypeObject.tp_getset=getset;

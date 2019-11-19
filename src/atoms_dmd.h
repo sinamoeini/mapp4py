@@ -33,7 +33,8 @@ namespace MAPP_NS
         ~AtomsDMD();
         AtomsDMD& operator=(const AtomsDMD&);
         AtomsDMD& operator+(const AtomsDMD&);
-        void add(const AtomsDMD&);
+        AtomsDMD& operator+=(const AtomsDMD&);
+        void import_vecs(const AtomsDMD&);
         void update_max_alpha();
         AtomsDMD& operator=(const Atoms&);
         

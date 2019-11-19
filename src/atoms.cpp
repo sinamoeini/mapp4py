@@ -82,7 +82,7 @@ ndynamic_vecs(0)
 copy constructor
 --------------------------------------------*/
 Atoms::Atoms(const Atoms& other):
-elements(Elements()),
+elements(other.elements),
 comm(other.comm),
 world(comm.world),
 s_lo(comm.s_lo),
@@ -146,7 +146,7 @@ Atoms& Atoms::operator+(const Atoms& r)
     if(is_same!=MPI_IDENT)
         throw std::string("atom objects do not belong to same world");
         
-    add(r);
+    import_vecs(r);
     natms_lcl+=r.natms_lcl;
     natms+=r.natms;
     for(int ivec=0;ivec<nvecs;ivec++)
@@ -156,9 +156,17 @@ Atoms& Atoms::operator+(const Atoms& r)
     return *this;
 }
 /*--------------------------------------------
+
+ --------------------------------------------*/
+Atoms& Atoms::operator+=(const Atoms& r)
+{
+    this->operator+(r);
+    return *this;
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
-void Atoms::add(const Atoms& other)
+void Atoms::import_vecs(const Atoms& other)
 {
     id_type max_id=get_max_id();
     x->append(*other.x,0.0);

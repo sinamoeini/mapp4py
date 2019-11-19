@@ -510,8 +510,9 @@ namespace MAPP_NS
         virtual ~Atoms();
         Atoms& operator=(const Atoms&);
         Atoms& operator+(const Atoms&);
+        Atoms& operator+=(const Atoms&);
         
-        void add(const Atoms&);
+        void import_vecs(const Atoms&);
         vec* find_vec(const char*);
         void push(vec*);
         void pop(vec*);

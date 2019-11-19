@@ -78,14 +78,7 @@ AtomsDMD& AtomsDMD::operator=(const AtomsDMD& r)
  --------------------------------------------*/
 AtomsDMD& AtomsDMD::operator+(const AtomsDMD& r)
 {
-    if(natms_ph!=0 || r.natms_ph!=0)
-        throw std::string("atom objects have phantom atoms");
-    int is_same;
-    MPI_Comm_compare(world,r.world,&is_same);
-    if(is_same!=MPI_IDENT)
-        throw std::string("atom objects do not belong to same world");
-        
-    add(r);
+    import_vecs(r);
     natms_lcl+=r.natms_lcl;
     natms+=r.natms;
     for(int ivec=0;ivec<nvecs;ivec++)
@@ -95,11 +88,19 @@ AtomsDMD& AtomsDMD::operator+(const AtomsDMD& r)
     return *this;
 }
 /*--------------------------------------------
+
+ --------------------------------------------*/
+AtomsDMD& AtomsDMD::operator+=(const AtomsDMD& r)
+{
+    this->operator+(r);
+    return *this;
+}
+/*--------------------------------------------
  
  --------------------------------------------*/
-void AtomsDMD::add(const AtomsDMD& other)
+void AtomsDMD::import_vecs(const AtomsDMD& other)
 {
-    Atoms::add(other);
+    Atoms::import_vecs(other);
     
     int max_c_dim=MAX(this->c_dim,other.c_dim);
     if(max_c_dim!=this->c_dim)

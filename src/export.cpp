@@ -381,7 +381,7 @@ PyObject* ExportMD::__call__(PyObject* self,PyObject* args,PyObject* kwds)
     FuncAPI<OP<AtomsMD>,std::string> f("__call__",{"atoms","file_name"});
     
     if(f(args,kwds)==-1) return NULL;
-    std::cout<< Py_REFCNT(f.val<0>().ob) <<std::endl;
+    
     reinterpret_cast<ExportMD::Object*>(self)->xprt->atoms=reinterpret_cast<AtomsMD::Object*>(f.val<0>().ob)->atoms;
     try
     {

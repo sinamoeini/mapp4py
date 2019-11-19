@@ -403,8 +403,53 @@ void AtomsDMD::__dealloc__(PyObject* self)
     delete __self->atoms;
     delete __self;
 }
+/*--------------------------------------------
+
+--------------------------------------------*/
+PyObject* AtomsDMD::__add__(PyObject* l,PyObject* r)
+{
+    PyObject* __l=__new__(&TypeObject,NULL,NULL);
+    reinterpret_cast<Object*>(__l)->atoms=new AtomsDMD(*(reinterpret_cast<Object*>(l)->atoms));
+    PyObject* ans=__iadd__(__l,r);
+    Py_DECREF(__l);
+    return ans;
+}
+/*--------------------------------------------
+
+--------------------------------------------*/
+PyObject* AtomsDMD::__iadd__(PyObject* l,PyObject* r)
+{
+    VarAPI<OP<AtomsDMD>> var("rhs");
+    if(!var.set_nothrow(r))
+    {
+        PyErr_Format(PyExc_TypeError,"unsupported operand type(s) for %s: \'%s\' and \'%s\'","+",l->ob_type->tp_name,r->ob_type->tp_name);
+        return NULL;
+    }
+    Object* __l=reinterpret_cast<Object*>(l);
+    AtomsDMD* atoms_l=__l->atoms;
+    Object* __r=reinterpret_cast<Object*>(r);
+    AtomsDMD* atoms_r=__r->atoms;
+    
+    if(atoms_l->natms_ph!=0 || atoms_r->natms_ph!=0)
+    {
+        PyErr_SetString(PyExc_TypeError,"atom objects have phantom atoms");
+        return NULL;
+    }
+    int is_same;
+    MPI_Comm_compare(atoms_l->world,atoms_r->world,&is_same);
+    if(is_same!=MPI_IDENT)
+    {
+        PyErr_SetString(PyExc_TypeError,"atom objects do not belong to same world");
+        return NULL;
+    }
+        
+    *(__l->atoms)+=*(__r->atoms);
+    Py_INCREF(l);
+    return l;
+}
 /*--------------------------------------------*/
 PyTypeObject AtomsDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
+PyNumberMethods AtomsDMD::NumberMethods={};
 /*--------------------------------------------*/
 int AtomsDMD::setup_tp()
 {
@@ -417,6 +462,10 @@ int AtomsDMD::setup_tp()
     TypeObject.tp_init=__init__;
     TypeObject.tp_alloc=__alloc__;
     TypeObject.tp_dealloc=__dealloc__;
+    
+    NumberMethods.nb_add=__add__;
+    NumberMethods.nb_inplace_add=__iadd__;
+    TypeObject.tp_as_number=&NumberMethods;
     
     setup_tp_getset();
     TypeObject.tp_getset=getset;

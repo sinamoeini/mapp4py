@@ -927,7 +927,8 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
             B[i][j]=__self->atoms->B[i][j];
         });
         
-        type0 (&strain)[__dim__][__dim__]=f.val<0>();
+        type0 (strain)[__dim__][__dim__];
+        Algebra::MSQ_T(f.val<0>(),strain);
         
         Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
         type0 F[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};

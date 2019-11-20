@@ -1659,8 +1659,47 @@ namespace MAPP_NS
                 *ANS=*MLT**MSQ;
             }
         };
+
+    
+    
+        template<const int i,const int j,const int dim >
+        class __MSQ_T
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT MSQ,T* RESTRICT MSQ_T)
+            {
+                *MSQ_T=*MSQ;
+                __MSQ_T<i-1,j,dim>::func(MSQ+dim,MSQ_T+1);
+            }
+        };
+    
+        template<const int j,const int dim >
+        class __MSQ_T<1,j,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT MSQ,T* RESTRICT MSQ_T)
+            {
+                *MSQ_T=*MSQ;
+                __MSQ_T<dim,j-1,dim>::func(MSQ-dim*(dim-1)+1,MSQ_T+1);
+            }
+        };
+    
+        template<const int dim >
+        class __MSQ_T<1,1,dim>
+        {
+        public:
+            template<typename T>
+            static inline void func(T* RESTRICT MSQ,T* RESTRICT MSQ_T)
+            {
+                *MSQ_T=*MSQ;
+            }
+        };
         
         
+    
+    
         template<const int i,const int j,const int dim >
         class __MLT_T
         {
@@ -2895,6 +2934,12 @@ namespace MAPP_NS
         void MLT_mul_MSQ(T(&MLT)[dim][dim],T(&MSQ)[dim][dim],T(&MLT_MSQ)[dim][dim])
         {
             __MLT_mul_MSQ<dim,dim,dim>::func(&MLT[dim-1][0],&MSQ[0][dim-1],&MLT_MSQ[dim-1][dim-1]);
+        }
+        /*==========================================================================*/
+        template<const int dim,typename T>
+        void MSQ_T(T(&MSQ)[dim][dim],T(&MSQ_T)[dim][dim])
+        {
+            __MSQ_T<dim,dim,dim>::func(&MSQ[0][0],&MSQ_T[0][0]);
         }
         /*==========================================================================*/
         template<const int dim,typename T>

@@ -523,6 +523,7 @@ namespace MAPP_NS
         void x2s_all();
         void s2x_all();
         void x2s_dump();
+        void mul(int(&)[__dim__]);
         id_type get_max_id();
         
         void insert(byte*,vec**,int,int);

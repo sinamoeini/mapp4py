@@ -327,6 +327,66 @@ id_type Atoms::get_max_id()
     return max_id;
 }
 /*--------------------------------------------
+
+--------------------------------------------*/
+void Atoms::mul(int (&N)[3])
+{
+    int n=1;
+    Algebra::Do<__dim__>::func([&n,&N](int i){n*=N[i];});
+    
+    
+
+    for(int i=0;i<nvecs;i++)
+        vecs[i]->replicate(n);
+    
+    
+    type0 dx[__dim__];
+    type0 I[__dim__];
+    int P[__dim__]{DESIG(__dim__,1)};
+    Algebra::DoLT<__dim__-1>::func([&P,&N](int i,int j)
+    {
+        P[__dim__-2-i]*=N[__dim__-1-j];
+    });
+    
+    id_type max_id=get_max_id();
+    id_type* __id=id->begin();
+    int no;
+    id_type did;
+    type0* __x=x->begin()+natms_lcl*__dim__;
+    __id=id->begin()+natms_lcl;
+    for(int i=1;i<n;i++)
+    {
+        no=i;
+        Algebra::zero<__dim__>(I);
+        Algebra::zero<__dim__>(dx);
+        Algebra::Do<__dim__>::func([&I,&P,&no](int i)
+        {
+           I[i]=static_cast<type0>(no/P[i]);
+            no=no%P[i];
+        });
+        did=static_cast<id_type>(i)*(max_id+1);
+        Algebra::V_mul_MLT(I,H,dx);
+        for(int j=0;j<natms_lcl;j++)
+        {
+            Algebra::V_add_V<__dim__>(__x,dx);
+            *__id+=did;
+            __x+=__dim__;
+            ++__id;
+        }
+            
+        
+    }
+    
+    Algebra::DoLT<__dim__>::func([this,&N](int i,int j)
+    {
+        H[i][j]*=static_cast<type0>(N[i]);
+    });
+    update_H();
+    natms_lcl*=n;
+    natms*=n;
+    reset_domain();
+}
+/*--------------------------------------------
  insert a number of atoms
  --------------------------------------------*/
 void Atoms::insert(byte* buff,vec** vecs_,int nvecs_,int natms_)
@@ -920,14 +980,11 @@ void Atoms::ml_strain(PyMethodDef& tp_methods)
         Atoms::Object* __self=reinterpret_cast<Atoms::Object*>(self);
         
         type0 H[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
+        Algebra::V_eq<__dim__*__dim__>(&(__self->atoms->H[0][0]),&H[0][0]);
         type0 B[__dim__][__dim__]{DESIG2(__dim__,__dim__,0.0)};
-        Algebra::DoLT<__dim__>::func([&H,&B,&__self](int i,int j)
-        {
-            H[i][j]=__self->atoms->H[i][j];
-            B[i][j]=__self->atoms->B[i][j];
-        });
+        Algebra::V_eq<__dim__*__dim__>(&(__self->atoms->B[0][0]),&B[0][0]);
         
-        type0 (strain)[__dim__][__dim__];
+        type0 strain[__dim__][__dim__];
         Algebra::MSQ_T(f.val<0>(),strain);
         
         Algebra::Do<__dim__>::func([&strain](int i){strain[i][i]++;});
@@ -991,67 +1048,7 @@ void Atoms::ml_mul(PyMethodDef& tp_methods)
         f.get<0>().logics[0]=VLogics("ge",1);
         if(f(args,kwds)) return NULL;
         Atoms* atoms=reinterpret_cast<Atoms::Object*>(self)->atoms;
-        int N[__dim__];
-        Algebra::V_eq<__dim__>(f.val<0>(),N);
-        int n=1;
-        Algebra::Do<__dim__>::func([&n,&N](int i){n*=N[i];});
-        
-        
-        int nvecs=atoms->nvecs;
-        vec** vecs=atoms->vecs;
-        for(int i=0;i<nvecs;i++)
-            vecs[i]->replicate(n);
-        
-        
-        type0 dx[__dim__];
-        type0 I[__dim__];
-        int P[__dim__]{DESIG(__dim__,1)};
-        Algebra::DoLT<__dim__-1>::func([&P,&N](int i,int j)
-        {
-            P[__dim__-2-i]*=N[__dim__-1-j];
-        });
-        
-        id_type max_id=atoms->get_max_id();
-        id_type* __id=atoms->id->begin();
-        int natms_lcl=atoms->natms_lcl;
-        int no;
-        id_type did;
-        type0* __x=atoms->x->begin()+natms_lcl*__dim__;
-        __id=atoms->id->begin()+natms_lcl;
-        type0 (&H)[__dim__][__dim__]=atoms->H;
-        for(int i=1;i<n;i++)
-        {
-            no=i;
-            Algebra::zero<__dim__>(I);
-            Algebra::zero<__dim__>(dx);
-            Algebra::Do<__dim__>::func([&I,&P,&no](int i)
-            {
-               I[i]=static_cast<type0>(no/P[i]);
-                no=no%P[i];
-            });
-            did=static_cast<id_type>(i)*(max_id+1);
-            Algebra::V_mul_MLT(I,H,dx);
-            for(int j=0;j<natms_lcl;j++)
-            {
-                Algebra::V_add_V<__dim__>(__x,dx);
-                *__id+=did;
-                __x+=__dim__;
-                ++__id;
-            }
-                
-            
-        }
-        
-        Algebra::DoLT<__dim__>::func([&atoms,&N](int i,int j)
-        {
-            atoms->H[i][j]*=static_cast<type0>(N[i]);
-        });
-        atoms->update_H();
-        atoms->natms_lcl*=n;
-        atoms->natms*=n;
-        atoms->reset_domain();
-
-        
+        atoms->mul(f.val<0>());       
         Py_RETURN_NONE;
     });
     

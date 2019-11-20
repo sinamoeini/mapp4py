@@ -447,6 +447,32 @@ PyObject* AtomsDMD::__iadd__(PyObject* l,PyObject* r)
     Py_INCREF(l);
     return l;
 }
+/*--------------------------------------------
+
+--------------------------------------------*/
+PyObject* AtomsDMD::__mul__(PyObject* l,PyObject* r)
+{
+    PyObject* __l=__new__(&TypeObject,NULL,NULL);
+    reinterpret_cast<Object*>(__l)->atoms=new AtomsDMD(*(reinterpret_cast<Object*>(l)->atoms));
+    PyObject* ans=__imul__(__l,r);
+    Py_DECREF(__l);
+    return ans;
+}
+/*--------------------------------------------
+
+--------------------------------------------*/
+PyObject* AtomsDMD::__imul__(PyObject* l,PyObject* r)
+{
+    VarAPI<int[__dim__]> var("rhs");
+    var.logics[0]=VLogics("ge",1);
+    if(!var.set(r))
+        return NULL;
+    
+    Object* __l=reinterpret_cast<Object*>(l);
+    __l->atoms->mul(var.val);
+    Py_INCREF(l);
+    return l;
+}
 /*--------------------------------------------*/
 PyTypeObject AtomsDMD::TypeObject ={PyObject_HEAD_INIT(NULL)};
 PyNumberMethods AtomsDMD::NumberMethods={};

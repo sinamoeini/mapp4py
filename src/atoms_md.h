@@ -40,6 +40,8 @@ namespace MAPP_NS
         static void __dealloc__(PyObject*);
         static PyObject* __add__(PyObject*,PyObject*);
         static PyObject* __iadd__(PyObject*,PyObject*);
+        static PyObject* __mul__(PyObject*,PyObject*);
+        static PyObject* __imul__(PyObject*,PyObject*);
         
         static PyGetSetDef getset[];
         static void setup_tp_getset();

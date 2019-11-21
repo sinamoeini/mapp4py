@@ -354,7 +354,7 @@ PyObject* AtomsMD::__imul__(PyObject* l,PyObject* r)
 {
     VarAPI<int[__dim__]> var("rhs");
     var.logics[0]=VLogics("ge",1);
-    if(!var.set(r))
+    if(var.set(r)!=0)
         return NULL;
     
     Object* __l=reinterpret_cast<Object*>(l);
@@ -381,6 +381,8 @@ int AtomsMD::setup_tp()
     
     NumberMethods.nb_add=__add__;
     NumberMethods.nb_inplace_add=__iadd__;
+    NumberMethods.nb_multiply=__mul__;
+    NumberMethods.nb_inplace_multiply=__imul__;
     TypeObject.tp_as_number=&NumberMethods;
     
     setup_tp_getset();

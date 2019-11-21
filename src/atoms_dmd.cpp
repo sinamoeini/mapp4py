@@ -465,7 +465,7 @@ PyObject* AtomsDMD::__imul__(PyObject* l,PyObject* r)
 {
     VarAPI<int[__dim__]> var("rhs");
     var.logics[0]=VLogics("ge",1);
-    if(!var.set(r))
+    if(var.set(r)!=0)
         return NULL;
     
     Object* __l=reinterpret_cast<Object*>(l);

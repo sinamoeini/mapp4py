@@ -113,6 +113,9 @@ ndynamic_vecs(0)
     x=new Vec<type0>(this,*other.x);
     id= new Vec<id_type>(this,*other.id);
     x_dof=new Vec<bool>(this,*other.x_dof);
+    
+    //std::remove_pointer<npy_intp>::type npy_dim[2]={3,3};
+    //Py_H=PyArray_New(&PyArray_Type,2,npy_dim,cpp_type2type_num<type0>::type_num(),NULL,&H[0][0],0,NPY_ARRAY_CARRAY_RO,NULL);
 }
 /*--------------------------------------------
  destructor

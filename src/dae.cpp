@@ -119,7 +119,7 @@ void DAE::init()
     min=new MinCGDMD(1.0e-9,__H_dof,false,1.0,0.1,ls);
     min->atoms=atoms;
     min->ff=ff;
-    min->init();
+    //min->init();
     min->ntally=0;
     min->__init<false,true,true,false>();
     updt=ff->updt;

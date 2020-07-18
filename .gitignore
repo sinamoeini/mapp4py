@@ -4,10 +4,6 @@ DerivedData
 mapp4py
 build
 obj
-doc
-doc/src/generated
-doc/build
-doc/scipy-sphinx-theme
 src/gen_macro
 Makefile
 mapp.egg-info

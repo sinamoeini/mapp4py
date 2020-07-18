@@ -172,7 +172,7 @@ void DAE::min_error_true()
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS0 VECTENS0;
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
-    VECTENS1& h=handler.h;
+    VECTENS1 h = VECTENS1(atoms,__dim__,true,c_dim,true,c_dim,false);
     VECTENS0& x=handler.x;
     
     /*
@@ -277,7 +277,7 @@ void DAE::min_error_false()
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS0 VECTENS0;
     typedef typename MinDMDHandler<false,true,true,false>::VECTENS1 VECTENS1;
     VECTENS1& f=handler.f;
-    VECTENS1& h=handler.h;
+    VECTENS1 h = VECTENS1(atoms,__dim__,true,c_dim,true,c_dim,false);
     VECTENS0& x=handler.x;
     
     

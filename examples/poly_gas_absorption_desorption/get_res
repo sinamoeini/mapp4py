@@ -1,0 +1,19 @@
+#grep  -A 22 GAS_FRAC output | sed '/GAS_FRAC/,+2d' | sed '/--/d' | sed 's/|//g'
+
+cat res | awk '
+BEGIN{
+N=0;x=0.0;}
+{
+x+=$10; 
+N+=1;
+if(N==20) 
+	{
+        printf("%.16lf\n",x/N);
+	x=0.0;
+	N=0.0;
+	}
+
+}
+ENDP{printf("%.16lf\n",x/N);}'
+
+
